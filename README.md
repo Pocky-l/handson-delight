@@ -1,11 +1,12 @@
 # Hands-On Delight
 
-Experimental addon for [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight) built on
-[Diegesis](https://github.com/Pocky-l/diegesis): its menus become interfaces in the world.
+An experimental addon for [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight), built on
+[Diegesis](https://github.com/Pocky-l/diegesis). It turns the menus of Farmer's Delight into things you use right in the
+world.
 
-The cooking pot opens up, in the world too: there is water in it, ingredients float and colour it, and everybody around sees the soup
-simmer. Nothing cooks by itself: stir with the spoon until it is done, then click the soup with a bowl. Everything else stays Farmer's
-Delight underneath: the same recipes, hoppers and drops.
+For now it is the cooking pot. Open it and you see water inside, and the food you put in floats and colours it. Stir
+with the spoon until the soup is done, then click it with a bowl. Players nearby see the soup simmer. Recipes, hoppers
+and drops work as in Farmer's Delight.
 
 ![Beef stew cooked and stirred by hand in the open cooking pot](docs/showcase/soup.gif)
 

@@ -15,7 +15,7 @@
 <p style="text-align:center"><em>Food goes in whole and floats. The water takes on its colour, and the colour deepens as it cooks. When a serving is done the items burst and pieces come up: lumps of meat, slices, leaves, drops of fat. The spoon leaves trails in the soup, and the thicker it gets, the longer they stay.</em></p>
 
 <h2 style="text-align:center">Stirring</h2>
-<p style="text-align:center"><em>Hold the spoon by its handle and move it round. Stop and the pot stops too, keeping how far it got. A big pot cooks faster than one serving at a time, so sixteen servings take 40 seconds of stirring, not hours.</em></p>
+<p style="text-align:center"><em>Hold the spoon by its handle and move it round. Stop and the pot stops too, keeping how far it got. A full pot cooks faster than a single serving: sixteen servings take about 40 seconds of stirring.</em></p>
 
 <h2 style="text-align:center">The recipe book</h2>
 <p style="text-align:center"><em>A small book hangs beside the pot. Click it and it opens in the air. Dishes you can cook right now come first, and you can keep reading while you stir.</em></p>

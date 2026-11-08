@@ -1,0 +1,84 @@
+plugins {
+    id 'multiloader-loader'
+    id 'fabric-loom'
+}
+
+// Farmer's Delight Refabricated to compile against, prepared by common (see common/build.gradle). Clients play the
+// release jar.
+evaluationDependsOn(':common')
+def refabricatedForCompile = project(':common').refabricatedForCompile
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${parchment_minecraft_version}:${parchment_mappings_version}@zip")
+    }
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    modCompileOnly files(refabricatedForCompile)
+    // The API is in Diegesis' common jar, in Mojang names like this project; the Fabric jar of the library plays in
+    // the playtest client (playtest-1.20.1-fabric).
+    compileOnly "com.pockyl.diegesis:common:${diegesis_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    modCompileOnly "mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}"
+    modCompileOnly "dev.emi:emi-fabric:${emi_version}:api"
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}") {
+        exclude group: 'net.fabricmc'
+        exclude group: 'net.fabricmc.fabric-api'
+    }
+}
+
+loom {
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+    runs {
+        client {
+            client()
+            configName = 'Fabric Client'
+            ideConfigGenerated(true)
+            runDir('run')
+        }
+        server {
+            server()
+            configName = 'Fabric Server'
+            ideConfigGenerated(true)
+            runDir('run-server')
+        }
+    }
+}
+
+tasks.named('processResources', ProcessResources) {
+    var replaceProperties = [
+            minecraft_version    : minecraft_version,
+            fabric_loader_version: fabric_loader_min_version,
+            fabric_api_version   : fabric_api_min_version,
+            mod_id               : mod_id,
+            mod_name             : mod_name,
+            mod_license          : mod_license,
+            mod_version          : mod_version,
+            mod_authors          : mod_authors,
+            mod_description      : mod_description,
+            mod_url              : mod_url,
+            farmers_delight_version: farmers_delight_refabricated_min_version,
+            diegesis_version     : diegesis_version,
+    ]
+    inputs.properties replaceProperties
+    filesMatching('fabric.mod.json') {
+        expand replaceProperties
+    }
+    // Forge finds its SRG names through the refmap the mixin config names; Loom remaps the mixins in the jar itself
+    // and writes none, so the Fabric jar leaves the line out.
+    filesMatching('handson_delight.mixins.json') {
+        filter { String line -> line.contains('"refmap"') ? null : line }
+    }
+}
+
+publishMods {
+    file = tasks.named('remapJar').flatMap { it.archiveFile }
+    displayName = "${mod_name} ${mod_version}+${minecraft_version} (Fabric)"
+    modLoaders.add('fabric')
+}

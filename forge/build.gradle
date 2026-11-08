@@ -1,0 +1,143 @@
+plugins {
+    id 'multiloader-loader'
+    id 'idea'
+    id 'net.neoforged.moddev.legacyforge'
+}
+
+legacyForge {
+    version = "${minecraft_version}-${forge_version}"
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        client {
+            client()
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            // Separate directory, so a dedicated server can run next to the dev client.
+            gameDirectory = project.file('run-server')
+            programArgument '--nogui'
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        gameTestServer {
+            type = 'gameTestServer'
+            // Own directory, with Diegesis in its mods folder (see syncDevMods).
+            gameDirectory = project.file('run/gametest')
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+// Dependencies added to localRuntime are available in dev runs but are not published as dependencies.
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+configurations {
+    // Diegesis is a mod with mixins from an included build: it runs from a mods folder, as in the playtest client.
+    devMods {
+        canBeConsumed = false
+        transitive = false
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+            attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.LIBRARY))
+            attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
+        }
+    }
+}
+
+dependencies {
+    // Published mods use SRG names; the mod* configurations remap them to the development mappings.
+    modImplementation "maven.modrinth:farmers-delight:${farmers_delight_version}"
+    compileOnly "com.pockyl.diegesis:forge:${diegesis_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    modCompileOnly "mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"
+    modCompileOnly "dev.emi:emi-forge:${emi_version}:api"
+    devMods "com.pockyl.diegesis:forge:${diegesis_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+var syncDevMods = tasks.register('syncDevMods', Sync) {
+    from(configurations.devMods)
+    into 'run/gametest/mods'
+}
+
+// Forge 1.20.1 runs the game tests on a dedicated server, in a world made from server.properties: a flat one.
+var prepareGameTestServer = tasks.register('prepareGameTestServer') {
+    var dir = project.file('run/gametest')
+    outputs.file(new File(dir, 'server.properties'))
+    doLast {
+        dir.mkdirs()
+        new File(dir, 'server.properties').text = [
+                'level-type=minecraft:flat', 'generate-structures=false', 'spawn-protection=0'
+        ].join(System.lineSeparator()) + System.lineSeparator()
+    }
+}
+tasks.named('runGameTestServer') { dependsOn syncDevMods, prepareGameTestServer }
+
+// Refmaps translate the mixin targets to the SRG names Forge uses at runtime.
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            forge_version_range    : forge_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+            mod_url                : mod_url,
+            farmers_delight_version_range: farmers_delight_version_range,
+            diegesis_version_range : diegesis_version_range,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+legacyForge.ideSyncTask generateModMetadata
+
+tasks.named('jar', Jar) {
+    // Forge 47 reads mixin configs from the manifest, not from mods.toml.
+    manifest.attributes('MixinConfigs': "${mod_id}.mixins.json")
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
+
+publishMods {
+    // The reobfuscated (SRG) jar is the one that runs outside the development environment.
+    file = tasks.named('reobfJar').flatMap { it.archiveFile }
+    displayName = "${mod_name} ${mod_version}+${minecraft_version} (Forge)"
+    modLoaders.add('forge')
+}

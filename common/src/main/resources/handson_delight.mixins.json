@@ -1,0 +1,35 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.pockyl.handson_delight.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "handson_delight.refmap.json",
+  "mixins": [
+    "CookingPotBlockEntityAccessor",
+    "CookingPotStirringMixin",
+    "CookingPotServingMixin",
+    "ItemUtilsMixin",
+    "RecipeManagerMixin",
+    "RecipeManagerAccessor",
+    "ShapelessRecipeMixin",
+    "TransientCraftingContainerAccessor",
+    "CraftingMenuAccessor",
+    "InventoryMenuAccessor",
+    "ServerRecipeBookMixin",
+    "CuttingBoardBlockEntityMixin",
+    "CuttingBoardBlockMixin",
+    "SkilletBlockEntityMixin",
+    "PlayerListMixin"
+  ],
+  "client": [
+    "CookingPotBlockEntityMixin",
+    "CookingPotBlockMixin",
+    "SpriteContentsAccessor",
+    "CuttingBoardRendererMixin",
+    "SkilletRendererMixin",
+    "CampfireSmokeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

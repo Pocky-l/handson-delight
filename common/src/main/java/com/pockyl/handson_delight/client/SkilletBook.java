@@ -1,0 +1,47 @@
+package com.pockyl.handson_delight.client;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CampfireCookingRecipe;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import vectorwing.farmersdelight.common.block.SkilletBlock;
+
+import com.pockyl.diegesis.api.client.StationView;
+import com.pockyl.handson_delight.station.SkilletCooking;
+import com.pockyl.handson_delight.station.SkilletStation;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/** The skillet's book: what the campfire cooks, and how long one takes in the pan, both sides, at the station's pace. */
+final class SkilletBook implements RecipeBook.Source {
+    @Override
+    public List<RecipeBook.Page> pages(StationView view) {
+        Level level = view.level();
+        List<RecipeBook.Page> pages = new ArrayList<>();
+        for (CampfireCookingRecipe recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {
+            ItemStack dish = recipe.getResultItem(level.registryAccess());
+            if (dish.isEmpty() || recipe.getIngredients().isEmpty()) {
+                continue;
+            }
+            int ticks = 2 * SkilletCooking.sideTicks(SkilletBlock.getSkilletCookingTime(recipe.getCookingTime(), 0), 1);
+            Component seconds = Component.translatable("handson_delight.book.seconds", Math.round(ticks / 20.0F));
+            pages.add(new RecipeBook.Page(recipe.getId(), dish.copy(), List.of(recipe.getIngredients().get(0)),
+                    List.of(new ItemStack(Items.CLOCK)), seconds, false));
+        }
+        return pages;
+    }
+
+    @Override
+    public List<ItemStack> inStation(StationView view) {
+        return List.of(view.state().getItem(SkilletStation.PAN_SLOT));
+    }
+
+    /** What fries in the pan. */
+    @Override
+    public Object current(StationView view) {
+        return SkilletCooking.recipe(view.level(), view.state().getItem(SkilletStation.PAN_SLOT)).map(CampfireCookingRecipe::getId).orElse(null);
+    }
+}

@@ -1,0 +1,46 @@
+package com.pockyl.handson_delight.mixin;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.crafting.RecipeManager;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import com.pockyl.handson_delight.assembly.AssemblyRecipes;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Food put together on the cutting board: its recipes are found before the manager reads them and kept for the board as well. They
+ * stay in the manager, for automation; a player's crafting grid does not make them ({@code ShapelessRecipeMixin}).
+ */
+@Mixin(RecipeManager.class)
+abstract class RecipeManagerMixin {
+    @Unique
+    private static final String APPLY =
+            "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V";
+
+    @Unique
+    private final Map<ResourceLocation, JsonObject> handson$taken = new HashMap<>();
+
+    @Inject(method = APPLY, at = @At("HEAD"))
+    private void handson$findAssembled(Map<ResourceLocation, JsonElement> recipes, ResourceManager resources, ProfilerFiller profiler,
+            CallbackInfo callback) {
+        handson$taken.clear();
+        AssemblyRecipes.collect(recipes, handson$taken);
+    }
+
+    @Inject(method = APPLY, at = @At("TAIL"))
+    private void handson$keepAssembled(Map<ResourceLocation, JsonElement> recipes, ResourceManager resources, ProfilerFiller profiler,
+            CallbackInfo callback) {
+        AssemblyRecipes.load(handson$taken);
+        handson$taken.clear();
+    }
+}

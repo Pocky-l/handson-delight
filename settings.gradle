@@ -2,6 +2,10 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         maven { url = 'https://maven.neoforged.net/releases' }
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
     }
 }
 
@@ -10,6 +14,10 @@ plugins {
 }
 
 rootProject.name = 'handson_delight'
+
+// common: the stations, scenes and assets, compiled against plain Minecraft and Farmer's Delight; forge / fabric: the
+// loader glue. Each loader project compiles the common sources into its own jar.
+include 'common', 'forge', 'fabric'
 
 // The Diegesis library comes from its working copy while both are developed together.
 includeBuild('../diegesis')

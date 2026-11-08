@@ -1,35 +1,40 @@
-<h1 align="center">Hands-On Delight</h1>
-
 <p align="center">
-  Cook in <a href="https://www.curseforge.com/minecraft/mc-mods/farmers-delight">Farmer's Delight</a> with your own hands:
-  the cooking pot, the cutting board and the skillet open right in the world.
+  <img src="docs/showcase/title.gif" alt="Hands-On Delight" width="834">
 </p>
 
 <p align="center">
   <a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-delight"><img alt="CurseForge" src="https://img.shields.io/badge/CurseForge-Hands--On%20Delight-F16436"></a>
-  <img alt="Minecraft 1.20.1" src="https://img.shields.io/badge/Minecraft-1.20.1-62B47A">
-  <a href="https://files.minecraftforge.net"><img alt="Forge" src="https://img.shields.io/badge/Loader-Forge-DFA86A"></a>
-  <a href="https://fabricmc.net"><img alt="Fabric" src="https://img.shields.io/badge/Loader-Fabric-C6BBA5"></a>
-  <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue">
+  <a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-delight/files"><img alt="Minecraft 1.20.1" src="https://img.shields.io/badge/Minecraft-1.20.1-62B47A"></a>
+  <a href="https://files.minecraftforge.net"><img alt="Forge or Fabric" src="https://img.shields.io/badge/Loader-Forge%20%7C%20Fabric-DFA86A"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/farmers-delight"><img alt="An addon for Farmer's Delight" src="https://img.shields.io/badge/Farmer's%20Delight-addon-d98a3a"></a>
+  <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue"></a>
 </p>
 
-<p align="center">
-  <img src="docs/showcase/stir.gif" alt="Vegetables stirred by hand in the open cooking pot" width="640">
-</p>
+<p align="center"><i>Cook in <a href="https://www.curseforge.com/minecraft/mc-mods/farmers-delight">Farmer's Delight</a> with your own hands.</i></p>
 
-An addon for [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight), built on
-[Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis). It adds no blocks or items: Farmer's Delight's own blocks
-open as stations, and its recipes, and those of its addons, work in them.
+<p align="center"><b>The cooking pot, the cutting board and the skillet open right where they stand, with no menu screen. You stir the soup with the spoon and chop with the knife yourself, and players nearby see what you cook.</b></p>
 
-<table align="center">
-  <tr>
-    <td align="center"><img src="docs/showcase/chop.gif" width="260" alt="A cabbage chopped on the cutting board"><br>Chop on the board</td>
-    <td align="center"><img src="docs/showcase/skillet.gif" width="260" alt="Beef patties tossed in the skillet"><br>Toss the skillet</td>
-    <td align="center"><img src="docs/showcase/burger.gif" width="260" alt="A hamburger stacked on the cutting board"><br>Build a burger</td>
-  </tr>
-</table>
+<p align="center"><img src="docs/showcase/stir.gif" alt="Vegetables stirred by hand in the open cooking pot, the recipe book beside it" width="720"></p>
+
+<p align="center"><b>No menus</b>, the blocks open in the world &middot; <b>Every recipe</b> of Farmer's Delight and its addons &middot; <b>No new blocks or items</b></p>
+
+Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 ## Features
+
+<h3 align="center">The cutting board</h3>
+<p align="center"><img src="docs/showcase/chop.gif" alt="A cabbage chopped with the knife on the cutting board" width="720"></p>
+<p align="center"><i>Lay the food on the board and cut along the marks with the knife in hand.<br>One cut goes through sixteen at once, and the pieces fly into your inventory.</i></p>
+
+<h3 align="center">Burgers on the board</h3>
+<p align="center"><img src="docs/showcase/burger.gif" alt="Bread, patty, cabbage, tomato and onion stacked into a hamburger on the cutting board" width="720"></p>
+<p align="center"><i>Bread first, then whatever goes on it: the last layer turns the stack into the dish.<br>Sandwiches no longer take the crafting table, and those of addons are built the same way.</i></p>
+
+<h3 align="center">The skillet</h3>
+<p align="center"><img src="docs/showcase/skillet.gif" alt="Beef patties turned over in the air by a toss of the skillet" width="720"></p>
+<p align="center"><i>Food fries on the side that lies in the pan. Toss the pan by its handle and it turns over in the air.</i></p>
+
+### In detail
 
 - **Cooking pot.** Food floats in the water and colours it. Take the spoon by its handle and stir: the whole pot cooks
   as one batch, sixteen servings in about 27 seconds. Walk away and it cooks on as Farmer's Delight cooks, a serving at

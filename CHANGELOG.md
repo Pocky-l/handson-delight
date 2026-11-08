@@ -1,8 +1,9 @@
 # Changelog
 
-## [0.1.0-beta.1+1.20.1]
+## [1.0.0+1.20.1]
 
-First beta: the cooking pot, the cutting board and the skillet of Farmer's Delight open right in the world.
+The first full release, with everything from the beta: the cooking pot, the cutting board and the skillet of
+Farmer's Delight open right in the world.
 
 - Cooking pot: put food into the water, take the spoon and stir by moving the mouse, then ladle the soup out with a
   bowl. Everything in the pot cooks as one batch, sixteen servings in about 27 seconds. Stir in wide, steady rounds to
@@ -18,3 +19,7 @@ First beta: the cooking pot, the cutting board and the skillet of Farmer's Delig
 - `config/handson_delight.properties` turns off each station, the crafting table change and the required stirring.
   Each player can hide the recipe book there.
 - Forge, and Fabric with Farmer's Delight Refabricated.
+
+## [0.1.0-beta.1+1.20.1]
+
+First beta.

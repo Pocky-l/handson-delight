@@ -5,23 +5,21 @@
 
 <p style="text-align:center">📦 Requires <a href="https://www.curseforge.com/minecraft/mc-mods/farmers-delight">Farmer's Delight</a> (on Fabric <a href="https://www.curseforge.com/minecraft/mc-mods/farmers-delight-refabricated">Farmer's Delight Refabricated</a> and <a href="https://www.curseforge.com/minecraft/mc-mods/fabric-api">Fabric API</a>) and <a href="https://www.curseforge.com/minecraft/mc-mods/diegesis">Diegesis</a>. Minecraft 1.20.1, <a href="https://files.minecraftforge.net">Forge</a> and <a href="https://fabricmc.net">Fabric</a>.</p>
 
-<p style="text-align:center"><img src="https://media.forgecdn.net/attachments/description/1790221/description_a5868777-a4fb-4ef8-90c5-af7c8185f443.gif" width="640" alt="Beef stew cooked and stirred by hand in the open cooking pot"></p>
-
 <p style="text-align:center">The kitchen blocks of <a href="https://www.curseforge.com/minecraft/mc-mods/farmers-delight">Farmer's Delight</a> open right where they stand, with no menu screen. You stir and chop with your own hand, and the food lands in front of you.<br>No new blocks or items: the recipes of Farmer's Delight and its addons work as they are.</p>
 
 <hr>
 
 <h3 style="text-align:center">🍲 Stir the pot</h3>
-<p style="text-align:center"><img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/showcase/stir.gif" width="620" alt="Vegetables stirred in the cooking pot, with the recipe book beside it"></p>
+<p style="text-align:center"><img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/showcase/stir.gif" width="640" alt="Vegetables stirred in the cooking pot, with the recipe book beside it"></p>
 
 <h3 style="text-align:center">🔪 Chop on the board</h3>
-<p style="text-align:center"><img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/showcase/chop.gif" width="485" alt="A cabbage chopped with the knife on the cutting board"></p>
+<p style="text-align:center"><img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/showcase/chop.gif" width="640" alt="A cabbage chopped with the knife on the cutting board"></p>
 
 <h3 style="text-align:center">🍳 Toss the skillet</h3>
-<p style="text-align:center"><img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/showcase/skillet.gif" width="600" alt="Beef patties turned over in the air by a toss of the skillet"></p>
+<p style="text-align:center"><img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/showcase/skillet.gif" width="640" alt="Beef patties turned over in the air by a toss of the skillet"></p>
 
 <h3 style="text-align:center">🍔 Build a burger</h3>
-<p style="text-align:center"><img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/showcase/burger.gif" width="485" alt="Bread, patty, cabbage, tomato and onion stacked into a hamburger on the cutting board"></p>
+<p style="text-align:center"><img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/showcase/burger.gif" width="640" alt="Bread, patty, cabbage, tomato and onion stacked into a hamburger on the cutting board"></p>
 
 <hr>
 

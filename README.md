@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/showcase/soup.gif" alt="Beef stew stirred by hand in the open cooking pot" width="480">
+  <img src="docs/showcase/stir.gif" alt="Vegetables stirred by hand in the open cooking pot" width="640">
 </p>
 
 An addon for [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight), built on
@@ -23,12 +23,9 @@ open as stations, and its recipes, and those of its addons, work in them.
 
 <table align="center">
   <tr>
-    <td align="center"><img src="docs/showcase/stir.gif" width="380" alt="Vegetables stirred in the cooking pot"><br>Stir the pot</td>
-    <td align="center"><img src="docs/showcase/chop.gif" width="300" alt="A cabbage chopped on the cutting board"><br>Chop on the board</td>
-  </tr>
-  <tr>
-    <td align="center"><img src="docs/showcase/skillet.gif" width="380" alt="Beef patties tossed in the skillet"><br>Toss the skillet</td>
-    <td align="center"><img src="docs/showcase/burger.gif" width="300" alt="A hamburger stacked on the cutting board"><br>Build a burger</td>
+    <td align="center"><img src="docs/showcase/chop.gif" width="260" alt="A cabbage chopped on the cutting board"><br>Chop on the board</td>
+    <td align="center"><img src="docs/showcase/skillet.gif" width="260" alt="Beef patties tossed in the skillet"><br>Toss the skillet</td>
+    <td align="center"><img src="docs/showcase/burger.gif" width="260" alt="A hamburger stacked on the cutting board"><br>Build a burger</td>
   </tr>
 </table>
 

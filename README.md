@@ -7,8 +7,8 @@
 
 <p align="center">
   <a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-delight"><img alt="CurseForge" src="https://img.shields.io/badge/CurseForge-Hands--On%20Delight-F16436"></a>
-  <img alt="Minecraft 1.20.1" src="https://img.shields.io/badge/Minecraft-1.20.1-62B47A">
-  <a href="https://files.minecraftforge.net"><img alt="Forge" src="https://img.shields.io/badge/Loader-Forge-DFA86A"></a>
+  <img alt="Minecraft 1.21.1" src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A">
+  <a href="https://neoforged.net"><img alt="NeoForge" src="https://img.shields.io/badge/Loader-NeoForge-D7742F"></a>
   <a href="https://fabricmc.net"><img alt="Fabric" src="https://img.shields.io/badge/Loader-Fabric-C6BBA5"></a>
   <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue">
 </p>
@@ -71,7 +71,7 @@ open as stations, and its recipes, and those of its addons, work in them.
 
 [![REI](https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/rei.png)](https://www.curseforge.com/minecraft/mc-mods/roughly-enough-items) ✅ **[REI](https://www.curseforge.com/minecraft/mc-mods/roughly-enough-items)** (optional) - the same
 
-[![Embeddium](https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/embeddium.png)](https://www.curseforge.com/minecraft/mc-mods/embeddium) ✅ **[Embeddium](https://www.curseforge.com/minecraft/mc-mods/embeddium)** and [![Oculus](https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/oculus.png)](https://www.curseforge.com/minecraft/mc-mods/oculus) **[Oculus](https://www.curseforge.com/minecraft/mc-mods/oculus)** (optional) - the stations draw as usual
+[![Sodium](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/sodium.png)](https://modrinth.com/mod/sodium) ✅ **[Sodium](https://modrinth.com/mod/sodium)** and [![Iris](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/iris.png)](https://modrinth.com/mod/iris) **[Iris](https://modrinth.com/mod/iris)** (optional) - the stations draw as usual
 
 Hoppers, pipes and drops use the blocks' own inventories. A pot fed by automation cooks by itself, as in Farmer's Delight.
 
@@ -89,7 +89,7 @@ which each player sets in their own file.
 
 ## Installation
 
-1. Minecraft 1.20.1 with [Forge](https://files.minecraftforge.net) or [Fabric](https://fabricmc.net).
+1. Minecraft 1.21.1 with [NeoForge](https://neoforged.net) or [Fabric](https://fabricmc.net).
 2. [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight), on Fabric
    [Farmer's Delight Refabricated](https://www.curseforge.com/minecraft/mc-mods/farmers-delight-refabricated) and
    [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api).
@@ -102,7 +102,7 @@ which each player sets in their own file.
 ./gradlew build
 ```
 
-The jars are written to `forge/build/libs/` and `fabric/build/libs/`.
+The jars are written to `neoforge/build/libs/` and `fabric/build/libs/`.
 
 ## Credits
 

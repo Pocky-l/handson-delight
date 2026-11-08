@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.0+1.21.1]
+
+Hands-On Delight on Minecraft 1.21.1: NeoForge with Farmer's Delight, and Fabric with Farmer's Delight Refabricated. Everything
+1.0.0 does on 1.20.1 works the same way here: the cooking pot, the cutting board, the skillet, the recipe books, the
+config and the recipe viewers. Needs Diegesis 1.0.0-beta.3 for 1.21.1.
+
 ## [1.0.0+1.20.1]
 
 The first full release, with everything from the beta: the cooking pot, the cutting board and the skillet of

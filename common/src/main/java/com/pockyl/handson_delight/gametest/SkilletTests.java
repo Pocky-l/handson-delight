@@ -10,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -67,7 +68,7 @@ public final class SkilletTests {
         BlockPos pos = helper.absolutePos(fire.above());
         Station station = new Station(helper.getLevel(), pos);
         SkilletBlockEntity skillet = (SkilletBlockEntity) helper.getLevel().getBlockEntity(pos);
-        return new Pan(station, new SkilletLogic(station), skillet, helper.makeMockPlayer());
+        return new Pan(station, new SkilletLogic(station), skillet, helper.makeMockPlayer(GameType.CREATIVE));
     }
 
     public static void aBatchFriesInHalvesAndWaitsToBeTurned(GameTestHelper helper) {

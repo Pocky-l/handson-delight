@@ -148,7 +148,7 @@ public final class SkilletBehavior implements StationBehavior {
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
             ItemStack inPan = view.state().getItem(SkilletStation.PAN_SLOT);
             ItemStack held = player.getMainHandItem();
-            if (inPan.isEmpty() || ItemStack.isSameItemSameTags(inPan, held)) {
+            if (inPan.isEmpty() || ItemStack.isSameItemSameComponents(inPan, held)) {
                 onInventoryShiftClick(view, player.getInventory().selected, held);
             }
         }
@@ -182,7 +182,7 @@ public final class SkilletBehavior implements StationBehavior {
         int pieces = Math.min(batch, PIECES);
         int unders = Math.min(Math.max(0, batch - PIECES), PIECES);
         float up = clock < lookHeldUntil ? shownUp : Float.isNaN(tossedUp) ? state.data().getFloat(SkilletStation.UP) : tossedUp;
-        boolean sameFood = ItemStack.isSameItemSameTags(inPan, shown);
+        boolean sameFood = ItemStack.isSameItemSameComponents(inPan, shown);
         if (sameFood && pieces == shownPieces && unders == shownUnders && look(up) == look(shownUp)) {
             return;
         }
@@ -610,7 +610,7 @@ public final class SkilletBehavior implements StationBehavior {
             }
             view.playSound(SoundEvents.LANTERN_PLACE, "pan", 0.5F, 1.0F);
         } else if (SkilletStation.EFFECT_REFUSED.equals(effect)) {
-            ItemStack refused = ItemStack.of(data.getCompound(SkilletStation.STACK));
+            ItemStack refused = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(SkilletStation.STACK));
             ghost(view, refused, 0).ifPresent(ghost -> {
                 ghost.moveTo(0.0F, LAND_FROM + 2.0F, 0.0F, 0.0F);
                 ghost.moveTo(0.0F, 1.5F, 0.0F, 0.09F);
@@ -619,13 +619,13 @@ public final class SkilletBehavior implements StationBehavior {
             });
             view.playSound(SoundEvents.LANTERN_HIT, "pan", 0.4F, 1.3F);
         } else if (SkilletStation.EFFECT_TAKEN.equals(effect)) {
-            leaves(view, ItemStack.of(data.getCompound(SkilletStation.STACK)), true);
+            leaves(view, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(SkilletStation.STACK)), true);
             view.playSound(SoundEvents.ITEM_PICKUP, "pan", 0.3F, 1.5F);
         } else if (SkilletStation.EFFECT_FRIED.equals(effect)) {
             if (data.getBoolean(SkilletStation.IN_PAN)) {
                 ready(view);
             } else {
-                leaves(view, ItemStack.of(data.getCompound(SkilletStation.STACK)), data.getBoolean(SkilletStation.TO_COOK));
+                leaves(view, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(SkilletStation.STACK)), data.getBoolean(SkilletStation.TO_COOK));
             }
             view.playSound(SoundEvents.ITEM_PICKUP, "pan", 0.35F, 1.3F);
         }

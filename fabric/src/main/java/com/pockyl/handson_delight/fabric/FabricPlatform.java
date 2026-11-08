@@ -1,13 +1,12 @@
 package com.pockyl.handson_delight.fabric;
 
 import net.fabricmc.fabric.api.entity.FakePlayer;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModDependency;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
@@ -25,7 +24,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-/** Farmer's Delight Refabricated: the pot keeps its items in Refabricated's own port of Forge's item handler. */
+/** Farmer's Delight Refabricated: the pot keeps its items in Refabricated's own port of NeoForge's item handler. */
 public final class FabricPlatform implements Platform {
     @Override
     public ItemStack getItem(CookingPotBlockEntity pot, int slot) {
@@ -38,7 +37,7 @@ public final class FabricPlatform implements Platform {
     }
 
     @Override
-    public Optional<CookingPotRecipe> findRecipe(Level level, List<ItemStack> items) {
+    public Optional<RecipeHolder<CookingPotRecipe>> findRecipe(Level level, List<ItemStack> items) {
         ItemStackHandler slots = new ItemStackHandler(CookingPotBlockEntity.INVENTORY_SIZE);
         for (int i = 0; i < Math.min(items.size(), CookingPotBlockEntity.MEAL_DISPLAY_SLOT); i++) {
             slots.setStackInSlot(i, items.get(i).copy());
@@ -47,7 +46,7 @@ public final class FabricPlatform implements Platform {
     }
 
     @Override
-    public List<CookingPotRecipe> cookingRecipes(Level level) {
+    public List<RecipeHolder<CookingPotRecipe>> cookingRecipes(Level level) {
         return level.getRecipeManager().getAllRecipesFor(ModRecipeTypes.COOKING.get());
     }
 
@@ -75,21 +74,19 @@ public final class FabricPlatform implements Platform {
                 .orElse(false);
     }
 
-    /** The client names the channels it listens on after joining, long before it can open a crafting table. */
+    /** The client names the channels it listens on while it configures, before it joins the world. */
     @Override
     public boolean hasThisMod(ServerPlayer player) {
-        return player instanceof FakePlayer || player.connection == null || ServerPlayNetworking.canSend(player, BoardDishes.CHANNEL);
+        // No connection, or one that goes nowhere (game tests): no client.
+        return player instanceof FakePlayer || player.connection == null || player.connection.getRemoteAddress() == null
+                || ServerPlayNetworking.canSend(player, BoardDishes.Payload.TYPE);
     }
 
-    /**
-     * Sent before the client has named its channels (the recipes follow at once), so whether it has the mod is not known yet. A client
-     * without it drops the packet.
-     */
     @Override
     public void sendBoardDishes(ServerPlayer player) {
-        FriendlyByteBuf buffer = PacketByteBufs.create();
-        BoardDishes.write(buffer);
-        ServerPlayNetworking.send(player, BoardDishes.CHANNEL, buffer);
+        if (player.connection != null && ServerPlayNetworking.canSend(player, BoardDishes.Payload.TYPE)) {
+            ServerPlayNetworking.send(player, BoardDishes.payload());
+        }
     }
 
     @Override

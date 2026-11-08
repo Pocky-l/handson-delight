@@ -1,7 +1,9 @@
 package com.pockyl.handson_delight.mixin;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -45,17 +47,17 @@ abstract class CuttingBoardBlockEntityMixin implements BoardLayers {
     }
 
     @Inject(method = "saveAdditional", at = @At("TAIL"))
-    private void handson$saveLayers(CompoundTag tag, CallbackInfo callback) {
+    private void handson$saveLayers(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo callback) {
         if (handson$layers.stream().anyMatch(stack -> !stack.isEmpty())) {
-            tag.put(LAYERS, ContainerHelper.saveAllItems(new CompoundTag(), handson$layers));
+            tag.put(LAYERS, ContainerHelper.saveAllItems(new CompoundTag(), handson$layers, registries));
         }
     }
 
-    @Inject(method = "load", at = @At("TAIL"))
-    private void handson$loadLayers(CompoundTag tag, CallbackInfo callback) {
+    @Inject(method = "loadAdditional", at = @At("TAIL"))
+    private void handson$loadLayers(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo callback) {
         handson$layers.clear();
         if (tag.contains(LAYERS)) {
-            ContainerHelper.loadAllItems(tag.getCompound(LAYERS), handson$layers);
+            ContainerHelper.loadAllItems(tag.getCompound(LAYERS), handson$layers, registries);
         }
     }
 
@@ -65,7 +67,7 @@ abstract class CuttingBoardBlockEntityMixin implements BoardLayers {
     }
 
     @Inject(method = "playProcessingSound", at = @At("HEAD"), cancellable = true, remap = false)
-    private void handson$oneSoundForABatch(String sound, ItemStack tool, ItemStack item, CallbackInfo callback) {
+    private void handson$oneSoundForABatch(SoundEvent sound, ItemStack tool, ItemStack item, CallbackInfo callback) {
         if (BoardResults.isQuiet()) {
             callback.cancel();
         }

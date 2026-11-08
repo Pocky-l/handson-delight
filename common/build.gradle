@@ -3,16 +3,16 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import java.util.zip.ZipEntry
 
-// The stations, scenes and assets shared by Forge and Fabric, compiled against plain Minecraft, the Diegesis API and
+// The stations, scenes and assets shared by NeoForge and Fabric, compiled against plain Minecraft, the Diegesis API and
 // Farmer's Delight. Nothing here may use a loader API or a member of Farmer's Delight whose type differs between its
-// Forge and Fabric builds (the inventory, the recipe wrapper, the registry holders): those go through platform.Platform.
+// NeoForge and Fabric builds (the inventory, the recipe wrapper, the registry holders): those go through platform.Platform.
 plugins {
     id 'multiloader-common'
-    id 'net.neoforged.moddev.legacyforge'
+    id 'net.neoforged.moddev'
 }
 
-legacyForge {
-    mcpVersion = minecraft_version
+neoForge {
+    neoFormVersion = neo_form_version
     parchment {
         mappingsVersion = parchment_mappings_version
         minecraftVersion = parchment_minecraft_version
@@ -22,8 +22,8 @@ legacyForge {
 dependencies {
     compileOnly 'org.spongepowered:mixin:0.8.5'
     compileOnly "com.pockyl.diegesis:common:${diegesis_version}"
-    // The Forge build stands for both: the classes common uses have the same names and signatures in Refabricated.
-    modCompileOnly "maven.modrinth:farmers-delight:${farmers_delight_version}"
+    // The NeoForge build stands for both: the classes common uses have the same names and signatures in Refabricated.
+    compileOnly "maven.modrinth:farmers-delight:${farmers_delight_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "dev.emi:emi-xplat-mojmap:${emi_version}:api"
 }
@@ -44,8 +44,8 @@ artifacts {
     commonResources sourceSets.main.resources.sourceDirectories.singleFile
 }
 
-// Farmer's Delight Refabricated 2.5 is built with Loom 1.16, and the Fabric project's Loom (1.14.10, shared by every 1.20.1
-// Fabric build that playtest-1.20.1-fabric composes: one composite cannot mix Loom versions) refuses such jars. Compiling
+// Farmer's Delight Refabricated 3.3 is built with a newer Loom, and the Fabric project's Loom (1.14.10, shared by every 1.21.1
+// Fabric build that playtest-1.21.1-fabric composes: one composite cannot mix Loom versions) refuses such jars. Compiling
 // needs only its classes, so fabric remaps a copy without the Loom entries of the manifest like any other mod.
 // Prepared here at configuration time, since Loom resolves the mod dependencies while it configures fabric: resolving in
 // fabric would use its repositories before Loom has added its own, and resolving this project's configurations from
@@ -62,11 +62,18 @@ if (!refabricatedForCompile.isFile()) {
         manifest.mainAttributes.keySet().removeIf { it.toString().startsWith('Fabric-Loom-') }
         new JarOutputStream(new FileOutputStream(refabricatedForCompile), manifest).withCloseable { out ->
             jar.entries().each { entry ->
-                if (entry.name != JarFile.MANIFEST_NAME) {
-                    out.putNextEntry(new ZipEntry(entry.name))
-                    jar.getInputStream(entry).withCloseable { out << it }
-                    out.closeEntry()
+                if (entry.name == JarFile.MANIFEST_NAME || entry.name.endsWith('.classtweaker')) {
+                    return
                 }
+                out.putNextEntry(new ZipEntry(entry.name))
+                if (entry.name == 'fabric.mod.json') {
+                    // Its class tweaker is format v2, which Loom 1.14 cannot read; the widened members are not used here.
+                    def text = jar.getInputStream(entry).getText('UTF-8')
+                    out << text.readLines().findAll { !it.contains('"accessWidener"') }.join('\n').getBytes('UTF-8')
+                } else {
+                    jar.getInputStream(entry).withCloseable { out << it }
+                }
+                out.closeEntry()
             }
         }
     }

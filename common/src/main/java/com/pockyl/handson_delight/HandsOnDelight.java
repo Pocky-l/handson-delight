@@ -32,6 +32,6 @@ public final class HandsOnDelight {
 
     @SuppressWarnings("removal")
     public static ResourceLocation id(String path) {
-        return new ResourceLocation(MOD_ID, path);
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 }

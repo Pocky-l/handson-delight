@@ -1,7 +1,9 @@
 package com.pockyl.handson_delight.station;
 
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
@@ -13,6 +15,7 @@ import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,14 +55,16 @@ public final class Cutting {
             Cached cached = CACHE.get(manager);
             if (cached == null || cached.from() != recipes) {
                 List<CuttingBoardRecipe> everything = new ArrayList<>();
-                List<Recipe<?>> found = manager.getAllRecipesFor((RecipeType) FarmersDelightContent.CUTTING.get());
-                for (Recipe<?> recipe : found) {
-                    if (recipe instanceof CuttingBoardRecipe cutting && !cutting.getIngredients().isEmpty()) {
+                Map<CuttingBoardRecipe, ResourceLocation> ids = new IdentityHashMap<>();
+                List<RecipeHolder<?>> found = manager.getAllRecipesFor((RecipeType) FarmersDelightContent.CUTTING.get());
+                for (RecipeHolder<?> holder : found) {
+                    if (holder.value() instanceof CuttingBoardRecipe cutting && !cutting.getIngredients().isEmpty()) {
                         everything.add(cutting);
+                        ids.put(cutting, holder.id());
                     }
                 }
-                List<CookingPotRecipe> pot = Platform.INSTANCE.cookingRecipes(level);
-                cached = new Cached(recipes, List.copyOf(everything), everything.stream().filter(recipe -> isCooking(recipe, pot)).toList());
+                List<CookingPotRecipe> pot = Platform.INSTANCE.cookingRecipes(level).stream().map(RecipeHolder::value).toList();
+                cached = new Cached(recipes, List.copyOf(everything), everything.stream().filter(recipe -> isCooking(recipe, pot)).toList(), ids);
                 CACHE.put(manager, cached);
             }
             return cached;
@@ -68,12 +73,12 @@ public final class Cutting {
 
     private static boolean isCooking(CuttingBoardRecipe recipe, List<CookingPotRecipe> pot) {
         for (ItemStack input : recipe.getIngredients().get(0).getItems()) {
-            if (input.isEdible()) {
+            if (input.has(DataComponents.FOOD)) {
                 return true;
             }
         }
         for (ItemStack result : recipe.getResults()) {
-            if (result.isEdible() || pot.stream().anyMatch(cooking -> cooking.getIngredients().stream().anyMatch(in -> in.test(result)))) {
+            if (result.has(DataComponents.FOOD) || pot.stream().anyMatch(cooking -> cooking.getIngredients().stream().anyMatch(in -> in.test(result)))) {
                 return true;
             }
         }
@@ -87,7 +92,13 @@ public final class Cutting {
     }
 
     /** The cutting recipes read from a recipe manager's map of recipes, as long as the map is the same one. */
-    private record Cached(Map<?, ?> from, List<CuttingBoardRecipe> everything, List<CuttingBoardRecipe> cooking) {
+    private record Cached(Map<?, ?> from, List<CuttingBoardRecipe> everything, List<CuttingBoardRecipe> cooking,
+                          Map<CuttingBoardRecipe, ResourceLocation> ids) {
+    }
+
+    /** The id {@code recipe} is known by, now that a recipe holds none of its own. */
+    public static ResourceLocation id(Level level, CuttingBoardRecipe recipe) {
+        return cached(level).ids().get(recipe);
     }
 
     public static List<CuttingBoardRecipe> recipesFor(Level level, ItemStack item) {

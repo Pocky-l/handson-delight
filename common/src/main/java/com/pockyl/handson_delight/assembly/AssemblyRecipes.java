@@ -3,7 +3,12 @@ package com.pockyl.handson_delight.assembly;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -12,7 +17,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeManager;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnDelight;
@@ -21,6 +25,7 @@ import com.pockyl.handson_delight.platform.Platform;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -34,7 +39,7 @@ import java.util.Set;
  * the board can make them.
  */
 public final class AssemblyRecipes {
-    private static final String[] CONDITION_KEYS = {"conditions", "forge:conditions", "fabric:load_conditions"};
+    private static final String[] CONDITION_KEYS = {"conditions", "neoforge:conditions", "fabric:load_conditions"};
 
     private static volatile List<Assembly> recipes = List.of();
     private static volatile Set<ResourceLocation> ids = Set.of();
@@ -60,15 +65,19 @@ public final class AssemblyRecipes {
         return book;
     }
 
-    /** The recipes {@link #book} lists, read where they are needed: on a client its tags are bound and its items known. */
+    /**
+     * The recipes {@link #book} lists, read where they are needed: on a client its tags are bound and its items known. Their
+     * ingredients and results name items and tags only, which the built-in registries know.
+     */
     public static List<Assembly> read(ListTag list) {
+        HolderLookup.Provider registries = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
         List<Assembly> read = new ArrayList<>();
         for (int i = 0; i < list.size(); i++) {
             CompoundTag entry = list.getCompound(i);
             ResourceLocation id = ResourceLocation.tryParse(entry.getString("id"));
             try {
                 JsonObject json = JsonParser.parseString(entry.getString("json")).getAsJsonObject();
-                if (id != null && RecipeManager.fromJson(id, json) instanceof CraftingRecipe crafting) {
+                if (id != null && parse(json, registries) instanceof CraftingRecipe crafting) {
                     read.add(new Assembly(id, crafting, baseIndex(json), json));
                 }
             } catch (RuntimeException broken) {
@@ -96,11 +105,11 @@ public final class AssemblyRecipes {
     }
 
     /** Reads the recipes {@link #split} took, after the recipe manager has read its own. */
-    public static void load(Map<ResourceLocation, JsonObject> taken) {
+    public static void load(Map<ResourceLocation, JsonObject> taken, HolderLookup.Provider registries) {
         List<Assembly> loaded = new ArrayList<>();
         taken.forEach((id, json) -> {
             try {
-                Recipe<?> recipe = RecipeManager.fromJson(id, json);
+                Recipe<?> recipe = parse(json, registries);
                 if (recipe instanceof CraftingRecipe crafting) {
                     loaded.add(new Assembly(id, crafting, baseIndex(json), json));
                 }
@@ -119,6 +128,11 @@ public final class AssemblyRecipes {
         }
         book = list;
         HandsOnDelight.LOGGER.info("{} crafting recipes of Farmer's Delight are put together on the cutting board, by players", loaded.size());
+    }
+
+    /** What {@code RecipeManager.fromJson} does, which is not public. */
+    private static Recipe<?> parse(JsonObject json, HolderLookup.Provider registries) {
+        return Recipe.CODEC.parse(registries.createSerializationContext(JsonOps.INSTANCE), json).getOrThrow(JsonParseException::new);
     }
 
     private static boolean isAssembled(ResourceLocation id, JsonObject json) {
@@ -140,10 +154,10 @@ public final class AssemblyRecipes {
     }
 
     private static boolean isFood(JsonElement result) {
-        String name = result.isJsonObject() ? string(result.getAsJsonObject(), "item")
+        String name = result.isJsonObject() ? Objects.requireNonNullElse(string(result.getAsJsonObject(), "id"), string(result.getAsJsonObject(), "item"))
                 : result.isJsonPrimitive() ? result.getAsString() : null;
         ResourceLocation item = name == null ? null : ResourceLocation.tryParse(name);
-        return item != null && BuiltInRegistries.ITEM.containsKey(item) && BuiltInRegistries.ITEM.get(item).isEdible();
+        return item != null && BuiltInRegistries.ITEM.containsKey(item) && BuiltInRegistries.ITEM.get(item).components().has(DataComponents.FOOD);
     }
 
     /** Where the bread is among the ingredients, -1 without any. */

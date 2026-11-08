@@ -1,8 +1,9 @@
 package com.pockyl.handson_delight.client;
 
-import net.minecraft.world.Container;
-import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -50,7 +51,8 @@ final class CookedPieces {
 
     private static Set<Item> ingredients(Level level, ItemStack meal) {
         Set<Item> found = new LinkedHashSet<>();
-        for (CookingPotRecipe recipe : Platform.INSTANCE.cookingRecipes(level)) {
+        for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(level)) {
+            CookingPotRecipe recipe = holder.value();
             if (recipe.getResultItem(level.registryAccess()).is(meal.getItem())) {
                 for (Ingredient ingredient : recipe.getIngredients()) {
                     ItemStack[] choices = ingredient.getItems();
@@ -67,18 +69,16 @@ final class CookedPieces {
 
     /** What a furnace makes of it, if that is still food: a steak of raw beef; a carrot stays a carrot. */
     private static ItemStack cooked(Level level, ItemStack raw) {
-        Container furnace = new SimpleContainer(raw);
-        return level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, furnace, level)
-                .map(recipe -> recipe.getResultItem(level.registryAccess()))
-                .filter(ItemStack::isEdible)
+        return level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(raw), level)
+                .map(recipe -> recipe.value().getResultItem(level.registryAccess()))
+                .filter(stack -> stack.has(DataComponents.FOOD))
                 .orElse(raw);
     }
 
     /** Meat goes in lumps, greens in leaves and strips, the rest in slices and small pieces, all in the food's main colour. */
     private static void cut(ItemStack food, List<Floater> pieces) {
         int color = FoodColors.main(food);
-        FoodProperties properties = food.getItem().getFoodProperties();
-        if (properties != null && properties.isMeat()) {
+        if (food.is(ItemTags.MEAT)) {
             pieces.add(new Floater(Floater.CHUNK, color, BIG));
             pieces.add(new Floater(Floater.NUGGET, color, SMALL));
         } else if (FoodColors.isGreen(color)) {

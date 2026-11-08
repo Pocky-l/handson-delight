@@ -1,4 +1,4 @@
-// Shared by common, forge and fabric: Java version, repositories, jar naming and contents.
+// Shared by common, neoforge and fabric: Java version, repositories, jar naming and contents.
 plugins {
     id 'java-library'
 }
@@ -10,7 +10,7 @@ base {
     archivesName = "${mod_id}-${project.name}-${minecraft_version}"
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 repositories {
     mavenCentral()
@@ -36,7 +36,7 @@ repositories {
         )
         filter { includeGroup('org.parchmentmc.data') }
     }
-    // Farmer's Delight (Forge) and Farmer's Delight Refabricated (Fabric).
+    // Farmer's Delight (NeoForge) and Farmer's Delight Refabricated (Fabric).
     exclusiveContent {
         forRepository {
             maven {

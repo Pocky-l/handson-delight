@@ -4,7 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -40,10 +41,14 @@ public final class SkilletCooking {
     }
 
     public static Optional<CampfireCookingRecipe> recipe(Level level, ItemStack stack) {
+        return holder(level, stack).map(RecipeHolder::value);
+    }
+
+    public static Optional<RecipeHolder<CampfireCookingRecipe>> holder(Level level, ItemStack stack) {
         if (level == null || stack.isEmpty()) {
             return Optional.empty();
         }
-        return level.getRecipeManager().getRecipeFor(RecipeType.CAMPFIRE_COOKING, new SimpleContainer(stack.copyWithCount(1)), level);
+        return level.getRecipeManager().getRecipeFor(RecipeType.CAMPFIRE_COOKING, new SingleRecipeInput(stack.copyWithCount(1)), level);
     }
 
     /** Ticks one side of {@code batch} takes, for a recipe Farmer's Delight's skillet cooks in {@code skilletTicks}. */
@@ -98,7 +103,7 @@ public final class SkilletCooking {
         ItemStack inPan = skillet.getStoredStack();
         BlockState state = skillet.getBlockState();
         if (carried.isEmpty() || state.getValue(SkilletBlock.WATERLOGGED) || recipe(level, carried).isEmpty()
-                || !inPan.isEmpty() && !ItemStack.isSameItemSameTags(inPan, carried)) {
+                || !inPan.isEmpty() && !ItemStack.isSameItemSameComponents(inPan, carried)) {
             return false;
         }
         int moved = Math.min(one ? 1 : carried.getCount(), Math.min(BATCH, carried.getMaxStackSize()) - inPan.getCount());
@@ -152,7 +157,7 @@ public final class SkilletCooking {
     private static void finish(SkilletBlockEntity skillet, Frying frying, ItemStack stack, CampfireCookingRecipe recipe) {
         Level level = skillet.getLevel();
         int count = Math.min(frying.batch(), stack.getCount());
-        ItemStack one = recipe.assemble(new SimpleContainer(stack.copyWithCount(1)), level.registryAccess());
+        ItemStack one = recipe.assemble(new SingleRecipeInput(stack.copyWithCount(1)), level.registryAccess());
         ItemStack done = one.copyWithCount(one.getCount() * count);
         ItemStack left = stack.copyWithCount(stack.getCount() - count);
         Optional<StationContext> station = level instanceof ServerLevel server ? Diegesis.activeStation(server, skillet.getBlockPos())
@@ -162,7 +167,7 @@ public final class SkilletCooking {
             Platform.INSTANCE.setItem(skillet, done);
             frying.reset();
             CompoundTag ready = new CompoundTag();
-            ready.put(SkilletStation.STACK, done.save(new CompoundTag()));
+            ready.put(SkilletStation.STACK, done.saveOptional(level.registryAccess()));
             ready.putBoolean(SkilletStation.IN_PAN, true);
             station.ifPresent(at -> at.effect(SkilletStation.EFFECT_FRIED, "pan", ready));
             return;
@@ -178,7 +183,7 @@ public final class SkilletCooking {
         Optional<Player> cook = station.flatMap(at -> at.users().stream().<Player>map(player -> player)
                 .min((a, b) -> Boolean.compare(!a.getUUID().equals(frying.cook()), !b.getUUID().equals(frying.cook()))));
         CompoundTag data = new CompoundTag();
-        data.put(SkilletStation.STACK, done.save(new CompoundTag()));
+        data.put(SkilletStation.STACK, done.saveOptional(level.registryAccess()));
         data.putBoolean(SkilletStation.TO_COOK, cook.isPresent());
         if (cook.isPresent()) {
             if (!cook.get().getInventory().add(done)) {

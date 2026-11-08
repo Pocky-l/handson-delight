@@ -1,14 +1,16 @@
-package com.pockyl.handson_delight.forge;
+package com.pockyl.handson_delight.neoforge;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.wrapper.RecipeWrapper;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import net.neoforged.neoforgespi.language.IModInfo;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
@@ -22,8 +24,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-/** Farmer's Delight on Forge: the pot keeps its items in Forge's item handler. */
-public final class ForgePlatform implements Platform {
+/** Farmer's Delight on NeoForge: the pot keeps its items in NeoForge's item handler. */
+public final class NeoForgePlatform implements Platform {
     @Override
     public ItemStack getItem(CookingPotBlockEntity pot, int slot) {
         return pot.getInventory().getStackInSlot(slot);
@@ -35,7 +37,7 @@ public final class ForgePlatform implements Platform {
     }
 
     @Override
-    public Optional<CookingPotRecipe> findRecipe(Level level, List<ItemStack> items) {
+    public Optional<RecipeHolder<CookingPotRecipe>> findRecipe(Level level, List<ItemStack> items) {
         ItemStackHandler slots = new ItemStackHandler(CookingPotBlockEntity.INVENTORY_SIZE);
         for (int i = 0; i < Math.min(items.size(), CookingPotBlockEntity.MEAL_DISPLAY_SLOT); i++) {
             slots.setStackInSlot(i, items.get(i).copy());
@@ -44,7 +46,7 @@ public final class ForgePlatform implements Platform {
     }
 
     @Override
-    public List<CookingPotRecipe> cookingRecipes(Level level) {
+    public List<RecipeHolder<CookingPotRecipe>> cookingRecipes(Level level) {
         return level.getRecipeManager().getAllRecipesFor(ModRecipeTypes.COOKING.get());
     }
 
@@ -67,18 +69,21 @@ public final class ForgePlatform implements Platform {
     public boolean isFarmersDelightAddon(String modId) {
         return ModList.get().getModContainerById(modId)
                 .map(mod -> mod.getModInfo().getDependencies().stream()
-                        .anyMatch(dependency -> dependency.isMandatory() && dependency.getModId().equals(FarmersDelightContent.MOD_ID)))
+                        .anyMatch(dependency -> dependency.getType() == IModInfo.DependencyType.REQUIRED
+                                && dependency.getModId().equals(FarmersDelightContent.MOD_ID)))
                 .orElse(false);
     }
 
     @Override
     public void sendBoardDishes(ServerPlayer player) {
-        ForgeNetwork.send(player);
+        NeoForgeNetwork.send(player);
     }
 
     @Override
     public boolean hasThisMod(ServerPlayer player) {
-        return player instanceof FakePlayer || player.connection == null || ForgeNetwork.present(player);
+        // No connection, or one that goes nowhere (game tests): no client.
+        return player instanceof FakePlayer || player.connection == null || player.connection.getConnection().channel() == null
+                || NeoForgeNetwork.present(player);
     }
 
     @Override

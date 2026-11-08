@@ -15,11 +15,11 @@ final class UsableCache {
     private final Map<Object, Boolean> known = new HashMap<>();
 
     boolean test(ItemStack stack, Predicate<ItemStack> usable) {
-        Object key = stack.hasTag() ? List.of(stack.getItem(), stack.getTag()) : stack.getItem();
+        Object key = stack.getComponentsPatch().isEmpty() ? stack.getItem() : List.of(stack.getItem(), stack.getComponentsPatch());
         Boolean found = known.get(key);
         if (found == null) {
             found = usable.test(stack);
-            known.put(stack.hasTag() ? List.of(stack.getItem(), stack.getTag().copy()) : key, found);
+            known.put(key, found);
         }
         return found;
     }

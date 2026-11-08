@@ -4,12 +4,15 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,22 +34,31 @@ public final class BoardDishes {
     private BoardDishes() {
     }
 
-    /** The packet, on the server. */
-    public static void write(FriendlyByteBuf buffer) {
-        CompoundTag payload = new CompoundTag();
-        // Without the board's station nothing is made there: the viewers show the crafting recipes alone.
-        payload.put("dishes", HandsOnConfig.cuttingBoard() ? AssemblyRecipes.book() : new ListTag());
-        payload.putBoolean(CRAFTED_TOO, !HandsOnConfig.removeCraftingRecipes());
-        buffer.writeNbt(payload);
+    /** The packet: the dishes as the server has them. A client without this mod never gets it. */
+    public record Payload(CompoundTag book) implements CustomPacketPayload {
+        public static final Type<Payload> TYPE = new Type<>(CHANNEL);
+        public static final StreamCodec<FriendlyByteBuf, Payload> CODEC = StreamCodec.of(
+                (buffer, payload) -> buffer.writeNbt(payload.book()),
+                buffer -> new Payload(Objects.requireNonNullElseGet(buffer.readNbt(), CompoundTag::new)));
+
+        @Override
+        public Type<Payload> type() {
+            return TYPE;
+        }
     }
 
-    public static CompoundTag read(FriendlyByteBuf buffer) {
-        CompoundTag payload = buffer.readNbt();
-        return payload == null ? new CompoundTag() : payload;
+    /** The packet, on the server. */
+    public static Payload payload() {
+        CompoundTag book = new CompoundTag();
+        // Without the board's station nothing is made there: the viewers show the crafting recipes alone.
+        book.put("dishes", HandsOnConfig.cuttingBoard() ? AssemblyRecipes.book() : new ListTag());
+        book.putBoolean(CRAFTED_TOO, !HandsOnConfig.removeCraftingRecipes());
+        return new Payload(book);
     }
 
     /** Called on the network thread: the dishes are only kept here, and read once the tags are bound. */
-    public static void receive(CompoundTag payload) {
+    public static void receive(Payload packet) {
+        CompoundTag payload = packet.book();
         craftedToo = payload.getBoolean(CRAFTED_TOO);
         received = payload.getList("dishes", Tag.TAG_COMPOUND);
     }

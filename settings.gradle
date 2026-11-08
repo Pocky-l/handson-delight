@@ -15,9 +15,9 @@ plugins {
 
 rootProject.name = 'handson_delight'
 
-// common: the stations, scenes and assets, compiled against plain Minecraft and Farmer's Delight; forge / fabric: the
+// common: the stations, scenes and assets, compiled against plain Minecraft and Farmer's Delight; neoforge / fabric: the
 // loader glue. Each loader project compiles the common sources into its own jar.
-include 'common', 'forge', 'fabric'
+include 'common', 'neoforge', 'fabric'
 
 // The Diegesis library comes from its working copy while both are developed together.
 includeBuild('../diegesis')

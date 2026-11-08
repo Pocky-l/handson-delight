@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.platform;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
@@ -14,7 +15,7 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 
 /**
- * What differs between Farmer's Delight on Forge and Farmer's Delight Refabricated on Fabric: the pot's inventory is Forge's
+ * What differs between Farmer's Delight on NeoForge and Farmer's Delight Refabricated on Fabric: the pot's inventory is NeoForge's
  * {@code ItemStackHandler} in one and Refabricated's own class in the other, and so is the wrapper its recipes match against.
  * Each loader project provides one implementation, listed in its {@code META-INF/services}.
  */
@@ -26,9 +27,9 @@ public interface Platform {
     void setItem(CookingPotBlockEntity pot, int slot, ItemStack stack);
 
     /** The cooking recipe these items make, laid in the pot's slots from the first one on. */
-    Optional<CookingPotRecipe> findRecipe(Level level, List<ItemStack> items);
+    Optional<RecipeHolder<CookingPotRecipe>> findRecipe(Level level, List<ItemStack> items);
 
-    List<CookingPotRecipe> cookingRecipes(Level level);
+    List<RecipeHolder<CookingPotRecipe>> cookingRecipes(Level level);
 
     /** What lies on a cutting board: its one slot holds a stack. */
     ItemStack getItem(CuttingBoardBlockEntity board);

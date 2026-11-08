@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.world.item.Item;
@@ -105,7 +106,8 @@ final class FoodColors {
 
     /** What the dish is served in: its recipe's container, or what the item leaves behind when eaten. */
     private static ItemStack container(Level level, ItemStack meal) {
-        for (CookingPotRecipe recipe : Platform.INSTANCE.cookingRecipes(level)) {
+        for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(level)) {
+            CookingPotRecipe recipe = holder.value();
             if (recipe.getResultItem(level.registryAccess()).is(meal.getItem()) && !recipe.getOutputContainer().isEmpty()) {
                 return recipe.getOutputContainer();
             }

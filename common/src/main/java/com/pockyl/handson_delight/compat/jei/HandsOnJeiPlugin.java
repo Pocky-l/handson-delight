@@ -10,17 +10,19 @@ import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.assembly.BoardDishes;
 import com.pockyl.handson_delight.compat.AssemblyLayout;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * JEI shows the sandwiches as put together on the cutting board, and no longer in the crafting table, where a player cannot make
- * them. Found by its annotation on Forge, by the {@code jei_mod_plugin} entry point on Fabric.
+ * them. Found by its annotation on NeoForge, by the {@code jei_mod_plugin} entry point on Fabric.
  */
 @JeiPlugin
 public final class HandsOnJeiPlugin implements IModPlugin {
@@ -47,11 +49,14 @@ public final class HandsOnJeiPlugin implements IModPlugin {
     @Override
     public void onRuntimeAvailable(IJeiRuntime runtime) {
         RecipeManager recipes = Minecraft.getInstance().getConnection().getRecipeManager();
-        List<CraftingRecipe> crafting = BoardDishes.ids().stream()
-                .flatMap(id -> recipes.byKey(id).stream())
-                .filter(CraftingRecipe.class::isInstance)
-                .map(CraftingRecipe.class::cast)
-                .toList();
+        List<RecipeHolder<CraftingRecipe>> crafting = new ArrayList<>();
+        for (ResourceLocation id : BoardDishes.ids()) {
+            recipes.byKey(id).ifPresent(holder -> {
+                if (holder.value() instanceof CraftingRecipe recipe) {
+                    crafting.add(new RecipeHolder<>(holder.id(), recipe));
+                }
+            });
+        }
         if (!crafting.isEmpty()) {
             runtime.getRecipeManager().hideRecipes(RecipeTypes.CRAFTING, crafting);
         }

@@ -11,8 +11,6 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 import com.pockyl.diegesis.api.client.NodePainter;
 import com.pockyl.handson_delight.HandsOnDelight;
@@ -66,26 +64,25 @@ final class PanOil implements NodePainter {
             poseStack.translate(places[i][0], 0.0F, places[i][1]);
             // Quarter turns only: pixels turned by any other angle break the grid they share with the pan.
             poseStack.mulPose(Axis.YP.rotationDegrees(90.0F * i));
-            quad(consumer, poseStack.last().pose(), poseStack.last().normal(), sprite, half, alpha, light);
+            quad(consumer, poseStack.last(), sprite, half, alpha, light);
             poseStack.popPose();
         }
     }
 
-    private static void quad(VertexConsumer consumer, Matrix4f pose, Matrix3f normal, TextureAtlasSprite sprite, float half, int alpha,
+    private static void quad(VertexConsumer consumer, PoseStack.Pose pose, TextureAtlasSprite sprite, float half, int alpha,
             int light) {
         float u0 = sprite.getU0();
         float u1 = sprite.getU1();
         float v0 = sprite.getV0();
         float v1 = sprite.getV1();
-        vertex(consumer, pose, normal, -half, -half, u0, v0, alpha, light);
-        vertex(consumer, pose, normal, -half, half, u0, v1, alpha, light);
-        vertex(consumer, pose, normal, half, half, u1, v1, alpha, light);
-        vertex(consumer, pose, normal, half, -half, u1, v0, alpha, light);
+        vertex(consumer, pose, -half, -half, u0, v0, alpha, light);
+        vertex(consumer, pose, -half, half, u0, v1, alpha, light);
+        vertex(consumer, pose, half, half, u1, v1, alpha, light);
+        vertex(consumer, pose, half, -half, u1, v0, alpha, light);
     }
 
-    private static void vertex(VertexConsumer consumer, Matrix4f pose, Matrix3f normal, float x, float z, float u, float v, int alpha,
-            int light) {
-        consumer.vertex(pose, x, 0.0F, z).color(255, 255, 255, alpha).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
-                .normal(normal, 0.0F, 1.0F, 0.0F).endVertex();
+    private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, float x, float z, float u, float v, int alpha, int light) {
+        consumer.addVertex(pose, x, 0.0F, z).setColor(255, 255, 255, alpha).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
+                .setNormal(pose, 0.0F, 1.0F, 0.0F);
     }
 }

@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.mixin;
 
 import net.minecraft.network.Connection;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.PlayerList;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,7 +27,7 @@ abstract class PlayerListMixin {
 
     @Inject(method = "placeNewPlayer", at = @At(value = "NEW",
             target = "net/minecraft/network/protocol/game/ClientboundUpdateRecipesPacket"))
-    private void handson$boardDishesOnJoin(Connection connection, ServerPlayer player, CallbackInfo callback) {
+    private void handson$boardDishesOnJoin(Connection connection, ServerPlayer player, CommonListenerCookie cookie, CallbackInfo callback) {
         Platform.INSTANCE.sendBoardDishes(player);
     }
 

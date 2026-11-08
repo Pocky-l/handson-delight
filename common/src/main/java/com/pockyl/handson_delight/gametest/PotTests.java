@@ -1,6 +1,5 @@
 package com.pockyl.handson_delight.gametest;
 
-import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -17,8 +16,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
@@ -43,11 +43,10 @@ import com.pockyl.handson_delight.station.StirSkill;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * The station's rules against a real pot of Farmer's Delight, the same on every loader: each loader project runs these through its
- * own test registration (Forge's {@code ModGameTests}, Fabric's {@code FabricPotTests}).
+ * own test registration (NeoForge's {@code ModGameTests}, Fabric's {@code FabricPotTests}).
  */
 public final class PotTests {
     private PotTests() {
@@ -83,7 +82,7 @@ public final class PotTests {
 
     public static void theMealStaysInThePot(GameTestHelper helper) {
         Setup setup = pot(helper);
-        Player player = helper.makeMockPlayer();
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
         helper.assertFalse(setup.logic.mayTake(setup.station, player, CookingPotStation.MEAL_SLOT), "the meal is only served");
         helper.assertTrue(setup.logic.mayTake(setup.station, player, CookingPotStation.SERVED_SLOT), "servings are taken");
         helper.succeed();
@@ -91,7 +90,7 @@ public final class PotTests {
 
     public static void aBowlClickedOnTheSoupFills(GameTestHelper helper) {
         Setup setup = pot(helper);
-        Player player = helper.makeMockPlayer();
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
         player.inventoryMenu.setCarried(new ItemStack(Items.BOWL, 3));
         // No meal: nothing to scoop, the bowls stay on the cursor.
         setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_SCOOP, new CompoundTag());
@@ -99,9 +98,9 @@ public final class PotTests {
 
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 2));
         // What a finished recipe leaves in the pot: it knows its container only from the recipe or from its save.
-        CompoundTag saved = setup.pot.saveWithoutMetadata();
-        saved.put("Container", new ItemStack(Items.BOWL).save(new CompoundTag()));
-        setup.pot.load(saved);
+        CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
+        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
         helper.assertFalse(setup.logic.mayPlace(setup.station, player, SlotRef.of(CookingPotStation.INGREDIENTS, 0), new ItemStack(Items.BOWL)),
                 "a bowl for the soup does not go in");
         setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_SCOOP, new CompoundTag());
@@ -135,7 +134,7 @@ public final class PotTests {
 
     public static void dishesStayOutOfTheWater(GameTestHelper helper) {
         Setup setup = pot(helper);
-        Player player = helper.makeMockPlayer();
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
         SlotRef first = SlotRef.of(CookingPotStation.INGREDIENTS, 0);
         helper.assertFalse(setup.logic.mayPlace(setup.station, player, first, new ItemStack(Items.BOWL)), "no bowl in an empty pot");
         helper.assertTrue(setup.logic.mayPlace(setup.station, player, first, new ItemStack(Items.CARROT)), "food goes in");
@@ -144,11 +143,11 @@ public final class PotTests {
 
     public static void shiftFillsTheWholeStack(GameTestHelper helper) {
         Setup setup = pot(helper);
-        Player player = helper.makeMockPlayer();
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 2));
-        CompoundTag saved = setup.pot.saveWithoutMetadata();
-        saved.put("Container", new ItemStack(Items.BOWL).save(new CompoundTag()));
-        setup.pot.load(saved);
+        CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
+        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
         player.inventoryMenu.setCarried(new ItemStack(Items.BOWL, 5));
         CompoundTag all = new CompoundTag();
         all.putBoolean(CookingPotStation.SCOOP_ALL, true);
@@ -175,7 +174,7 @@ public final class PotTests {
 
     public static void theWholeBatchCooksAtOnce(GameTestHelper helper) {
         Setup setup = pot(helper);
-        Player player = helper.makeMockPlayer();
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
         fill(setup.pot, 4);
         for (int tick = 0; tick < 320; tick += 20) {
             helper.runAfterDelay(tick, () -> setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_STIR, new CompoundTag()));
@@ -227,8 +226,8 @@ public final class PotTests {
     /** One spoon: while one cook stirs, another's strokes do not move it; once it has been still a moment, they do. */
     public static void oneSpoonOneHand(GameTestHelper helper) {
         Setup setup = pot(helper);
-        Player first = helper.makeMockPlayer();
-        Player second = helper.makeMockPlayer();
+        Player first = helper.makeMockPlayer(GameType.CREATIVE);
+        Player second = helper.makeMockPlayer(GameType.CREATIVE);
         CompoundTag left = new CompoundTag();
         left.putFloat(CookingPotStation.STIR_X, -0.5F);
         CompoundTag right = new CompoundTag();
@@ -246,14 +245,14 @@ public final class PotTests {
     /** A serving taken with a bowl in the hand, without opening the pot, counts as made: it opens the dish's stars. */
     public static void aServingTakenByHandCounts(GameTestHelper helper) {
         Setup setup = pot(helper);
-        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), new GameProfile(UUID.randomUUID(), "server"));
+        ServerPlayer player = TestPlayers.serverPlayer(helper, "server");
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 2));
-        CompoundTag saved = setup.pot.saveWithoutMetadata();
-        saved.put("Container", new ItemStack(Items.BOWL).save(new CompoundTag()));
-        setup.pot.load(saved);
+        CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
+        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.BOWL, 2));
         BlockPos pos = setup.station.pos();
-        helper.getLevel().getBlockState(pos).use(helper.getLevel(), player, InteractionHand.MAIN_HAND,
+        helper.getLevel().getBlockState(pos).useItemOn(player.getMainHandItem(), helper.getLevel(), player, InteractionHand.MAIN_HAND,
                 new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
         int made = player.getStats().getValue(Stats.ITEM_CRAFTED.get(fd("beef_stew")));
         helper.assertTrue(setup.pot.getMeal().getCount() == 1, "the bowl took a serving");
@@ -263,7 +262,7 @@ public final class PotTests {
 
     /** Steady wide rounds for twelve seconds, by a cook who has made {@code made} beef stews before. */
     private static void stirWell(GameTestHelper helper, Setup setup, int made) {
-        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), new GameProfile(UUID.randomUUID(), "cook"));
+        ServerPlayer player = TestPlayers.serverPlayer(helper, "cook");
         player.awardStat(Stats.ITEM_CRAFTED.get(fd("beef_stew")), made);
         fill(setup.pot, 2);
         for (int tick = 0; tick < 240; tick += 2) {
@@ -288,7 +287,7 @@ public final class PotTests {
     /** A dish picked in the book fills the pot from the inventory: one set, then with shift all the sets there are, whole sets only. */
     public static void theBookFillsThePot(GameTestHelper helper) {
         Setup setup = pot(helper);
-        Player player = helper.makeMockPlayer();
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
         player.getInventory().add(new ItemStack(Items.BEEF, 3));
         player.getInventory().add(new ItemStack(Items.CARROT, 5));
         player.getInventory().add(new ItemStack(Items.POTATO, 3));
@@ -322,13 +321,13 @@ public final class PotTests {
     /** When the meal's stack fills before the batch is used up, the sets the stars saved go back to the cook. */
     public static void theSetsSavedGoBack(GameTestHelper helper) {
         Setup setup = pot(helper);
-        ServerPlayer cook = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), new GameProfile(UUID.randomUUID(), "cook"));
+        ServerPlayer cook = TestPlayers.serverPlayer(helper, "cook");
         cook.awardStat(Stats.ITEM_CRAFTED.get(fd("beef_stew")), 40);
         setup.station.users.add(cook);
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 12));
-        CompoundTag saved = setup.pot.saveWithoutMetadata();
-        saved.put("Container", new ItemStack(Items.BOWL).save(new CompoundTag()));
-        setup.pot.load(saved);
+        CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
+        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
         fill(setup.pot, 6);
         for (int tick = 0; tick < 340; tick += 2) {
             double angle = tick * Math.PI / 10.0;
@@ -418,7 +417,7 @@ public final class PotTests {
 
     public static void nothingCooksWithoutStirring(GameTestHelper helper) {
         Setup setup = pot(helper);
-        Player player = helper.makeMockPlayer();
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
         Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(Items.BEEF));
         Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.CARROT));
         Platform.INSTANCE.setItem(setup.pot, 2, new ItemStack(Items.POTATO));
@@ -467,15 +466,15 @@ public final class PotTests {
     private static void addRecipe(GameTestHelper helper, String name, ItemStack result, ItemStack container, int cookTime, Ingredient... inputs) {
         RecipeManager recipes = helper.getLevel().getRecipeManager();
         ResourceLocation id = HandsOnDelight.id("test_" + name);
-        List<Recipe<?>> all = new ArrayList<>(recipes.getRecipes());
-        all.removeIf(recipe -> recipe.getId().equals(id));
-        all.add(new CookingPotRecipe(id, "", CookingPotRecipeBookTab.MISC, NonNullList.of(Ingredient.EMPTY, inputs), result, container, 0.1F,
-                cookTime));
+        List<RecipeHolder<?>> all = new ArrayList<>(recipes.getRecipes());
+        all.removeIf(recipe -> recipe.id().equals(id));
+        all.add(new RecipeHolder<>(id, new CookingPotRecipe("", CookingPotRecipeBookTab.MISC, NonNullList.of(Ingredient.EMPTY, inputs), result,
+                container, 0.1F, cookTime)));
         recipes.replaceRecipes(all);
     }
 
     private static void stirFor(GameTestHelper helper, Setup setup, int ticks) {
-        Player player = helper.makeMockPlayer();
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
         for (int tick = 0; tick < ticks; tick += 20) {
             helper.runAfterDelay(tick, () -> setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_STIR, new CompoundTag()));
         }
@@ -488,7 +487,7 @@ public final class PotTests {
         Setup setup = pot(helper);
         Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(Items.SUGAR, 5));
         Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.DANDELION, 5));
-        helper.assertFalse(setup.logic.mayPlace(setup.station, helper.makeMockPlayer(), SlotRef.of(CookingPotStation.INGREDIENTS, 2),
+        helper.assertFalse(setup.logic.mayPlace(setup.station, helper.makeMockPlayer(GameType.CREATIVE), SlotRef.of(CookingPotStation.INGREDIENTS, 2),
                 new ItemStack(Items.GLASS_BOTTLE)), "what the drink is served in does not go in");
         stirFor(helper, setup, 140);
         helper.runAfterDelay(140, () -> {

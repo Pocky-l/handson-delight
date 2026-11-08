@@ -1,6 +1,7 @@
 package com.pockyl.handson_delight.client;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.Direction;
@@ -48,7 +49,7 @@ public final class PotBehavior implements StationBehavior {
     /** A press on the spoon shorter than this is a click: the spoon stays in the hand, stirring as the mouse goes, until the next click. */
     private static final float SPOON_CLICK = 0.3F;
     @SuppressWarnings("removal")
-    private static final ResourceLocation BADGE_TEXTURE = new ResourceLocation("minecraft", "block/white_concrete");
+    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /**
      * Where the liquid starts and how deep a full pot is, in pixels; slots stand at {@link #ITEM_REST}. A full pot stays 1.5 px under
      * the rim (10): at 9.5 what floats, the foam at the walls and the waves showed as a thin line over the rim from the side
@@ -351,7 +352,8 @@ public final class PotBehavior implements StationBehavior {
     }
 
     private static boolean usable(StationView view, ItemStack stack) {
-        for (CookingPotRecipe recipe : Platform.INSTANCE.cookingRecipes(view.level())) {
+        for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(view.level())) {
+            CookingPotRecipe recipe = holder.value();
             if (ItemStack.isSameItem(recipe.getOutputContainer(), stack) || recipe.getIngredients().stream().anyMatch(ingredient -> ingredient.test(stack))) {
                 return true;
             }
@@ -647,7 +649,7 @@ public final class PotBehavior implements StationBehavior {
                 cookedFor[i] = items[i].copy();
             }
             cookedMade = Platform.INSTANCE.findRecipe(view.level(), Arrays.asList(items))
-                    .map(found -> found.getResultItem(view.level().registryAccess())).orElse(ItemStack.EMPTY);
+                    .map(found -> found.value().getResultItem(view.level().registryAccess())).orElse(ItemStack.EMPTY);
         }
         return cookedMade;
     }

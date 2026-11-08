@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.Block;
 import java.util.function.Supplier;
 
 /**
- * Blocks and sounds of Farmer's Delight, by id. Its own registry fields are Forge's {@code RegistryObject} in one build and a
+ * Blocks and sounds of Farmer's Delight, by id. Its own registry fields are NeoForge's {@code DeferredHolder} in one build and a
  * plain {@code Supplier} in Refabricated, so the shared code does not read them.
  */
 public final class FarmersDelightContent {
@@ -30,9 +30,8 @@ public final class FarmersDelightContent {
     private FarmersDelightContent() {
     }
 
-    @SuppressWarnings("removal")
     public static ResourceLocation id(String path) {
-        return new ResourceLocation(MOD_ID, path);
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 
     /** A sound event plays by its id, so one made here sounds the same as the registered one. */

@@ -1,4 +1,4 @@
-// A loader project (forge, fabric): compiles the common sources and resources into its own jar and publishes it.
+// A loader project (neoforge, fabric): compiles the common sources and resources into its own jar and publishes it.
 plugins {
     id 'multiloader-common'
     id 'me.modmuss50.mod-publish-plugin'
@@ -89,7 +89,7 @@ publishMods {
         projectId = curseforge_project_id
         accessToken = curseforgeToken
         minecraftVersions.add(minecraft_version)
-        javaVersions.add(JavaVersion.VERSION_17)
+        javaVersions.add(JavaVersion.VERSION_21)
         client = curseforge_client.toBoolean()
         server = curseforge_server.toBoolean()
         // Farmer's Delight is a different project on each loader: curseforge_requires_<loader> replaces the shared list.

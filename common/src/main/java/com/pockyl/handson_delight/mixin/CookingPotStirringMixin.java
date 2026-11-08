@@ -1,9 +1,11 @@
 package com.pockyl.handson_delight.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -80,7 +82,7 @@ abstract class CookingPotStirringMixin implements PotStirring {
     private static final int AWAY = 40;
 
     @Shadow
-    private boolean processCooking(CookingPotRecipe recipe, CookingPotBlockEntity pot) {
+    private boolean processCooking(RecipeHolder<CookingPotRecipe> recipe, CookingPotBlockEntity pot) {
         throw new AssertionError();
     }
 
@@ -141,7 +143,7 @@ abstract class CookingPotStirringMixin implements PotStirring {
     }
 
     @Inject(method = "saveAdditional", at = @At("TAIL"), remap = true)
-    private void handson$saveByHand(CompoundTag tag, CallbackInfo callback) {
+    private void handson$saveByHand(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo callback) {
         if (handson$byHand) {
             tag.putBoolean(BY_HAND, true);
         }
@@ -150,8 +152,8 @@ abstract class CookingPotStirringMixin implements PotStirring {
         }
     }
 
-    @Inject(method = "load", at = @At("TAIL"), remap = true)
-    private void handson$loadByHand(CompoundTag tag, CallbackInfo callback) {
+    @Inject(method = "loadAdditional", at = @At("TAIL"), remap = true)
+    private void handson$loadByHand(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo callback) {
         handson$byHand = tag.getBoolean(BY_HAND);
         handson$bonusCarried = tag.getFloat(BONUS);
         // What a loaded pot holds was there before: only what comes in from now on says who feeds it.
@@ -159,7 +161,7 @@ abstract class CookingPotStirringMixin implements PotStirring {
     }
 
     @Inject(method = "processCooking", at = @At("HEAD"), cancellable = true)
-    private void handson$waitForTheSpoon(CookingPotRecipe recipe, CookingPotBlockEntity pot, CallbackInfoReturnable<Boolean> callback) {
+    private void handson$waitForTheSpoon(RecipeHolder<CookingPotRecipe> recipe, CookingPotBlockEntity pot, CallbackInfoReturnable<Boolean> callback) {
         if (pot.getLevel() == null || handson$serving || !PotLogic.isOurs(pot)) {
             return;
         }
@@ -172,7 +174,7 @@ abstract class CookingPotStirringMixin implements PotStirring {
             handson$batch = 0;
             return;
         }
-        int batch = PotLogic.batch(pot, recipe.getResultItem(pot.getLevel().registryAccess()));
+        int batch = PotLogic.batch(pot, recipe.value().getResultItem(pot.getLevel().registryAccess()));
         if (batch != handson$batch && handson$batch > 0 && batch > 0 && cookTimeTotal > 0) {
             // More food thrown in takes longer, less takes shorter: the time already cooked stays what it was.
             cookTime = Math.min(cookTimeTotal - 1, Math.round(cookTime * PotLogic.speed(batch) / PotLogic.speed(handson$batch)));
@@ -191,13 +193,13 @@ abstract class CookingPotStirringMixin implements PotStirring {
 
     /** Farmer's Delight made one serving: the rest of the batch follows at once, and what the stirring earned with it. */
     @Inject(method = "processCooking", at = @At("RETURN"))
-    private void handson$serveTheBatch(CookingPotRecipe recipe, CookingPotBlockEntity pot, CallbackInfoReturnable<Boolean> callback) {
+    private void handson$serveTheBatch(RecipeHolder<CookingPotRecipe> recipe, CookingPotBlockEntity pot, CallbackInfoReturnable<Boolean> callback) {
         if (!callback.getReturnValueZ() || handson$serving || handson$farmersDelightsWay || pot.getLevel() == null || !PotLogic.isOurs(pot)) {
             return;
         }
-        ItemStack result = recipe.getResultItem(pot.getLevel().registryAccess());
+        ItemStack result = recipe.value().getResultItem(pot.getLevel().registryAccess());
         ItemStack meal = pot.getMeal();
-        if (result.isEmpty() || !ItemStack.isSameItemSameTags(meal, result)) {
+        if (result.isEmpty() || !ItemStack.isSameItemSameComponents(meal, result)) {
             return;
         }
         // The batch as HEAD counted it, before Farmer's Delight's serving: a slot that held the last item is empty now, and a count

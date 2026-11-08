@@ -1,6 +1,7 @@
 package com.pockyl.handson_delight.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -67,7 +68,7 @@ abstract class SkilletBlockEntityMixin implements FryingPan {
     }
 
     @Inject(method = "saveAdditional", at = @At("TAIL"))
-    private void handson$saveFrying(CompoundTag tag, CallbackInfo callback) {
+    private void handson$saveFrying(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo callback) {
         CompoundTag frying = new CompoundTag();
         handson$frying.save(frying);
         if (!frying.isEmpty()) {
@@ -75,8 +76,8 @@ abstract class SkilletBlockEntityMixin implements FryingPan {
         }
     }
 
-    @Inject(method = "load", at = @At("TAIL"))
-    private void handson$loadFrying(CompoundTag tag, CallbackInfo callback) {
+    @Inject(method = "loadAdditional", at = @At("TAIL"))
+    private void handson$loadFrying(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo callback) {
         handson$frying.load(tag.getCompound(FRYING));
     }
 }

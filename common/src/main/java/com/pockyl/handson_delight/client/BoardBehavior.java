@@ -71,7 +71,7 @@ public final class BoardBehavior implements StationBehavior {
     /** A block-like item, drawn as an item: its size on the board, pixels. */
     private static final float BLOCK_SIZE = 8.0F;
     @SuppressWarnings("removal")
-    private static final ResourceLocation WHITE = new ResourceLocation("minecraft", "block/white_concrete");
+    private static final ResourceLocation WHITE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /** The layers sink into one dish, which pops up where they were: seconds. */
     private static final float MELT_TIME = 0.28F;
     private static final float POP_TIME = 0.35F;
@@ -193,7 +193,7 @@ public final class BoardBehavior implements StationBehavior {
         }
         ItemStack onBoard = view.state().getItem(CuttingBoardStation.BOARD_SLOT);
         boolean free = onBoard.isEmpty() && BoardLogic.layers(view.state()).isEmpty();
-        if (free || ItemStack.isSameItemSameTags(onBoard, held)) {
+        if (free || ItemStack.isSameItemSameComponents(onBoard, held)) {
             onInventoryShiftClick(view, slot, held);
         }
     }
@@ -227,13 +227,13 @@ public final class BoardBehavior implements StationBehavior {
         ItemStack onBoard = carved(view) ? ItemStack.EMPTY : state.getItem(CuttingBoardStation.BOARD_SLOT);
         List<ItemVoxels.Cut> cuts = cutsMade(view, onBoard);
         if (!ItemStack.matches(onBoard, shownItem) || !cuts.equals(shownCuts)) {
-            if (cuts.size() > shownCuts.size() && ItemStack.isSameItemSameTags(onBoard, shownItem)) {
+            if (cuts.size() > shownCuts.size() && ItemStack.isSameItemSameComponents(onBoard, shownItem)) {
                 gap = 0.0F;
                 opening = true;
             }
             // Put down by a hand, not made of the layers (the dish pops up by itself) nor what is left after a cut.
             boolean landed = !quiet && !onBoard.isEmpty() && Arrays.stream(shownLayers).allMatch(ItemStack::isEmpty)
-                    && (shownItem.isEmpty() || ItemStack.isSameItemSameTags(onBoard, shownItem) && onBoard.getCount() > shownItem.getCount());
+                    && (shownItem.isEmpty() || ItemStack.isSameItemSameComponents(onBoard, shownItem) && onBoard.getCount() > shownItem.getCount());
             shownItem = onBoard.copy();
             shownCuts = cuts;
             if (!cuts.isEmpty()) {
@@ -257,7 +257,7 @@ public final class BoardBehavior implements StationBehavior {
         // While the layers turn into their dish they are the animation's.
         for (int i = 0; i < CuttingBoardStation.MOST_LAYERS && Float.isNaN(melting); i++) {
             ItemStack layer = i < layers.size() ? layers.get(i) : ItemStack.EMPTY;
-            if (ItemStack.isSameItemSameTags(layer, shownLayers[i])) {
+            if (ItemStack.isSameItemSameComponents(layer, shownLayers[i])) {
                 continue;
             }
             shownLayers[i] = layer.copy();
@@ -775,7 +775,7 @@ public final class BoardBehavior implements StationBehavior {
             float pitch = data.contains(CuttingBoardStation.AT) ? 1.15F + 0.05F * data.getInt(CuttingBoardStation.AT) : 1.0F;
             view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.7F, pitch);
         } else if (CuttingBoardStation.EFFECT_REFUSED.equals(effect)) {
-            ItemStack refused = ItemStack.of(data.getCompound(CuttingBoardStation.STACK));
+            ItemStack refused = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(CuttingBoardStation.STACK));
             if (!refused.isEmpty()) {
                 bounced(view, refused);
             }
@@ -786,7 +786,7 @@ public final class BoardBehavior implements StationBehavior {
             }
             view.playSound(SoundEvents.WOOD_HIT, "surface", 0.4F, 1.4F);
         } else if (CuttingBoardStation.EFFECT_TAKEN.equals(effect)) {
-            ItemStack taken = ItemStack.of(data.getCompound(CuttingBoardStation.STACK));
+            ItemStack taken = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(CuttingBoardStation.STACK));
             if (!taken.isEmpty()) {
                 taken(view, taken, data.getInt(CuttingBoardStation.AT));
             }

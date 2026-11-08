@@ -41,7 +41,7 @@ final class BoardBook implements RecipeBook.Source {
             }
             List<Ingredient> ingredients = List.of(recipe.getIngredients().get(0), recipe.getTool());
             List<ItemStack> foot = results.size() > 1 ? results : List.of();
-            pages.add(new RecipeBook.Page(recipe.getId(), results.get(0).copy(), ingredients, foot, null, false));
+            pages.add(new RecipeBook.Page(Cutting.id(level, recipe), results.get(0).copy(), ingredients, foot, null, false));
         }
         return pages;
     }
@@ -101,7 +101,7 @@ final class BoardBook implements RecipeBook.Source {
             }
         }
         ItemStack onBoard = view.state().getItem(CuttingBoardStation.BOARD_SLOT);
-        return Cutting.recipesFor(view.level(), onBoard).stream().findFirst().map(CuttingBoardRecipe::getId).orElse(null);
+        return Cutting.recipesFor(view.level(), onBoard).stream().findFirst().map(recipe -> Cutting.id(view.level(), recipe)).orElse(null);
     }
 
     @Override

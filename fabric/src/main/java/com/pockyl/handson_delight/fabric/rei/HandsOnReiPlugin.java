@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * REI shows the sandwiches as put together on the cutting board, and no longer in the crafting table. Fabric only: on Forge, REI
+ * REI shows the sandwiches as put together on the cutting board, and no longer in the crafting table. Fabric only: on NeoForge, REI
  * reads the JEI plugin.
  */
 public final class HandsOnReiPlugin implements REIClientPlugin {

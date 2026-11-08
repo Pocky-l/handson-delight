@@ -24,7 +24,7 @@ import java.util.Set;
 
 /**
  * EMI shows the sandwiches as put together on the cutting board, and no longer in the crafting table. Found by its annotation on
- * Forge, by the {@code emi} entry point on Fabric. The category has the id of the JEI one, so EMI does not show JEI's as well.
+ * NeoForge, by the {@code emi} entry point on Fabric. The category has the id of the JEI one, so EMI does not show JEI's as well.
  */
 @EmiEntrypoint
 public final class HandsOnEmiPlugin implements EmiPlugin {

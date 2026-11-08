@@ -1,6 +1,7 @@
 package com.pockyl.handson_delight.client;
 
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -24,7 +25,8 @@ final class PotBook implements RecipeBook.Source {
     public List<RecipeBook.Page> pages(StationView view) {
         Level level = view.level();
         List<RecipeBook.Page> pages = new ArrayList<>();
-        for (CookingPotRecipe recipe : Platform.INSTANCE.cookingRecipes(level)) {
+        for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(level)) {
+            CookingPotRecipe recipe = holder.value();
             List<Ingredient> ingredients = recipe.getIngredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
             List<ItemStack> foot = new ArrayList<>();
             if (!recipe.getOutputContainer().isEmpty()) {
@@ -32,7 +34,7 @@ final class PotBook implements RecipeBook.Source {
             }
             foot.add(new ItemStack(Items.CLOCK));
             Component seconds = Component.translatable("handson_delight.book.seconds", Math.round(recipe.getCookTime() / 20.0F / PotLogic.speed(1)));
-            pages.add(new RecipeBook.Page(recipe.getId(), recipe.getResultItem(level.registryAccess()), ingredients, foot, seconds, true));
+            pages.add(new RecipeBook.Page(holder.id(), recipe.getResultItem(level.registryAccess()), ingredients, foot, seconds, true));
         }
         return pages;
     }
@@ -55,13 +57,13 @@ final class PotBook implements RecipeBook.Source {
     @Override
     public Object current(StationView view) {
         Level level = view.level();
-        Optional<CookingPotRecipe> cooking = Platform.INSTANCE.findRecipe(level, inStation(view));
+        Optional<RecipeHolder<CookingPotRecipe>> cooking = Platform.INSTANCE.findRecipe(level, inStation(view));
         if (cooking.isPresent()) {
-            return cooking.get().getId();
+            return cooking.get().id();
         }
         ItemStack meal = view.state().getItem(CookingPotStation.MEAL_SLOT);
         return meal.isEmpty() ? null : Platform.INSTANCE.cookingRecipes(level).stream()
-                .filter(recipe -> recipe.getResultItem(level.registryAccess()).is(meal.getItem())).map(CookingPotRecipe::getId).findFirst()
+                .filter(recipe -> recipe.value().getResultItem(level.registryAccess()).is(meal.getItem())).map(RecipeHolder::id).findFirst()
                 .orElse(null);
     }
 }

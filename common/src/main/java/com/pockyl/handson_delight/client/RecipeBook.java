@@ -51,9 +51,9 @@ import java.util.Optional;
  */
 final class RecipeBook implements NodePainter {
     @SuppressWarnings("removal")
-    private static final ResourceLocation PAPER = new ResourceLocation("textures/gui/book.png");
+    private static final ResourceLocation PAPER = ResourceLocation.parse("textures/gui/book.png");
     @SuppressWarnings("removal")
-    private static final ResourceLocation WHITE = new ResourceLocation("minecraft", "block/white_concrete");
+    private static final ResourceLocation WHITE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
     private static final Quaternionf LYING = new Matrix3f(0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F).getNormalizedRotation(new Quaternionf());
     /** How much bigger than on the enchanting table. */
     private static final float SIZE = 0.72F;
@@ -507,7 +507,7 @@ final class RecipeBook implements NodePainter {
         poseStack.translate(-CLOSED_SHIFT * closed, 0.0F, 0.0F);
         model.setupAnim(0.0F, 0.0F, 1.0F, OPEN * eased);
         VertexConsumer cover = EnchantTableRenderer.BOOK_LOCATION.buffer(buffers, RenderType::entitySolid);
-        model.render(poseStack, cover, shade, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        model.render(poseStack, cover, shade, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
         poseStack.popPose();
         if (open > 0.0F) {
             // The sheets go with the model: the same turn from closed, the same angle of the pages all the way open.
@@ -717,10 +717,10 @@ final class RecipeBook implements NodePainter {
             int r = argb >> 16 & 0xFF;
             int g = argb >> 8 & 0xFF;
             int b = argb & 0xFF;
-            consumer.vertex(matrix, x0, y0, lift).color(r, g, b, a).uv(u0, v0).uv2(shade).endVertex();
-            consumer.vertex(matrix, x0, y1, lift).color(r, g, b, a).uv(u0, v1).uv2(shade).endVertex();
-            consumer.vertex(matrix, x1, y1, lift).color(r, g, b, a).uv(u1, v1).uv2(shade).endVertex();
-            consumer.vertex(matrix, x1, y0, lift).color(r, g, b, a).uv(u1, v0).uv2(shade).endVertex();
+            consumer.addVertex(matrix, x0, y0, lift).setColor(r, g, b, a).setUv(u0, v0).setLight(shade);
+            consumer.addVertex(matrix, x0, y1, lift).setColor(r, g, b, a).setUv(u0, v1).setLight(shade);
+            consumer.addVertex(matrix, x1, y1, lift).setColor(r, g, b, a).setUv(u1, v1).setLight(shade);
+            consumer.addVertex(matrix, x1, y0, lift).setColor(r, g, b, a).setUv(u1, v0).setLight(shade);
         }
 
         void item(ItemStack stack, float x, float y, float size) {

@@ -1,6 +1,5 @@
 package com.pockyl.handson_delight.gametest;
 
-import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -12,14 +11,15 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -39,7 +39,6 @@ import com.pockyl.handson_delight.station.CuttingBoardStation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 /** The cutting board's rules against a real board of Farmer's Delight, on every loader, like {@link PotTests}. */
 public final class BoardTests {
@@ -89,7 +88,10 @@ public final class BoardTests {
         BlockPos pos = helper.absolutePos(at);
         Station station = new Station(helper.getLevel(), pos);
         CuttingBoardBlockEntity board = (CuttingBoardBlockEntity) helper.getLevel().getBlockEntity(pos);
-        return new Board(station, new BoardLogic(station), board, helper.makeMockPlayer(), new ItemStack(fd("iron_knife")));
+        // A server player: Refabricated's board hands what it cuts to one.
+        ServerPlayer cook = TestPlayers.serverPlayer(helper, "cook");
+        cook.setGameMode(GameType.CREATIVE);
+        return new Board(station, new BoardLogic(station), board, cook, new ItemStack(fd("iron_knife")));
     }
 
     /**
@@ -98,15 +100,20 @@ public final class BoardTests {
      */
     public static void burgersLeaveTheCraftingTable(GameTestHelper helper) {
         Level level = helper.getLevel();
-        Player player = helper.makeMockPlayer();
-        CraftingContainer table = burger(new TransientCraftingContainer(new CraftingMenu(0, player.getInventory()), 3, 3));
-        CraftingContainer machine = burger(new TransientCraftingContainer(new MachineMenu(), 3, 3));
-        helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, table, level).isEmpty(),
-                "the crafting table makes no hamburger");
-        helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, machine, level)
-                .filter(recipe -> recipe.getResultItem(level.registryAccess()).is(fd("hamburger"))).isPresent(), "an autocrafter still does");
-        Recipe<?> hamburger = level.getRecipeManager().byKey(FarmersDelightContent.id("hamburger")).orElseThrow();
-        ServerPlayer cook = new ServerPlayer(level.getServer(), helper.getLevel(), new GameProfile(UUID.randomUUID(), "cook"));
+        ServerPlayer cook = TestPlayers.serverPlayer(helper, "cook");
+        CraftingMenu table = new CraftingMenu(0, cook.getInventory(), ContainerLevelAccess.create(level, helper.absolutePos(BlockPos.ZERO)));
+        for (int slot = 0; slot < 5; slot++) {
+            table.getSlot(1 + slot).set(burger().get(slot));
+        }
+        helper.assertTrue(table.getSlot(0).getItem().isEmpty(), "the crafting table makes no hamburger");
+        TransientCraftingContainer machine = new TransientCraftingContainer(new MachineMenu(), 3, 3);
+        for (int slot = 0; slot < 5; slot++) {
+            machine.setItem(slot, burger().get(slot));
+        }
+        helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, machine.asCraftInput(), level)
+                .filter(recipe -> recipe.value().getResultItem(level.registryAccess()).is(fd("hamburger"))).isPresent(),
+                "an autocrafter still does");
+        RecipeHolder<?> hamburger = level.getRecipeManager().byKey(FarmersDelightContent.id("hamburger")).orElseThrow();
         helper.assertTrue(cook.getRecipeBook().addRecipes(List.of(hamburger), cook) == 0 && !cook.getRecipeBook().contains(hamburger),
                 "and the recipe book does not learn it");
         helper.assertTrue(AssemblyRecipes.all().stream().anyMatch(dish -> dish.id().getPath().equals("hamburger")), "the board does");
@@ -116,13 +123,9 @@ public final class BoardTests {
         helper.succeed();
     }
 
-    private static CraftingContainer burger(CraftingContainer grid) {
-        grid.setItem(0, new ItemStack(Items.BREAD));
-        grid.setItem(1, new ItemStack(fd("beef_patty")));
-        grid.setItem(2, new ItemStack(fd("cabbage_leaf")));
-        grid.setItem(3, new ItemStack(fd("tomato")));
-        grid.setItem(4, new ItemStack(fd("onion")));
-        return grid;
+    private static List<ItemStack> burger() {
+        return List.of(new ItemStack(Items.BREAD), new ItemStack(fd("beef_patty")), new ItemStack(fd("cabbage_leaf")),
+                new ItemStack(fd("tomato")), new ItemStack(fd("onion")));
     }
 
     /** A crafting grid that is no player's, as a machine has. */
@@ -295,9 +298,9 @@ public final class BoardTests {
         Station again = new Station(helper.getLevel(), setup.station.pos());
         new BoardLogic(again);
         helper.assertTrue(BoardLogic.layers(again.state()).size() == 2, "the next cook finds the dish where it was");
-        CompoundTag saved = setup.board.saveWithoutMetadata();
+        CompoundTag saved = setup.board.saveWithoutMetadata(helper.getLevel().registryAccess());
         CuttingBoardBlockEntity copy = (CuttingBoardBlockEntity) setup.board.getType().create(setup.station.pos(), setup.station.blockState());
-        copy.load(saved);
+        copy.loadWithComponents(saved, helper.getLevel().registryAccess());
         helper.assertTrue(((BoardLayers) copy).handson$layers().get(1).is(fd("beef_patty")), "it is saved with the board");
         helper.succeed();
     }
@@ -348,7 +351,7 @@ public final class BoardTests {
     /** One cook leaving does not take the marks from another one still cutting; the last one leaving does. */
     public static void anotherCookKeepsTheMarks(GameTestHelper helper) {
         Board setup = board(helper);
-        Player other = helper.makeMockPlayer();
+        Player other = helper.makeMockPlayer(GameType.CREATIVE);
         setup.station.users.add(other);
         setup.carry(new ItemStack(fd("cabbage"), 2));
         setup.place();

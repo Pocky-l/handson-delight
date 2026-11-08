@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -26,23 +26,23 @@ abstract class CookingPotServingMixin {
     @Unique
     private static final ThreadLocal<ItemStack> handson$mealBefore = new ThreadLocal<>();
 
-    @Inject(method = "use", at = @At("HEAD"))
-    private void handson$rememberTheMeal(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit,
-            CallbackInfoReturnable<InteractionResult> callback) {
+    @Inject(method = "useItemOn", at = @At("HEAD"))
+    private void handson$rememberTheMeal(ItemStack held, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit,
+            CallbackInfoReturnable<ItemInteractionResult> callback) {
         handson$mealBefore.set(!level.isClientSide() && level.getBlockEntity(pos) instanceof CookingPotBlockEntity pot ? pot.getMeal().copy()
                 : ItemStack.EMPTY);
     }
 
-    @Inject(method = "use", at = @At("RETURN"))
-    private void handson$countTheServing(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit,
-            CallbackInfoReturnable<InteractionResult> callback) {
+    @Inject(method = "useItemOn", at = @At("RETURN"))
+    private void handson$countTheServing(ItemStack held, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit,
+            CallbackInfoReturnable<ItemInteractionResult> callback) {
         ItemStack before = handson$mealBefore.get();
         handson$mealBefore.remove();
         if (before == null || before.isEmpty() || !(level.getBlockEntity(pos) instanceof CookingPotBlockEntity pot)) {
             return;
         }
         ItemStack now = pot.getMeal();
-        int served = now.isEmpty() ? before.getCount() : ItemStack.isSameItemSameTags(now, before) ? before.getCount() - now.getCount() : 0;
+        int served = now.isEmpty() ? before.getCount() : ItemStack.isSameItemSameComponents(now, before) ? before.getCount() - now.getCount() : 0;
         if (served > 0) {
             ItemStack serving = before.copyWithCount(served);
             serving.onCraftedBy(level, player, served);

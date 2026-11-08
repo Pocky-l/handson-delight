@@ -1,6 +1,7 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
@@ -187,11 +188,12 @@ public final class PotLogic implements StationLogic {
         List<ItemStack> kinds = new ArrayList<>();
         for (ItemStack stack : inPot) {
             if (!stack.isEmpty()) {
-                kinds.stream().filter(kind -> ItemStack.isSameItemSameTags(kind, stack)).findFirst()
+                kinds.stream().filter(kind -> ItemStack.isSameItemSameComponents(kind, stack)).findFirst()
                         .ifPresentOrElse(kind -> kind.grow(stack.getCount()), () -> kinds.add(stack.copy()));
             }
         }
-        for (CookingPotRecipe recipe : Platform.INSTANCE.cookingRecipes(level)) {
+        for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(level)) {
+            CookingPotRecipe recipe = holder.value();
             int[] parts = parts(recipe, kinds);
             if (parts != null) {
                 lay(pot, kinds, parts);
@@ -249,7 +251,8 @@ public final class PotLogic implements StationLogic {
     @Override
     public boolean mayPlace(StationContext station, Player player, SlotRef slot, ItemStack stack) {
         boolean serves = false;
-        for (CookingPotRecipe recipe : Platform.INSTANCE.cookingRecipes(station.level())) {
+        for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(station.level())) {
+            CookingPotRecipe recipe = holder.value();
             if (recipe.getIngredients().stream().anyMatch(ingredient -> ingredient.test(stack))) {
                 return true;
             }
@@ -273,7 +276,7 @@ public final class PotLogic implements StationLogic {
     /** How many servings of {@code result} cook together: all that the ingredients make, as far as the meal's stack has room. */
     public static int batch(CookingPotBlockEntity pot, ItemStack result) {
         ItemStack meal = pot.getMeal();
-        if (result.isEmpty() || !meal.isEmpty() && !ItemStack.isSameItemSameTags(meal, result)) {
+        if (result.isEmpty() || !meal.isEmpty() && !ItemStack.isSameItemSameComponents(meal, result)) {
             return 0;
         }
         return Math.max(0, Math.min(servingsLeft(pot), (result.getMaxStackSize() - meal.getCount()) / result.getCount()));
@@ -341,7 +344,7 @@ public final class PotLogic implements StationLogic {
             scoop(station, player, data.getBoolean(CookingPotStation.SCOOP_ALL));
         } else if (CookingPotStation.ACTION_FILL.equals(action)) {
             ResourceLocation id = ResourceLocation.tryParse(data.getString(CookingPotStation.DISH));
-            Platform.INSTANCE.cookingRecipes(station.level()).stream().filter(recipe -> recipe.getId().equals(id)).findFirst()
+            Platform.INSTANCE.cookingRecipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).map(RecipeHolder::value).findFirst()
                     .ifPresent(recipe -> fill(player, recipe, data.getBoolean(CookingPotStation.SCOOP_ALL) ? CookingPotStation.FILL_MOST : 1));
         } else if (CookingPotStation.ACTION_STIR.equals(action)) {
             long now = station.level().getGameTime();
@@ -420,7 +423,7 @@ public final class PotLogic implements StationLogic {
         }
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
             ItemStack stack = inventory.getItem(slot);
-            if (stack.isEmpty() || !ingredient.test(stack) || !there.isEmpty() && !ItemStack.isSameItemSameTags(there, stack)) {
+            if (stack.isEmpty() || !ingredient.test(stack) || !there.isEmpty() && !ItemStack.isSameItemSameComponents(there, stack)) {
                 continue;
             }
             int wanted = 1;
@@ -469,7 +472,7 @@ public final class PotLogic implements StationLogic {
                 resultFor[i] = inPot[i].copy();
             }
             resultMade = Platform.INSTANCE.findRecipe(station.level(), List.of(inPot))
-                    .map(recipe -> recipe.getResultItem(station.level().registryAccess())).orElse(ItemStack.EMPTY);
+                    .map(recipe -> recipe.value().getResultItem(station.level().registryAccess())).orElse(ItemStack.EMPTY);
         }
         return resultMade;
     }

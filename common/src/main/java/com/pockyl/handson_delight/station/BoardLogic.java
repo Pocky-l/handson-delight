@@ -121,7 +121,7 @@ public final class BoardLogic implements StationLogic {
             return;
         }
         ItemStack onBoard = Platform.INSTANCE.getItem(board);
-        if (!ItemStack.isSameItemSameTags(onBoard, cutting)) {
+        if (!ItemStack.isSameItemSameComponents(onBoard, cutting)) {
             // Something else lies there now: a hopper took the item, or a deployer cut it.
             cutting = onBoard.copyWithCount(1);
             restart(station);
@@ -197,7 +197,7 @@ public final class BoardLogic implements StationLogic {
             return;
         }
         boolean fits = onBoard.isEmpty() ? !Cutting.recipesFor(station.level(), carried).isEmpty()
-                : ItemStack.isSameItemSameTags(onBoard, carried);
+                : ItemStack.isSameItemSameComponents(onBoard, carried);
         int room = Math.min(carried.getMaxStackSize(), board.getMaxStackSize()) - onBoard.getCount();
         int moved = Math.min(one ? 1 : carried.getCount(), room);
         if (!fits || moved <= 0) {
@@ -326,7 +326,7 @@ public final class BoardLogic implements StationLogic {
         }
         result.onCraftedBy(station.level(), player, result.getCount());
         ItemStack onBoard = Platform.INSTANCE.getItem(board);
-        if (onBoard.isEmpty() || ItemStack.isSameItemSameTags(onBoard, result)) {
+        if (onBoard.isEmpty() || ItemStack.isSameItemSameComponents(onBoard, result)) {
             int room = result.getMaxStackSize() - onBoard.getCount();
             int there = Math.min(room, result.getCount());
             Platform.INSTANCE.setItem(board, result.copyWithCount(onBoard.getCount() + there));
@@ -346,7 +346,7 @@ public final class BoardLogic implements StationLogic {
     private static void refuse(StationContext station, ItemStack stack) {
         CompoundTag data = new CompoundTag();
         if (!stack.isEmpty()) {
-            data.put(CuttingBoardStation.STACK, stack.copyWithCount(1).save(new CompoundTag()));
+            data.put(CuttingBoardStation.STACK, stack.copyWithCount(1).saveOptional(station.level().registryAccess()));
         }
         station.effect(CuttingBoardStation.EFFECT_REFUSED, "surface", data);
     }
@@ -354,7 +354,7 @@ public final class BoardLogic implements StationLogic {
     /** What came off the board, from which layer (-1: what lay to be cut, or the dish), for the clients to lift it off. */
     private static void taken(StationContext station, ItemStack stack, int layer) {
         CompoundTag data = new CompoundTag();
-        data.put(CuttingBoardStation.STACK, stack.save(new CompoundTag()));
+        data.put(CuttingBoardStation.STACK, stack.saveOptional(station.level().registryAccess()));
         data.putInt(CuttingBoardStation.AT, layer);
         station.effect(CuttingBoardStation.EFFECT_TAKEN, "surface", data);
     }

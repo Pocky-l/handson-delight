@@ -85,7 +85,7 @@ public final class SkilletLogic implements StationLogic {
         boolean wasEmpty = skillet.getStoredStack().isEmpty();
         if (!SkilletCooking.place(skillet, player, carried, one)) {
             CompoundTag data = new CompoundTag();
-            data.put(SkilletStation.STACK, carried.copyWithCount(1).save(new CompoundTag()));
+            data.put(SkilletStation.STACK, carried.copyWithCount(1).saveOptional(station.level().registryAccess()));
             station.effect(SkilletStation.EFFECT_REFUSED, "pan", data);
             return;
         }
@@ -115,7 +115,7 @@ public final class SkilletLogic implements StationLogic {
             return;
         }
         CompoundTag data = new CompoundTag();
-        data.put(SkilletStation.STACK, taken.save(new CompoundTag()));
+        data.put(SkilletStation.STACK, taken.saveOptional(station.level().registryAccess()));
         station.effect(SkilletStation.EFFECT_TAKEN, "pan", data);
         if (!player.getInventory().add(taken)) {
             player.drop(taken, false);

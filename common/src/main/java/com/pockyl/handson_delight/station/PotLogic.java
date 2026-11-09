@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.station;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.resources.ResourceLocation;
@@ -65,6 +66,7 @@ public final class PotLogic implements StationLogic {
     /** The ingredients the result was last looked up for, and what they make: the lookup runs only when they change. */
     private final ItemStack[] resultFor = new ItemStack[CookingPotBlockEntity.MEAL_DISPLAY_SLOT];
     private ItemStack resultMade = ItemStack.EMPTY;
+    private CookingPotRecipe recipeMade;
 
     public PotLogic(StationContext station) {
         pot = (CookingPotBlockEntity) station.blockEntity();
@@ -285,24 +287,84 @@ public final class PotLogic implements StationLogic {
     }
 
     /** How many times the ingredients in the pot make the recipe: every slot gives one item to a serving. */
-    private static int servingsLeft(CookingPotBlockEntity pot) {
+    private static int servingsLeft(CookingPotBlockEntity pot, CookingPotRecipe recipe) {
+        List<ItemStack> stacks = new ArrayList<>();
         int left = Integer.MAX_VALUE;
         for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
             ItemStack stack = Platform.INSTANCE.getItem(pot, i);
             if (!stack.isEmpty()) {
+                stacks.add(stack);
                 left = Math.min(left, stack.getCount());
             }
         }
-        return left == Integer.MAX_VALUE ? 0 : left;
+        if (stacks.isEmpty()) {
+            return 0;
+        }
+        // Two of an ingredient may lie in one slot when a mod matches stacks (Autochef's Delight): never more servings than the
+        // ingredients make, whichever way they lie.
+        while (left > 0 && !makes(recipe.getIngredients(), stacks, left)) {
+            left--;
+        }
+        return left;
     }
 
-    /** How many servings of {@code result} cook together: all that the ingredients make, as far as the meal's stack has room. */
-    public static int batch(CookingPotBlockEntity pot, ItemStack result) {
+    /** Whether {@code stacks} hold every ingredient {@code times} times over, each item going to one ingredient. */
+    static boolean makes(List<Ingredient> ingredients, List<ItemStack> stacks, int times) {
+        int[] room = new int[stacks.size()];
+        for (int i = 0; i < room.length; i++) {
+            room[i] = stacks.get(i).getCount();
+        }
+        int[][] taken = new int[ingredients.size()][stacks.size()];
+        for (int ingredient = 0; ingredient < ingredients.size(); ingredient++) {
+            if (ingredients.get(ingredient).isEmpty()) {
+                continue;
+            }
+            for (int n = 0; n < times; n++) {
+                if (!take(ingredient, ingredients, stacks, room, taken, new boolean[ingredients.size()])) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * One more item for {@code ingredient}: from a stack with room, or from a used-up stack whose item another ingredient gives up for one
+     * from elsewhere.
+     */
+    private static boolean take(int ingredient, List<Ingredient> ingredients, List<ItemStack> stacks, int[] room, int[][] taken,
+            boolean[] seen) {
+        seen[ingredient] = true;
+        for (int stack = 0; stack < stacks.size(); stack++) {
+            if (ingredients.get(ingredient).test(stacks.get(stack)) && room[stack] > 0) {
+                room[stack]--;
+                taken[ingredient][stack]++;
+                return true;
+            }
+        }
+        for (int stack = 0; stack < stacks.size(); stack++) {
+            if (!ingredients.get(ingredient).test(stacks.get(stack))) {
+                continue;
+            }
+            for (int other = 0; other < ingredients.size(); other++) {
+                if (!seen[other] && taken[other][stack] > 0 && take(other, ingredients, stacks, room, taken, seen)) {
+                    taken[other][stack]--;
+                    taken[ingredient][stack]++;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** How many servings of {@code recipe} cook together: all that the ingredients make, as far as the meal's stack has room. */
+    public static int batch(CookingPotBlockEntity pot, CookingPotRecipe recipe) {
+        ItemStack result = recipe.getResultItem(pot.getLevel() == null ? RegistryAccess.EMPTY : pot.getLevel().registryAccess());
         ItemStack meal = pot.getMeal();
         if (result.isEmpty() || !meal.isEmpty() && !ItemStack.isSameItemSameComponents(meal, result)) {
             return 0;
         }
-        return Math.max(0, Math.min(servingsLeft(pot), (result.getMaxStackSize() - meal.getCount()) / result.getCount()));
+        return Math.max(0, Math.min(servingsLeft(pot, recipe), (result.getMaxStackSize() - meal.getCount()) / result.getCount()));
     }
 
     /** How many times as fast as one serving a batch cooks: sixteen servings take four times as long as one, so a full pot is still work. */
@@ -385,7 +447,7 @@ public final class PotLogic implements StationLogic {
             ItemStack dish = result(station);
             cook = player.getUUID();
             float at = data.contains(CookingPotStation.STIR_AT) ? data.getFloat(CookingPotStation.STIR_AT) : Float.NaN;
-            ((PotStirring) pot).handson$skill().move(now, at, x, z, pot.isHeated() && batch(pot, dish) > 0, openStars(player, dish));
+            ((PotStirring) pot).handson$skill().move(now, at, x, z, pot.isHeated() && batch(station) > 0, openStars(player, dish));
             station.state().setControl(CookingPotStation.SPOON_X, x);
             station.state().setControl(CookingPotStation.SPOON_Z, z);
         }
@@ -536,6 +598,12 @@ public final class PotLogic implements StationLogic {
 
     /** What the ingredients in the pot make. */
     private ItemStack result(StationContext station) {
+        recipe(station);
+        return resultMade;
+    }
+
+    /** The recipe the ingredients in the pot make, or null. */
+    private CookingPotRecipe recipe(StationContext station) {
         ItemStack[] inPot = station.state().getItems(CookingPotStation.INGREDIENTS);
         boolean same = true;
         for (int i = 0; i < resultFor.length && same; i++) {
@@ -545,10 +613,16 @@ public final class PotLogic implements StationLogic {
             for (int i = 0; i < resultFor.length; i++) {
                 resultFor[i] = inPot[i].copy();
             }
-            resultMade = Platform.INSTANCE.findRecipe(station.level(), List.of(inPot))
-                    .map(recipe -> recipe.value().getResultItem(station.level().registryAccess())).orElse(ItemStack.EMPTY);
+            recipeMade = Platform.INSTANCE.findRecipe(station.level(), List.of(inPot)).map(RecipeHolder::value).orElse(null);
+            resultMade = recipeMade == null ? ItemStack.EMPTY : recipeMade.getResultItem(station.level().registryAccess());
         }
-        return resultMade;
+        return recipeMade;
+    }
+
+    /** How many servings the ingredients in the pot cook together. */
+    private int batch(StationContext station) {
+        CookingPotRecipe recipe = recipe(station);
+        return recipe == null ? 0 : batch(pot, recipe);
     }
 
     private void refresh(StationContext station) {
@@ -558,7 +632,7 @@ public final class PotLogic implements StationLogic {
         int total = data.get(1);
         // The whole batch cooks at once, and the dial shows how far it is.
         ItemStack dish = result(station);
-        int batch = batch(pot, dish);
+        int batch = batch(station);
         float speed = speed(batch);
         float progress = batch > 0 && total > 0 ? Math.min(1.0F, (float) time / total) : 0.0F;
         state.setControl(CookingPotStation.PROGRESS, progress);

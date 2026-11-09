@@ -29,4 +29,7 @@ public interface PotStirring {
 
     /** Every tick of the pot: sees whether food came in, and whether by hand or by itself (a hopper, a pipe, a menu). */
     void handson$watchFood(long gameTime);
+
+    /** Right after the pot's own cooking step in a tick: when it served a stirred batch's first serving, the rest follows. */
+    void handson$afterCooking();
 }

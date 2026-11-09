@@ -56,6 +56,15 @@ abstract class CookingPotStirringMixin implements PotStirring {
     /** On while the rest of a batch is made through Farmer's Delight's own code. */
     @Unique
     private boolean handson$serving;
+    /**
+     * The recipe a stirred batch cooks this tick, and how big its meal was before: when the meal grew, a serving was made and the rest of
+     * the batch follows. Read after the cooking step, not at its return: another mod may end the step early (Autochef's Delight uses up
+     * the ingredients itself and returns).
+     */
+    @Unique
+    private RecipeHolder<CookingPotRecipe> handson$cooking;
+    @Unique
+    private int handson$mealBefore;
     /** This serving cooks Farmer's Delight's way: no batch, no stars. */
     @Unique
     private boolean handson$farmersDelightsWay;
@@ -208,12 +217,13 @@ abstract class CookingPotStirringMixin implements PotStirring {
         boolean attended = pot.getLevel().getGameTime() - handson$attendedAt <= AWAY;
         handson$farmersDelightsWay = !stirred
                 && (!handson$byHand || !attended || !HandsOnConfig.stirringRequired() || PotLogic.isInMenu(pot));
+        handson$cooking = null;
         if (handson$farmersDelightsWay) {
             // Fed by automation, worked in Farmer's Delight's own menu or left by the cook: its own way, a serving at a time.
             handson$batch = 0;
             return;
         }
-        int batch = PotLogic.batch(pot, recipe.value().getResultItem(pot.getLevel().registryAccess()));
+        int batch = PotLogic.batch(pot, recipe.value());
         if (batch != handson$batch && handson$batch > 0 && batch > 0 && cookTimeTotal > 0) {
             // More food thrown in takes longer, less takes shorter: the time already cooked stays what it was.
             cookTime = Math.min(cookTimeTotal - 1, Math.round(cookTime * PotLogic.speed(batch) / PotLogic.speed(handson$batch)));
@@ -225,22 +235,39 @@ abstract class CookingPotStirringMixin implements PotStirring {
             int whole = (int) handson$saved;
             handson$saved -= whole;
             cookTime += whole;
+            handson$cooking = recipe;
+            handson$mealBefore = pot.getMeal().getCount();
         } else {
             callback.setReturnValue(false);
         }
     }
 
-    /** Farmer's Delight made one serving: the rest of the batch follows at once, and what the stirring earned with it. */
-    @Inject(method = "processCooking", at = @At("RETURN"))
-    private void handson$serveTheBatch(RecipeHolder<CookingPotRecipe> recipe, CookingPotBlockEntity pot, CallbackInfoReturnable<Boolean> callback) {
-        if (!callback.getReturnValueZ() || handson$serving || handson$farmersDelightsWay || pot.getLevel() == null || !PotLogic.isOurs(pot)) {
+    @Inject(method = "cookingTick", at = @At(value = "INVOKE", shift = At.Shift.AFTER, target = "Lvectorwing/farmersdelight/common/block/entity/"
+            + "CookingPotBlockEntity;processCooking(Lnet/minecraft/world/item/crafting/RecipeHolder;"
+            + "Lvectorwing/farmersdelight/common/block/entity/CookingPotBlockEntity;)Z"))
+    private static void handson$afterTheStep(Level level, BlockPos pos, BlockState state, CookingPotBlockEntity pot, CallbackInfo callback) {
+        ((PotStirring) pot).handson$afterCooking();
+    }
+
+    @Override
+    public void handson$afterCooking() {
+        RecipeHolder<CookingPotRecipe> recipe = handson$cooking;
+        handson$cooking = null;
+        CookingPotBlockEntity pot = (CookingPotBlockEntity) (Object) this;
+        if (recipe == null || handson$serving || pot.getLevel() == null || !PotLogic.isOurs(pot)) {
             return;
         }
         ItemStack result = recipe.value().getResultItem(pot.getLevel().registryAccess());
         ItemStack meal = pot.getMeal();
-        if (result.isEmpty() || !ItemStack.isSameItemSameComponents(meal, result)) {
+        if (result.isEmpty() || !ItemStack.isSameItemSameComponents(meal, result) || meal.getCount() <= handson$mealBefore) {
             return;
         }
+        handson$serveTheBatch(recipe, pot, result, meal);
+    }
+
+    /** Farmer's Delight made one serving: the rest of the batch follows at once, and what the stirring earned with it. */
+    @Unique
+    private void handson$serveTheBatch(RecipeHolder<CookingPotRecipe> recipe, CookingPotBlockEntity pot, ItemStack result, ItemStack meal) {
         // The batch as HEAD counted it, before Farmer's Delight's serving: a slot that held the last item is empty now, and a count
         // made now would leave it out and cook the rest without it.
         int room = (result.getMaxStackSize() - meal.getCount()) / result.getCount() + 1;

@@ -1,30 +1,39 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 import com.pockyl.diegesis.api.client.StationView;
+import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.station.BoardLogic;
 import com.pockyl.handson_delight.station.Cutting;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The board's book: what can be cut, listed by what comes off (a cabbage leaf: a cabbage and a knife, with everything else the cut
- * gives at the foot), and the dishes put together on it, bread first. The dishes come from the station's data: a dedicated server
+ * gives at the foot), and the dishes put together on it, what goes down first first. The dishes come from the station's data: a dedicated server
  * sends their recipes nowhere else.
  */
 final class BoardBook implements RecipeBook.Source {
     /** The dishes' recipes as the server last sent them ({@code CuttingBoardStation.EFFECT_BOOK}): the same for every board. */
     private static ListTag received = new ListTag();
+    private static final String DISHES = "dishes";
+    private static final String KNIFE = "knife";
     private ListTag readFrom;
     private List<RecipeBook.Page> dishes = List.of();
     /** Goes up each time the dishes are read anew: what the drawer shows depends on them. */
@@ -41,9 +50,44 @@ final class BoardBook implements RecipeBook.Source {
             }
             List<Ingredient> ingredients = List.of(recipe.getIngredients().get(0), recipe.getTool());
             List<ItemStack> foot = results.size() > 1 ? results : List.of();
-            pages.add(new RecipeBook.Page(recipe.getId(), results.get(0).copy(), ingredients, foot, null, false));
+            pages.add(new RecipeBook.Page(recipe.getId(), results.get(0).copy(), ingredients, foot, null, false, toolKind(recipe)));
         }
         return pages;
+    }
+
+    /** The tabs: everything, the dishes, then a tab for each tool the board cuts with, the knife first. */
+    @Override
+    public List<RecipeBook.Tab> tabs(StationView view) {
+        List<RecipeBook.Tab> tabs = new ArrayList<>();
+        // Everything under a compass, as in vanilla's recipe book.
+        tabs.add(new RecipeBook.Tab(null, new ItemStack(Items.COMPASS)));
+        if (!dishes(view).isEmpty()) {
+            tabs.add(new RecipeBook.Tab(DISHES, new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("hamburger")))));
+        }
+        Set<String> tools = new LinkedHashSet<>();
+        Cutting.all(view.level()).stream().map(BoardBook::toolKind).sorted(Comparator.comparing(kind -> !kind.equals(KNIFE)))
+                .forEach(tools::add);
+        for (String tool : tools) {
+            ItemStack icon = tool.equals(KNIFE) ? new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")))
+                    : new ItemStack(BuiltInRegistries.ITEM.get(new ResourceLocation(tool)));
+            tabs.add(new RecipeBook.Tab(tool, icon));
+        }
+        return tabs;
+    }
+
+    @Override
+    public String memory() {
+        return CuttingBoardStation.ID.toString();
+    }
+
+    /** What a cut is made with: the knife, or the first item of its tool (an axe), by id. */
+    private static String toolKind(CuttingBoardRecipe recipe) {
+        ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")));
+        if (recipe.getTool().test(knife)) {
+            return KNIFE;
+        }
+        ItemStack[] tools = recipe.getTool().getItems();
+        return tools.length == 0 ? KNIFE : BuiltInRegistries.ITEM.getKey(tools[0].getItem()).toString();
     }
 
     static void received(ListTag book) {
@@ -57,10 +101,10 @@ final class BoardBook implements RecipeBook.Source {
             List<RecipeBook.Page> read = new ArrayList<>();
             for (AssemblyRecipes.Assembly dish : AssemblyRecipes.read(book)) {
                 List<Ingredient> ingredients = new ArrayList<>(dish.ingredients());
-                // The bread first: it goes down first.
+                // What goes down first is listed first.
                 ingredients.add(0, ingredients.remove(dish.base()));
-                ItemStack result = dish.recipe().getResultItem(view.level().registryAccess()).copy();
-                read.add(new RecipeBook.Page(dish.id(), result, ingredients, List.of(), null, false));
+                ItemStack result = dish.result().copy();
+                read.add(new RecipeBook.Page(dish.id(), result, ingredients, List.of(), null, false, DISHES));
             }
             dishes = read;
             version++;
@@ -79,12 +123,17 @@ final class BoardBook implements RecipeBook.Source {
         return dishes(view).stream().anyMatch(page -> page.ingredients().stream().anyMatch(ingredient -> ingredient.test(stack)));
     }
 
-    /** A dish picked in the book is the one the board makes as soon as the layers make it, even if they could grow into more. */
+    /**
+     * A dish picked in the book is the one the board makes as soon as the layers make it, even if they could grow into more; what it
+     * takes is laid from the inventory, one set or, with shift, a batch.
+     */
     @Override
     public void picked(StationView view, RecipeBook.Page page) {
-        if (dishes.contains(page)) {
+        // By its recipe: the dishes are read anew when the server sends them, the page may be of the list before.
+        if (dishes(view).stream().anyMatch(dish -> dish.key().equals(page.key()))) {
             CompoundTag pick = new CompoundTag();
             pick.putString(CuttingBoardStation.DISH, page.key().toString());
+            pick.putBoolean(CuttingBoardStation.ALL, Screen.hasShiftDown());
             view.sendAction(CuttingBoardStation.ACTION_PICK, pick);
         }
     }

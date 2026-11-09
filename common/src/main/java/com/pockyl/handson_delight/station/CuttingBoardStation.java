@@ -27,7 +27,8 @@ public final class CuttingBoardStation {
     public static final String BOARD = "board";
     /** What a dish is being put together from, bottom first: kept in the board (see {@link BoardLayers}). */
     public static final String LAYERS = "layers";
-    public static final int MOST_LAYERS = 8;
+    /** Feasts, pies and the cake take nine things, as many as a crafting grid holds. */
+    public static final int MOST_LAYERS = 9;
     /**
      * Where a stack let go on the board is caught: one slot that never keeps anything. The logic takes what it is given there, and the
      * board's own slots refuse stacks the library would move by itself: its guess (a shift-click from the inventory) is never shown.
@@ -56,8 +57,12 @@ public final class CuttingBoardStation {
     public static final String ACTION_TAKE = "take";
     /** {@code assemble}: the layers become the dish they make. */
     public static final String ACTION_ASSEMBLE = "assemble";
-    /** {@code pick}: the dish picked in the book ({@link #DISH}: its recipe id) is made as soon as the layers make it. */
+    /**
+     * {@code pick}: the dish picked in the book ({@link #DISH}: its recipe id) is made as soon as the layers make it, and what it takes
+     * is laid from the inventory: one set, or a batch with {@link #ALL}.
+     */
     public static final String ACTION_PICK = "pick";
+    public static final String ALL = "all";
     public static final String ONE = "one";
     public static final String FROM = "from";
     public static final String AT = "at";
@@ -79,7 +84,13 @@ public final class CuttingBoardStation {
     public static final ResourceLocation EFFECT_CHOPPED = HandsOnDelight.id("chopped");
     public static final ResourceLocation EFFECT_PLACED = HandsOnDelight.id("placed");
     public static final ResourceLocation EFFECT_REFUSED = HandsOnDelight.id("refused");
+    /**
+     * Data: {@link #FINISH}, how the dish was finished ({@code AssemblyRecipes.Finish}); {@link #BLOCK}, whether it is a block;
+     * {@link #LAYERS}, what it was made of, bottom first, one of each (a dish picked in the book is laid and made in one tick).
+     */
     public static final ResourceLocation EFFECT_ASSEMBLED = HandsOnDelight.id("assembled");
+    public static final String FINISH = "finish";
+    public static final String BLOCK = "block";
     /** Data: {@link #BOOK}. */
     public static final ResourceLocation EFFECT_BOOK = HandsOnDelight.id("board_book");
     /** Something comes off the board into the inventory: {@link #STACK} from layer {@link #AT}, or from the board itself with none. */

@@ -12,6 +12,7 @@
     "RecipeManagerMixin",
     "RecipeManagerAccessor",
     "ShapelessRecipeMixin",
+    "ShapedRecipeMixin",
     "TransientCraftingContainerAccessor",
     "CraftingMenuAccessor",
     "InventoryMenuAccessor",

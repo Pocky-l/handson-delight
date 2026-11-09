@@ -1,6 +1,5 @@
 package com.pockyl.handson_delight.compat;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -14,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * How the recipe viewers draw a dish put together on the board, the same in JEI, EMI and REI: the bread lies on the board, as the
+ * How the recipe viewers draw a dish put together on the board, the same in JEI, EMI and REI: what goes down first lies on the board, as the
  * food does in Farmer's Delight's own cutting category, the other layers stand beside it in slots, then the arrow and the dish. The
  * board, slots and arrow are Farmer's Delight's, read from its texture.
  */
@@ -31,9 +30,9 @@ public final class AssemblyLayout {
     public static final int BOARD_HEIGHT = 22;
     public static final int BOARD_X = 4;
     public static final int BOARD_Y = 29;
-    /** The bread on the board: the item's corner. */
-    public static final int BREAD_X = 16;
-    public static final int BREAD_Y = 27;
+    /** What goes down first, on the board: the item's corner. */
+    public static final int BASE_X = 16;
+    public static final int BASE_Y = 27;
     public static final int SLOT_U = 0;
     public static final int SLOT_V = 58;
     public static final int SLOT_SIZE = 18;
@@ -57,7 +56,7 @@ public final class AssemblyLayout {
         return Component.translatable("handson_delight.assembly");
     }
 
-    public static Component breadFirst() {
+    public static Component goesDownFirst() {
         return Component.translatable("handson_delight.assembly.first");
     }
 
@@ -65,11 +64,11 @@ public final class AssemblyLayout {
         return new ItemStack(FarmersDelightContent.CUTTING_BOARD.get());
     }
 
-    public static Ingredient bread(AssemblyRecipes.Assembly dish) {
+    public static Ingredient base(AssemblyRecipes.Assembly dish) {
         return dish.ingredients().get(dish.base());
     }
 
-    /** Everything that goes on the bread, in the recipe's order. */
+    /** Everything that goes on it, in the recipe's order. */
     public static List<Ingredient> layers(AssemblyRecipes.Assembly dish) {
         List<Ingredient> layers = new ArrayList<>(dish.ingredients());
         layers.remove(dish.base());
@@ -77,7 +76,7 @@ public final class AssemblyLayout {
     }
 
     public static ItemStack result(AssemblyRecipes.Assembly dish) {
-        return dish.recipe().getResultItem(Minecraft.getInstance().getConnection().registryAccess());
+        return dish.result();
     }
 
     /** The corner of the frame of layer {@code index} of {@code count}: three in a row, the rows centred. */

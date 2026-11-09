@@ -14,6 +14,51 @@ public final class FabricBoardTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void bowlDishesLeaveTheCraftingTable(GameTestHelper helper) {
+        BoardTests.bowlDishesLeaveTheCraftingTable(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyFoodCraftComesToTheBoard(GameTestHelper helper) {
+        BoardTests.everyFoodCraftComesToTheBoard(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void doughKeepsItsWater(GameTestHelper helper) {
+        BoardTests.doughKeepsItsWater(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aPieGoesIntoItsCrust(GameTestHelper helper) {
+        BoardTests.aPieGoesIntoItsCrust(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void milkGivesItsBucketBack(GameTestHelper helper) {
+        BoardTests.milkGivesItsBucketBack(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void cookiesComeEightARound(GameTestHelper helper) {
+        BoardTests.cookiesComeEightARound(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aFeastIsLaidFromTheBook(GameTestHelper helper) {
+        BoardTests.aFeastIsLaidFromTheBook(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aSaladStartsFromItsBowl(GameTestHelper helper) {
+        BoardTests.aSaladStartsFromItsBowl(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void theBookLaysADishFromTheInventory(GameTestHelper helper) {
+        BoardTests.theBookLaysADishFromTheInventory(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void aBurgerIsBuiltFromTheBreadUp(GameTestHelper helper) {
         BoardTests.aBurgerIsBuiltFromTheBreadUp(helper);
     }

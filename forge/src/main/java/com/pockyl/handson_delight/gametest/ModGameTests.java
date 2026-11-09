@@ -165,6 +165,51 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 100)
+    public static void bowlDishesLeaveTheCraftingTable(GameTestHelper helper) {
+        BoardTests.bowlDishesLeaveTheCraftingTable(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void everyFoodCraftComesToTheBoard(GameTestHelper helper) {
+        BoardTests.everyFoodCraftComesToTheBoard(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void doughKeepsItsWater(GameTestHelper helper) {
+        BoardTests.doughKeepsItsWater(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aPieGoesIntoItsCrust(GameTestHelper helper) {
+        BoardTests.aPieGoesIntoItsCrust(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void milkGivesItsBucketBack(GameTestHelper helper) {
+        BoardTests.milkGivesItsBucketBack(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void cookiesComeEightARound(GameTestHelper helper) {
+        BoardTests.cookiesComeEightARound(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aFeastIsLaidFromTheBook(GameTestHelper helper) {
+        BoardTests.aFeastIsLaidFromTheBook(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aSaladStartsFromItsBowl(GameTestHelper helper) {
+        BoardTests.aSaladStartsFromItsBowl(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theBookLaysADishFromTheInventory(GameTestHelper helper) {
+        BoardTests.theBookLaysADishFromTheInventory(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
     public static void aBurgerIsBuiltFromTheBreadUp(GameTestHelper helper) {
         BoardTests.aBurgerIsBuiltFromTheBreadUp(helper);
     }

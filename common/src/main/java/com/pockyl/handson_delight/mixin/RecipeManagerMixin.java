@@ -5,17 +5,23 @@ import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Food put together on the cutting board: its recipes are found before the manager reads them and kept for the board as well. They
@@ -37,10 +43,19 @@ abstract class RecipeManagerMixin {
         AssemblyRecipes.collect(recipes, handson$taken);
     }
 
+    /** A recipe of a type of its own (Farmer's Delight's dough from water) is not made in a player's grid either. */
+    @Inject(method = "getRecipeFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/Container;"
+            + "Lnet/minecraft/world/level/Level;)Ljava/util/Optional;", at = @At("RETURN"), cancellable = true)
+    private void handson$notInThisGrid(RecipeType<?> type, Container grid, Level level, CallbackInfoReturnable<Optional<?>> callback) {
+        if (callback.getReturnValue().orElse(null) instanceof Recipe<?> recipe && AssemblyRecipes.notInThisGrid(recipe, grid)) {
+            callback.setReturnValue(Optional.empty());
+        }
+    }
+
     @Inject(method = APPLY, at = @At("TAIL"))
     private void handson$keepAssembled(Map<ResourceLocation, JsonElement> recipes, ResourceManager resources, ProfilerFiller profiler,
             CallbackInfo callback) {
-        AssemblyRecipes.load(handson$taken);
+        AssemblyRecipes.load(handson$taken, ((RecipeManagerAccessor) this).handson$byName()::containsKey);
         handson$taken.clear();
     }
 }

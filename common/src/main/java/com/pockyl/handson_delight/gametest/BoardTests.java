@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.CraftingContainer;
@@ -39,6 +40,8 @@ import com.pockyl.handson_delight.station.CuttingBoardStation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /** The cutting board's rules against a real board of Farmer's Delight, on every loader, like {@link PotTests}. */
@@ -111,8 +114,192 @@ public final class BoardTests {
                 "and the recipe book does not learn it");
         helper.assertTrue(AssemblyRecipes.all().stream().anyMatch(dish -> dish.id().getPath().equals("hamburger")), "the board does");
         helper.assertTrue(level.getRecipeManager().byKey(FarmersDelightContent.id("cooking_pot")).isPresent(), "blocks are still crafted");
-        helper.assertFalse(AssemblyRecipes.all().stream().anyMatch(dish -> dish.id().getPath().equals("mixed_salad")),
-                "a salad in a bowl is not stacked on bread");
+        helper.succeed();
+    }
+
+    /**
+     * Plated meals and salads go down from the bowl up. What is one kind of thing put back together (slices into a pie, leaves into
+     * a cabbage) and what is no food (horse feed, milk bottles) stays in the crafting table.
+     */
+    public static void bowlDishesLeaveTheCraftingTable(GameTestHelper helper) {
+        for (String dish : List.of("bacon_and_eggs", "steak_and_potatoes", "roasted_mutton_chops", "grilled_salmon", "mixed_salad",
+                "fruit_salad", "nether_salad")) {
+            helper.assertTrue(made(dish).filter(it -> it.kind() == AssemblyRecipes.Base.BOWL).isPresent(), dish + " starts from its bowl");
+        }
+        for (String crafted : List.of("apple_pie_from_slices", "cabbage_from_leaves", "horse_feed", "milk_bottle", "cooking_pot")) {
+            helper.assertTrue(made(crafted).isEmpty(), crafted + " stays in the crafting table");
+        }
+        Level level = helper.getLevel();
+        Player player = helper.makeMockPlayer();
+        CraftingContainer table = netherSalad(new TransientCraftingContainer(new CraftingMenu(0, player.getInventory()), 3, 3));
+        CraftingContainer machine = netherSalad(new TransientCraftingContainer(new MachineMenu(), 3, 3));
+        helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, table, level).isEmpty(), "the table makes no salad");
+        helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, machine, level).isPresent(), "an autocrafter does");
+        helper.succeed();
+    }
+
+    private static Optional<AssemblyRecipes.Assembly> made(String path) {
+        return AssemblyRecipes.all().stream().filter(dish -> dish.id().equals(FarmersDelightContent.id(path))).findFirst();
+    }
+
+    private static CraftingContainer netherSalad(CraftingContainer grid) {
+        grid.setItem(0, new ItemStack(Items.CRIMSON_FUNGUS));
+        grid.setItem(1, new ItemStack(Items.WARPED_FUNGUS));
+        grid.setItem(4, new ItemStack(Items.BOWL));
+        return grid;
+    }
+
+    /** Every other kind of FD food craft goes onto the board too, each starting from what goes down first. */
+    public static void everyFoodCraftComesToTheBoard(GameTestHelper helper) {
+        Map<String, AssemblyRecipes.Base> kinds = Map.ofEntries(Map.entry("kelp_roll", AssemblyRecipes.Base.KELP),
+                Map.entry("cod_roll", AssemblyRecipes.Base.RICE), Map.entry("salmon_roll", AssemblyRecipes.Base.RICE),
+                Map.entry("barbecue_stick", AssemblyRecipes.Base.STICK), Map.entry("melon_popsicle", AssemblyRecipes.Base.STICK),
+                Map.entry("wheat_dough_from_egg", AssemblyRecipes.Base.WHEAT), Map.entry("wheat_dough_from_water", AssemblyRecipes.Base.WHEAT),
+                Map.entry("pie_crust", AssemblyRecipes.Base.WHEAT), Map.entry("honey_cookie", AssemblyRecipes.Base.WHEAT),
+                Map.entry("sweet_berry_cookie", AssemblyRecipes.Base.WHEAT), Map.entry("cake_from_milk_bottle", AssemblyRecipes.Base.WHEAT),
+                Map.entry("apple_pie", AssemblyRecipes.Base.CRUST), Map.entry("chocolate_pie", AssemblyRecipes.Base.CRUST),
+                Map.entry("sweet_berry_cheesecake", AssemblyRecipes.Base.CRUST),
+                Map.entry("pumpkin_pie_from_pie_crust", AssemblyRecipes.Base.CRUST), Map.entry("melon_juice", AssemblyRecipes.Base.BOTTLE),
+                Map.entry("stuffed_potato", AssemblyRecipes.Base.FIRST), Map.entry("roast_chicken_block", AssemblyRecipes.Base.BOWL),
+                Map.entry("honey_glazed_ham_block", AssemblyRecipes.Base.BOWL), Map.entry("shepherds_pie_block", AssemblyRecipes.Base.BOWL),
+                Map.entry("rice_roll_medley_block", AssemblyRecipes.Base.BOWL), Map.entry("gleaming_salad_block", AssemblyRecipes.Base.BOWL));
+        kinds.forEach((dish, base) -> helper.assertTrue(made(dish).filter(it -> it.kind() == base).isPresent(), dish + " goes down from its " + base));
+        helper.assertTrue(made("honey_glazed_ham_block").map(AssemblyRecipes.Assembly::finish).orElse(null) == AssemblyRecipes.Finish.PRESS,
+                "a feast is pressed together, not tossed");
+        for (String crafted : List.of("cake_from_slices", "pumpkin_pie_from_slices", "pumpkin_from_slices", "milk_bucket_from_bottles",
+                "milk_bottle", "rice_panicle", "tomato_seeds")) {
+            helper.assertTrue(made(crafted).isEmpty(), crafted + " stays in the crafting table");
+        }
+        Level level = helper.getLevel();
+        CraftingContainer table = new TransientCraftingContainer(new CraftingMenu(0, helper.makeMockPlayer().getInventory()), 3, 3);
+        table.setItem(0, new ItemStack(Items.WHEAT));
+        table.setItem(1, new ItemStack(Items.WATER_BUCKET));
+        helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, table, level).isEmpty(),
+                "the table makes no dough from water either, though it is a recipe of its own type");
+        helper.succeed();
+    }
+
+    /** Dough from water: as many as there is wheat, and the bucket of water stays full, as in the crafting table. */
+    public static void doughKeepsItsWater(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.carry(new ItemStack(Items.WHEAT, 5));
+        setup.place();
+        setup.carry(new ItemStack(Items.WATER_BUCKET));
+        setup.place();
+        helper.assertTrue(setup.onBoard().is(fd("wheat_dough")) && setup.onBoard().getCount() == 5, "five dough of five wheat");
+        helper.assertTrue(setup.cook.getInventory().countItem(Items.WATER_BUCKET) == 1, "and the water comes back");
+        helper.succeed();
+    }
+
+    /** A shaped recipe: the crust first, then all the rest in any order; the pie is a block and lies on the board. */
+    public static void aPieGoesIntoItsCrust(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.carry(new ItemStack(fd("pie_crust"), 2));
+        setup.place();
+        for (Item layer : List.of(Items.APPLE, Items.SUGAR, Items.WHEAT, Items.APPLE, Items.WHEAT, Items.SUGAR, Items.APPLE, Items.WHEAT)) {
+            setup.carry(new ItemStack(layer, 2));
+            setup.place();
+        }
+        helper.assertTrue(setup.layers() == 0 && setup.onBoard().is(fd("apple_pie")) && setup.onBoard().getCount() == 2,
+                "two apple pies of nine layers");
+        helper.succeed();
+    }
+
+    /** Milk from a bucket: the bucket comes back, and a bucket goes down only one at a time, so one potato is stuffed. */
+    public static void milkGivesItsBucketBack(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.carry(new ItemStack(Items.BAKED_POTATO, 3));
+        setup.place();
+        setup.carry(new ItemStack(Items.COOKED_BEEF, 3));
+        setup.place();
+        setup.carry(new ItemStack(Items.MILK_BUCKET));
+        setup.place();
+        helper.assertTrue(setup.onBoard().is(fd("stuffed_potato")) && setup.onBoard().getCount() == 1, "one stuffed potato");
+        Inventory inventory = setup.cook.getInventory();
+        helper.assertTrue(inventory.countItem(Items.BUCKET) == 1 && inventory.countItem(Items.MILK_BUCKET) == 0, "the empty bucket comes back");
+        helper.assertTrue(inventory.countItem(Items.BAKED_POTATO) == 2 && inventory.countItem(Items.COOKED_BEEF) == 2, "and the rest");
+        helper.succeed();
+    }
+
+    /** Cookies come eight a round; the honey's bottles come back empty. */
+    public static void cookiesComeEightARound(GameTestHelper helper) {
+        Board setup = board(helper);
+        for (Item layer : List.of(Items.WHEAT, Items.HONEY_BOTTLE, Items.WHEAT)) {
+            setup.carry(new ItemStack(layer, 2));
+            setup.place();
+        }
+        helper.assertTrue(setup.onBoard().is(fd("honey_cookie")) && setup.onBoard().getCount() == 16, "sixteen cookies of two rounds");
+        helper.assertTrue(setup.cook.getInventory().countItem(Items.GLASS_BOTTLE) == 2, "two empty bottles");
+        helper.succeed();
+    }
+
+    /** A feast takes nine things: the book lays them all from the inventory, and the feast lies on the board. */
+    public static void aFeastIsLaidFromTheBook(GameTestHelper helper) {
+        Board setup = board(helper);
+        Inventory inventory = setup.cook.getInventory();
+        inventory.setItem(0, new ItemStack(Items.SWEET_BERRIES, 4));
+        inventory.setItem(1, new ItemStack(Items.HONEY_BOTTLE));
+        inventory.setItem(2, new ItemStack(fd("smoked_ham")));
+        inventory.setItem(3, new ItemStack(fd("cooked_rice"), 2));
+        inventory.setItem(4, new ItemStack(Items.BOWL));
+        CompoundTag pick = new CompoundTag();
+        pick.putString(CuttingBoardStation.DISH, FarmersDelightContent.id("honey_glazed_ham_block").toString());
+        setup.act(CuttingBoardStation.ACTION_PICK, pick);
+        helper.assertTrue(setup.onBoard().is(fd("honey_glazed_ham_block")), "the ham feast lies on the board");
+        helper.assertTrue(inventory.countItem(Items.SWEET_BERRIES) == 0 && inventory.countItem(Items.GLASS_BOTTLE) == 1,
+                "everything was used; the honey's bottle came back");
+        helper.succeed();
+    }
+
+    /** The bowl goes down first, then what it holds; the thinnest layer says how many, the rest goes back. */
+    public static void aSaladStartsFromItsBowl(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.carry(new ItemStack(Items.CRIMSON_FUNGUS, 5));
+        setup.place();
+        helper.assertTrue(setup.layers() == 0 && setup.onBoard().isEmpty(), "a fungus is no bowl");
+        setup.carry(new ItemStack(Items.BOWL, 3));
+        setup.place();
+        setup.carry(new ItemStack(Items.CRIMSON_FUNGUS, 5));
+        setup.place();
+        helper.assertTrue(setup.layers() == 2 && setup.cook.inventoryMenu.getCarried().getCount() == 2, "three fungi, as three bowls");
+        setup.carry(new ItemStack(Items.WARPED_FUNGUS, 2));
+        setup.place();
+        helper.assertTrue(setup.layers() == 0, "the last one makes the salad");
+        helper.assertTrue(setup.onBoard().is(fd("nether_salad")) && setup.onBoard().getCount() == 2, "two, as there were two warped");
+        helper.assertTrue(setup.cook.getInventory().countItem(Items.BOWL) == 1 && setup.cook.getInventory().countItem(Items.CRIMSON_FUNGUS) == 1,
+                "a bowl and a fungus go back");
+        helper.succeed();
+    }
+
+    /** A dish picked in the book is laid from the inventory: a batch with shift, one set without; a dish made before is taken off. */
+    public static void theBookLaysADishFromTheInventory(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.cook.getInventory().setItem(5, new ItemStack(Items.BOWL, 20));
+        setup.cook.getInventory().setItem(6, new ItemStack(Items.CRIMSON_FUNGUS, 20));
+        setup.cook.getInventory().setItem(7, new ItemStack(Items.WARPED_FUNGUS, 20));
+        CompoundTag pick = new CompoundTag();
+        pick.putString(CuttingBoardStation.DISH, FarmersDelightContent.id("nether_salad").toString());
+        pick.putBoolean(CuttingBoardStation.ALL, true);
+        setup.act(CuttingBoardStation.ACTION_PICK, pick);
+        helper.assertTrue(setup.onBoard().is(fd("nether_salad")) && setup.onBoard().getCount() == CuttingBoardStation.BATCH,
+                "sixteen salads with shift");
+        helper.assertTrue(setup.cook.getInventory().countItem(Items.BOWL) == 4 && setup.cook.getInventory().countItem(Items.WARPED_FUNGUS) == 4,
+                "taken from the inventory");
+        pick.putBoolean(CuttingBoardStation.ALL, false);
+        setup.act(CuttingBoardStation.ACTION_PICK, pick);
+        helper.assertTrue(setup.onBoard().getCount() == 1 && setup.cook.getInventory().countItem(fd("nether_salad")) == CuttingBoardStation.BATCH,
+                "one more without shift; the sixteen went to the cook");
+        setup.cook.getInventory().clearContent();
+        setup.act(CuttingBoardStation.ACTION_TAKE, new CompoundTag());
+        setup.act(CuttingBoardStation.ACTION_PICK, pick);
+        helper.assertTrue(setup.layers() == 0 && setup.onBoard().isEmpty(), "nothing in the inventory, nothing on the board");
+        setup.carry(new ItemStack(Items.BOWL, 3));
+        setup.place();
+        setup.cook.getInventory().setItem(1, new ItemStack(Items.CRIMSON_FUNGUS, 5));
+        setup.cook.getInventory().setItem(2, new ItemStack(Items.WARPED_FUNGUS, 5));
+        setup.act(CuttingBoardStation.ACTION_PICK, pick);
+        helper.assertTrue(setup.onBoard().is(fd("nether_salad")) && setup.onBoard().getCount() == 3,
+                "onto three bowls the book lays the rest of three salads");
         helper.succeed();
     }
 

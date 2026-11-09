@@ -60,7 +60,7 @@ public final class HandsOnReiPlugin implements REIClientPlugin {
 
         private static List<EntryIngredient> inputs(Assembly dish) {
             List<EntryIngredient> inputs = new ArrayList<>();
-            inputs.add(EntryIngredients.ofIngredient(AssemblyLayout.bread(dish)));
+            inputs.add(EntryIngredients.ofIngredient(AssemblyLayout.base(dish)));
             inputs.addAll(EntryIngredients.ofIngredients(AssemblyLayout.layers(dish)));
             return inputs;
         }
@@ -111,8 +111,8 @@ public final class HandsOnReiPlugin implements REIClientPlugin {
             widgets.add(Widgets.createTexturedWidget(AssemblyLayout.TEXTURE, x + AssemblyLayout.ARROW_X, y + AssemblyLayout.ARROW_Y,
                     AssemblyLayout.ARROW_U, AssemblyLayout.ARROW_V, AssemblyLayout.ARROW_WIDTH, AssemblyLayout.ARROW_HEIGHT));
             List<EntryIngredient> inputs = display.getInputEntries();
-            widgets.add(Widgets.createSlot(new Point(x + AssemblyLayout.BREAD_X, y + AssemblyLayout.BREAD_Y)).disableBackground().markInput()
-                    .entries(inputs.get(0).stream().map(stack -> stack.copy().tooltip(AssemblyLayout.breadFirst())).toList()));
+            widgets.add(Widgets.createSlot(new Point(x + AssemblyLayout.BASE_X, y + AssemblyLayout.BASE_Y)).disableBackground().markInput()
+                    .entries(inputs.get(0).stream().map(stack -> stack.copy().tooltip(AssemblyLayout.goesDownFirst())).toList()));
             for (int i = 0; i < display.layers; i++) {
                 widgets.add(Widgets.createSlot(new Point(x + AssemblyLayout.layerX(i) + 1, y + AssemblyLayout.layerY(i, display.layers) + 1))
                         .markInput().entries(inputs.get(i + 1)));

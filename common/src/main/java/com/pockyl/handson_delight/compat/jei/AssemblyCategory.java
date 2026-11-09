@@ -24,14 +24,14 @@ import static com.pockyl.handson_delight.compat.AssemblyLayout.ARROW_V;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.ARROW_WIDTH;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.ARROW_X;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.ARROW_Y;
+import static com.pockyl.handson_delight.compat.AssemblyLayout.BASE_X;
+import static com.pockyl.handson_delight.compat.AssemblyLayout.BASE_Y;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.BOARD_HEIGHT;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.BOARD_U;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.BOARD_V;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.BOARD_WIDTH;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.BOARD_X;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.BOARD_Y;
-import static com.pockyl.handson_delight.compat.AssemblyLayout.BREAD_X;
-import static com.pockyl.handson_delight.compat.AssemblyLayout.BREAD_Y;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.CATEGORY;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.HEIGHT;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.RESULT_X;
@@ -41,8 +41,8 @@ import static com.pockyl.handson_delight.compat.AssemblyLayout.SLOT_U;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.SLOT_V;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.TEXTURE;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.WIDTH;
-import static com.pockyl.handson_delight.compat.AssemblyLayout.bread;
-import static com.pockyl.handson_delight.compat.AssemblyLayout.breadFirst;
+import static com.pockyl.handson_delight.compat.AssemblyLayout.base;
+import static com.pockyl.handson_delight.compat.AssemblyLayout.goesDownFirst;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.layerX;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.layerY;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.layers;
@@ -92,8 +92,8 @@ final class AssemblyCategory implements IRecipeCategory<Assembly> {
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, Assembly dish, IFocusGroup focuses) {
-        builder.addSlot(RecipeIngredientRole.INPUT, BREAD_X, BREAD_Y).addIngredients(bread(dish))
-                .addRichTooltipCallback((view, tooltip) -> tooltip.add(breadFirst()));
+        builder.addSlot(RecipeIngredientRole.INPUT, BASE_X, BASE_Y).addIngredients(base(dish))
+                .addRichTooltipCallback((view, tooltip) -> tooltip.add(goesDownFirst()));
         List<Ingredient> layers = layers(dish);
         for (int i = 0; i < layers.size(); i++) {
             builder.addSlot(RecipeIngredientRole.INPUT, layerX(i) + 1, layerY(i, layers.size()) + 1).addIngredients(layers.get(i))

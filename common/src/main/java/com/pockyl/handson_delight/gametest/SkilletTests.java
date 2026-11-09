@@ -104,6 +104,24 @@ public final class SkilletTests {
         });
     }
 
+    /** An egg fries sunny side up: through from below in the time both sides of a steak take, never waiting for a toss. */
+    public static void anEggFriesWithoutATurn(GameTestHelper helper) {
+        Pan pan = pan(helper);
+        pan.place(Items.EGG, 2);
+        helper.assertTrue(pan.skillet.getStoredStack().is(Items.EGG) && pan.skillet.getStoredStack().getCount() == 2,
+                "both eggs go into the pan, got " + pan.skillet.getStoredStack());
+        helper.runAfterDelay(TWO_BEEF_SIDE + 5, () -> {
+            helper.assertTrue(pan.skillet.getStoredStack().is(Items.EGG), "past one side's time it still fries");
+            helper.assertFalse(pan.frying().waits(), "and does not wait to be turned");
+            helper.assertTrue(pan.frying().up() == pan.frying().down() && pan.frying().down() > 0.4F, "it cooks through from below");
+        });
+        helper.runAfterDelay(2 * TWO_BEEF_SIDE + 10, () -> {
+            ItemStack inPan = pan.skillet.getStoredStack();
+            helper.assertTrue(inPan.getCount() == 2 && !inPan.is(Items.EGG), "done in the time of both sides, never tossed, got " + inPan);
+            helper.succeed();
+        });
+    }
+
     public static void farmersDelightsRightClickCooksItsWay(GameTestHelper helper) {
         Pan pan = pan(helper);
         pan.skillet.addItemToCook(new ItemStack(Items.BEEF), pan.cook);

@@ -18,6 +18,7 @@ import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
 
 import com.pockyl.diegesis.api.Diegesis;
 import com.pockyl.diegesis.api.station.StationContext;
+import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.Optional;
@@ -74,7 +75,12 @@ public final class SkilletCooking {
         if (recipe.isPresent()) {
             frying.batch(Math.min(stack.getCount(), BATCH));
             int ticks = SkilletBlock.getSkilletCookingTime(recipe.get().getCookingTime(), ((FryingPan) skillet).handson$fireAspect());
-            frying.fry(1.0F / sideTicks(ticks, frying.batch()));
+            if (isOneSided(stack)) {
+                // An egg fries sunny side up: through from below in the time both sides take, no toss asked for.
+                frying.fryThrough(0.5F / sideTicks(ticks, frying.batch()));
+            } else {
+                frying.fry(1.0F / sideTicks(ticks, frying.batch()));
+            }
             if (frying.down() >= 1.0F && frying.up() >= 1.0F) {
                 finish(skillet, frying, stack, recipe.get());
             }
@@ -137,6 +143,11 @@ public final class SkilletCooking {
         frying(skillet).farmersDelightsWay();
         send(skillet, true);
         return inPan;
+    }
+
+    /** Whether {@code stack} is fried on one side only and never turned (see {@link KitchenTags#ONE_SIDED}). */
+    public static boolean isOneSided(ItemStack stack) {
+        return stack.is(KitchenTags.ONE_SIDED);
     }
 
     /** Whether {@code stack} in the pan is done: nothing the campfire makes of it any more. */

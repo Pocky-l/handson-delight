@@ -145,8 +145,31 @@ public final class PotLogic implements StationLogic {
         }
         if (!station.level().isClientSide()) {
             giveBackSaved(station);
+            giveBackLeftovers(station);
         }
         refresh(station);
+    }
+
+    /** The containers emptied into the soup (a milk bucket's bucket) go back to the cook, or to anyone at the pot. */
+    private void giveBackLeftovers(StationContext station) {
+        List<ItemStack> leftovers = ((PotStirring) pot).handson$takeLeftovers();
+        if (leftovers.isEmpty()) {
+            return;
+        }
+        Player to = null;
+        for (Player user : station.users()) {
+            if (to == null || user.getUUID().equals(cook)) {
+                to = user;
+            }
+        }
+        for (ItemStack leftover : leftovers) {
+            if (to == null) {
+                net.minecraft.world.Containers.dropItemStack(station.level(), station.pos().getX() + 0.5, station.pos().getY() + 1.0,
+                        station.pos().getZ() + 0.5, leftover);
+            } else if (!to.getInventory().add(leftover)) {
+                to.drop(leftover, false);
+            }
+        }
     }
 
     /**

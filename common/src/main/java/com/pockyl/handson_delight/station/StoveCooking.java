@@ -15,6 +15,7 @@ import vectorwing.farmersdelight.common.block.AbstractStoveBlock;
 import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
 import com.pockyl.diegesis.api.Diegesis;
+import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.Optional;
@@ -87,7 +88,11 @@ public final class StoveCooking {
             if (!lit || recipe.isEmpty() || grill.waits(place)) {
                 continue;
             }
-            grill.grill(place, 1.0F / sideTicks(recipe.get().getCookingTime()));
+            if (SkilletCooking.isOneSided(stack)) {
+                grill.grillThrough(place, 0.5F / sideTicks(recipe.get().getCookingTime()));
+            } else {
+                grill.grill(place, 1.0F / sideTicks(recipe.get().getCookingTime()));
+            }
             if (grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
                 ItemStack done = recipe.get().assemble(new SimpleContainer(stack.copyWithCount(1)), level.registryAccess());
                 Platform.INSTANCE.setItem(stove, place, done);
@@ -104,11 +109,11 @@ public final class StoveCooking {
 
     /**
      * The stack on the cursor goes onto the grill: with {@code place} -1 one onto every free place, as many as there are; else one onto
-     * that place. Returns how many went on.
+     * that place. Returns how many went on. What would run through the bars (an egg cracked open) goes into a skillet, not here.
      */
     public static int place(AbstractStoveBlockEntity stove, ItemStack carried, int place) {
         Level level = stove.getLevel();
-        if (carried.isEmpty() || level == null || isCovered(stove) || SkilletCooking.recipe(level, carried).isEmpty()) {
+        if (carried.isEmpty() || level == null || isCovered(stove) || !canGrill(level, carried)) {
             return 0;
         }
         Grill grill = grill(stove);
@@ -161,6 +166,11 @@ public final class StoveCooking {
             send(stove, true);
         }
         return taken;
+    }
+
+    /** Whether the grill takes {@code stack}: campfire food that stays on the bars. */
+    public static boolean canGrill(Level level, ItemStack stack) {
+        return !stack.is(KitchenTags.NOT_ON_GRILL) && SkilletCooking.recipe(level, stack).isPresent();
     }
 
     /** Whether {@code stack} on the grill is done: nothing the fire makes of it any more. */

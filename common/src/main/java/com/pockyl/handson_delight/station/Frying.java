@@ -79,6 +79,12 @@ public final class Frying {
         down = Math.min(1.0F, down + amount);
     }
 
+    /** Food fried on one side only cooks through from below: the top is done as the bottom is, so it never waits to be turned. */
+    void fryThrough(float amount) {
+        down = Math.min(1.0F, down + amount);
+        up = down;
+    }
+
     void turn(long now) {
         float was = down;
         down = up;

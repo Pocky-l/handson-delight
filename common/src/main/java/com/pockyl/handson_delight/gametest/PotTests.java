@@ -370,6 +370,31 @@ public final class PotTests {
         });
     }
 
+    /** Milk poured into the pot leaves its bottle: with the cook at the station it goes to them, not onto the floor. */
+    public static void theEmptiedContainerGoesToTheCook(GameTestHelper helper) {
+        Setup setup = pot(helper);
+        ServerPlayer cook = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), new GameProfile(UUID.randomUUID(), "cook"));
+        setup.station.users.add(cook);
+        Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(fd("milk_bottle")));
+        Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.SUGAR));
+        Platform.INSTANCE.setItem(setup.pot, 2, new ItemStack(Items.COCOA_BEANS));
+        Platform.INSTANCE.setItem(setup.pot, 3, new ItemStack(Items.COCOA_BEANS));
+        for (int tick = 0; tick < 400; tick++) {
+            double angle = tick * Math.PI / 10.0;
+            helper.runAfterDelay(tick, () -> {
+                setup.logic.onCustomAction(setup.station, cook, CookingPotStation.ACTION_STIR, spoonAt(angle));
+                setup.logic.tick(setup.station);
+            });
+        }
+        helper.runAfterDelay(405, () -> {
+            helper.assertTrue(setup.pot.getMeal().is(fd("hot_cocoa")), "the cocoa is made, got " + setup.pot.getMeal());
+            helper.assertTrue(cook.getInventory().countItem(Items.GLASS_BOTTLE) == 1, "the cook has the bottle back");
+            helper.assertTrue(helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                    new net.minecraft.world.phys.AABB(setup.station.pos()).inflate(3)).isEmpty(), "nothing lands beside the pot");
+            helper.succeed();
+        });
+    }
+
     /** Food a cook put in waits for the spoon while they are at the pot; once they walked away it cooks Farmer's Delight's way. */
     public static void aPotLeftByItsCookCooksOn(GameTestHelper helper) {
         Setup setup = pot(helper);

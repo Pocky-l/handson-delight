@@ -44,17 +44,21 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 - **Recipe book.** It hangs beside the station and puts what you can make now first. Click a dish and its ingredients
   go into the pot from your inventory; Shift + click puts in up to sixteen sets.
 - **Cutting board.** Right-click it with food to lay the food down, with a knife to take the knife in hand. Chop on
-  the dashed marks; each cut goes through sixteen items of the stack.
+  the dashed marks; each cut goes through sixteen items of the stack. Food is cut across its own length, a kelp roll in
+  even slices and a pie in wedges, with one cut for each piece it gives, three at most.
 - **Dishes on the board.** Farmer's Delight's food crafts move from the crafting table to the cutting board: lay what
   goes down first (bread, a bowl, a stick, kelp, wheat, a pie crust), put the rest on it, and the dish is made. Salads
-  are tossed in their bowl, rolls rolled, skewers pushed along the stick, dough kneaded. Machines such as Create's and
+  are tossed in their bowl and plated meals laid in it, sandwiches closed with their bread, skewers threaded from the
+  tip, dough kneaded. Milk and honey are poured, eggs cracked. Machines such as Create's and
   AE2's autocrafters still craft them, and so do players without this mod on a server that has it.
 - **Board recipe book.** Tabs show everything, the dishes only or the cuts only. Click a dish and it is laid from your
   inventory; Shift + click lays sixteen.
 - **Skillet.** Food fries on the side that lies on the pan, then smokes and waits. Toss the pan by its handle to turn it.
-  When both sides are done, click the food to take it. Up to sixteen fry together.
+  When both sides are done, click the food to take it. Up to sixteen fry together. Eggs go in cracked and fry
+  sunny side up, with no toss.
 - **Stove.** Up to six pieces grill on its top. Each one smokes when its lower side is done: click it to turn it over.
-  Once both sides are done it waits on the grill until you take it.
+  Once both sides are done it waits on the grill until you take it. Eggs would run through the grill: fry them in a
+  skillet.
 - **A kitchen.** Rest the cursor at the edge of the screen beside another station and the camera moves over to it. A, D
   and the arrow keys do the same.
 - **For everyone.** Players nearby see the soup simmer, the spoon go round and the food land on the board.

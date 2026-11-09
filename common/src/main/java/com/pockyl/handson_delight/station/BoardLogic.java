@@ -37,22 +37,20 @@ import java.util.Optional;
 public final class BoardLogic implements StationLogic {
     /** Ticks between two chops the server takes: a click as fast as a hand can go, not a macro. */
     private static final int CHOP_GAP = 3;
-    /**
-     * Where marks may lie, as fractions of the item's length (never at its very ends), and how far apart two must be to read as two
-     * cuts and to leave three pieces of a size one can see.
-     */
+    /** Where marks may lie, as fractions of the item's length from its far end: never at its very ends. */
     private static final float SPOT_FROM = 0.2F;
     private static final float SPOT_TO = 0.8F;
-    private static final float SPOT_APART = 0.3F;
-    /** How far a mark may lie from straight across the item: diagonal both ways, never along the item towards the cook. */
-    private static final float MOST_TILT = 60.0F * Mth.DEG_TO_RAD;
+    /** How far a mark may stray from its even place, as a share of the room between two marks: pieces of a size one can see. */
+    private static final float SPOT_JITTER = 0.2F;
 
     private final CuttingBoardBlockEntity board;
     /** How many of the marks the knife has come down on, in order. */
     private int marks;
     /** Where the marks of the item lying there are, see {@link CuttingBoardStation#SPOTS}. */
-    private final float[] spots = new float[Cutting.CHOPS];
-    private final float[] angles = new float[Cutting.CHOPS];
+    private final float[] spots = new float[Cutting.MOST_MARKS];
+    private final float[] angles = new float[Cutting.MOST_MARKS];
+    /** How the item lying there is cut: how many marks, laid how. */
+    private Cutting.Plan plan = new Cutting.Plan(1, Cutting.Style.ACROSS);
     private ItemStack cutting = ItemStack.EMPTY;
     private long lastChop = -CHOP_GAP;
     /** The dish the cook picked in the book: made at once when the layers make it. */
@@ -214,6 +212,10 @@ public final class BoardLogic implements StationLogic {
         carried.shrink(moved);
         putBack(player, from, carried);
         Platform.INSTANCE.setItem(board, put);
+        if (onBoard.isEmpty()) {
+            cutting = put.copyWithCount(1);
+            restart(station);
+        }
         station.effect(CuttingBoardStation.EFFECT_PLACED, "surface", new CompoundTag());
     }
 
@@ -369,7 +371,7 @@ public final class BoardLogic implements StationLogic {
         chopped.putFloat(CuttingBoardStation.ANGLE, angles[mark]);
         marks++;
         chopped.putString(CuttingBoardStation.TOOL, BuiltInRegistries.ITEM.getKey(tool.getItem()).toString());
-        if (marks < Cutting.CHOPS) {
+        if (marks < plan.marks()) {
             station.effect(CuttingBoardStation.EFFECT_CHOPPED, "item", chopped);
             return;
         }
@@ -482,26 +484,80 @@ public final class BoardLogic implements StationLogic {
     }
 
     /**
-     * No cuts on the item yet, and two new marks for it: at random places and angles, apart enough to read as two cuts, and never
-     * crossing on the item (that would make four pieces of no sense).
+     * No cuts on the item yet, and new marks for it, as many as the pieces it falls into ask (one cut for two pieces), at even places
+     * a little askew. A spot is a fraction of the item's length from its far end; an angle is the client's to turn into a line on the
+     * icon (see {@link Cutting.Style}): across and wedges get a share from -1 to 1 of how far they may lean, a roll and strips none;
+     * wedges get their turn about the middle in radians.
      */
     private void restart(StationContext station) {
         marks = 0;
+        ItemStack onBoard = Platform.INSTANCE.getItem(board);
+        plan = onBoard.isEmpty() ? new Cutting.Plan(1, Cutting.Style.ACROSS) : Cutting.plan(station.level(), onBoard);
         RandomSource random = station.level().getRandom();
-        spots[0] = Mth.nextFloat(random, SPOT_FROM, SPOT_TO);
-        angles[0] = Mth.nextFloat(random, -MOST_TILT, MOST_TILT);
-        for (int attempt = 0; ; attempt++) {
-            spots[1] = Mth.nextFloat(random, SPOT_FROM, SPOT_TO);
-            angles[1] = attempt < 30 ? Mth.nextFloat(random, -MOST_TILT, MOST_TILT) : angles[0];
-            if (Math.abs(spots[1] - spots[0]) >= SPOT_APART && !crossOnTheItem(spots[0], angles[0], spots[1], angles[1])) {
-                break;
+        int count = plan.marks();
+        // Each mark has an even share of the length and lies near the middle of it.
+        float room = (SPOT_TO - SPOT_FROM) / count;
+        float turn = random.nextFloat() * Mth.PI;
+        for (int mark = 0; mark < count; mark++) {
+            switch (plan.style()) {
+                case WEDGES -> {
+                    // Through the middle, evenly round it: two cuts make four wedges.
+                    spots[mark] = 0.5F;
+                    angles[mark] = turn + mark * Mth.PI / count;
+                }
+                case STRAIGHT, STRIPS -> {
+                    // Even slices of a roll, close strips of pasta: square across, at even places.
+                    float span = plan.style() == Cutting.Style.STRIPS ? 0.5F : 1.0F;
+                    spots[mark] = 0.5F + ((mark + 1.0F) / (count + 1.0F) - 0.5F) * span;
+                    angles[mark] = 0.0F;
+                }
+                case ACROSS -> {
+                    float even = SPOT_FROM + (mark + 0.5F) * room;
+                    float stray = count == 1 ? 0.15F : room * SPOT_JITTER;
+                    spots[mark] = even + Mth.nextFloat(random, -stray, stray);
+                    angles[mark] = Mth.nextFloat(random, -1.0F, 1.0F);
+                }
+            }
+        }
+        if (plan.style() == Cutting.Style.ACROSS) {
+            // Cut in no fixed order from one end to the other; lean so two never meet on the item.
+            for (int attempt = 0; attempt < 30 && crosses(count); attempt++) {
+                for (int mark = 0; mark < count; mark++) {
+                    angles[mark] = Mth.nextFloat(random, -1.0F, 1.0F);
+                }
+            }
+            if (crosses(count)) {
+                java.util.Arrays.fill(angles, 0, count, angles[0]);
+            }
+            for (int mark = count - 1; mark > 0; mark--) {
+                int other = random.nextInt(mark + 1);
+                float spot = spots[mark];
+                spots[mark] = spots[other];
+                spots[other] = spot;
+                float angle = angles[mark];
+                angles[mark] = angles[other];
+                angles[other] = angle;
             }
         }
     }
 
+    private boolean crosses(int count) {
+        for (int a = 0; a < count; a++) {
+            for (int b = a + 1; b < count; b++) {
+                if (crossOnTheItem(spots[a], angles[a] * MOST_LEAN, spots[b], angles[b] * MOST_LEAN)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** How far a mark across leans from square at most, radians: the client leans less on a long item, never more. */
+    public static final float MOST_LEAN = 35.0F * Mth.DEG_TO_RAD;
+
     /**
-     * Whether two marks meet on the item, taken as a square: each runs through the middle of the item's width at its spot, the
-     * angle from straight across.
+     * Whether two marks meet on the item, taken as a square with its length from far to near: each runs through the middle of the
+     * item's width at its spot, the angle from square across.
      */
     public static boolean crossOnTheItem(float spotA, float angleA, float spotB, float angleB) {
         float ax = Mth.cos(angleA);
@@ -519,12 +575,17 @@ public final class BoardLogic implements StationLogic {
         return x >= 0.0F && x <= 1.0F && z >= 0.0F && z <= 1.0F;
     }
 
+    /** How the item lying there is cut. */
+    public Cutting.Plan plan() {
+        return plan;
+    }
+
     /** Where the marks of the item lying there are now, fractions from its far end. */
     public float[] spots() {
         return spots.clone();
     }
 
-    /** How the marks lie, radians from straight across. */
+    /** How the marks lie: see {@link #restart}. */
     public float[] angles() {
         return angles.clone();
     }
@@ -558,7 +619,7 @@ public final class BoardLogic implements StationLogic {
         if (!Platform.INSTANCE.getItem(board).isEmpty() && layers(state).isEmpty()) {
             ListTag where = new ListTag();
             ListTag how = new ListTag();
-            for (int mark = 0; mark < Cutting.CHOPS; mark++) {
+            for (int mark = 0; mark < plan.marks(); mark++) {
                 where.add(FloatTag.valueOf(spots[mark]));
                 how.add(FloatTag.valueOf(angles[mark]));
             }

@@ -22,6 +22,8 @@ import java.util.Set;
 final class FoodColors {
     private static final Map<Item, Integer> CACHE = new HashMap<>();
     private static final int FALLBACK = 0xB0A070;
+    /** A raw egg stirred in: yolk and white. */
+    private static final int EGG = 0xF2DC9A;
     private static final int HUES = 12;
     private static final Map<Item, Integer> MAIN = new HashMap<>();
     private static final Map<Item, Integer> BROTH = new HashMap<>();
@@ -39,7 +41,9 @@ final class FoodColors {
     /** RGB of a stack's icon. */
     static int of(ItemStack stack) {
         forgetOnReload();
-        return CACHE.computeIfAbsent(stack.getItem(), item -> sample(stack));
+        // A liquid colours the soup with what is in its container, not the container; an egg with its yolk and white, not its shell.
+        return CACHE.computeIfAbsent(stack.getItem(), item -> KitchenLooks.isPoured(stack) ? KitchenLooks.liquidColor(stack) & 0xFFFFFF
+                : KitchenLooks.isCracked(stack) ? EGG : sample(stack));
     }
 
     /** Resources were reloaded (the game's fallback model is a new one): the colours read so far may be of other textures. */

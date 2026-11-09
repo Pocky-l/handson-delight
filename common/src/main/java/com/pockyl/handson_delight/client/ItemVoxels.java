@@ -31,7 +31,12 @@ final class ItemVoxels {
     }
 
     /** The pixels of an item's flat icon: the sprite of the block atlas they come from, and which of them are solid. */
-    record Icon(ResourceLocation sprite, int width, int height, boolean[] solid) {
+    record Icon(ResourceLocation sprite, int width, int height, boolean[] solid, int[] colors) {
+        /** The pixel's colour, ARGB. */
+        int color(int column, int row) {
+            return colors[row * width + column];
+        }
+
         boolean solid(int column, int row) {
             return column >= 0 && row >= 0 && column < width && row < height && solid[row * width + column];
         }
@@ -50,6 +55,163 @@ final class ItemVoxels {
                 }
             }
             return bounds;
+        }
+
+        /** How long the icon draws {@code size} pixels across at its longest side: node pixels per icon pixel. */
+        float pixel(float size) {
+            return size / Math.max(width, height);
+        }
+
+        /**
+         * The line the item lies along, node pixels for an icon {@code size} across: through the middle of its solid pixels, along
+         * their longest spread, pointing away from the viewer (its far end; the tip of a stick drawn as vanilla draws sticks).
+         */
+        Axis axis(float size) {
+            float pixel = pixel(size);
+            double sumX = 0;
+            double sumZ = 0;
+            int count = 0;
+            for (int row = 0; row < height; row++) {
+                for (int column = 0; column < width; column++) {
+                    if (solid(column, row)) {
+                        sumX += middleX(column);
+                        sumZ += middleZ(row);
+                        count++;
+                    }
+                }
+            }
+            if (count == 0) {
+                return Axis.square(size / 2.0F);
+            }
+            double cx = sumX / count;
+            double cz = sumZ / count;
+            double xx = 0;
+            double zz = 0;
+            double xz = 0;
+            for (int row = 0; row < height; row++) {
+                for (int column = 0; column < width; column++) {
+                    if (solid(column, row)) {
+                        double dx = middleX(column) - cx;
+                        double dz = middleZ(row) - cz;
+                        xx += dx * dx;
+                        zz += dz * dz;
+                        xz += dx * dz;
+                    }
+                }
+            }
+            double angle = 0.5 * Math.atan2(2.0 * xz, xx - zz);
+            float dirX = (float) Math.cos(angle);
+            float dirZ = (float) Math.sin(angle);
+            if (dirZ < -1.0e-3F || Math.abs(dirZ) <= 1.0e-3F && dirX < 0.0F) {
+                dirX = -dirX;
+                dirZ = -dirZ;
+            }
+            double spread = Math.sqrt(((xx - zz) / 2.0) * ((xx - zz) / 2.0) + xz * xz);
+            double big = (xx + zz) / 2.0 + spread;
+            double small = Math.max(1.0e-6, (xx + zz) / 2.0 - spread);
+            float from = Float.MAX_VALUE;
+            float to = -Float.MAX_VALUE;
+            for (int row = 0; row < height; row++) {
+                for (int column = 0; column < width; column++) {
+                    if (solid(column, row)) {
+                        float along = (float) ((middleX(column) - cx) * dirX + (middleZ(row) - cz) * dirZ);
+                        from = Math.min(from, along - 0.5F);
+                        to = Math.max(to, along + 0.5F);
+                    }
+                }
+            }
+            return new Axis((float) cx * pixel, (float) cz * pixel, dirX, dirZ, from * pixel, to * pixel,
+                    (float) Math.sqrt(big / small));
+        }
+
+        /**
+         * Where along a line {@code x + t * cos(angle), z + t * sin(angle)} (node pixels) the solid pixels of the icon drawn {@code size}
+         * across lie: {from, to}; empty ({@code from > to}) when it misses them.
+         */
+        float[] solidSpan(float x, float z, float angle, float size) {
+            float pixel = pixel(size);
+            float alongX = Mth.cos(angle);
+            float alongZ = Mth.sin(angle);
+            float from = Float.MAX_VALUE;
+            float to = -Float.MAX_VALUE;
+            for (float t = -size; t <= size; t += pixel / 4.0F) {
+                float px = (x + alongX * t) / pixel;
+                float pz = (z + alongZ * t) / pixel;
+                int column = Mth.floor(width / 2.0F - px);
+                int row = Mth.floor(height / 2.0F - pz);
+                if (solid(column, row)) {
+                    from = Math.min(from, t);
+                    to = Math.max(to, t);
+                }
+            }
+            return new float[] {from, to};
+        }
+
+        /**
+         * One half of the icon split along its own length through its middle: the far half or the near one (a loaf opened into a
+         * top and a bottom).
+         */
+        Icon half(boolean far) {
+            Axis axis = axis(Math.max(width, height));
+            boolean[] kept = new boolean[solid.length];
+            for (int row = 0; row < height; row++) {
+                for (int column = 0; column < width; column++) {
+                    if (!solid(column, row)) {
+                        continue;
+                    }
+                    // Which side of the line along the item the pixel lies on: across it, towards +z (far) or -z.
+                    float side = (middleX(column) - axis.x()) * -axis.dirZ() + (middleZ(row) - axis.z()) * axis.dirX();
+                    float towardsFar = -axis.dirZ() * 0.0F + axis.dirX();
+                    kept[row * width + column] = (side * (towardsFar >= 0.0F ? 1.0F : -1.0F) >= 0.0F) == far;
+                }
+            }
+            return new Icon(sprite, width, height, kept, colors);
+        }
+
+        private float middleX(int column) {
+            return width / 2.0F - column - 0.5F;
+        }
+
+        private float middleZ(int row) {
+            return height / 2.0F - row - 0.5F;
+        }
+    }
+
+    /**
+     * The line an item lies along, node pixels: its middle {@code x, z}, the way to its far end {@code dirX, dirZ}, where its solid
+     * pixels start and end along it ({@code from} below 0, {@code to} above), and how much longer than wide it is (1 for round).
+     */
+    record Axis(float x, float z, float dirX, float dirZ, float from, float to, float elongation) {
+        /** A block drawn as an item: a square {@code half} pixels from its middle to each side, straight away from the viewer. */
+        static Axis square(float half) {
+            return new Axis(0.0F, 0.0F, 0.0F, 1.0F, -half, half, 1.0F);
+        }
+
+        /** The point a fraction {@code spot} of the length from the far end. */
+        float[] at(float spot) {
+            float along = to - (to - from) * spot;
+            return new float[] {x + dirX * along, z + dirZ * along};
+        }
+
+        /** The angle of a line square across the item, radians from straight across (along x), between -90 and 90 degrees. */
+        float across() {
+            return normalized((float) Math.atan2(dirX, -dirZ));
+        }
+
+        /** The angle of the item's own length, radians from straight across. */
+        float along() {
+            return (float) Math.atan2(dirZ, dirX);
+        }
+
+        /** {@code angle} turned by half turns into -90..90 degrees: a line is the same either way. */
+        static float normalized(float angle) {
+            while (angle > Mth.HALF_PI) {
+                angle -= Mth.PI;
+            }
+            while (angle <= -Mth.HALF_PI) {
+                angle += Mth.PI;
+            }
+            return angle;
         }
     }
 
@@ -74,12 +236,15 @@ final class ItemVoxels {
         int width = contents.width();
         int height = contents.height();
         boolean[] solid = new boolean[width * height];
+        int[] colors = new int[width * height];
         for (int row = 0; row < height; row++) {
             for (int column = 0; column < width; column++) {
-                solid[row * width + column] = (image.getPixelRGBA(column, row) >>> 24) >= 128;
+                int abgr = image.getPixelRGBA(column, row);
+                solid[row * width + column] = (abgr >>> 24) >= 128;
+                colors[row * width + column] = (abgr & 0xFF00FF00) | (abgr & 0xFF) << 16 | (abgr >> 16) & 0xFF;
             }
         }
-        return Optional.of(new Icon(contents.name(), width, height, solid));
+        return Optional.of(new Icon(contents.name(), width, height, solid, colors));
     }
 
     /**
@@ -171,6 +336,60 @@ final class ItemVoxels {
             }
         }
         return shape.build();
+    }
+
+    /**
+     * A thin film the shape of {@code shape} drawn {@code size} across, {@code thick} pixels high, all in the colour of one pixel of
+     * {@code colour}'s sprite: a liquid poured over food. Only its top and edges are drawn.
+     */
+    static MeshShape film(Icon shape, float size, float thick, Icon colour, int column, int row) {
+        float pixel = shape.pixel(size);
+        float u = (column + 0.5F) / colour.width();
+        float v = (row + 0.5F) / colour.height();
+        MeshShape.Builder mesh = MeshShape.builder();
+        for (int r = 0; r < shape.height(); r++) {
+            for (int c = 0; c < shape.width(); c++) {
+                if (!shape.solid(c, r)) {
+                    continue;
+                }
+                float left = (shape.width() / 2.0F - c) * pixel;
+                float right = left - pixel;
+                float far = (shape.height() / 2.0F - r) * pixel;
+                float near = far - pixel;
+                mesh.corner(right, thick, near, u, v, 0, 1, 0).corner(right, thick, far, u, v, 0, 1, 0)
+                        .corner(left, thick, far, u, v, 0, 1, 0).corner(left, thick, near, u, v, 0, 1, 0);
+                if (!shape.solid(c, r + 1)) {
+                    side(mesh, new Vector3f(left, 0, near), new Vector3f(left, thick, near), new Vector3f(right, thick, near),
+                            new Vector3f(right, 0, near), 0, 0, -1, u, v);
+                }
+            }
+        }
+        return mesh.build();
+    }
+
+    /**
+     * The pixel of {@code full} that shows what is in it: the commonest colour among the pixels where {@code empty} (its container)
+     * differs, {column, row}; the middle solid pixel without a container.
+     */
+    static int[] contents(Icon full, Optional<Icon> empty) {
+        Map<Integer, Integer> counts = new HashMap<>();
+        Map<Integer, int[]> where = new HashMap<>();
+        for (int row = 0; row < full.height(); row++) {
+            for (int column = 0; column < full.width(); column++) {
+                if (!full.solid(column, row)) {
+                    continue;
+                }
+                int color = full.color(column, row);
+                boolean same = empty.isPresent() && empty.get().width() == full.width() && empty.get().height() == full.height()
+                        && empty.get().solid(column, row) && empty.get().color(column, row) == color;
+                if (!same) {
+                    counts.merge(color, 1, Integer::sum);
+                    where.putIfAbsent(color, new int[] {column, row});
+                }
+            }
+        }
+        return counts.entrySet().stream().max(Map.Entry.comparingByValue()).map(entry -> where.get(entry.getKey()))
+                .orElse(new int[] {full.width() / 2, full.height() / 2});
     }
 
     /** Whether the pixel is solid and in the same piece: no face between the two then. */

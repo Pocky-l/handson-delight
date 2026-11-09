@@ -643,7 +643,8 @@ final class RecipeBook implements NodePainter {
     }
 
     /** One side of a sheet, turned about the fold: units run right and down as on a screen. {@code resting}: the tabs stand on it. */
-    private void side(PoseStack poseStack, MultiBufferSource buffers, boolean left, float turn, float height, int listPage, boolean resting) {
+    private void side(PoseStack poseStack, MultiBufferSource buffers, boolean left, float turn, float height, int listPage,
+            boolean resting) {
         poseStack.pushPose();
         poseStack.translate(0.0F, height, 0.0F);
         poseStack.mulPose(new Quaternionf().rotationZ(turn));

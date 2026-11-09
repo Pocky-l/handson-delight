@@ -55,8 +55,9 @@ import java.util.function.Predicate;
  * a player's own crafting grid does not make them, and no player learns them for the recipe book.
  *
  * <p>The rule: a crafting recipe of Farmer's Delight or of a mod that needs it, made of more than one kind of thing, whose result is
- * food, a drink made of food, a feast, a pie or a cake. Slices back into a whole pie, crates opened and leaves pressed back into a cabbage are one kind of
- * thing and stay in the crafting table. Item tags {@link #ASSEMBLED} and {@link #NOT_ASSEMBLED} on the result correct the rule.
+ * food, a drink made of food, a feast, a pie or a cake. Slices back into a whole pie, crates opened and leaves pressed back into a
+ * cabbage are one kind of thing and stay in the crafting table. Item tags {@link #ASSEMBLED} and {@link #NOT_ASSEMBLED} on the
+ * result correct the rule.
  */
 public final class AssemblyRecipes {
     /** Results whose recipes are put together on the board although the rule would leave them in the crafting table. */
@@ -161,7 +162,8 @@ public final class AssemblyRecipes {
      * this mod. So does a player whose client lacks the mod: it cannot open the board, the crafting table stays theirs.
      */
     public static boolean notInThisGrid(Recipe<?> recipe, Container grid) {
-        if (!(grid instanceof TransientCraftingContainer table) || !HandsOnConfig.removeCraftingRecipes() || !isMadeOnTheBoard(recipe.getId())) {
+        if (!(grid instanceof TransientCraftingContainer table) || !HandsOnConfig.removeCraftingRecipes()
+                || !isMadeOnTheBoard(recipe.getId())) {
             return false;
         }
         AbstractContainerMenu menu = ((TransientCraftingContainerAccessor) table).handson$menu();

@@ -47,7 +47,8 @@ public final class Assembling {
                 }
                 if (stack.isEmpty()) {
                     left.set(layer, remainder.copy());
-                } else if (ItemStack.isSameItemSameTags(stack, remainder) && stack.getCount() + remainder.getCount() <= stack.getMaxStackSize()) {
+                } else if (ItemStack.isSameItemSameTags(stack, remainder)
+                        && stack.getCount() + remainder.getCount() <= stack.getMaxStackSize()) {
                     stack.grow(remainder.getCount());
                 } else {
                     leftovers.add(remainder.copy());

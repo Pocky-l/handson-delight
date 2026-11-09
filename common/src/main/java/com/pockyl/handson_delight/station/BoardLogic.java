@@ -160,8 +160,10 @@ public final class BoardLogic implements StationLogic {
             case CuttingBoardStation.ACTION_CHOP -> chop(station, player, data.getInt(CuttingBoardStation.MARK), data.getFloat(CuttingBoardStation.AT));
             case CuttingBoardStation.ACTION_TAKE -> take(station, player);
             case CuttingBoardStation.ACTION_ASSEMBLE -> assemble(station, player);
-            case CuttingBoardStation.ACTION_PICK -> pick(station, player, ResourceLocation.tryParse(data.getString(CuttingBoardStation.DISH)),
-                    data.getBoolean(CuttingBoardStation.ALL));
+            case CuttingBoardStation.ACTION_PICK -> {
+                ResourceLocation dish = ResourceLocation.tryParse(data.getString(CuttingBoardStation.DISH));
+                pick(station, player, dish, data.getBoolean(CuttingBoardStation.ALL));
+            }
             default -> {
             }
         }

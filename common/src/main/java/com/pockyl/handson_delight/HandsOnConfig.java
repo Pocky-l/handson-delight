@@ -18,7 +18,7 @@ public final class HandsOnConfig {
     private static final String FILE = HandsOnDelight.MOD_ID + ".properties";
     private static final String HEADER = String.join("\n",
             "Hands-On Delight. Every value is true or false; restart the game or the server after a change.",
-            "cooking_pot, cutting_board, skillet: the station of that block. Off, the block works as in Farmer's Delight.",
+            "cooking_pot, cutting_board, skillet, stove: the station of that block. Off, the block works as in Farmer's Delight.",
             "remove_crafting_recipes: Farmer's Delight's food crafts (sandwiches, salads, rolls, pies, feasts) are made on the",
             "  cutting board only, not in a crafting grid.",
             "  Machines (Create, AE2, Refined Storage) craft them either way.",
@@ -29,6 +29,7 @@ public final class HandsOnConfig {
     private static boolean cookingPot = true;
     private static boolean cuttingBoard = true;
     private static boolean skillet = true;
+    private static boolean stove = true;
     private static boolean removeCraftingRecipes = true;
     private static boolean stirringRequired = true;
     private static boolean recipeBook = true;
@@ -49,6 +50,7 @@ public final class HandsOnConfig {
         cookingPot = read(values, "cooking_pot", cookingPot);
         cuttingBoard = read(values, "cutting_board", cuttingBoard);
         skillet = read(values, "skillet", skillet);
+        stove = read(values, "stove", stove);
         removeCraftingRecipes = read(values, "remove_crafting_recipes", removeCraftingRecipes);
         stirringRequired = read(values, "stirring_required", stirringRequired);
         recipeBook = read(values, "recipe_book", recipeBook);
@@ -80,6 +82,10 @@ public final class HandsOnConfig {
 
     public static boolean skillet() {
         return skillet;
+    }
+
+    public static boolean stove() {
+        return stove;
     }
 
     /** Whether board dishes leave players' crafting grids; never without the board to make them. */

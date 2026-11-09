@@ -1137,7 +1137,8 @@ public final class BoardBehavior implements StationBehavior {
         after(SKEWER_SLIDE + (count - 1) * SKEWER_STAGGER, () -> {
             for (int i = 1; i < count; i++) {
                 int index = i;
-                view.node("layer_" + i).ifPresent(node -> node.moveTo(restX[index], restY[index] - index * LAYER_STEP, restZ[index], SKEWER_PUSH));
+                view.node("layer_" + i).ifPresent(node ->
+                        node.moveTo(restX[index], restY[index] - index * LAYER_STEP, restZ[index], SKEWER_PUSH));
             }
             view.playSound(SoundEvents.WOOD_HIT, "surface", 0.25F, 1.6F);
         });
@@ -1173,7 +1174,8 @@ public final class BoardBehavior implements StationBehavior {
             after(at + KNEAD_PUSH, () -> {
                 for (int i = 0; i < count; i++) {
                     int index = i;
-                    view.node("layer_" + i).ifPresent(node -> node.moveTo(restX[index], restY[index] - index * LAYER_STEP, restZ[index], KNEAD_PUSH));
+                    view.node("layer_" + i).ifPresent(node ->
+                            node.moveTo(restX[index], restY[index] - index * LAYER_STEP, restZ[index], KNEAD_PUSH));
                 }
             });
         }

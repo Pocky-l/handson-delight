@@ -7,7 +7,7 @@ import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.handson_delight.HandsOnDelight;
 
-/** {@link PotTests}, {@link BoardTests} and {@link SkilletTests} on Forge. */
+/** {@link PotTests}, {@link BoardTests}, {@link SkilletTests} and {@link StoveTests} on Forge. */
 @GameTestHolder(HandsOnDelight.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ModGameTests {
@@ -277,5 +277,20 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void moreFoodTakesLongerButKeepsWhatWasDone(GameTestHelper helper) {
         SkilletTests.moreFoodTakesLongerButKeepsWhatWasDone(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 460)
+    public static void aPieceGrillsInHalvesAndWaitsToBeTurned(GameTestHelper helper) {
+        StoveTests.aPieceGrillsInHalvesAndWaitsToBeTurned(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void farmersDelightsWayStaysItsOwn(GameTestHelper helper) {
+        StoveTests.farmersDelightsWayStaysItsOwn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void onlyFoodGoesOnAnOpenGrill(GameTestHelper helper) {
+        StoveTests.onlyFoodGoesOnAnOpenGrill(helper);
     }
 }

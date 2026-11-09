@@ -11,6 +11,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.wrapper.RecipeWrapper;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
+import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 import vectorwing.farmersdelight.common.registry.ModRecipeTypes;
@@ -61,6 +62,16 @@ public final class ForgePlatform implements Platform {
     @Override
     public void setItem(SkilletBlockEntity skillet, ItemStack stack) {
         ((IItemHandlerModifiable) skillet.getInventory()).setStackInSlot(0, stack);
+    }
+
+    @Override
+    public ItemStack getItem(AbstractStoveBlockEntity stove, int slot) {
+        return stove.getItems().getStackInSlot(slot);
+    }
+
+    @Override
+    public void setItem(AbstractStoveBlockEntity stove, int slot, ItemStack stack) {
+        stove.getItems().setStackInSlot(slot, stack);
     }
 
     @Override

@@ -13,7 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * How the recipe viewers draw a dish put together on the board, the same in JEI, EMI and REI: what goes down first lies on the board, as the
+ * How the recipe viewers draw a dish put together on the board, the same in JEI, EMI and REI: what goes down first lies on the board,
+ * as the
  * food does in Farmer's Delight's own cutting category, the other layers stand beside it in slots, then the arrow and the dish. The
  * board, slots and arrow are Farmer's Delight's, read from its texture.
  */

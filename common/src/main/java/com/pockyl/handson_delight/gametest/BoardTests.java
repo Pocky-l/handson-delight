@@ -154,7 +154,8 @@ public final class BoardTests {
         Map<String, AssemblyRecipes.Base> kinds = Map.ofEntries(Map.entry("kelp_roll", AssemblyRecipes.Base.KELP),
                 Map.entry("cod_roll", AssemblyRecipes.Base.RICE), Map.entry("salmon_roll", AssemblyRecipes.Base.RICE),
                 Map.entry("barbecue_stick", AssemblyRecipes.Base.STICK), Map.entry("melon_popsicle", AssemblyRecipes.Base.STICK),
-                Map.entry("wheat_dough_from_egg", AssemblyRecipes.Base.WHEAT), Map.entry("wheat_dough_from_water", AssemblyRecipes.Base.WHEAT),
+                Map.entry("wheat_dough_from_egg", AssemblyRecipes.Base.WHEAT),
+                Map.entry("wheat_dough_from_water", AssemblyRecipes.Base.WHEAT),
                 Map.entry("pie_crust", AssemblyRecipes.Base.WHEAT), Map.entry("honey_cookie", AssemblyRecipes.Base.WHEAT),
                 Map.entry("sweet_berry_cookie", AssemblyRecipes.Base.WHEAT), Map.entry("cake_from_milk_bottle", AssemblyRecipes.Base.WHEAT),
                 Map.entry("apple_pie", AssemblyRecipes.Base.CRUST), Map.entry("chocolate_pie", AssemblyRecipes.Base.CRUST),
@@ -162,8 +163,10 @@ public final class BoardTests {
                 Map.entry("pumpkin_pie_from_pie_crust", AssemblyRecipes.Base.CRUST), Map.entry("melon_juice", AssemblyRecipes.Base.BOTTLE),
                 Map.entry("stuffed_potato", AssemblyRecipes.Base.FIRST), Map.entry("roast_chicken_block", AssemblyRecipes.Base.BOWL),
                 Map.entry("honey_glazed_ham_block", AssemblyRecipes.Base.BOWL), Map.entry("shepherds_pie_block", AssemblyRecipes.Base.BOWL),
-                Map.entry("rice_roll_medley_block", AssemblyRecipes.Base.BOWL), Map.entry("gleaming_salad_block", AssemblyRecipes.Base.BOWL));
-        kinds.forEach((dish, base) -> helper.assertTrue(made(dish).filter(it -> it.kind() == base).isPresent(), dish + " goes down from its " + base));
+                Map.entry("rice_roll_medley_block", AssemblyRecipes.Base.BOWL),
+                Map.entry("gleaming_salad_block", AssemblyRecipes.Base.BOWL));
+        kinds.forEach((dish, base) ->
+                helper.assertTrue(made(dish).filter(it -> it.kind() == base).isPresent(), dish + " goes down from its " + base));
         helper.assertTrue(made("honey_glazed_ham_block").map(AssemblyRecipes.Assembly::finish).orElse(null) == AssemblyRecipes.Finish.PRESS,
                 "a feast is pressed together, not tossed");
         for (String crafted : List.of("cake_from_slices", "pumpkin_pie_from_slices", "pumpkin_from_slices", "milk_bucket_from_bottles",
@@ -216,7 +219,8 @@ public final class BoardTests {
         setup.place();
         helper.assertTrue(setup.onBoard().is(fd("stuffed_potato")) && setup.onBoard().getCount() == 1, "one stuffed potato");
         Inventory inventory = setup.cook.getInventory();
-        helper.assertTrue(inventory.countItem(Items.BUCKET) == 1 && inventory.countItem(Items.MILK_BUCKET) == 0, "the empty bucket comes back");
+        helper.assertTrue(inventory.countItem(Items.BUCKET) == 1 && inventory.countItem(Items.MILK_BUCKET) == 0,
+                "the empty bucket comes back");
         helper.assertTrue(inventory.countItem(Items.BAKED_POTATO) == 2 && inventory.countItem(Items.COOKED_BEEF) == 2, "and the rest");
         helper.succeed();
     }
@@ -266,7 +270,8 @@ public final class BoardTests {
         setup.place();
         helper.assertTrue(setup.layers() == 0, "the last one makes the salad");
         helper.assertTrue(setup.onBoard().is(fd("nether_salad")) && setup.onBoard().getCount() == 2, "two, as there were two warped");
-        helper.assertTrue(setup.cook.getInventory().countItem(Items.BOWL) == 1 && setup.cook.getInventory().countItem(Items.CRIMSON_FUNGUS) == 1,
+        Inventory inventory = setup.cook.getInventory();
+        helper.assertTrue(inventory.countItem(Items.BOWL) == 1 && inventory.countItem(Items.CRIMSON_FUNGUS) == 1,
                 "a bowl and a fungus go back");
         helper.succeed();
     }
@@ -283,11 +288,12 @@ public final class BoardTests {
         setup.act(CuttingBoardStation.ACTION_PICK, pick);
         helper.assertTrue(setup.onBoard().is(fd("nether_salad")) && setup.onBoard().getCount() == CuttingBoardStation.BATCH,
                 "sixteen salads with shift");
-        helper.assertTrue(setup.cook.getInventory().countItem(Items.BOWL) == 4 && setup.cook.getInventory().countItem(Items.WARPED_FUNGUS) == 4,
+        Inventory inventory = setup.cook.getInventory();
+        helper.assertTrue(inventory.countItem(Items.BOWL) == 4 && inventory.countItem(Items.WARPED_FUNGUS) == 4,
                 "taken from the inventory");
         pick.putBoolean(CuttingBoardStation.ALL, false);
         setup.act(CuttingBoardStation.ACTION_PICK, pick);
-        helper.assertTrue(setup.onBoard().getCount() == 1 && setup.cook.getInventory().countItem(fd("nether_salad")) == CuttingBoardStation.BATCH,
+        helper.assertTrue(setup.onBoard().getCount() == 1 && inventory.countItem(fd("nether_salad")) == CuttingBoardStation.BATCH,
                 "one more without shift; the sixteen went to the cook");
         setup.cook.getInventory().clearContent();
         setup.act(CuttingBoardStation.ACTION_TAKE, new CompoundTag());

@@ -10,6 +10,9 @@
 - A bucket of milk or a honey bottle gives its bucket or bottle back, and dough from water keeps the water.
 - A dish picked in the board's recipe book is laid from your inventory, one at a time or sixteen with Shift.
 - The board's recipe book has tabs: everything, dishes only, or cuts only. It remembers your choice.
+- The stove opens as a station too: lay up to six pieces on its grill, and each one smokes when its lower side is done.
+  Click it to turn it over; once both sides are done it waits on the grill until you take it. Food put on by sneaking
+  cooks the Farmer's Delight way.
 
 ## [1.0.1+1.20.1]
 

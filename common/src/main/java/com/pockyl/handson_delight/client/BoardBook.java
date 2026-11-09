@@ -26,7 +26,8 @@ import java.util.Set;
 
 /**
  * The board's book: what can be cut, listed by what comes off (a cabbage leaf: a cabbage and a knife, with everything else the cut
- * gives at the foot), and the dishes put together on it, what goes down first first. The dishes come from the station's data: a dedicated server
+ * gives at the foot), and the dishes put together on it, what goes down first first. The dishes come from the station's data: a
+ * dedicated server
  * sends their recipes nowhere else.
  */
 final class BoardBook implements RecipeBook.Source {

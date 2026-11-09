@@ -243,12 +243,19 @@ public final class BoardLogic implements StationLogic {
             return;
         }
         lastChop = now;
-        // The knife is the one the cook took on the cursor.
+        // The knife is the one the cook took on the cursor; with an empty hand, one from the inventory (owner: "I need not take
+        // the knife from its slot to cut").
         ItemStack tool = player.inventoryMenu.getCarried();
+        int toolSlot = -1;
         if (Cutting.findWith(level, onBoard, tool).isEmpty()) {
-            refuse(station);
-            return;
+            toolSlot = tool.isEmpty() ? Cutting.toolSlot(level, onBoard, player.getInventory()) : -1;
+            if (toolSlot < 0) {
+                refuse(station);
+                return;
+            }
+            tool = player.getInventory().getItem(toolSlot);
         }
+        ItemStack knife = tool;
         CompoundTag chopped = new CompoundTag();
         chopped.putFloat(CuttingBoardStation.AT, Mth.clamp(at, 0.0F, 16.0F));
         chopped.putFloat(CuttingBoardStation.SPOT, spots[mark]);
@@ -263,14 +270,18 @@ public final class BoardLogic implements StationLogic {
         restart(station);
         int done = 0;
         while (done < CuttingBoardStation.BATCH && !Platform.INSTANCE.getItem(board).isEmpty() && !tool.isEmpty()) {
-            List<ItemStack> results = BoardResults.catching(done > 0, () -> board.processStoredItemUsingTool(tool, player));
+            List<ItemStack> results = BoardResults.catching(done > 0, () -> board.processStoredItemUsingTool(knife, player));
             if (results == null) {
                 break;
             }
             results.forEach(result -> give(player, result));
             done++;
         }
-        player.inventoryMenu.setCarried(tool.isEmpty() ? ItemStack.EMPTY : tool);
+        if (toolSlot < 0) {
+            player.inventoryMenu.setCarried(tool.isEmpty() ? ItemStack.EMPTY : tool);
+        } else {
+            player.getInventory().setItem(toolSlot, tool.isEmpty() ? ItemStack.EMPTY : tool);
+        }
         if (done == 0) {
             refuse(station);
             return;

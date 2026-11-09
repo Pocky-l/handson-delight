@@ -157,6 +157,9 @@ final class RecipeBook implements NodePainter {
     private Handoff leaving;
     /** Where the book came from, this station's pixels from its own place, while it flies over with the camera; null at home. */
     private Vector3f arrivingFrom;
+    /** How much of {@code arrivingFrom} is still to go, as drawn last; held: the player went on before it got here, it waits in the air. */
+    private float arrivingLeft = 1.0F;
+    private boolean arrivingHeld;
     private final Source source;
 
     /** A book going over to the next station: where it hung in the world and how it was, open or put away. */
@@ -256,15 +259,25 @@ final class RecipeBook implements NodePainter {
      * book takes its place and flies from here to there with the camera.
      */
     void shut(StationView view) {
-        arrivingFrom = null;
         Optional<NodeView> node = view.node("book_open");
         if (DiegesisClient.goingOver() < 1.0F && node.isPresent() && node.get().isVisible()) {
-            leaving = new Handoff(node.get().worldPosition(), open, wanted, time);
-            handoff = leaving;
+            passOn(node.get());
             return;
         }
+        arrivingFrom = null;
+        arrivingHeld = false;
         wanted = false;
         open = 0.0F;
+    }
+
+    /** Hands the book over to the next station from where it is now, also half way here (two quick presses of D). */
+    private void passOn(NodeView node) {
+        if (arrivingFrom != null && !arrivingHeld) {
+            arrivingFrom.mul(arrivingLeft);
+            arrivingHeld = true;
+        }
+        leaving = new Handoff(node.worldPosition(), open, wanted, time);
+        handoff = leaving;
     }
 
     /** The station the player goes over to is this one: its book takes the one in the air, open as it was, and flies it here. */
@@ -272,6 +285,7 @@ final class RecipeBook implements NodePainter {
         handoff = null;
         passing.taken = true;
         station = view;
+        arrivingHeld = false;
         wanted = passing.wanted;
         open = passing.open;
         time = passing.time;
@@ -400,6 +414,8 @@ final class RecipeBook implements NodePainter {
                     handoff = null;
                 }
                 leaving = null;
+                arrivingFrom = null;
+                arrivingHeld = false;
                 wanted = false;
                 open = 0.0F;
             }
@@ -407,7 +423,11 @@ final class RecipeBook implements NodePainter {
             arrive(view, node, passing);
         }
         float flight = DiegesisClient.goingOver();
-        if (arrivingFrom != null && (flight >= 1.0F || !isWorkedAt(view))) {
+        if (arrivingFrom != null && !arrivingHeld && leaving == null && flight < 1.0F && !isWorkedAt(view)) {
+            // The player went on before the book got here (the station was not theirs yet, so it was not shut).
+            passOn(node);
+        }
+        if (arrivingFrom != null && !arrivingHeld && (flight >= 1.0F || !isWorkedAt(view))) {
             arrivingFrom = null;
         }
         node.setVisible(view.isFocused() || leaving != null || arrivingFrom != null);
@@ -421,7 +441,8 @@ final class RecipeBook implements NodePainter {
         float bob = Mth.sin(time * 1.3F) * 0.14F;
         if (arrivingFrom != null) {
             // With the camera, on the same easing: the book keeps its place on the screen while the kitchen moves under it.
-            float left = 1.0F - flight;
+            float left = arrivingHeld ? 1.0F : 1.0F - flight;
+            arrivingLeft = left;
             node.moveTo(arrivingFrom.x * left, arrivingFrom.y * left + bob, arrivingFrom.z * left, 0.0F);
         } else {
             node.moveTo(0.0F, bob, 0.0F, 0.0F);
@@ -490,6 +511,12 @@ final class RecipeBook implements NodePainter {
             flipWay = by;
             turnSound();
         }
+    }
+
+    /** It hangs before the camera and sways: drawn by the scene, its edges showed steps. */
+    @Override
+    public boolean smooth() {
+        return true;
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.Direction;
@@ -32,6 +33,7 @@ import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
+import com.pockyl.handson_delight.station.PotLogic;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -180,6 +182,22 @@ public final class PotBehavior implements StationBehavior {
     private static final float CALM_DRIFT = 0.05F;
     /** Bubbles along the walls are small beside the ones that rise from the bottom. */
     private static final float EDGE_BUBBLE_SIZE = 0.5F;
+    /**
+     * Several things put in at once (a dish picked in the book, a stack shared out) jump in one after the other (owner: "cozy"),
+     * from the player at the bottom of the screen ({@link FromPlayer}): seconds between them, seconds in the air, how high they
+     * start over the soup and how high the arc goes, pixels.
+     */
+    private static final float ARRIVE_STAGGER = 0.16F;
+    private static final float ARRIVE_TIME = 0.4F;
+    private static final float ARRIVE_FROM = 9.0F;
+    private static final float ARRIVE_ARC = 4.0F;
+    /**
+     * A bowl from the inventory offered over a finished soup to an empty hand (owner: "offer to scoop it if there is a bowl in the
+     * inventory"): how see-through, how high over the soup it hangs (pixels), how long it stays away after a scoop (seconds).
+     */
+    private static final int OFFERED = 0x8CFFFFFF;
+    private static final float OFFER_LIFT = 1.5F;
+    private static final float OFFER_AWAY = 0.35F;
 
     private final RecipeBook book = new RecipeBook(new PotBook());
     /** Whether an item goes into some dish or serves one: only those show in the inventory at the pot. */
@@ -208,6 +226,10 @@ public final class PotBehavior implements StationBehavior {
     private final float[] meltX = new float[SLOTS];
     private final float[] meltY = new float[SLOTS];
     private final float[] meltZ = new float[SLOTS];
+    /** Items jumping in: how long they have been in the air (negative: waiting for their turn, NaN: floating), where from. */
+    private final float[] arriveAge = new float[SLOTS];
+    private final float[] arriveX = new float[SLOTS];
+    private final float[] arriveZ = new float[SLOTS];
     private float piecesWait;
     private int brothColor;
 
@@ -237,6 +259,10 @@ public final class PotBehavior implements StationBehavior {
     private float swirlSign = 1.0F;
     /** When the hand took the spoon; whether a click did, so the next click puts it down. */
     private float strokeStart;
+    /** The container offered over the soup, empty while none is; when the last scoop with it went. */
+    private ItemStack offered = ItemStack.EMPTY;
+    private Item offeredItem;
+    private float scoopedAt = -10.0F;
     private boolean heldByClick;
     /** Kept between frames, not made anew in each. */
     private final Matrix4f potInverse = new Matrix4f();
@@ -262,6 +288,7 @@ public final class PotBehavior implements StationBehavior {
     public PotBehavior(StationView view) {
         java.util.Arrays.fill(shown, ItemStack.EMPTY);
         java.util.Arrays.fill(meltAge, Float.NaN);
+        java.util.Arrays.fill(arriveAge, Float.NaN);
     }
 
     @Override
@@ -332,6 +359,12 @@ public final class PotBehavior implements StationBehavior {
         }
         if (event instanceof SceneEvent.Click click && click.node().equals("book_open")) {
             book.click(view);
+        } else if (event instanceof SceneEvent.Click click && click.node().equals("soup") && click.button() == 0 && !offered.isEmpty()) {
+            CompoundTag how = new CompoundTag();
+            how.putBoolean(CookingPotStation.FROM_INVENTORY, true);
+            how.putBoolean(CookingPotStation.SCOOP_ALL, Screen.hasShiftDown());
+            view.sendAction(CookingPotStation.ACTION_SCOOP, how);
+            scoopedAt = time;
         }
     }
 
@@ -365,6 +398,41 @@ public final class PotBehavior implements StationBehavior {
         return view.level().getBlockEntity(view.pos()) instanceof CookingPotBlockEntity pot && !pot.getMeal().isEmpty() && pot.isContainerValid(stack);
     }
 
+    /**
+     * With an empty hand over a finished soup, a container from the inventory hangs see-through where the hand is, ready to dip: a
+     * click scoops with it, Shift as many as there are, and the hand stays empty. Not over the spoon, nor while it stirs.
+     */
+    private void offerBowl(StationView view) {
+        offered = ItemStack.EMPTY;
+        LocalPlayer player = Minecraft.getInstance().player;
+        NodeView node = view.node("scoop").orElse(null);
+        boolean spoon = stroking || heldByClick || view.node("ladle").map(NodeView::isHovered).orElse(false);
+        if (node == null || player == null || !view.isFocused() || spoon || !player.inventoryMenu.getCarried().isEmpty()
+                || time - scoopedAt < OFFER_AWAY || !(view.level().getBlockEntity(view.pos()) instanceof CookingPotBlockEntity pot)) {
+            if (node != null) {
+                node.setVisible(false);
+            }
+            view.node("soup").ifPresent(soup -> soup.setEnabled(false));
+            return;
+        }
+        int slot = PotLogic.containerSlot(pot, player.getInventory());
+        float surface = BROTH_FLOOR + BROTH_DEPTH * level;
+        Optional<Vector3f> over = slot < 0 ? Optional.empty() : view.cursorOn(surface + OFFER_LIFT)
+                .filter(point -> Math.abs(point.x - 8.0F) < POT_HALF && Math.abs(point.z - 8.0F) < POT_HALF);
+        node.setVisible(over.isPresent());
+        view.node("soup").ifPresent(soup -> soup.setEnabled(over.isPresent()));
+        if (over.isEmpty()) {
+            return;
+        }
+        offered = player.getInventory().getItem(slot);
+        if (offeredItem != offered.getItem()) {
+            offeredItem = offered.getItem();
+            node.setVisual(Visual.ofItem(offeredItem).withAnchor(ITEM_MIDDLE));
+            node.setTint(OFFERED);
+        }
+        node.moveTo(over.get().x - 8.0F, surface + OFFER_LIFT - 8.0F, over.get().z - 8.0F, 0.0F);
+    }
+
     /** Whether the hand holds a bowl over the soup: it fills on a click, and the pot says so with its outline. */
     private boolean bowlOverSoup(StationView view) {
         LocalPlayer player = Minecraft.getInstance().player;
@@ -395,20 +463,32 @@ public final class PotBehavior implements StationBehavior {
             graded(view);
         }
         servings = meal.getCount();
+        List<Integer> arrivals = new ArrayList<>();
         for (int i = 0; i < SLOTS; i++) {
             ItemStack now = items[i];
-            boolean arrived = !now.isEmpty() && shown[i].isEmpty();
-            shown[i] = now.copy();
-            int index = i;
-            view.node(ITEM_NODES[i]).ifPresent(node -> node.setEnabled(!now.isEmpty()));
-            if (arrived && !quiet) {
-                view.node("broth").ifPresent(broth -> broth.ripple(8.0F, 8.0F, 0.5F));
-                view.spawnParticles(DiegesisParticles.SPLASH, ITEM_NODES[index], 5, 0);
-                view.playSound(PotSounds.PLOP, ITEM_NODES[index], 0.5F, 0.92F + 0.03F * index);
-                if (state.getControl(CookingPotStation.HEATED) > 0.5F) {
-                    view.playSound(FarmersDelightContent.SKILLET_ADD_FOOD, ITEM_NODES[index], ADD_FOOD_VOLUME, 0.8F);
-                }
+            if (!now.isEmpty() && shown[i].isEmpty() && !quiet) {
+                arrivals.add(i);
             }
+            if (now.isEmpty() || quiet) {
+                arriveAge[i] = Float.NaN;
+            }
+            shown[i] = now.copy();
+        }
+        if (arrivals.size() > 1) {
+            float height = BROTH_FLOOR + BROTH_DEPTH * level + ARRIVE_FROM;
+            for (int k = 0; k < arrivals.size(); k++) {
+                int index = arrivals.get(k);
+                Vector3f from = FromPlayer.point(view, height, k, arrivals.size()).orElse(new Vector3f(8.0F, height, 8.0F));
+                arriveAge[index] = -k * ARRIVE_STAGGER;
+                arriveX[index] = from.x - 8.0F;
+                arriveZ[index] = from.z - 8.0F;
+            }
+        } else {
+            arrivals.forEach(index -> splashIn(view, index));
+        }
+        for (int i = 0; i < SLOTS; i++) {
+            boolean there = !shown[i].isEmpty() && !(arriveAge[i] < 0.0F);
+            view.node(ITEM_NODES[i]).ifPresent(node -> node.setEnabled(there));
         }
         view.node("served").ifPresent(node -> node.setEnabled(!state.getItem(CookingPotStation.SERVED_SLOT).isEmpty()));
         preview = meal.isEmpty() ? cooked(view, items) : meal;
@@ -423,6 +503,34 @@ public final class PotBehavior implements StationBehavior {
         tooltip(view, meal);
         colour(view, meal, items);
         pieces(view, meal);
+    }
+
+    /** An item comes into the soup: rings, drops, a plop, and a hiss on a hot pot. */
+    private void splashIn(StationView view, int index) {
+        view.node("broth").ifPresent(broth -> broth.ripple(8.0F, 8.0F, 0.5F));
+        view.spawnParticles(DiegesisParticles.SPLASH, ITEM_NODES[index], 5, 0);
+        view.playSound(PotSounds.PLOP, ITEM_NODES[index], 0.5F, 0.92F + 0.03F * index);
+        if (view.state().getControl(CookingPotStation.HEATED) > 0.5F) {
+            view.playSound(FarmersDelightContent.SKILLET_ADD_FOOD, ITEM_NODES[index], ADD_FOOD_VOLUME, 0.8F);
+        }
+    }
+
+    /** Items waiting for their turn come out one by one; what lands splashes. */
+    private void arrivals(StationView view, float dt) {
+        for (int i = 0; i < SLOTS; i++) {
+            if (Float.isNaN(arriveAge[i])) {
+                continue;
+            }
+            float before = arriveAge[i];
+            arriveAge[i] += dt;
+            if (before < 0.0F && arriveAge[i] >= 0.0F) {
+                view.node(ITEM_NODES[i]).ifPresent(node -> node.setEnabled(true));
+            }
+            if (arriveAge[i] >= ARRIVE_TIME) {
+                arriveAge[i] = Float.NaN;
+                splashIn(view, i);
+            }
+        }
     }
 
     /** The badge shows while there is a dish to cook or serve; its stars and bar while it cooks, or while a batch shows its stars. */
@@ -678,10 +786,12 @@ public final class PotBehavior implements StationBehavior {
         turnToBlock(view);
         level = Mth.lerp(Math.min(1.0F, dt * 3.0F), level, state.getTank(CookingPotStation.BROTH).amount() / 100.0F);
         moveSpoon(view, dt, stirred);
+        arrivals(view, dt);
         drift(view, dt);
         melt(view, dt);
         book.frame(view, dt);
-        boolean offering = view.node("mouth").map(NodeView::isHovered).orElse(false) || bowlOverSoup(view);
+        offerBowl(view);
+        boolean offering = view.node("mouth").map(NodeView::isHovered).orElse(false) || bowlOverSoup(view) || !offered.isEmpty();
         view.node("pot").ifPresent(pot -> pot.setOutlined(offering));
         view.node("broth").ifPresent(broth -> {
             broth.setAgitation(!heated ? 0.0F : cooking ? 0.12F : 0.03F);
@@ -901,7 +1011,20 @@ public final class PotBehavior implements StationBehavior {
                 float roll = tumble(view, index, dt);
                 float hop = Mth.sin(roll * Mth.PI) * TUMBLE_HOP;
                 float over = roll * roll * (3.0F - 2.0F * roll) * 360.0F;
-                node.moveTo(itemX[index], surface + bob + hop, itemZ[index], 0.0F);
+                float x = itemX[index];
+                float y = surface + bob + hop;
+                float z = itemZ[index];
+                float flight = arriveAge[index];
+                if (flight >= 0.0F) {
+                    // On its way in from the hand: an arc that comes down onto its place on the circle.
+                    float t = Math.min(1.0F, flight / ARRIVE_TIME);
+                    float eased = t * t * (3.0F - 2.0F * t);
+                    x = Mth.lerp(eased, arriveX[index], x);
+                    z = Mth.lerp(eased, arriveZ[index], z);
+                    y = Mth.lerp(t, y + ARRIVE_FROM, y) + ARRIVE_ARC * Mth.sin(t * Mth.PI);
+                    over += (1.0F - eased) * 180.0F;
+                }
+                node.moveTo(x, y, z, 0.0F);
                 node.rotateTo(Mth.sin(time * 0.5F + index) * 3.0F + over, -angle * Mth.RAD_TO_DEG, Mth.cos(time * 0.4F + index) * 3.0F, 0.0F);
             });
         }
@@ -929,7 +1052,7 @@ public final class PotBehavior implements StationBehavior {
     private void itemWakes(StationView view, float dt) {
         view.node("broth").ifPresent(broth -> {
             for (int i = 0; i < SLOTS; i++) {
-                if (shown[i].isEmpty()) {
+                if (shown[i].isEmpty() || !Float.isNaN(arriveAge[i])) {
                     itemFloating[i] = false;
                     continue;
                 }

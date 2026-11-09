@@ -197,6 +197,38 @@
       }
     },
     {
+      "id": "scoop",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "rotation": [
+        -60,
+        180,
+        0
+      ],
+      "scale": 0.3,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "soup",
+      "$comment": "Takes the click of an empty hand over a finished soup while a bowl from the inventory is offered; off otherwise.",
+      "collider": {
+        "from": [
+          4,
+          2,
+          4
+        ],
+        "to": [
+          12,
+          9,
+          12
+        ]
+      }
+    },
+    {
       "id": "melt_0",
       "pos": [
         8,

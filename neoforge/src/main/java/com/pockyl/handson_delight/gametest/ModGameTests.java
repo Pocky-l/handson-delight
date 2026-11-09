@@ -30,6 +30,21 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void anEmptyHandScoopsWithBowlsFromTheInventory(GameTestHelper helper) {
+        PotTests.anEmptyHandScoopsWithBowlsFromTheInventory(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void anEmptyHandCutsWithTheKnifeInTheInventory(GameTestHelper helper) {
+        BoardTests.anEmptyHandCutsWithTheKnifeInTheInventory(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void anEmptyHandWithoutAKnifeCutsNothing(GameTestHelper helper) {
+        BoardTests.anEmptyHandWithoutAKnifeCutsNothing(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void aStackIsSharedOutForARecipeOfTwoAlike(GameTestHelper helper) {
         PotTests.aStackIsSharedOutForARecipeOfTwoAlike(helper);
     }

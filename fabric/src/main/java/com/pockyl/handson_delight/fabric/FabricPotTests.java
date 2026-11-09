@@ -24,6 +24,11 @@ public final class FabricPotTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void anEmptyHandScoopsWithBowlsFromTheInventory(GameTestHelper helper) {
+        PotTests.anEmptyHandScoopsWithBowlsFromTheInventory(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void aStackIsSharedOutForARecipeOfTwoAlike(GameTestHelper helper) {
         PotTests.aStackIsSharedOutForARecipeOfTwoAlike(helper);
     }

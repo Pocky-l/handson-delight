@@ -222,6 +222,44 @@ public final class BoardTests {
         });
     }
 
+    public static void anEmptyHandCutsWithTheKnifeInTheInventory(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.carry(new ItemStack(fd("cabbage"), 2));
+        setup.place();
+        setup.cook.getInventory().setItem(7, setup.knife.copy());
+        CompoundTag first = new CompoundTag();
+        first.putInt(CuttingBoardStation.MARK, 0);
+        first.putFloat(CuttingBoardStation.AT, 10.0F);
+        setup.act(CuttingBoardStation.ACTION_CHOP, first);
+        helper.runAfterDelay(4, () -> {
+            CompoundTag second = new CompoundTag();
+            second.putInt(CuttingBoardStation.MARK, 1);
+            second.putFloat(CuttingBoardStation.AT, 6.0F);
+            setup.act(CuttingBoardStation.ACTION_CHOP, second);
+            helper.assertTrue(setup.onBoard().isEmpty(), "both cabbages are cut");
+            helper.assertTrue(setup.cook.getInventory().countItem(fd("cabbage_leaf")) == 4, "the leaves go to the cook");
+            helper.assertTrue(setup.cook.getInventory().getItem(7).is(fd("iron_knife")), "the knife stays in its slot");
+            helper.assertTrue(setup.cook.inventoryMenu.getCarried().isEmpty(), "the hand stays empty");
+            helper.succeed();
+        });
+    }
+
+    public static void anEmptyHandWithoutAKnifeCutsNothing(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.carry(new ItemStack(fd("cabbage"), 1));
+        setup.place();
+        CompoundTag first = new CompoundTag();
+        first.putInt(CuttingBoardStation.MARK, 0);
+        setup.act(CuttingBoardStation.ACTION_CHOP, first);
+        helper.runAfterDelay(4, () -> {
+            CompoundTag second = new CompoundTag();
+            second.putInt(CuttingBoardStation.MARK, 1);
+            setup.act(CuttingBoardStation.ACTION_CHOP, second);
+            helper.assertTrue(setup.onBoard().getCount() == 1, "no knife, no cut");
+            helper.succeed();
+        });
+    }
+
     public static void sixteenAreCutAtOnce(GameTestHelper helper) {
         Board setup = board(helper);
         setup.carry(new ItemStack(fd("cabbage"), 20));

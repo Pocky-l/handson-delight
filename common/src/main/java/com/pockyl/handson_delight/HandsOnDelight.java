@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 import com.pockyl.handson_delight.station.SkilletStation;
+import com.pockyl.handson_delight.station.StoveStation;
 
 /** Turns the menus of Farmer's Delight into stations of Diegesis. The mod registers nothing: blocks and items stay theirs. */
 public final class HandsOnDelight {
@@ -27,6 +28,9 @@ public final class HandsOnDelight {
         }
         if (HandsOnConfig.skillet()) {
             SkilletStation.register();
+        }
+        if (HandsOnConfig.stove()) {
+            StoveStation.register();
         }
     }
 

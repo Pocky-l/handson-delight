@@ -49,18 +49,18 @@ public final class HandsOnEmiPlugin implements EmiPlugin {
     }
 
     private static final class AssemblyRecipe extends BasicEmiRecipe {
-        private final EmiIngredient bread;
+        private final EmiIngredient base;
         private final List<EmiIngredient> layers = new ArrayList<>();
 
         AssemblyRecipe(Assembly dish) {
             // EMI wants ids of its own: the crafting recipe keeps the dish's.
             super(CATEGORY, HandsOnDelight.id("/" + dish.id().getNamespace() + "/" + dish.id().getPath()),
                     AssemblyLayout.WIDTH, AssemblyLayout.HEIGHT);
-            bread = EmiIngredient.of(AssemblyLayout.bread(dish));
+            base = EmiIngredient.of(AssemblyLayout.base(dish));
             for (Ingredient layer : AssemblyLayout.layers(dish)) {
                 layers.add(EmiIngredient.of(layer));
             }
-            inputs.add(bread);
+            inputs.add(base);
             inputs.addAll(layers);
             catalysts.add(BOARD);
             outputs.add(EmiStack.of(AssemblyLayout.result(dish)));
@@ -72,8 +72,8 @@ public final class HandsOnEmiPlugin implements EmiPlugin {
                     AssemblyLayout.BOARD_HEIGHT, AssemblyLayout.BOARD_U, AssemblyLayout.BOARD_V);
             widgets.addTexture(AssemblyLayout.TEXTURE, AssemblyLayout.ARROW_X, AssemblyLayout.ARROW_Y, AssemblyLayout.ARROW_WIDTH,
                     AssemblyLayout.ARROW_HEIGHT, AssemblyLayout.ARROW_U, AssemblyLayout.ARROW_V);
-            widgets.addSlot(bread, AssemblyLayout.BREAD_X - 1, AssemblyLayout.BREAD_Y - 1).drawBack(false)
-                    .appendTooltip(AssemblyLayout.breadFirst());
+            widgets.addSlot(base, AssemblyLayout.BASE_X - 1, AssemblyLayout.BASE_Y - 1).drawBack(false)
+                    .appendTooltip(AssemblyLayout.goesDownFirst());
             for (int i = 0; i < layers.size(); i++) {
                 widgets.addSlot(layers.get(i), AssemblyLayout.layerX(i), AssemblyLayout.layerY(i, layers.size()))
                         .backgroundTexture(AssemblyLayout.TEXTURE, AssemblyLayout.SLOT_U, AssemblyLayout.SLOT_V);

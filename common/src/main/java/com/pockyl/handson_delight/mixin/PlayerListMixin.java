@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.List;
@@ -33,6 +34,8 @@ abstract class PlayerListMixin {
 
     @Inject(method = "reloadResources", at = @At("HEAD"))
     private void handson$boardDishesOnReload(CallbackInfo callback) {
+        // The tags were bound again after the recipes loaded: the board's dishes are chosen with the new ones.
+        AssemblyRecipes.tagsChanged();
         for (ServerPlayer player : players) {
             Platform.INSTANCE.sendBoardDishes(player);
         }

@@ -116,12 +116,12 @@ public final class PotTests {
 
     public static void anEmptyHandScoopsWithBowlsFromTheInventory(GameTestHelper helper) {
         Setup setup = pot(helper);
-        Player player = helper.makeMockPlayer();
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
         player.getInventory().setItem(5, new ItemStack(Items.BOWL, 3));
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 4));
-        CompoundTag saved = setup.pot.saveWithoutMetadata();
-        saved.put("Container", new ItemStack(Items.BOWL).save(new CompoundTag()));
-        setup.pot.load(saved);
+        CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
+        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
         CompoundTag one = new CompoundTag();
         one.putBoolean(CookingPotStation.FROM_INVENTORY, true);
         setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_SCOOP, one);

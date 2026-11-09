@@ -10,6 +10,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
 
@@ -18,10 +19,13 @@ import com.pockyl.diegesis.api.state.SlotStorage;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
+import com.pockyl.handson_delight.assembly.Assembling;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -156,8 +160,10 @@ public final class BoardLogic implements StationLogic {
             case CuttingBoardStation.ACTION_CHOP -> chop(station, player, data.getInt(CuttingBoardStation.MARK), data.getFloat(CuttingBoardStation.AT));
             case CuttingBoardStation.ACTION_TAKE -> take(station, player);
             case CuttingBoardStation.ACTION_ASSEMBLE -> assemble(station, player);
-            case CuttingBoardStation.ACTION_PICK ->
-                    pick(station, player, ResourceLocation.tryParse(data.getString(CuttingBoardStation.DISH)));
+            case CuttingBoardStation.ACTION_PICK -> {
+                ResourceLocation dish = ResourceLocation.tryParse(data.getString(CuttingBoardStation.DISH));
+                pick(station, player, dish, data.getBoolean(CuttingBoardStation.ALL));
+            }
             default -> {
             }
         }
@@ -222,11 +228,112 @@ public final class BoardLogic implements StationLogic {
         }
     }
 
-    private void pick(StationContext station, Player player, ResourceLocation dish) {
-        if (dish != null && AssemblyRecipes.all().stream().anyMatch(assembly -> assembly.id().equals(dish))) {
-            picked = dish;
-            finishIfWanted(station, player, layers(station.state()));
+    /**
+     * A dish picked in the book is the one the board makes, and what it takes comes from the cook's inventory: onto an empty board one
+     * set, or as many as a batch with {@code all}; onto layers already there, the rest of it for as many as lie there.
+     */
+    private void pick(StationContext station, Player player, ResourceLocation id, boolean all) {
+        Optional<AssemblyRecipes.Assembly> dish = AssemblyRecipes.all().stream().filter(assembly -> assembly.id().equals(id)).findFirst();
+        if (dish.isEmpty()) {
+            return;
         }
+        picked = id;
+        fill(station, player, dish.get(), all);
+        finishIfWanted(station, player, layers(station.state()));
+    }
+
+    private void fill(StationContext station, Player player, AssemblyRecipes.Assembly dish, boolean all) {
+        StationState state = station.state();
+        List<ItemStack> layers = layers(state);
+        // A dish made before is taken off for the new one (a pie too, which the knife could slice); what lies there to be cut keeps
+        // the board.
+        ItemStack onBoard = Platform.INSTANCE.getItem(board);
+        if (layers.isEmpty() && !onBoard.isEmpty() && !AssemblyRecipes.isDish(onBoard.getItem())
+                && !Cutting.recipesFor(station.level(), onBoard).isEmpty()) {
+            return;
+        }
+        int[] taken = layers.isEmpty() ? new int[0] : AssemblyRecipes.assign(dish, layers, false);
+        if (taken == null) {
+            return;
+        }
+        // What is still missing, the base first: it goes down first.
+        List<Integer> missing = new ArrayList<>();
+        for (int i = 0; i < dish.ingredients().size(); i++) {
+            int ingredient = i;
+            if (Arrays.stream(taken).noneMatch(used -> used == ingredient)) {
+                missing.add(ingredient);
+            }
+        }
+        missing.sort(Comparator.comparing(ingredient -> ingredient != dish.base()));
+        if (missing.isEmpty() || layers.size() + missing.size() > CuttingBoardStation.MOST_LAYERS) {
+            return;
+        }
+        int want = layers.isEmpty() ? all ? CuttingBoardStation.BATCH : 1 : layers.get(0).getCount();
+        Inventory inventory = player.getInventory();
+        ItemStack[] left = new ItemStack[Inventory.INVENTORY_SIZE];
+        for (int slot = 0; slot < left.length; slot++) {
+            left[slot] = inventory.getItem(slot).copy();
+        }
+        // The item each new layer is made of, found with the first set; an item that does not stack (a bucket) goes down once.
+        ItemStack[] kinds = new ItemStack[missing.size()];
+        int[] counts = new int[missing.size()];
+        List<int[]> removals = new ArrayList<>();
+        int sets = 0;
+        while (sets < want) {
+            List<int[]> set = new ArrayList<>();
+            boolean whole = true;
+            for (int m = 0; m < missing.size() && whole; m++) {
+                if (kinds[m] != null && kinds[m].getMaxStackSize() == 1) {
+                    continue;
+                }
+                int slot = source(left, dish.ingredients().get(missing.get(m)), kinds[m]);
+                if (slot < 0) {
+                    whole = false;
+                    break;
+                }
+                if (kinds[m] == null) {
+                    kinds[m] = left[slot].copyWithCount(1);
+                }
+                left[slot].shrink(1);
+                set.add(new int[] {slot, m});
+            }
+            if (!whole) {
+                break;
+            }
+            for (int[] one : set) {
+                counts[one[1]]++;
+            }
+            removals.addAll(set);
+            sets++;
+        }
+        if (sets == 0) {
+            return;
+        }
+        if (layers.isEmpty() && !onBoard.isEmpty()) {
+            Platform.INSTANCE.setItem(board, ItemStack.EMPTY);
+            taken(station, onBoard, -1);
+            give(player, onBoard);
+        }
+        for (int[] removal : removals) {
+            inventory.removeItem(removal[0], 1);
+        }
+        for (int m = 0; m < missing.size(); m++) {
+            state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, layers.size() + m), kinds[m].copyWithCount(counts[m]));
+        }
+        CompoundTag where = new CompoundTag();
+        where.putInt(CuttingBoardStation.AT, layers.size() + missing.size() - 1);
+        station.effect(CuttingBoardStation.EFFECT_PLACED, "surface", where);
+    }
+
+    /** The inventory slot that gives the next item for a layer: one the ingredient takes, the same as the layer's when it has one. */
+    private static int source(ItemStack[] inventory, Ingredient ingredient, ItemStack kind) {
+        for (int slot = 0; slot < inventory.length; slot++) {
+            ItemStack stack = inventory[slot];
+            if (!stack.isEmpty() && ingredient.test(stack) && (kind == null || ItemStack.isSameItemSameComponents(kind, stack))) {
+                return slot;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -313,40 +420,44 @@ public final class BoardLogic implements StationLogic {
     }
 
     /**
-     * The layers become their dish, as the crafting table made it, as many times as the thinnest layer allows; it lies on the board
-     * (Farmer's Delight's slot, so a hopper can take it as well as a click), and what is left of the other layers goes back.
+     * The layers become their dish, round after round as the crafting table makes it, as many times as the layers allow; it lies on
+     * the board (Farmer's Delight's slot, so a hopper can take it as well as a click). What is left of the layers, and what the recipe
+     * leaves (a bucket, a bottle), goes to the cook.
      */
     private void assemble(StationContext station, Player player) {
         StationState state = station.state();
-        Optional<AssemblyRecipes.Assembly> dish = AssemblyRecipes.complete(layers(state));
-        if (dish.isEmpty()) {
+        List<ItemStack> layers = layers(state);
+        Optional<AssemblyRecipes.Assembly> dish = AssemblyRecipes.complete(layers);
+        Assembling.Made made = dish.map(it -> Assembling.make(it, layers, station.level(), CuttingBoardStation.BATCH)).orElse(null);
+        if (made == null || made.rounds() == 0) {
             refuse(station);
             return;
         }
-        int times = layers(state).stream().mapToInt(ItemStack::getCount).min().orElse(0);
-        ItemStack one = dish.get().recipe().getResultItem(station.level().registryAccess());
-        ItemStack result = one.copyWithCount(one.getCount() * times);
         for (int i = 0; i < CuttingBoardStation.MOST_LAYERS; i++) {
-            SlotRef slot = SlotRef.of(CuttingBoardStation.LAYERS, i);
-            ItemStack left = state.getItem(slot).copy();
-            left.shrink(times);
-            state.setItem(slot, ItemStack.EMPTY);
-            if (!left.isEmpty()) {
-                give(player, left);
+            state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, i), ItemStack.EMPTY);
+        }
+        made.layers().forEach(left -> give(player, left));
+        made.leftovers().forEach(left -> give(player, left));
+        for (ItemStack result : made.dishes()) {
+            result.onCraftedBy(station.level(), player, result.getCount());
+            ItemStack onBoard = Platform.INSTANCE.getItem(board);
+            if (onBoard.isEmpty() || ItemStack.isSameItemSameComponents(onBoard, result)) {
+                int room = Math.min(result.getMaxStackSize(), board.getMaxStackSize()) - onBoard.getCount();
+                int there = Math.max(0, Math.min(room, result.getCount()));
+                if (there > 0) {
+                    Platform.INSTANCE.setItem(board, result.copyWithCount(onBoard.getCount() + there));
+                    result.shrink(there);
+                }
             }
-        }
-        result.onCraftedBy(station.level(), player, result.getCount());
-        ItemStack onBoard = Platform.INSTANCE.getItem(board);
-        if (onBoard.isEmpty() || ItemStack.isSameItemSameComponents(onBoard, result)) {
-            int room = result.getMaxStackSize() - onBoard.getCount();
-            int there = Math.min(room, result.getCount());
-            Platform.INSTANCE.setItem(board, result.copyWithCount(onBoard.getCount() + there));
-            result.shrink(there);
-        }
-        if (!result.isEmpty()) {
             give(player, result);
         }
-        station.effect(CuttingBoardStation.EFFECT_ASSEMBLED, "item", new CompoundTag());
+        CompoundTag how = new CompoundTag();
+        ListTag from = new ListTag();
+        layers.forEach(layer -> from.add(layer.copyWithCount(1).saveOptional(station.level().registryAccess())));
+        how.put(CuttingBoardStation.LAYERS, from);
+        how.putString(CuttingBoardStation.FINISH, dish.get().finish().name());
+        how.putBoolean(CuttingBoardStation.BLOCK, dish.get().isBlock());
+        station.effect(CuttingBoardStation.EFFECT_ASSEMBLED, "item", how);
     }
 
     private static void refuse(StationContext station) {
@@ -427,9 +538,13 @@ public final class BoardLogic implements StationLogic {
         }
     }
 
+    /** Into the inventory, what does not fit at the cook's feet, in stacks no bigger than the item allows (eight cookies a round). */
     private static void give(Player player, ItemStack stack) {
-        if (!player.getInventory().add(stack)) {
-            player.drop(stack, false);
+        while (!stack.isEmpty()) {
+            ItemStack part = stack.split(stack.getMaxStackSize());
+            if (!player.getInventory().add(part)) {
+                player.drop(part, false);
+            }
         }
     }
 
@@ -451,7 +566,7 @@ public final class BoardLogic implements StationLogic {
             data.put(CuttingBoardStation.ANGLES, how);
         }
         AssemblyRecipes.complete(layers(state)).ifPresent(dish -> data.putString(CuttingBoardStation.DISH,
-                BuiltInRegistries.ITEM.getKey(dish.recipe().getResultItem(station.level().registryAccess()).getItem()).toString()));
+                BuiltInRegistries.ITEM.getKey(dish.result().getItem()).toString()));
         if (!data.equals(state.data())) {
             state.setData(data);
         }

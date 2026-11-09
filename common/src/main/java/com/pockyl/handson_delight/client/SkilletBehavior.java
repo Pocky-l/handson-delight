@@ -185,7 +185,10 @@ public final class SkilletBehavior implements StationBehavior {
         int pieces = Math.min(batch, PIECES);
         int unders = Math.min(Math.max(0, batch - PIECES), PIECES);
         float up = clock < lookHeldUntil ? shownUp : Float.isNaN(tossedUp) ? state.data().getFloat(SkilletStation.UP) : tossedUp;
-        boolean sameFood = ItemStack.isSameItemSameComponents(inPan, shown);
+        // Food that became what the fire makes of it is the same food: it stays where it lay, nothing lands (owner, 2026-11-09:
+        // a potato done in the pan landed again as if put in).
+        boolean sameFood = ItemStack.isSameItemSameComponents(inPan, shown)
+                || !shown.isEmpty() && !inPan.isEmpty() && ItemStack.isSameItemSameComponents(cooked(view, shown), inPan);
         if (sameFood && pieces == shownPieces && unders == shownUnders && look(up) == look(shownUp)) {
             return;
         }

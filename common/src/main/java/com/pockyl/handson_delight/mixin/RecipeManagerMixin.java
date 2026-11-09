@@ -47,7 +47,8 @@ abstract class RecipeManagerMixin {
     @Inject(method = APPLY, at = @At("TAIL"))
     private void handson$keepAssembled(Map<ResourceLocation, JsonElement> recipes, ResourceManager resources, ProfilerFiller profiler,
             CallbackInfo callback) {
-        AssemblyRecipes.load(handson$taken, registries);
+        // Only those the manager loaded: a recipe whose conditions fail is not made anywhere.
+        AssemblyRecipes.load(handson$taken, ((RecipeManagerAccessor) this).handson$byName()::containsKey, registries);
         handson$taken.clear();
     }
 }

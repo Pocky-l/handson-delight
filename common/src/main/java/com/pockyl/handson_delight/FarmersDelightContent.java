@@ -18,6 +18,7 @@ public final class FarmersDelightContent {
     public static final Supplier<Block> COOKING_POT = () -> BuiltInRegistries.BLOCK.get(id("cooking_pot"));
     public static final Supplier<Block> CUTTING_BOARD = () -> BuiltInRegistries.BLOCK.get(id("cutting_board"));
     public static final Supplier<Block> SKILLET = () -> BuiltInRegistries.BLOCK.get(id("skillet"));
+    public static final Supplier<Block> STOVE = () -> BuiltInRegistries.BLOCK.get(id("stove"));
     public static final Supplier<RecipeType<?>> CUTTING = () -> BuiltInRegistries.RECIPE_TYPE.get(id("cutting"));
 
     public static final SoundEvent BOIL_SOUP = sound("block.cooking_pot.boil_soup");

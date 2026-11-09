@@ -6,6 +6,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
+import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
@@ -38,6 +39,11 @@ public interface Platform {
 
     /** What lies in a skillet: its one slot holds a stack ({@code getStoredStack} reads it in every build). */
     void setItem(SkilletBlockEntity skillet, ItemStack stack);
+
+    /** What lies on a stove's top: six slots of one item each. */
+    ItemStack getItem(AbstractStoveBlockEntity stove, int slot);
+
+    void setItem(AbstractStoveBlockEntity stove, int slot, ItemStack stack);
 
     /**
      * Whether the mod {@code modId} needs Farmer's Delight: an addon, whose food recipes the stations take over too. A mod that only

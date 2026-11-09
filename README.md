@@ -2,7 +2,7 @@
 
 <p align="center">
   Cook in <a href="https://www.curseforge.com/minecraft/mc-mods/farmers-delight">Farmer's Delight</a> with your own hands:
-  the cooking pot, the cutting board and the skillet open right in the world.
+  the cooking pot, the cutting board, the skillet and the stove open right in the world.
 </p>
 
 <p align="center">
@@ -40,11 +40,16 @@ open as stations, and its recipes, and those of its addons, work in them.
   go into the pot from your inventory; Shift + click puts in up to sixteen sets.
 - **Cutting board.** Right-click it with food to lay the food down, with a knife to take the knife in hand. Chop on
   the dashed marks; each cut goes through sixteen items of the stack.
-- **Sandwiches on the board.** Sandwiches, burgers and wraps move from the crafting table to the cutting board: lay the
-  bread, stack the rest on it, and the dish appears. Machines such as Create's and AE2's autocrafters still craft them,
-  and so do players without this mod on a server that has it.
+- **Dishes on the board.** Farmer's Delight's food crafts move from the crafting table to the cutting board: lay what
+  goes down first (bread, a bowl, a stick, kelp, wheat, a pie crust), put the rest on it, and the dish is made. Salads
+  are tossed in their bowl, rolls rolled, skewers pushed along the stick, dough kneaded. Machines such as Create's and
+  AE2's autocrafters still craft them, and so do players without this mod on a server that has it.
+- **Board recipe book.** Tabs show everything, the dishes only or the cuts only. Click a dish and it is laid from your
+  inventory; Shift + click lays sixteen.
 - **Skillet.** Food fries on the side that lies on the pan, then smokes and waits. Toss the pan by its handle to turn it.
   When both sides are done, click the food to take it. Up to sixteen fry together.
+- **Stove.** Up to six pieces grill on its top. Each one smokes when its lower side is done: click it to turn it over.
+  Once both sides are done it waits on the grill until you take it.
 - **A kitchen.** Rest the cursor at the edge of the screen beside another station and the camera moves over to it. A, D
   and the arrow keys do the same.
 - **For everyone.** Players nearby see the soup simmer, the spoon go round and the food land on the board.
@@ -53,19 +58,20 @@ open as stations, and its recipes, and those of its addons, work in them.
 
 | Action | How |
 |---|---|
-| Open a station | Right-click the pot, board or skillet |
+| Open a station | Right-click the pot, board, skillet or stove |
 | Use the block as in Farmer's Delight | Sneak + right-click |
 | Stir | Click the spoon's handle, move the mouse, click again to put it down |
 | Serve | Click the soup with a bowl |
 | Put a whole stack in | Shift + click it in the inventory |
 | Cut | Left-click the food on the board: the knife comes from your inventory |
+| Turn a piece on the stove | Click it |
 | Take food back | Right-click it |
 | Put the knife away | Right-click with it |
 | Go to the next station | Rest the cursor at the screen's edge on its side, or press A, D or an arrow key |
 
 ## Compatibility
 
-[![JEI](https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/jei.png)](https://www.curseforge.com/minecraft/mc-mods/jei) ✅ **[JEI](https://www.curseforge.com/minecraft/mc-mods/jei)** (optional) - shows the board's sandwiches, burgers and wraps
+[![JEI](https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/jei.png)](https://www.curseforge.com/minecraft/mc-mods/jei) ✅ **[JEI](https://www.curseforge.com/minecraft/mc-mods/jei)** (optional) - shows the board's dishes
 
 [![EMI](https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/emi.png)](https://www.curseforge.com/minecraft/mc-mods/emi) ✅ **[EMI](https://www.curseforge.com/minecraft/mc-mods/emi)** (optional) - the same
 
@@ -82,8 +88,8 @@ which each player sets in their own file.
 
 | Key | Default | What it does |
 |---|---|---|
-| `cooking_pot`, `cutting_board`, `skillet` | `true` | The station of that block. Off, the block works as in Farmer's Delight |
-| `remove_crafting_recipes` | `true` | Sandwiches, burgers and wraps are made on the board only |
+| `cooking_pot`, `cutting_board`, `skillet`, `stove` | `true` | The station of that block. Off, the block works as in Farmer's Delight |
+| `remove_crafting_recipes` | `true` | Farmer's Delight's food crafts are made on the board only |
 | `stirring_required` | `true` | Food you put into the pot waits for the spoon while you are at it |
 | `recipe_book` | `true` | The recipe book beside the stations |
 

@@ -15,6 +15,7 @@
     "CuttingBoardBlockEntityMixin",
     "CuttingBoardBlockMixin",
     "SkilletBlockEntityMixin",
+    "StoveBlockEntityMixin",
     "PlayerListMixin"
   ],
   "client": [
@@ -23,6 +24,8 @@
     "SpriteContentsAccessor",
     "CuttingBoardRendererMixin",
     "SkilletRendererMixin",
+    "StoveRendererMixin",
+    "StoveSmokeMixin",
     "CampfireSmokeMixin"
   ],
   "injectors": {

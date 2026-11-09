@@ -26,6 +26,7 @@ import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.station.BoardLogic;
 import com.pockyl.handson_delight.station.Cutting;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
@@ -75,6 +76,34 @@ public final class BoardBehavior implements StationBehavior {
     private static final float MELT_TIME = 0.28F;
     private static final float POP_TIME = 0.35F;
     private static final float POP_HEIGHT = 1.6F;
+    /** A toss: how high what lies in the bowl flies, how long it is in the air and rests after, how the bowl itself jerks. */
+    private static final float TOSS_HEIGHT = 4.0F;
+    private static final float TOSS_TIME = 0.42F;
+    private static final float TOSS_REST = 0.12F;
+    private static final float TOSS_JERK = 0.9F;
+    private static final float TOSS_JERK_TIME = 0.16F;
+    private static final float TOSS_TILT = 12.0F;
+    private static final float TOSS_TUMBLE = 40.0F;
+    /** A roll: the layers close up, then roll away and back under the hands, shorter each time. */
+    private static final float ROLL_GATHER = 0.12F;
+    private static final int ROLLS = 3;
+    private static final float ROLL_STROKE = 0.14F;
+    private static final float ROLL_TRAVEL = 1.6F;
+    private static final float ROLL_TURN = 25.0F;
+    /** A skewer: how the pieces go onto the stick, stand across it and are pushed along. */
+    private static final float SKEWER_SLIDE = 0.18F;
+    private static final float SKEWER_STAGGER = 0.1F;
+    private static final float SKEWER_PUSH = 0.16F;
+    private static final float SKEWER_LENGTH = 6.0F;
+    private static final float SKEWER_PUSH_ALONG = 0.8F;
+    private static final float SKEWER_STAND = -60.0F;
+    private static final float SKEWER_SCALE = 0.7F;
+    /** Kneading: pressed into a lump, then pushed flat and gathered again a few times. */
+    private static final float KNEAD_PRESS = 0.12F;
+    private static final int KNEAD_PUSHES = 3;
+    private static final float KNEAD_PUSH = 0.09F;
+    private static final float KNEAD_TURN = 22.0F;
+    private static final float KNEAD_SPREAD = 1.2F;
     /** How far apart the layers of a dish lie, as the scene repeats them. */
     private static final float LAYER_STEP = 0.65F;
     /**
@@ -114,6 +143,10 @@ public final class BoardBehavior implements StationBehavior {
     private boolean whole;
     /** The layers as last seen, for the dish they turn into; how long that still takes, seconds, NaN when nothing turns. */
     private final List<ItemStack> lastLayers = new ArrayList<>();
+    /** Where each layer rests while the dish is finished (x and z from the middle, height over the board): a toss mixes them up. */
+    private final float[] restX = new float[CuttingBoardStation.MOST_LAYERS];
+    private final float[] restY = new float[CuttingBoardStation.MOST_LAYERS];
+    private final float[] restZ = new float[CuttingBoardStation.MOST_LAYERS];
     private float melting = Float.NaN;
     private final BoardBook pages = new BoardBook();
     private final RecipeBook book = new RecipeBook(pages);
@@ -241,7 +274,8 @@ public final class BoardBehavior implements StationBehavior {
                 view.node(flat ? "item" : "item_block").ifPresent(node -> land(view, node, 0.0F, flat ? pileLift() : 0.0F, 0.0F));
             }
             view.node("pile").ifPresent(pile -> {
-                pile.setVisible(onBoard.getCount() > 1);
+                // Not under layers being finished: the dish's pile shows when it pops up.
+                pile.setVisible(onBoard.getCount() > 1 && Float.isNaN(melting));
                 if (onBoard.getCount() > 1) {
                     pile.setShape(shape(onBoard, ITEM_SIZE, List.of(), 0.0F), sprite(onBoard));
                 }
@@ -276,7 +310,7 @@ public final class BoardBehavior implements StationBehavior {
                     node.moveTo(jitterX(index), 0.0F, jitterZ(index), 0.0F);
                     if (arrives) {
                         after(delay, () -> {
-                            if (ItemStack.isSameItemSameTags(shownLayers[index], layer)) {
+                            if (ItemStack.isSameItemSameComponents(shownLayers[index], layer)) {
                                 node.setVisible(true);
                                 landFromPlayer(view, node, jitterX(index), 0.0F, jitterZ(index));
                                 view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.7F, 1.15F + 0.05F * index);
@@ -837,7 +871,12 @@ public final class BoardBehavior implements StationBehavior {
                 taken(view, taken, data.getInt(CuttingBoardStation.AT));
             }
         } else if (CuttingBoardStation.EFFECT_ASSEMBLED.equals(effect)) {
-            assembled(view);
+            List<ItemStack> made = new ArrayList<>();
+            ListTag layers = data.getList(CuttingBoardStation.LAYERS, Tag.TAG_COMPOUND);
+            for (int i = 0; i < layers.size(); i++) {
+                made.add(ItemStack.parseOptional(view.level().registryAccess(), layers.getCompound(i)));
+            }
+            assembled(view, finish(data.getString(CuttingBoardStation.FINISH)), made);
             book.statsChanged();
         } else if (CuttingBoardStation.EFFECT_BOOK.equals(effect)) {
             BoardBook.received(data.getList(CuttingBoardStation.BOOK, Tag.TAG_COMPOUND));
@@ -880,30 +919,266 @@ public final class BoardBehavior implements StationBehavior {
                 || Cutting.all(view.level()).stream().anyMatch(recipe -> recipe.getTool().test(stack));
     }
 
-    /** The layers sink into each other and the dish pops up in their place, with crumbs and a glint. */
-    private void assembled(StationView view) {
-        melting = MELT_TIME;
-        for (int i = 0; i < lastLayers.size(); i++) {
-            ItemStack layer = lastLayers.get(i);
+    private static AssemblyRecipes.Finish finish(String name) {
+        for (AssemblyRecipes.Finish finish : AssemblyRecipes.Finish.values()) {
+            if (finish.name().equals(name)) {
+                return finish;
+            }
+        }
+        return AssemblyRecipes.Finish.PRESS;
+    }
+
+    /**
+     * The layers are finished as their kind of dish is (a salad is tossed in its bowl first), then sink into each other and the dish
+     * pops up in their place, with crumbs and a glint. {@code made}: the layers the dish was made of; those not on the board yet (a
+     * dish picked in the book is laid and made at once) first come from the player one after the other.
+     */
+    private void assembled(StationView view, AssemblyRecipes.Finish finish, List<ItemStack> made) {
+        for (int i = 0; i < CuttingBoardStation.MOST_LAYERS; i++) {
+            rest(i, jitterX(i), i * LAYER_STEP, jitterZ(i));
+        }
+        float arrive = arrive(view, made);
+        int count = lastLayers.size();
+        float finishing = switch (finish) {
+            case TOSS -> TOSS_TIME + TOSS_REST;
+            case ROLL -> ROLL_GATHER + (ROLLS + 1) * ROLL_STROKE;
+            case SKEWER -> SKEWER_SLIDE + (count - 1) * SKEWER_STAGGER + SKEWER_PUSH;
+            case KNEAD -> KNEAD_PRESS + KNEAD_PUSHES * KNEAD_PUSH * 2.0F;
+            case PRESS -> 0.0F;
+        };
+        melting = arrive + finishing + MELT_TIME;
+        // The dish (an item lying flat or a block standing) waits unseen until it pops up.
+        for (String dish : List.of("item", "item_block")) {
+            view.node(dish).ifPresent(item -> item.scaleTo(arrive + finishing > 0.0F ? 0.0F : 0.3F, 0.0F));
+        }
+        view.node("pile").ifPresent(pile -> pile.setVisible(false));
+        then(arrive, () -> {
+            switch (finish) {
+                case TOSS -> toss(view);
+                case ROLL -> roll(view);
+                case SKEWER -> skewer(view);
+                case KNEAD -> knead(view);
+                case PRESS -> {
+                }
+            }
+            then(finishing, () -> pop(view, finish));
+        });
+    }
+
+    private void rest(int layer, float x, float y, float z) {
+        restX[layer] = x;
+        restY[layer] = y;
+        restZ[layer] = z;
+    }
+
+    /** {@code run} after {@code seconds}, or now. */
+    private void then(float seconds, Runnable run) {
+        if (seconds > 0.0F) {
+            after(seconds, run);
+        } else {
+            run.run();
+        }
+    }
+
+    /**
+     * Shows the layers {@code made} of: those the board already showed where they lie, the others coming from the player one after the
+     * other. Returns when the last has landed.
+     */
+    private float arrive(StationView view, List<ItemStack> made) {
+        List<ItemStack> layers = made.isEmpty() ? List.copyOf(lastLayers) : made;
+        float landed = 0.0F;
+        int order = 0;
+        for (int i = 0; i < layers.size() && i < CuttingBoardStation.MOST_LAYERS; i++) {
+            ItemStack layer = layers.get(i);
+            boolean seen = made.isEmpty() || ItemStack.isSameItemSameComponents(shownLayers[i], layer);
+            float delay = order * LAYER_STAGGER;
+            if (!seen) {
+                order++;
+                landed = delay + PLAYER_LAND_TIME + SETTLE_TIME;
+            }
             int index = i;
             view.node("layer_" + i).ifPresent(node -> {
-                node.setVisible(true);
                 node.setShape(shape(layer, index == 0 ? ITEM_SIZE : LAYER_SIZE, List.of(), 0.0F), sprite(layer));
-                node.scaleTo(0.1F, MELT_TIME);
-                node.moveTo(0.0F, -index * 0.6F, 0.0F, MELT_TIME);
+                node.rotateTo(0.0F, turn(index), 0.0F, 0.0F);
+                node.scaleTo(1.0F, 0.0F);
+                node.setVisible(seen);
+                if (seen) {
+                    node.moveTo(jitterX(index), 0.0F, jitterZ(index), 0.0F);
+                    return;
+                }
+                after(delay, () -> {
+                    node.setVisible(true);
+                    landFromPlayer(view, node, jitterX(index), 0.0F, jitterZ(index));
+                    view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.7F, 1.15F + 0.05F * index);
+                });
             });
         }
-        view.node("item").ifPresent(item -> {
+        lastLayers.clear();
+        layers.forEach(layer -> lastLayers.add(layer.copy()));
+        return landed;
+    }
+
+    /** The layers sink into each other and the dish pops up in their place. */
+    private void pop(StationView view, AssemblyRecipes.Finish finish) {
+        for (int i = 0; i < lastLayers.size(); i++) {
+            int index = i;
+            // Each sinks from where it rests towards the middle of the board.
+            float x = restX[i] * 0.4F;
+            float y = restY[i] * 0.08F - index * LAYER_STEP;
+            float z = restZ[i] * 0.4F;
+            view.node("layer_" + i).ifPresent(node -> {
+                node.scaleTo(0.1F, MELT_TIME);
+                node.moveTo(x, y, z, MELT_TIME);
+            });
+        }
+        boolean flat = ItemVoxels.icon(shownItem).isPresent();
+        view.node(flat ? "item" : "item_block").ifPresent(item -> {
             item.scaleTo(0.3F, 0.0F);
             item.scaleTo(1.0F, POP_TIME);
-            item.hopTo(0.0F, pileLift(), 0.0F, POP_HEIGHT, POP_TIME);
+            item.hopTo(0.0F, flat ? pileLift() : 0.0F, 0.0F, POP_HEIGHT, POP_TIME);
         });
-        int crumbs = lastLayers.isEmpty() ? 0xFFE8D8B0 : 0xFF000000 | FoodColors.main(lastLayers.get(0));
+        // Under the layers still melting it would fight them for the same place.
+        after(MELT_TIME, () -> view.node("pile").ifPresent(pile -> pile.setVisible(shownItem.getCount() > 1)));
+        // Crumbs of the food: of the bread, of what lies in a bowl.
+        int food = finish == AssemblyRecipes.Finish.TOSS && lastLayers.size() > 1 ? 1 : 0;
+        int crumbs = lastLayers.isEmpty() ? 0xFFE8D8B0 : 0xFF000000 | FoodColors.main(lastLayers.get(food));
         Vector3f middle = new Vector3f(MIDDLE_X, TOP + 1.0F, MIDDLE_Z);
         view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 3.0F, 0.0F), 2.5F, 12, crumbs);
         view.spawnParticles(DiegesisParticles.GLINT, middle, new Vector3f(0.0F, 2.0F, 0.0F), 2.0F, 5, 0xFFFFE9A0);
         view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.8F, 0.75F);
         view.playSound(SoundEvents.ITEM_PICKUP, "surface", 0.35F, 1.4F);
+    }
+
+    /**
+     * The bowl jerks up and what lies in it flies, each piece its own height and turn, and falls back in another order: a salad tossed.
+     */
+    private void toss(StationView view) {
+        view.node("layer_0").ifPresent(bowl -> {
+            bowl.hopTo(jitterX(0), 0.0F, jitterZ(0), TOSS_JERK, TOSS_JERK_TIME);
+            bowl.rotateTo(-TOSS_TILT, 0.0F, 0.0F, TOSS_JERK_TIME / 2.0F);
+            after(TOSS_JERK_TIME / 2.0F, () -> bowl.rotateTo(0.0F, 0.0F, 0.0F, TOSS_JERK_TIME / 2.0F));
+        });
+        int count = lastLayers.size();
+        for (int i = 1; i < count; i++) {
+            int index = i;
+            // Back in another order: the top lands lowest, the bottom on top.
+            int landsAt = count - i;
+            rest(i, jitterX(landsAt), landsAt * LAYER_STEP, jitterZ(landsAt));
+            float height = TOSS_HEIGHT + (i * 37 % 5) * 0.6F;
+            // Tumbling, never upside down: a piece is built from the icon's top and has no underside to show.
+            float side = i % 2 == 0 ? 1.0F : -1.0F;
+            float spin = turn(landsAt) + side * (120.0F + (index * 53 % 80));
+            view.node("layer_" + i).ifPresent(node -> {
+                node.hopTo(jitterX(landsAt), (landsAt - index) * LAYER_STEP, jitterZ(landsAt), height, TOSS_TIME);
+                node.rotateTo(side * TOSS_TUMBLE, (turn(index) + spin) / 2.0F, -side * TOSS_TUMBLE * 0.6F, TOSS_TIME / 2.0F);
+                after(TOSS_TIME / 2.0F, () -> node.rotateTo(0.0F, spin, 0.0F, TOSS_TIME / 2.0F));
+            });
+            after(TOSS_TIME - 0.02F * i, () -> view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.3F, 1.3F + 0.05F * index));
+        }
+        view.playSound(SoundEvents.ARMOR_EQUIP_LEATHER.value(), "surface", 0.5F, 1.4F);
+    }
+
+    /**
+     * Rolled under the hands: the layers close up into one log, which rolls away from the cook and back, a little less each time.
+     * It turns about its length only as far as its pieces still show their tops: they have no underside.
+     */
+    private void roll(StationView view) {
+        int count = lastLayers.size();
+        for (int i = 0; i < count; i++) {
+            int index = i;
+            float y = i * LAYER_STEP * 0.6F;
+            rest(i, 0.0F, y, 0.0F);
+            view.node("layer_" + i).ifPresent(node -> {
+                node.moveTo(0.0F, y - index * LAYER_STEP, 0.0F, ROLL_GATHER);
+                node.rotateTo(0.0F, turn(index) * 0.3F, 0.0F, ROLL_GATHER);
+            });
+        }
+        for (int stroke = 0; stroke <= ROLLS; stroke++) {
+            // Away, back, away, and at last to rest: each stroke shorter.
+            float amount = stroke == ROLLS ? 0.0F : (stroke % 2 == 0 ? 1.0F : -1.0F) * (ROLLS - stroke) / (float) ROLLS;
+            int at = stroke;
+            after(ROLL_GATHER + stroke * ROLL_STROKE, () -> {
+                for (int i = 0; i < count; i++) {
+                    int index = i;
+                    view.node("layer_" + i).ifPresent(node -> {
+                        node.moveTo(0.0F, restY[index] - index * LAYER_STEP, amount * ROLL_TRAVEL, ROLL_STROKE);
+                        node.rotateTo(amount * ROLL_TURN, turn(index) * 0.3F, 0.0F, ROLL_STROKE);
+                    });
+                }
+                if (at < ROLLS) {
+                    view.playSound(SoundEvents.WOOL_STEP, "surface", 0.3F, 1.2F + 0.1F * at);
+                }
+            });
+        }
+    }
+
+    /**
+     * Pushed along the stick: one after the other each piece goes onto the stick, standing across it, then all of them are pushed
+     * along towards its tip together.
+     */
+    private void skewer(StationView view) {
+        int count = lastLayers.size();
+        int pieces = Math.max(1, count - 1);
+        for (int i = 1; i < count; i++) {
+            int index = i;
+            // From the handle's end of the stick to its tip, the icon's diagonal.
+            float t = (i - 0.5F) / pieces - 0.5F;
+            float x = -t * SKEWER_LENGTH;
+            float z = -t * SKEWER_LENGTH;
+            float y = LAYER_STEP;
+            rest(i, x + SKEWER_PUSH_ALONG, y, z + SKEWER_PUSH_ALONG);
+            after((i - 1) * SKEWER_STAGGER, () -> view.node("layer_" + index).ifPresent(node -> {
+                node.moveTo(x, y - index * LAYER_STEP, z, SKEWER_SLIDE);
+                node.rotateTo(SKEWER_STAND, 45.0F, 0.0F, SKEWER_SLIDE);
+                node.scaleTo(SKEWER_SCALE, SKEWER_SLIDE);
+                after(SKEWER_SLIDE * 0.8F, () -> view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.3F, 1.4F + 0.06F * index));
+            }));
+        }
+        after(SKEWER_SLIDE + (count - 1) * SKEWER_STAGGER, () -> {
+            for (int i = 1; i < count; i++) {
+                int index = i;
+                view.node("layer_" + i).ifPresent(node ->
+                        node.moveTo(restX[index], restY[index] - index * LAYER_STEP, restZ[index], SKEWER_PUSH));
+            }
+            view.playSound(SoundEvents.WOOD_HIT, "surface", 0.25F, 1.6F);
+        });
+    }
+
+    /**
+     * Kneaded: pressed together into one lump, then worked over: pushed flat so it spreads, turned, gathered again, a few times.
+     */
+    private void knead(StationView view) {
+        int count = lastLayers.size();
+        for (int i = 0; i < count; i++) {
+            int index = i;
+            float y = i * LAYER_STEP * 0.35F;
+            rest(i, jitterX(i) * 0.5F, y, jitterZ(i) * 0.5F);
+            view.node("layer_" + i).ifPresent(node -> node.moveTo(restX[index], y - index * LAYER_STEP, restZ[index], KNEAD_PRESS));
+        }
+        view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.5F, 0.7F);
+        for (int push = 0; push < KNEAD_PUSHES; push++) {
+            float twist = (push % 2 == 0 ? 1.0F : -1.0F) * KNEAD_TURN;
+            float at = KNEAD_PRESS + push * KNEAD_PUSH * 2.0F;
+            after(at, () -> {
+                for (int i = 0; i < count; i++) {
+                    int index = i;
+                    // Pushed down, every piece spreads its own way out from the middle.
+                    float out = (index % 2 == 0 ? 1.0F : -1.0F) * KNEAD_SPREAD;
+                    view.node("layer_" + i).ifPresent(node -> {
+                        node.moveTo(restX[index] + out, -index * LAYER_STEP, restZ[index] + out * 0.6F, KNEAD_PUSH);
+                        node.rotateTo(0.0F, turn(index) + twist, 0.0F, KNEAD_PUSH * 2.0F);
+                    });
+                }
+                view.playSound(SoundEvents.WOOL_STEP, "surface", 0.45F, 0.75F);
+            });
+            after(at + KNEAD_PUSH, () -> {
+                for (int i = 0; i < count; i++) {
+                    int index = i;
+                    view.node("layer_" + i).ifPresent(node ->
+                            node.moveTo(restX[index], restY[index] - index * LAYER_STEP, restZ[index], KNEAD_PUSH));
+                }
+            });
+        }
     }
 
     @Override

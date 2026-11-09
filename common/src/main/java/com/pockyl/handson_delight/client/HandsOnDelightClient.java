@@ -10,6 +10,7 @@ import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 import com.pockyl.handson_delight.station.SkilletStation;
+import com.pockyl.handson_delight.station.StoveStation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(CookingPotStation.ID, PotBehavior::new);
         DiegesisClient.registerBehavior(CuttingBoardStation.ID, BoardBehavior::new);
         DiegesisClient.registerBehavior(SkilletStation.ID, SkilletBehavior::new);
+        DiegesisClient.registerBehavior(StoveStation.ID, StoveBehavior::new);
         DiegesisClient.registerLiquid(HandsOnDelight.id("broth"), LiquidLook.of(0xE0B0A070).thick(0.6F));
         registerParticles();
     }

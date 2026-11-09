@@ -1,7 +1,18 @@
 # Changelog
 
-## [1.0.1+1.21.1]
+## [1.1.0+1.21.1]
 
+- Plated meals and salads are made on the cutting board instead of the crafting table: put the bowl down, then what
+  goes into it, and the food is tossed in the bowl.
+- So are the rest of Farmer's Delight's food crafts. Rolls start from kelp or rice and are rolled, skewers start from the
+  stick and are pushed along it, dough, pie crust, cookies and the cake start from wheat and are kneaded, pies go into
+  their crust, melon juice into its bottle. The five feasts are put together in their bowl.
+- A bucket of milk or a honey bottle gives its bucket or bottle back, and dough from water keeps the water.
+- A dish picked in the board's recipe book is laid from your inventory, one at a time or sixteen with Shift.
+- The board's recipe book has tabs: everything, dishes only, or cuts only. It remembers your choice.
+- The stove opens as a station too: lay up to six pieces on its grill, and each one smokes when its lower side is done.
+  Click it to turn it over; once both sides are done it waits on the grill until you take it. Food put on by sneaking
+  cooks the Farmer's Delight way.
 - The recipe book is drawn with smooth edges instead of jagged steps.
 - Two quick presses of A or D go two stations on at once; the recipe book flies along.
 - A dish picked in the recipe book no longer appears in the station at once: its ingredients jump in from you one

@@ -7,7 +7,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.handson_delight.HandsOnDelight;
 
-/** {@link PotTests}, {@link BoardTests} and {@link SkilletTests} on NeoForge. */
+/** {@link PotTests}, {@link BoardTests}, {@link SkilletTests} and {@link StoveTests} on NeoForge. */
 @GameTestHolder(HandsOnDelight.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ModGameTests {
@@ -165,6 +165,51 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 100)
+    public static void bowlDishesLeaveTheCraftingTable(GameTestHelper helper) {
+        BoardTests.bowlDishesLeaveTheCraftingTable(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void everyFoodCraftComesToTheBoard(GameTestHelper helper) {
+        BoardTests.everyFoodCraftComesToTheBoard(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void doughKeepsItsWater(GameTestHelper helper) {
+        BoardTests.doughKeepsItsWater(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aPieGoesIntoItsCrust(GameTestHelper helper) {
+        BoardTests.aPieGoesIntoItsCrust(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void milkGivesItsBucketBack(GameTestHelper helper) {
+        BoardTests.milkGivesItsBucketBack(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void cookiesComeEightARound(GameTestHelper helper) {
+        BoardTests.cookiesComeEightARound(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aFeastIsLaidFromTheBook(GameTestHelper helper) {
+        BoardTests.aFeastIsLaidFromTheBook(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aSaladStartsFromItsBowl(GameTestHelper helper) {
+        BoardTests.aSaladStartsFromItsBowl(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theBookLaysADishFromTheInventory(GameTestHelper helper) {
+        BoardTests.theBookLaysADishFromTheInventory(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
     public static void aBurgerIsBuiltFromTheBreadUp(GameTestHelper helper) {
         BoardTests.aBurgerIsBuiltFromTheBreadUp(helper);
     }
@@ -232,5 +277,20 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void moreFoodTakesLongerButKeepsWhatWasDone(GameTestHelper helper) {
         SkilletTests.moreFoodTakesLongerButKeepsWhatWasDone(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 460)
+    public static void aPieceGrillsInHalvesAndWaitsToBeTurned(GameTestHelper helper) {
+        StoveTests.aPieceGrillsInHalvesAndWaitsToBeTurned(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void farmersDelightsWayStaysItsOwn(GameTestHelper helper) {
+        StoveTests.farmersDelightsWayStaysItsOwn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void onlyFoodGoesOnAnOpenGrill(GameTestHelper helper) {
+        StoveTests.onlyFoodGoesOnAnOpenGrill(helper);
     }
 }

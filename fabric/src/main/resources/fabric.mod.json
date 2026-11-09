@@ -19,7 +19,8 @@
     "emi": ["com.pockyl.handson_delight.compat.emi.HandsOnEmiPlugin"],
     "rei_client": ["com.pockyl.handson_delight.fabric.rei.HandsOnReiPlugin"],
     "fabric-gametest": ["com.pockyl.handson_delight.fabric.FabricPotTests", "com.pockyl.handson_delight.fabric.FabricBoardTests",
-      "com.pockyl.handson_delight.fabric.FabricSkilletTests"]
+      "com.pockyl.handson_delight.fabric.FabricSkilletTests",
+      "com.pockyl.handson_delight.fabric.FabricStoveTests"]
   },
   "mixins": ["handson_delight.mixins.json"],
   "depends": {

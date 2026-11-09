@@ -42,6 +42,7 @@ import com.pockyl.handson_delight.station.PotLogic;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -111,6 +112,14 @@ final class RecipeBook implements NodePainter {
     private static final float CLOSED_TURN = Mth.HALF_PI;
     private static final float CLOSED_SHIFT = 3.0F / 16.0F;
     /** The ribbon that closes the book, at the top of the right page. */
+    /** The tabs over the list: where the row starts, each one's width and spacing, height (the others lower), icon, edge. */
+    private static final float TABS_X = 10.0F;
+    private static final float TAB_WIDE = 16.0F;
+    private static final float TAB_PITCH = 18.0F;
+    private static final float TAB_HIGH = 14.0F;
+    private static final float TAB_DROP = 3.0F;
+    private static final float TAB_ICON = 11.0F;
+    private static final int TAB_EDGE = 0x905A3C18;
     private static final int RIBBON_X = 62;
     private static final int RIBBON_WIDTH = 6;
     private static final int RIBBON_HEIGHT = 13;
@@ -135,6 +144,11 @@ final class RecipeBook implements NodePainter {
     private int page;
     private Entry picked;
     private Entry hovered;
+    /** The tabs over the list (none for a book of one kind), the kind shown (null: all), the tab under the cursor. */
+    private List<Tab> tabs = List.of();
+    private String tab;
+    private boolean tabRemembered;
+    private Tab hoveredTab;
     private float refresh;
     private float reach;
     private float time;
@@ -201,13 +215,34 @@ final class RecipeBook implements NodePainter {
         default Object current(StationView view) {
             return null;
         }
+
+        /**
+         * The kinds of recipe the book can show alone, as tabs over the list, the first one showing them all (kind null). Fewer than
+         * two kinds: no tabs.
+         */
+        default List<Tab> tabs(StationView view) {
+            return List.of();
+        }
+
+        /** Under which name the chosen tab is remembered on the client: one per station type. */
+        default String memory() {
+            return "";
+        }
+    }
+
+    /** A tab over the list: the kind of recipe it shows ({@code Page.kind}; null: all), drawn as {@code icon}. */
+    record Tab(String kind, ItemStack icon) {
     }
 
     /**
      * One recipe: the dish on the list, what goes in, and small things at the foot of its page, with a note after them. {@code key}
      * keeps the page picked while the list is read again; {@code stars}: the pot's stars of the dish are shown.
      */
-    record Page(Object key, ItemStack dish, List<Ingredient> ingredients, List<ItemStack> foot, Component note, boolean stars) {
+    record Page(Object key, ItemStack dish, List<Ingredient> ingredients, List<ItemStack> foot, Component note, boolean stars,
+            String kind) {
+        Page(Object key, ItemStack dish, List<Ingredient> ingredients, List<ItemStack> foot, Component note, boolean stars) {
+            this(key, dish, ingredients, foot, note, stars, null);
+        }
     }
 
     /** A page, which of its ingredients the player has, and how many of the dish they have made, which opens its stars. */
@@ -336,10 +371,21 @@ final class RecipeBook implements NodePainter {
     }
 
     private void read(StationView view) {
+        List<Tab> offered = source.tabs(view);
+        tabs = offered.size() > 2 ? offered : List.of();
+        if (!tabRemembered) {
+            tabRemembered = true;
+            tab = BookTabs.get(source.memory());
+        }
+        if (tabs.stream().noneMatch(it -> Objects.equals(it.kind(), tab))) {
+            tab = null;
+        }
         List<ItemStack> pool = pool(view);
         List<Entry> found = new ArrayList<>();
         for (Page page : source.pages(view)) {
-            found.add(entry(page, pool));
+            if (tab == null || tab.equals(page.kind())) {
+                found.add(entry(page, pool));
+            }
         }
         if (cursorX >= 0.0F && !entries.isEmpty()) {
             // Under the cursor the list keeps its order: a dish never moves away from where the player points.
@@ -356,6 +402,7 @@ final class RecipeBook implements NodePainter {
             picked = found.stream().filter(entry -> entry.page().key().equals(kept)).findFirst().orElse(null);
         }
         entries = found;
+        page = Math.min(page, pages() - 1);
     }
 
     /** What the player has to cook with: the inventory, the stack in the hand (a knife taken to cut), and what lies in the station. */
@@ -461,6 +508,7 @@ final class RecipeBook implements NodePainter {
         cursorX = -1.0F;
         cursorY = -1.0F;
         hovered = null;
+        hoveredTab = null;
         if (cursor.isEmpty() || flip < 1.0F) {
             return;
         }
@@ -468,10 +516,12 @@ final class RecipeBook implements NodePainter {
         float y = (PAGE_HEIGHT / 2.0F - point.z) / UNIT;
         // The left page runs from its edge at +x to the fold at 0; the right one on from there.
         float x = point.x > 0.0F ? (PAGE_WIDTH - point.x) / UNIT : UNITS_WIDE - point.x / UNIT;
-        if (x >= 0.0F && x < UNITS_WIDE * 2 && y >= 0.0F && y < UNITS_HIGH) {
+        boolean overTabs = !tabs.isEmpty() && x < UNITS_WIDE && y >= -TAB_HIGH && y < 0.0F;
+        if (x >= 0.0F && x < UNITS_WIDE * 2 && (y >= 0.0F || overTabs) && y < UNITS_HIGH) {
             cursorX = x;
             cursorY = y;
             hovered = entryAt(x, y);
+            hoveredTab = overTabs ? tabAt(x) : null;
         }
     }
 
@@ -480,6 +530,12 @@ final class RecipeBook implements NodePainter {
         int row = Mth.floor((y - GRID_Y) / PITCH);
         int index = page * PER_PAGE + row * COLUMNS + column;
         return column >= 0 && column < COLUMNS && row >= 0 && row < ROWS && index < entries.size() ? entries.get(index) : null;
+    }
+
+    private Tab tabAt(float x) {
+        int index = Mth.floor((x - TABS_X) / TAB_PITCH);
+        float into = x - TABS_X - index * TAB_PITCH;
+        return index >= 0 && index < tabs.size() && into < TAB_WIDE ? tabs.get(index) : null;
     }
 
     private boolean onRibbon() {
@@ -491,6 +547,19 @@ final class RecipeBook implements NodePainter {
         if (!wanted || onRibbon()) {
             toggle(view);
             putAway = !wanted;
+        } else if (hoveredTab != null) {
+            if (!Objects.equals(tab, hoveredTab.kind())) {
+                tab = hoveredTab.kind();
+                BookTabs.put(source.memory(), tab);
+                page = 0;
+                flip = 1.0F;
+                read(view);
+                // The right page shows the first of the kind until another is picked.
+                if (picked == null && !entries.isEmpty()) {
+                    picked = entries.get(0);
+                }
+                turnSound();
+            }
         } else if (hovered != null) {
             picked = hovered;
             source.picked(view, picked.page());
@@ -553,28 +622,29 @@ final class RecipeBook implements NodePainter {
      */
     private void spread(PoseStack poseStack, MultiBufferSource buffers, float tilt, float height) {
         if (flip >= 1.0F) {
-            side(poseStack, buffers, true, tilt, height, page);
-            side(poseStack, buffers, false, -tilt, height, page);
+            side(poseStack, buffers, true, tilt, height, page, true);
+            side(poseStack, buffers, false, -tilt, height, page, false);
             return;
         }
         float over = flip * flip * (3.0F - 2.0F * flip);
         // Forward the old list stays on the left until the sheet covers it with the new one; back the old list itself lifts off.
         boolean forward = flipWay > 0;
-        side(poseStack, buffers, true, tilt, height, forward ? page - 1 : page);
-        side(poseStack, buffers, false, -tilt, height, page);
+        side(poseStack, buffers, true, tilt, height, forward ? page - 1 : page, true);
+        side(poseStack, buffers, false, -tilt, height, page, false);
         float right = -tilt;
         float left = tilt - Mth.PI;
         float turn = forward ? Mth.lerp(over, right, left) : Mth.lerp(over, left, right);
         float lifted = height + SHEET_LIFT;
         if (turn > -Mth.HALF_PI) {
-            side(poseStack, buffers, false, turn, lifted, page);
+            side(poseStack, buffers, false, turn, lifted, page, false);
         } else {
-            side(poseStack, buffers, true, turn + Mth.PI, lifted, forward ? page : page + 1);
+            side(poseStack, buffers, true, turn + Mth.PI, lifted, forward ? page : page + 1, false);
         }
     }
 
-    /** One side of a sheet, turned about the fold: units run right and down as on a screen. */
-    private void side(PoseStack poseStack, MultiBufferSource buffers, boolean left, float turn, float height, int listPage) {
+    /** One side of a sheet, turned about the fold: units run right and down as on a screen. {@code resting}: the tabs stand on it. */
+    private void side(PoseStack poseStack, MultiBufferSource buffers, boolean left, float turn, float height, int listPage,
+            boolean resting) {
         poseStack.pushPose();
         poseStack.translate(0.0F, height, 0.0F);
         poseStack.mulPose(new Quaternionf().rotationZ(turn));
@@ -585,6 +655,9 @@ final class RecipeBook implements NodePainter {
         canvas.rect(left ? UNITS_WIDE - FOLD_WIDTH : 0.0F, 0.0F, FOLD_WIDTH, UNITS_HIGH, 0.1F, FOLD);
         canvas.rect(left ? UNITS_WIDE - 2.0F : 0.0F, 0.0F, 2.0F, UNITS_HIGH, 0.15F, FOLD);
         if (left) {
+            if (resting) {
+                drawTabs(canvas);
+            }
             drawList(canvas, listPage);
         } else {
             Entry shown = hovered != null ? hovered : picked;
@@ -593,6 +666,13 @@ final class RecipeBook implements NodePainter {
             }
         }
         poseStack.popPose();
+    }
+
+    private void drawTabs(Sheet canvas) {
+        for (int i = 0; i < tabs.size(); i++) {
+            Tab shown = tabs.get(i);
+            canvas.tab(TABS_X + i * TAB_PITCH, Objects.equals(shown.kind(), tab), shown == hoveredTab, shown.icon());
+        }
     }
 
     private void drawList(Sheet canvas, int listPage) {
@@ -715,6 +795,24 @@ final class RecipeBook implements NodePainter {
         void rect(float x, float y, float width, float height, float lift, int argb) {
             VertexConsumer consumer = buffers.getBuffer(RenderType.text(TextureAtlas.LOCATION_BLOCKS));
             quad(consumer, x, y, x + width, y + height, lift, argb, white.getU0(), white.getU1(), white.getV0(), white.getV1());
+        }
+
+        /**
+         * A paper tab standing over the page's top edge, as vanilla's recipe book has them: the chosen one taller and in the page's own
+         * paper, the others a shade darker behind it, each with its kind's icon.
+         */
+        void tab(float x, boolean chosen, boolean lit, ItemStack icon) {
+            float high = chosen ? TAB_HIGH : TAB_HIGH - TAB_DROP;
+            int paper = chosen ? 0xFFFFFFFF : lit ? 0xFFEDE4D0 : 0xFFD6C9AC;
+            float u0 = PAPER_U0 + 4.0F / 256.0F;
+            float v0 = PAPER_V0 + 4.0F / 256.0F;
+            // Down into the page by a unit: the chosen one runs on into it, with no edge between.
+            quad(buffers.getBuffer(RenderType.text(PAPER)), x, -high, x + TAB_WIDE, chosen ? 1.0F : 0.0F, chosen ? 0.05F : 0.0F, paper, u0,
+                    u0 + TAB_WIDE * 1.6F / 256.0F, v0, v0 + high * 1.6F / 256.0F);
+            rect(x + 1.0F, -high, TAB_WIDE - 2.0F, 1.0F, 0.1F, TAB_EDGE);
+            rect(x, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
+            rect(x + TAB_WIDE - 1.0F, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
+            item(icon, x + (TAB_WIDE - TAB_ICON) / 2.0F, -high + 2.0F, TAB_ICON, !chosen && !lit);
         }
 
         void ribbon(boolean lit) {

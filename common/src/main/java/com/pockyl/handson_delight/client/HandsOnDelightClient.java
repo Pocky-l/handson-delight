@@ -51,7 +51,7 @@ public final class HandsOnDelightClient {
         for (int i = 0; i < 5; i++) {
             popping.add(ResourceLocation.fromNamespaceAndPath("diegesis", "bubble_pop_" + i));
         }
-        DiegesisClient.registerParticle(OIL_POP, ParticleStyle.builder(popping).color(0xEEFFE6A6).size(0.8F, 1.3F).life(0.25F, 0.5F)
+        DiegesisClient.registerParticle(OIL_POP, ParticleStyle.builder(popping).color(0xE6F7C27A).size(0.8F, 1.3F).life(0.25F, 0.5F)
                 .drag(1.0F).grow(0.4F).pop().build());
         DiegesisClient.registerParticle(FAT, ParticleStyle.builder(ResourceLocation.fromNamespaceAndPath("minecraft", "drip_fall")).color(0xFFFFE7A8)
                 .size(0.3F, 0.45F).life(0.3F, 0.6F).gravity(75.0F).drag(0.05F).stretch().pop().build());

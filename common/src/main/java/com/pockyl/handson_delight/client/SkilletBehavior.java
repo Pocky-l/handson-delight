@@ -85,6 +85,17 @@ public final class SkilletBehavior implements StationBehavior {
     private static final float FLOOR = 1.05F;
     private static final float EDGE = 0.5F;
     private static final float WAITING_SIZZLE = 1.3F;
+    /**
+     * How the pan tells the cook where the food is (owner: "it is unclear when to turn it and when it is done; make it answer with
+     * sound"): the frying sizzle grows louder and higher as the side on the pan browns, seconds apart; when that side is done the fat
+     * pops and the food gives a little jump, and soft pops go on while it waits; a done batch settles with a deep sizzle and a
+     * crackle. Pieces already in the pan move over to their new places this fast when more come.
+     */
+    private static final float FRY_VOICE = 1.0F;
+    private static final float WAITING_POP = 1.4F;
+    private static final float POP_HOP = 0.6F;
+    private static final float POP_TIME = 0.18F;
+    private static final float GLIDE = 0.16F;
 
     private final SkilletBook pages = new SkilletBook();
     private final RecipeBook book = new RecipeBook(pages);
@@ -116,12 +127,28 @@ public final class SkilletBehavior implements StationBehavior {
     private float shimmer;
     private float smoke;
     private float sizzle;
+    private float fryVoice;
+    private float waitingPop;
+    private boolean wasWaiting;
+    /**
+     * Pieces coming into the pan (piece_i at i, under_i at PIECES + i): seconds in the air (NaN: lying), where from, how long, how
+     * high. Where to is asked every frame, so a piece still landing when more come lands on its new place.
+     */
+    private final float[] landAge = new float[PIECES * 2];
+    private final float[] landX = new float[PIECES * 2];
+    private final float[] landY = new float[PIECES * 2];
+    private final float[] landZ = new float[PIECES * 2];
+    private final float[] landTime = new float[PIECES * 2];
+    private final float[] landHop = new float[PIECES * 2];
+    /** Pieces that wait for their turn to come in: hidden until then, whatever the state says meanwhile. */
+    private final boolean[] waitingIn = new boolean[PIECES * 2];
     private final List<Step> steps = new ArrayList<>();
 
     private record Step(float at, Runnable run) {
     }
 
     public SkilletBehavior(StationView view) {
+        java.util.Arrays.fill(landAge, Float.NaN);
     }
 
     @Override
@@ -219,6 +246,8 @@ public final class SkilletBehavior implements StationBehavior {
                 float delay = (i - before) * PIECE_STAGGER;
                 Vector3f from = together ? FromPlayer.offset(view, LAND_FROM, i - before, pieces - before) : null;
                 Runnable lands = () -> {
+                    waitingIn[index] = false;
+                    waitingIn[PIECES + index] = false;
                     if (index >= shownPieces) {
                         return;
                     }
@@ -235,6 +264,8 @@ public final class SkilletBehavior implements StationBehavior {
                     }
                 };
                 if (delay > 0.0F) {
+                    waitingIn[i] = true;
+                    waitingIn[PIECES + i] = true;
                     view.node("piece_" + i).ifPresent(node -> node.setVisible(false));
                     view.node("under_" + i).ifPresent(node -> node.setVisible(false));
                     after(delay, lands);
@@ -252,7 +283,7 @@ public final class SkilletBehavior implements StationBehavior {
     }
 
     private void drawPiece(StationView view, NodeView node, int index, boolean visible, boolean under) {
-        node.setVisible(visible);
+        node.setVisible(visible && !waitingIn[under ? PIECES + index : index]);
         if (!visible) {
             return;
         }
@@ -267,11 +298,16 @@ public final class SkilletBehavior implements StationBehavior {
             node.setVisual(Visual.ofItem(look.getItem()).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));
         }
         node.setTint(shownUp >= 1.0F ? 0xFFFFFFFF : mix(0xFFFFFFFF, SEARED, Math.max(0.0F, shownUp) * SEAR));
-        if (!node.isMoving()) {
+        // What lies there already moves over to its place in the new layout; what is landing or in the air of a toss is on its way.
+        if (!landing(index, under) && !(tossing() && node.isMoving())) {
             float[] at = place(index, shownPieces);
-            node.moveTo(at[0], height(under, look), at[1], 0.0F);
+            node.moveTo(at[0], height(under, look), at[1], visible && quiet ? 0.0F : GLIDE);
             node.rotateTo(0.0F, yaw(index, under), 0.0F, 0.0F);
         }
+    }
+
+    private boolean tossing() {
+        return clock - tossedAt < JERK_TIME + FLIGHT + FLIGHT_STRONG + STAGGER * PIECES * 2;
     }
 
     /** How high a piece lies: on the pan, on another piece, or as a block-like item standing on its middle. */
@@ -318,13 +354,42 @@ public final class SkilletBehavior implements StationBehavior {
     private void land(NodeView node, int index, boolean under, Vector3f from) {
         float[] at = place(index, shownPieces);
         float y = height(under, shown);
-        if (from == null) {
-            node.moveTo(at[0], y + LAND_FROM, at[1], 0.0F);
-            node.hopTo(at[0], y, at[1], 0.8F, LAND_TIME);
-        } else {
-            node.moveTo(at[0] + from.x, y + LAND_FROM, at[1] + from.z, 0.0F);
-            node.hopTo(at[0], y, at[1], 2.0F, PLAYER_LAND_TIME);
+        int k = under ? PIECES + index : index;
+        landAge[k] = 0.0F;
+        landX[k] = at[0] + (from == null ? 0.0F : from.x);
+        landY[k] = y + LAND_FROM;
+        landZ[k] = at[1] + (from == null ? 0.0F : from.z);
+        landTime[k] = from == null ? LAND_TIME : PLAYER_LAND_TIME;
+        landHop[k] = from == null ? 0.8F : 2.0F;
+        node.moveTo(landX[k], landY[k], landZ[k], 0.0F);
+    }
+
+    /** Pieces on their way in come down onto where they belong now, however many lie there by then. */
+    private void landings(StationView view, float dt) {
+        for (int k = 0; k < landAge.length; k++) {
+            if (Float.isNaN(landAge[k])) {
+                continue;
+            }
+            int index = k % PIECES;
+            boolean under = k >= PIECES;
+            landAge[k] += dt;
+            float t = Math.min(1.0F, landAge[k] / landTime[k]);
+            float[] at = place(index, Math.max(1, shownPieces));
+            float y = height(under, shown);
+            float eased = t * (2.0F - t);
+            float x = Mth.lerp(eased, landX[k], at[0]);
+            float z = Mth.lerp(eased, landZ[k], at[1]);
+            float height = Mth.lerp(t, landY[k], y) + landHop[k] * Mth.sin(t * Mth.PI);
+            int which = k;
+            view.node((under ? "under_" : "piece_") + index).ifPresent(node -> node.moveTo(x, height, z, 0.0F));
+            if (t >= 1.0F) {
+                landAge[which] = Float.NaN;
+            }
         }
+    }
+
+    private boolean landing(int index, boolean under) {
+        return !Float.isNaN(landAge[under ? PIECES + index : index]);
     }
 
     @Override
@@ -346,6 +411,7 @@ public final class SkilletBehavior implements StationBehavior {
             inUse = copy;
             showCopy(view, copy);
         }
+        landings(view, dt);
         frying(view, dt);
         book.frame(view, dt);
     }
@@ -372,6 +438,7 @@ public final class SkilletBehavior implements StationBehavior {
         oil.frame(dt, hot && food);
         if (!hot) {
             sizzle = 0.0F;
+            calm(view);
             return;
         }
         shimmer += dt * (food ? SHIMMER_RATE : SHIMMER_EMPTY_RATE);
@@ -382,6 +449,7 @@ public final class SkilletBehavior implements StationBehavior {
         }
         if (!food) {
             sizzle = 0.0F;
+            calm(view);
             return;
         }
         // Fuller pans seethe and spit more, up to a full layer of four pieces. Done food only simmers in its fat while it waits.
@@ -396,6 +464,7 @@ public final class SkilletBehavior implements StationBehavior {
         }
         if (done) {
             sizzle = 0.0F;
+            calm(view);
             return;
         }
         spit += dt * SPIT_RATE * fullness;
@@ -408,8 +477,20 @@ public final class SkilletBehavior implements StationBehavior {
         }
         boolean waits = data.getBoolean(SkilletStation.BY_HAND) && data.getFloat(SkilletStation.DOWN) >= 1.0F
                 && data.getFloat(SkilletStation.UP) < 1.0F && Float.isNaN(tossedUp);
+        if (waits && !wasWaiting && !inAir) {
+            wantsTurning(view);
+        }
+        wasWaiting = waits;
+        outlineHandle(view, waits && !inAir);
         if (!waits) {
             sizzle = 0.0F;
+            // The sizzle grows as the side on the pan browns: the ear follows the frying without looking.
+            float down = Mth.clamp(data.getFloat(SkilletStation.DOWN), 0.0F, 1.0F);
+            fryVoice -= dt;
+            if (fryVoice <= 0.0F && !inAir) {
+                fryVoice = FRY_VOICE * (1.0F - 0.3F * down);
+                view.playSound(FarmersDelightContent.SKILLET_SIZZLE, "pan", 0.12F + 0.28F * down, 0.85F + 0.3F * down + random.nextFloat() * 0.05F);
+            }
             vapour += dt * VAPOUR_RATE * fullness;
             while (vapour >= 1.0F) {
                 vapour -= 1.0F;
@@ -428,6 +509,50 @@ public final class SkilletBehavior implements StationBehavior {
             sizzle = WAITING_SIZZLE;
             view.playSound(FarmersDelightContent.SKILLET_SIZZLE, "pan", 0.3F, 1.15F + random.nextFloat() * 0.1F);
         }
+        waitingPop -= dt;
+        if (waitingPop <= 0.0F) {
+            waitingPop = WAITING_POP * (0.8F + 0.4F * random.nextFloat());
+            view.playSound(SoundEvents.LAVA_POP, "pan", 0.18F, 1.4F + random.nextFloat() * 0.3F);
+        }
+    }
+
+    /**
+     * The side on the pan is done: the fat pops twice and the food gives a little jump, once. Soft pops go on while it waits
+     * ({@link #frying}); the handle stays outlined: a toss turns it.
+     */
+    private void wantsTurning(StationView view) {
+        waitingPop = WAITING_POP;
+        view.playSound(SoundEvents.LAVA_POP, "pan", 0.4F, 1.3F);
+        after(0.09F, () -> view.playSound(SoundEvents.LAVA_POP, "pan", 0.35F, 1.55F));
+        for (int i = 0; i < 8; i++) {
+            float angle = random.nextFloat() * Mth.TWO_PI;
+            float out = 3.0F + random.nextFloat() * 3.0F;
+            view.spawnParticles(HandsOnDelightClient.FAT, roundFood(), new Vector3f(Mth.cos(angle) * out, 8.0F + random.nextFloat() * 5.0F,
+                    Mth.sin(angle) * out), 0.1F, 1, 0);
+        }
+        for (int i = 0; i < shownPieces; i++) {
+            float[] at = place(i, shownPieces);
+            for (boolean under : new boolean[] {false, true}) {
+                int index = i;
+                if (landing(index, under) || under && index >= shownUnders) {
+                    continue;
+                }
+                float y = height(under, shown);
+                view.node((under ? "under_" : "piece_") + i).filter(node -> !node.isMoving())
+                        .ifPresent(node -> after(index * 0.04F, () -> node.hopTo(at[0], y, at[1], POP_HOP, POP_TIME)));
+            }
+        }
+    }
+
+    /** Nothing waits to be turned: no outline but the cursor's, and the next wait is new. */
+    private void calm(StationView view) {
+        wasWaiting = false;
+        outlineHandle(view, false);
+    }
+
+    /** The handle is outlined under the cursor, and while food waits to be turned: that is what turns it. */
+    private void outlineHandle(StationView view, boolean waits) {
+        view.node("handle").ifPresent(handle -> handle.setOutlined(handle.isHovered() || waits && view.isFocused()));
     }
 
     /** Food landing in a hot pan: the fat seethes up round it, spits and steams. */
@@ -670,6 +795,9 @@ public final class SkilletBehavior implements StationBehavior {
     private void ready(StationView view) {
         view.spawnParticles(DiegesisParticles.STEAM, onFood(), new Vector3f(0.0F, 3.0F, 0.0F), 2.0F, 4, 0x60FFFFFF);
         view.spawnParticles(DiegesisParticles.GLINT, onFood(), new Vector3f(0.0F, 2.0F, 0.0F), 2.5F, 4, 0xFFFFE9A0);
+        // Done: one last deep sizzle as the food settles, then only the fire crackles under it (owner: a chime "does not fit").
+        view.playSound(FarmersDelightContent.SKILLET_ADD_FOOD, "pan", 0.4F, 0.75F);
+        after(0.35F, () -> view.playSound(SoundEvents.CAMPFIRE_CRACKLE, "pan", 0.6F, 0.9F));
     }
 
     private void leaves(StationView view, ItemStack stack, boolean toCook) {

@@ -22,6 +22,13 @@
 - With an empty hand over food on the cutting board, a knife from your inventory shows over it: click on the mark to
   cut. The knife stays in your inventory.
 - What you get at a station shows how many came, "+1" or more, as it goes into the inventory.
+- The skillet tells you how the food is doing. The sizzle grows as the side on the pan browns. When that side is done
+  the fat pops, the food gives a little jump and the handle is outlined until you toss it. A done batch settles with a
+  last deep sizzle and a crackle of the fire.
+- Food put into the skillet quickly no longer lands on top of another piece: every piece finds its place, and those
+  already there move over.
+- The oil in the skillet seethes amber instead of pale green, finished salads no longer throw green crumbs, and the
+  sparkle over finished food is golden instead of green.
 - Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.4.
 
 ## [1.0.0+1.21.1]

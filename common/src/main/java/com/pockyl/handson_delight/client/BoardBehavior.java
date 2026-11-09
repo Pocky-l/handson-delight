@@ -115,6 +115,8 @@ public final class BoardBehavior implements StationBehavior {
     private static final float LAND_HOP = 0.8F;
     private static final float SETTLE_TIME = 0.12F;
     private static final float SETTLE_HOP = 0.25F;
+    /** The dust a board gives off when dough or bread is worked on it. */
+    private static final int FLOUR = 0xFFEDE3CC;
     /** How see-through the knife offered from the inventory stands over the food. */
     private static final int OFFERED = 0x8CFFFFFF;
     /** Seconds between layers that go on together, and how long one takes from the player to the board. */
@@ -890,7 +892,8 @@ public final class BoardBehavior implements StationBehavior {
         ItemStack food = shownItem.isEmpty() ? lastCut : shownItem;
         int color = food.isEmpty() ? 0xFFE0D0A0 : 0xFF000000 | FoodColors.main(food);
         Vector3f at = new Vector3f(MIDDLE_X, TOP + itemHeight(), data.getFloat(CuttingBoardStation.AT));
-        view.spawnParticles(DiegesisParticles.SPLASH, at, new Vector3f(0.0F, 4.0F, 0.0F), 1.2F, 4, color);
+        // Bits of the food, not drops: a splash in the food's colour read as green water off a cabbage.
+        view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 4.0F, 0.0F), 1.2F, 4, color);
         if (!data.getBoolean(CuttingBoardStation.DONE)) {
             // The last chop sounds through Farmer's Delight, as its own cut does.
             view.playSound(chopSound(tool), "item", 0.8F, 0.95F + view.level().getRandom().nextFloat() * 0.15F);
@@ -1039,11 +1042,12 @@ public final class BoardBehavior implements StationBehavior {
         });
         // Under the layers still melting it would fight them for the same place.
         after(MELT_TIME, () -> view.node("pile").ifPresent(pile -> pile.setVisible(shownItem.getCount() > 1)));
-        // Crumbs of the food: of the bread, of what lies in a bowl.
-        int food = finish == AssemblyRecipes.Finish.TOSS && lastLayers.size() > 1 ? 1 : 0;
-        int crumbs = lastLayers.isEmpty() ? 0xFFE8D8B0 : 0xFF000000 | FoodColors.main(lastLayers.get(food));
+        // Flour dust off what was pressed, rolled or kneaded; a dish tossed in its bowl only glints (owner: "no particles that do not
+        // fit, green ones": crumbs in the food's own colour flew green off every salad).
         Vector3f middle = new Vector3f(MIDDLE_X, TOP + 1.0F, MIDDLE_Z);
-        view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 3.0F, 0.0F), 2.5F, 12, crumbs);
+        if (finish != AssemblyRecipes.Finish.TOSS) {
+            view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 3.0F, 0.0F), 2.5F, 12, FLOUR);
+        }
         view.spawnParticles(DiegesisParticles.GLINT, middle, new Vector3f(0.0F, 2.0F, 0.0F), 2.0F, 5, 0xFFFFE9A0);
         view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.8F, 0.75F);
         view.playSound(SoundEvents.ITEM_PICKUP, "surface", 0.35F, 1.4F);

@@ -81,6 +81,16 @@ public final class BoardTests {
             return BoardLogic.layers(station.state()).size();
         }
 
+        /**
+         * A dish that could still grow into a bigger one waits for the cook's word (addons add bigger burgers, salads and cookies):
+         * given here when it waits.
+         */
+        void finishIfItWaits() {
+            if (layers() > 0) {
+                act(CuttingBoardStation.ACTION_ASSEMBLE, new CompoundTag());
+            }
+        }
+
         ItemStack onBoard() {
             return Platform.INSTANCE.getItem(board);
         }
@@ -220,17 +230,22 @@ public final class BoardTests {
     /** Milk from a bucket: the bucket comes back, and a bucket goes down only one at a time, so one potato is stuffed. */
     public static void milkGivesItsBucketBack(GameTestHelper helper) {
         Board setup = board(helper);
+        // Cooked beef in Farmer's Delight's recipe; an addon may stuff it with something else (Delightful: a patty).
+        Item filling = made("stuffed_potato").flatMap(dish -> dish.ingredients().stream()
+                        .filter(in -> !in.test(new ItemStack(Items.BAKED_POTATO)) && !in.test(new ItemStack(Items.MILK_BUCKET))).findFirst())
+                .map(in -> in.getItems()[0].getItem()).orElse(Items.COOKED_BEEF);
         setup.carry(new ItemStack(Items.BAKED_POTATO, 3));
         setup.place();
-        setup.carry(new ItemStack(Items.COOKED_BEEF, 3));
+        setup.carry(new ItemStack(filling, 3));
         setup.place();
         setup.carry(new ItemStack(Items.MILK_BUCKET));
         setup.place();
+        setup.finishIfItWaits();
         helper.assertTrue(setup.onBoard().is(fd("stuffed_potato")) && setup.onBoard().getCount() == 1, "one stuffed potato");
         Inventory inventory = setup.cook.getInventory();
         helper.assertTrue(inventory.countItem(Items.BUCKET) == 1 && inventory.countItem(Items.MILK_BUCKET) == 0,
                 "the empty bucket comes back");
-        helper.assertTrue(inventory.countItem(Items.BAKED_POTATO) == 2 && inventory.countItem(Items.COOKED_BEEF) == 2, "and the rest");
+        helper.assertTrue(inventory.countItem(Items.BAKED_POTATO) == 2 && inventory.countItem(filling) == 2, "and the rest");
         helper.succeed();
     }
 
@@ -241,6 +256,7 @@ public final class BoardTests {
             setup.carry(new ItemStack(layer, 2));
             setup.place();
         }
+        setup.finishIfItWaits();
         helper.assertTrue(setup.onBoard().is(fd("honey_cookie")) && setup.onBoard().getCount() == 16, "sixteen cookies of two rounds");
         helper.assertTrue(setup.cook.getInventory().countItem(Items.GLASS_BOTTLE) == 2, "two empty bottles");
         helper.succeed();
@@ -277,6 +293,7 @@ public final class BoardTests {
         helper.assertTrue(setup.layers() == 2 && setup.cook.inventoryMenu.getCarried().getCount() == 2, "three fungi, as three bowls");
         setup.carry(new ItemStack(Items.WARPED_FUNGUS, 2));
         setup.place();
+        setup.finishIfItWaits();
         helper.assertTrue(setup.layers() == 0, "the last one makes the salad");
         helper.assertTrue(setup.onBoard().is(fd("nether_salad")) && setup.onBoard().getCount() == 2, "two, as there were two warped");
         Inventory inventory = setup.cook.getInventory();
@@ -365,9 +382,15 @@ public final class BoardTests {
         setup.act(CuttingBoardStation.ACTION_ASSEMBLE, new CompoundTag());
         helper.assertTrue(setup.layers() == 4, "without the onion it is no burger yet");
 
+        boolean bigger = AssemblyRecipes.canGrow(List.of(new ItemStack(Items.BREAD), new ItemStack(fd("beef_patty")),
+                new ItemStack(fd("cabbage_leaf")), new ItemStack(fd("tomato")), new ItemStack(fd("onion"))));
         setup.carry(new ItemStack(fd("onion")));
         setup.place();
-        helper.assertTrue(setup.layers() == 0, "the last layer makes the burger at once: nothing bigger starts this way");
+        if (bigger) {
+            helper.assertTrue(setup.layers() == 5, "a bigger burger starts this way: the burger waits for the cook's word");
+            setup.finishIfItWaits();
+        }
+        helper.assertTrue(setup.layers() == 0, "the last layer makes the burger at once when nothing bigger starts this way");
         helper.assertTrue(setup.onBoard().is(fd("hamburger")) && setup.onBoard().getCount() == 1, "one, as the patty was one");
         helper.assertTrue(setup.cook.getInventory().countItem(Items.BREAD) == 2, "the bread not used goes back");
         setup.act(CuttingBoardStation.ACTION_TAKE, new CompoundTag());
@@ -381,6 +404,7 @@ public final class BoardTests {
             setup.carry(new ItemStack(layer, 20));
             setup.place();
         }
+        setup.finishIfItWaits();
         helper.assertTrue(setup.onBoard().is(fd("hamburger")) && setup.onBoard().getCount() == CuttingBoardStation.BATCH,
                 "sixteen burgers from stacks of twenty");
         helper.assertTrue(setup.cook.inventoryMenu.getCarried().getCount() == 4, "the onions over sixteen stay in the hand");

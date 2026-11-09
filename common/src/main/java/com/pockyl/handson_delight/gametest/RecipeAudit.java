@@ -4,7 +4,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CampfireCookingRecipe;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -178,10 +177,7 @@ public final class RecipeAudit {
 
     /** The same rule as the board's: food, or a block of food put down whole. */
     private static boolean isDish(ItemStack result) {
-        return !result.isEmpty() && !result.is(AssemblyRecipes.NOT_ASSEMBLED) && (result.isEdible()
-                || result.getItem() instanceof BlockItem item && (item.getBlock() instanceof vectorwing.farmersdelight.common.block.FeastBlock
-                || item.getBlock() instanceof vectorwing.farmersdelight.common.block.PieBlock
-                || item.getBlock() instanceof net.minecraft.world.level.block.CakeBlock));
+        return !result.isEmpty() && !result.is(AssemblyRecipes.NOT_ASSEMBLED) && (AssemblyRecipes.isDishResult(result) || AssemblyRecipes.isCutIntoFood(result));
     }
 
     private static long kinds(Collection<Ingredient> ingredients) {

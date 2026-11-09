@@ -34,6 +34,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CakeBlock;
 import vectorwing.farmersdelight.common.block.FeastBlock;
 import vectorwing.farmersdelight.common.block.PieBlock;
+import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnConfig;
@@ -50,7 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Food that Farmer's Delight and its addons make in the crafting table and that is put together on the cutting board instead. The
@@ -111,7 +112,7 @@ public final class AssemblyRecipes {
 
     /**
      * What goes down first, found by name among the ingredients in this order: it says what kind of dish it is. A recipe with none
-     * of them starts with its first ingredient.
+     * of them starts with its first ingredient. Wheat, its dough or flour is kneaded (a cake an addon makes from dough).
      */
     public enum Base {
         BOWL("bowl", Finish.TOSS),
@@ -121,14 +122,18 @@ public final class AssemblyRecipes {
         STICK("stick", Finish.SKEWER),
         KELP("kelp", Finish.ROLL),
         RICE("rice", Finish.ROLL),
-        WHEAT("wheat", Finish.KNEAD),
+        WHEAT(Finish.KNEAD, "wheat", "dough", "flour"),
         FIRST(null, Finish.PRESS);
 
-        private final String word;
+        private final String[] words;
         private final Finish finish;
 
         Base(String word, Finish finish) {
-            this.word = word;
+            this(finish, word == null ? new String[0] : new String[] {word});
+        }
+
+        Base(Finish finish, String... words) {
+            this.words = words;
             this.finish = finish;
         }
 
@@ -261,7 +266,8 @@ public final class AssemblyRecipes {
         ListTag book = new ListTag();
         for (Assembly assembly : from) {
             ItemStack result = assembly.result();
-            boolean taken = result.is(ASSEMBLED) || !result.is(NOT_ASSEMBLED) && (isDish(result) || isDrinkOfFood(assembly));
+            boolean taken = result.is(ASSEMBLED) || !result.is(NOT_ASSEMBLED) && (isDishResult(result) || isCutIntoFood(result)
+                    || isDrinkOfFood(assembly));
             if (!taken) {
                 continue;
             }
@@ -274,12 +280,42 @@ public final class AssemblyRecipes {
         return new Chosen(List.copyOf(all), Set.copyOf(all.stream().map(Assembly::id).toList()), book);
     }
 
-    /** Food, or a block of food put down whole. */
-    private static boolean isDish(ItemStack result) {
+    /**
+     * Food, or a block of food put down whole. A pie may be no block item and no food of its own: Delightful makes the vanilla pumpkin
+     * pie a pie block that is put down and eaten in slices.
+     */
+    public static boolean isDishResult(ItemStack result) {
         if (result.isEdible()) {
             return true;
         }
-        return result.getItem() instanceof BlockItem item && isWholeFood(item.getBlock());
+        if (result.getItem() instanceof BlockItem item && isWholeFood(item.getBlock())) {
+            return true;
+        }
+        Set<Item> placed = wholeFoodItems;
+        if (placed == null) {
+            placed = BuiltInRegistries.BLOCK.stream().filter(AssemblyRecipes::isWholeFood).map(Block::asItem).collect(Collectors.toSet());
+            wholeFoodItems = placed;
+        }
+        return placed.contains(result.getItem());
+    }
+
+    /** The items that put down a block of whole food, once the blocks are all registered. */
+    private static volatile Set<Item> wholeFoodItems;
+    /** The cutting board's recipes the server loaded with the dishes. */
+    private static volatile List<CuttingBoardRecipe> cutting = List.of();
+
+    /**
+     * A whole dish the board cuts into food: a pie no one eats whole. Farmer's Delight puts the vanilla pumpkin pie down through an item of
+     * its own, and Delightful leaves the vanilla one no food: only its slices are.
+     */
+    public static boolean isCutIntoFood(ItemStack result) {
+        for (CuttingBoardRecipe recipe : cutting) {
+            if (!recipe.getIngredients().isEmpty() && recipe.getIngredients().get(0).test(result)
+                    && recipe.getResults().stream().anyMatch(ItemStack::isEdible)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** A drink made of food (melon juice); milk poured from a bucket into bottles is no dish. */
@@ -326,10 +362,11 @@ public final class AssemblyRecipes {
      * Reads the recipes {@link #collect} found, after the recipe manager has read its own: only those it {@code loaded}, and of a
      * conditional recipe the choice that it loaded.
      */
-    public static void load(Map<ResourceLocation, JsonObject> taken, Function<ResourceLocation, Recipe<?>> loaded) {
+    public static void load(Map<ResourceLocation, JsonObject> taken, Map<ResourceLocation, Recipe<?>> loaded) {
         List<Assembly> read = new ArrayList<>();
+        cutting = loaded.values().stream().filter(CuttingBoardRecipe.class::isInstance).map(CuttingBoardRecipe.class::cast).toList();
         taken.forEach((id, json) -> {
-            Recipe<?> recipe = loaded.apply(id);
+            Recipe<?> recipe = loaded.get(id);
             if (recipe == null) {
                 return;
             }
@@ -470,11 +507,13 @@ public final class AssemblyRecipes {
         Base kind = Base.FIRST;
         search:
         for (Base candidate : Base.values()) {
-            for (int i = 0; candidate.word != null && i < named.size(); i++) {
-                if (names(named.get(i), candidate.word)) {
-                    base = i;
-                    kind = candidate;
-                    break search;
+            for (String word : candidate.words) {
+                for (int i = 0; i < named.size(); i++) {
+                    if (names(named.get(i), word)) {
+                        base = i;
+                        kind = candidate;
+                        break search;
+                    }
                 }
             }
         }

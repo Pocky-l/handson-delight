@@ -10,7 +10,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -87,6 +86,11 @@ public final class BoardBehavior implements StationBehavior {
     private static final float LAND_HOP = 0.8F;
     private static final float SETTLE_TIME = 0.12F;
     private static final float SETTLE_HOP = 0.25F;
+    /** How see-through the knife offered from the inventory stands over the food. */
+    private static final int OFFERED = 0x8CFFFFFF;
+    /** Seconds between layers that go on together, and how long one takes from the player to the board. */
+    private static final float LAYER_STAGGER = 0.16F;
+    private static final float PLAYER_LAND_TIME = 0.32F;
     private static final float DROP_HEIGHT = 3.0F;
     private static final float FROM_CURSOR = 10.0F;
     private static final float LIFT_TIME = 0.1F;
@@ -198,16 +202,6 @@ public final class BoardBehavior implements StationBehavior {
         }
     }
 
-    /** The first slot of the inventory, the hotbar first, with a knife that cuts {@code item}; -1 without one. */
-    private static int knifeFor(StationView view, LocalPlayer player, ItemStack item) {
-        for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
-            if (Cutting.findWith(view.level(), item, player.getInventory().getItem(slot)).isPresent()) {
-                return slot;
-            }
-        }
-        return -1;
-    }
-
     @Override
     public void onClose(StationView view) {
         book.shut(view);
@@ -254,26 +248,47 @@ public final class BoardBehavior implements StationBehavior {
             });
         }
         List<ItemStack> layers = BoardLogic.layers(state);
+        // Several layers at once (a dish picked in the book) come from the player one after the other (owner: "cozy", "they must
+        // fly from the player"); one put down by hand lands from the hand.
+        int arriving = 0;
+        for (int i = 0; i < CuttingBoardStation.MOST_LAYERS && Float.isNaN(melting) && !quiet; i++) {
+            ItemStack layer = i < layers.size() ? layers.get(i) : ItemStack.EMPTY;
+            arriving += shownLayers[i].isEmpty() && !layer.isEmpty() ? 1 : 0;
+        }
+        boolean together = arriving > 1;
+        int landing = 0;
         // While the layers turn into their dish they are the animation's.
         for (int i = 0; i < CuttingBoardStation.MOST_LAYERS && Float.isNaN(melting); i++) {
             ItemStack layer = i < layers.size() ? layers.get(i) : ItemStack.EMPTY;
             if (ItemStack.isSameItemSameTags(layer, shownLayers[i])) {
                 continue;
             }
+            boolean arrives = together && shownLayers[i].isEmpty() && !layer.isEmpty();
             shownLayers[i] = layer.copy();
             int index = i;
+            int order = arrives ? landing++ : 0;
+            float delay = order * LAYER_STAGGER;
             view.node("layer_" + i).ifPresent(node -> {
-                node.setVisible(!layer.isEmpty());
+                node.setVisible(!layer.isEmpty() && !arrives);
                 if (!layer.isEmpty()) {
                     node.setShape(shape(layer, index == 0 ? ITEM_SIZE : LAYER_SIZE, List.of(), 0.0F), sprite(layer));
                     node.rotateTo(0.0F, turn(index), 0.0F, 0.0F);
                     node.moveTo(jitterX(index), 0.0F, jitterZ(index), 0.0F);
-                    if (!quiet) {
+                    if (arrives) {
+                        after(delay, () -> {
+                            if (ItemStack.isSameItemSameTags(shownLayers[index], layer)) {
+                                node.setVisible(true);
+                                landFromPlayer(view, node, jitterX(index), 0.0F, jitterZ(index));
+                                view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.7F, 1.15F + 0.05F * index);
+                            }
+                        });
+                    } else if (!quiet) {
                         land(view, node, jitterX(index), 0.0F, jitterZ(index));
                     }
                 }
             });
         }
+        float lastLanded = landing > 0 ? (landing - 1) * LAYER_STAGGER + PLAYER_LAND_TIME : 0.0F;
         if (!layers.isEmpty()) {
             lastLayers.clear();
             layers.forEach(layer -> lastLayers.add(layer.copy()));
@@ -281,11 +296,19 @@ public final class BoardBehavior implements StationBehavior {
         boolean nowWhole = !state.data().getString(CuttingBoardStation.DISH).isEmpty();
         if (nowWhole && !whole) {
             // The last layer went on: the stack settles into one dish, and nothing floats over it to say so.
-            for (int i = 0; i < layers.size(); i++) {
-                int index = i;
-                view.node("layer_" + i).ifPresent(node -> node.hopTo(jitterX(index), 0.0F, jitterZ(index), SETTLE_HOP, SETTLE_TIME));
+            int count = layers.size();
+            Runnable settle = () -> {
+                for (int i = 0; i < count; i++) {
+                    int index = i;
+                    view.node("layer_" + i).ifPresent(node -> node.hopTo(jitterX(index), 0.0F, jitterZ(index), SETTLE_HOP, SETTLE_TIME));
+                }
+                view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.5F, 0.8F);
+            };
+            if (lastLanded > 0.0F) {
+                after(lastLanded, settle);
+            } else {
+                settle.run();
             }
-            view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.5F, 0.8F);
         }
         whole = nowWhole;
         quiet = false;
@@ -332,6 +355,14 @@ public final class BoardBehavior implements StationBehavior {
         node.moveTo(from.x, from.y, from.z, 0.0F);
         node.hopTo(x, y, z, LAND_HOP, LAND_TIME);
         after(LAND_TIME, () -> node.hopTo(x, y, z, SETTLE_HOP, SETTLE_TIME));
+    }
+
+    /** {@code node} comes from the player over to its place with a hop, and settles. */
+    private void landFromPlayer(StationView view, NodeView node, float x, float y, float z) {
+        Vector3f from = FromPlayer.offset(view, TOP + DROP_HEIGHT, 0, 1);
+        node.moveTo(x + from.x, y + DROP_HEIGHT, z + from.z, 0.0F);
+        node.hopTo(x, y, z, LAND_HOP * 2.5F, PLAYER_LAND_TIME);
+        after(PLAYER_LAND_TIME, () -> node.hopTo(x, y, z, SETTLE_HOP, SETTLE_TIME));
     }
 
     /** Where the cook's hand is over {@code node}, as the node's move, at {@code height} over it; straight above for the others. */
@@ -486,14 +517,27 @@ public final class BoardBehavior implements StationBehavior {
         book.frame(view, dt);
     }
 
-    /** The knife on the cook's cursor, when it cuts what lies on the board (owner: "the knife works only once I take it in hand"). */
+    /**
+     * The knife that cuts what lies on the board: the one on the cook's cursor, or with an empty hand one in the inventory, offered
+     * see-through over the food (owner, 2026-11-09: "I need not take the knife from its slot to cut").
+     */
     private Optional<ItemStack> tool(StationView view) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null || !view.isFocused() || shownItem.isEmpty() || !BoardLogic.layers(view.state()).isEmpty()) {
             return Optional.empty();
         }
         ItemStack carried = player.inventoryMenu.getCarried();
+        if (carried.isEmpty()) {
+            int slot = Cutting.toolSlot(view.level(), shownItem, player.getInventory());
+            return slot < 0 ? Optional.empty() : Optional.of(player.getInventory().getItem(slot));
+        }
         return Cutting.findWith(view.level(), shownItem, carried).map(recipe -> carried);
+    }
+
+    /** The knife over the food is only offered: the hand is empty. */
+    private static boolean offered() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        return player != null && player.inventoryMenu.getCarried().isEmpty();
     }
 
     /**
@@ -521,6 +565,8 @@ public final class BoardBehavior implements StationBehavior {
             knife = tool.get().getItem();
             node.setVisual(Visual.ofItem(knife).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));
         }
+        // Offered from the inventory it stands see-through, and comes down solid when it cuts.
+        node.setTint(offered() && Float.isNaN(chopAge) ? OFFERED : 0xFFFFFFFF);
         float wantX = knifeX;
         float wantZ = knifeZ;
         float wantY = HOVER;
@@ -696,12 +742,12 @@ public final class BoardBehavior implements StationBehavior {
             return;
         }
         if (!shownItem.isEmpty()) {
-            // A left click with an empty hand means to cut: the knife comes from the inventory. Without one, or with a right click,
-            // what lies there goes back.
-            LocalPlayer player = Minecraft.getInstance().player;
-            int knife = player == null || click.button() != 0 ? -1 : knifeFor(view, player, shownItem);
-            if (knife >= 0) {
-                view.takeFromInventory(knife);
+            // A left click with an empty hand cuts with the knife offered over the food, which stays in the inventory. Without one,
+            // or with a right click, what lies there goes back.
+            if (click.button() == 0 && tool(view).isPresent()) {
+                if (overItem(view).isPresent()) {
+                    chop(view);
+                }
             } else {
                 view.sendAction(CuttingBoardStation.ACTION_TAKE, new CompoundTag());
             }

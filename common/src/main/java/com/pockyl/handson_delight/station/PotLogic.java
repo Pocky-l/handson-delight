@@ -338,7 +338,11 @@ public final class PotLogic implements StationLogic {
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
         if (CookingPotStation.ACTION_SCOOP.equals(action)) {
-            scoop(station, player, data.getBoolean(CookingPotStation.SCOOP_ALL));
+            if (data.getBoolean(CookingPotStation.FROM_INVENTORY)) {
+                scoopFromInventory(station, player, data.getBoolean(CookingPotStation.SCOOP_ALL));
+            } else {
+                scoop(station, player, data.getBoolean(CookingPotStation.SCOOP_ALL));
+            }
         } else if (CookingPotStation.ACTION_FILL.equals(action)) {
             ResourceLocation id = ResourceLocation.tryParse(data.getString(CookingPotStation.DISH));
             Platform.INSTANCE.cookingRecipes(station.level()).stream().filter(recipe -> recipe.getId().equals(id)).findFirst()
@@ -455,6 +459,53 @@ public final class PotLogic implements StationLogic {
         if (scooped > 0) {
             station.effect(CookingPotStation.EFFECT_SCOOPED, "broth", new CompoundTag());
         }
+    }
+
+    /**
+     * An empty hand over the soup: a container from the inventory takes a serving, or, with {@code all}, every one there is room
+     * for. The servings go into the inventory; the hand stays empty.
+     */
+    private void scoopFromInventory(StationContext station, Player player, boolean all) {
+        if (!player.inventoryMenu.getCarried().isEmpty()) {
+            return;
+        }
+        Inventory inventory = player.getInventory();
+        int scooped = 0;
+        int slot;
+        while ((slot = containerSlot(pot, inventory)) >= 0) {
+            ItemStack serving = pot.useHeldItemOnMeal(inventory.getItem(slot));
+            if (serving.isEmpty()) {
+                break;
+            }
+            scooped++;
+            served(station, player, serving);
+            if (!inventory.add(serving)) {
+                player.drop(serving, false);
+            }
+            if (!all) {
+                break;
+            }
+        }
+        if (scooped > 0) {
+            inventory.setChanged();
+            station.effect(CookingPotStation.EFFECT_SCOOPED, "broth", new CompoundTag());
+        }
+    }
+
+    /** The inventory slot whose stack the soup is served in: the one in hand first, then the hotbar and the rest; -1 without one. */
+    public static int containerSlot(CookingPotBlockEntity pot, Inventory inventory) {
+        if (pot.getMeal().isEmpty()) {
+            return -1;
+        }
+        if (!inventory.getSelected().isEmpty() && pot.isContainerValid(inventory.getSelected())) {
+            return inventory.selected;
+        }
+        for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
+            if (!inventory.getItem(slot).isEmpty() && pot.isContainerValid(inventory.getItem(slot))) {
+                return slot;
+            }
+        }
+        return -1;
     }
 
     /** What the ingredients in the pot make. */

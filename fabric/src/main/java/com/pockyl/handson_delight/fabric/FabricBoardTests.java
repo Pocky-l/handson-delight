@@ -34,6 +34,16 @@ public final class FabricBoardTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void anEmptyHandCutsWithTheKnifeInTheInventory(GameTestHelper helper) {
+        BoardTests.anEmptyHandCutsWithTheKnifeInTheInventory(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void anEmptyHandWithoutAKnifeCutsNothing(GameTestHelper helper) {
+        BoardTests.anEmptyHandWithoutAKnifeCutsNothing(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
     public void sixteenAreCutAtOnce(GameTestHelper helper) {
         BoardTests.sixteenAreCutAtOnce(helper);
     }

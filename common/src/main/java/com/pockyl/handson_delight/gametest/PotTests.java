@@ -115,6 +115,28 @@ public final class PotTests {
         helper.succeed();
     }
 
+    public static void anEmptyHandScoopsWithBowlsFromTheInventory(GameTestHelper helper) {
+        Setup setup = pot(helper);
+        Player player = helper.makeMockPlayer();
+        player.getInventory().setItem(5, new ItemStack(Items.BOWL, 3));
+        Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 4));
+        CompoundTag saved = setup.pot.saveWithoutMetadata();
+        saved.put("Container", new ItemStack(Items.BOWL).save(new CompoundTag()));
+        setup.pot.load(saved);
+        CompoundTag one = new CompoundTag();
+        one.putBoolean(CookingPotStation.FROM_INVENTORY, true);
+        setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_SCOOP, one);
+        helper.assertTrue(player.getInventory().countItem(Items.BOWL) == 2, "one bowl from the inventory fills");
+        helper.assertTrue(player.getInventory().countItem(fd("beef_stew")) == 1, "into the inventory");
+        helper.assertTrue(player.inventoryMenu.getCarried().isEmpty(), "the hand stays empty");
+        CompoundTag all = one.copy();
+        all.putBoolean(CookingPotStation.SCOOP_ALL, true);
+        setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_SCOOP, all);
+        helper.assertTrue(player.getInventory().countItem(Items.BOWL) == 0, "Shift fills every bowl there is");
+        helper.assertTrue(setup.pot.getMeal().getCount() == 1, "and leaves the serving it has no bowl for");
+        helper.succeed();
+    }
+
     public static void aStackIsSharedOutForARecipeOfTwoAlike(GameTestHelper helper) {
         Setup setup = pot(helper);
         SlotRef first = SlotRef.of(CookingPotStation.INGREDIENTS, 0);

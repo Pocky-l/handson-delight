@@ -66,6 +66,9 @@ public final class SkilletBehavior implements StationBehavior {
     /** Putting in and taking out, as at the board. */
     private static final float LAND_TIME = 0.2F;
     private static final float LAND_FROM = 4.0F;
+    /** Seconds between pieces that come in together. */
+    private static final float PIECE_STAGGER = 0.14F;
+    private static final float PLAYER_LAND_TIME = 0.32F;
     private static final float AWAY_TIME = 0.3F;
     private static final float AWAY_Z = 12.0F;
     /**
@@ -204,14 +207,37 @@ public final class SkilletBehavior implements StationBehavior {
             view.node("under_" + i).ifPresent(node -> drawPiece(view, node, index, index < unders, true));
         }
         if (!quiet) {
-            // What came in lands; what was there stays.
+            // What came in lands; several at once (a stack, the book) come from the player one after the other (owner: "cozy",
+            // "they must fly from the player"). What was there stays.
+            boolean hot = state.data().getBoolean(SkilletStation.HEATED);
+            boolean together = pieces - before > 1;
             for (int i = before; i < pieces; i++) {
                 int index = i;
-                view.node("piece_" + i).ifPresent(node -> land(node, index, false));
-                view.node("under_" + i).filter(NodeView::isVisible).ifPresent(node -> land(node, index, true));
-            }
-            if (pieces > before && state.data().getBoolean(SkilletStation.HEATED)) {
-                after(LAND_TIME, () -> hitsTheFat(view));
+                float delay = (i - before) * PIECE_STAGGER;
+                Vector3f from = together ? FromPlayer.offset(view, LAND_FROM, i - before, pieces - before) : null;
+                Runnable lands = () -> {
+                    if (index >= shownPieces) {
+                        return;
+                    }
+                    view.node("piece_" + index).ifPresent(node -> {
+                        node.setVisible(true);
+                        land(node, index, false, from);
+                    });
+                    view.node("under_" + index).filter(node -> index < shownUnders).ifPresent(node -> {
+                        node.setVisible(true);
+                        land(node, index, true, from);
+                    });
+                    if (hot) {
+                        after(from == null ? LAND_TIME : PLAYER_LAND_TIME, () -> hitsTheFat(view));
+                    }
+                };
+                if (delay > 0.0F) {
+                    view.node("piece_" + i).ifPresent(node -> node.setVisible(false));
+                    view.node("under_" + i).ifPresent(node -> node.setVisible(false));
+                    after(delay, lands);
+                } else {
+                    lands.run();
+                }
             }
         }
         quiet = false;
@@ -285,12 +311,17 @@ public final class SkilletBehavior implements StationBehavior {
         return color;
     }
 
-    /** Comes down into the pan from a little above, with a hop. */
-    private void land(NodeView node, int index, boolean under) {
+    /** Comes down into the pan from a little above, or with {@code from} over from the player, with a hop. */
+    private void land(NodeView node, int index, boolean under, Vector3f from) {
         float[] at = place(index, shownPieces);
         float y = height(under, shown);
-        node.moveTo(at[0], y + LAND_FROM, at[1], 0.0F);
-        node.hopTo(at[0], y, at[1], 0.8F, LAND_TIME);
+        if (from == null) {
+            node.moveTo(at[0], y + LAND_FROM, at[1], 0.0F);
+            node.hopTo(at[0], y, at[1], 0.8F, LAND_TIME);
+        } else {
+            node.moveTo(at[0] + from.x, y + LAND_FROM, at[1] + from.z, 0.0F);
+            node.hopTo(at[0], y, at[1], 2.0F, PLAYER_LAND_TIME);
+        }
     }
 
     @Override

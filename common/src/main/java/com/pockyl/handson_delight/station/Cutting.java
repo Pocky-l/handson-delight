@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.station;
 
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -99,6 +100,19 @@ public final class Cutting {
     }
 
     /** The recipe for {@code item} that {@code tool} cuts it by. */
+    /** The inventory slot whose tool cuts {@code item}: the one in hand first, then the hotbar and the rest; -1 without one. */
+    public static int toolSlot(Level level, ItemStack item, Inventory inventory) {
+        if (findWith(level, item, inventory.getSelected()).isPresent()) {
+            return inventory.selected;
+        }
+        for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
+            if (findWith(level, item, inventory.getItem(slot)).isPresent()) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
     public static Optional<CuttingBoardRecipe> findWith(Level level, ItemStack item, ItemStack tool) {
         return tool.isEmpty() ? Optional.empty() : recipesFor(level, item).stream().filter(recipe -> recipe.getTool().test(tool)).findFirst();
     }

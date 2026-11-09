@@ -62,6 +62,11 @@ public final class CookingPotStation {
     public static final int FILL_MOST = 16;
     /** Data of {@link #ACTION_SCOOP}: the whole stack on the cursor, not one container. */
     public static final String SCOOP_ALL = "all";
+    /**
+     * Data of {@link #ACTION_SCOOP}: the hand is empty, the containers come from the inventory (owner: "with an empty hand over
+     * the soup, offer to scoop it if there is a bowl in the inventory").
+     */
+    public static final String FROM_INVENTORY = "from_inventory";
     public static final String STIR_X = "x";
     /** Data of {@link #ACTION_STIR}: the cook's own clock, in ticks, so that the server judges the pace the hand had. */
     public static final String STIR_AT = "at";

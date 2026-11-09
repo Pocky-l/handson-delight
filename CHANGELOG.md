@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.1+1.20.1]
+
+- The recipe book is drawn with smooth edges instead of jagged steps.
+- Two quick presses of A or D go two stations on at once; the recipe book flies along.
+- A dish picked in the recipe book no longer appears in the station at once: its ingredients jump in from you one
+  after the other, into the soup, onto the board and into the pan. A stack put into the pan does the same.
+- With an empty hand over a finished soup, a bowl from your inventory shows over it: click to scoop a serving, Shift to
+  scoop all you have bowls for.
+- With an empty hand over food on the cutting board, a knife from your inventory shows over it: click on the mark to
+  cut. The knife stays in your inventory.
+- What you get at a station shows how many came, "+1" or more, as it goes into the inventory.
+- Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.4.
+
 ## [1.0.0+1.20.1]
 
 The first full release, with everything from the beta: the cooking pot, the cutting board and the skillet of

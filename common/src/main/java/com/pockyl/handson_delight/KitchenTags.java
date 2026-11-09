@@ -28,6 +28,11 @@ public final class KitchenTags {
     public static final TagKey<Item> GRAINS = tag("grains");
     /** Runs through a grill's bars: the stove's grill does not take it. */
     public static final TagKey<Item> NOT_ON_GRILL = tag("not_on_grill");
+    /**
+     * Fried on one side only, never turned: an egg, sunny side up. It cooks through from below in the time both sides of other
+     * food take, and never waits to be tossed or turned.
+     */
+    public static final TagKey<Item> ONE_SIDED = tag("one_sided");
     /** A dish on a stick that is frozen together, not skewered. */
     public static final TagKey<Item> FROZEN = tag("frozen");
     /** A dish whose bread is rolled round the filling. */

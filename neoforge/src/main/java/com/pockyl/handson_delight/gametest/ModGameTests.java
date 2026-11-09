@@ -309,8 +309,8 @@ public final class ModGameTests {
         StoveTests.anEggStaysOffTheGrill(helper);
     }
 
-    @GameTest(template = "empty", timeoutTicks = 100)
-    public static void anEggFriesInThePan(GameTestHelper helper) {
-        SkilletTests.anEggFriesInThePan(helper);
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void anEggFriesWithoutATurn(GameTestHelper helper) {
+        SkilletTests.anEggFriesWithoutATurn(helper);
     }
 }

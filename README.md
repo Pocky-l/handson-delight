@@ -49,7 +49,8 @@ open as stations, and its recipes, and those of its addons, work in them.
 - **Board recipe book.** Tabs show everything, the dishes only or the cuts only. Click a dish and it is laid from your
   inventory; Shift + click lays sixteen.
 - **Skillet.** Food fries on the side that lies on the pan, then smokes and waits. Toss the pan by its handle to turn it.
-  When both sides are done, click the food to take it. Up to sixteen fry together. Eggs go in cracked.
+  When both sides are done, click the food to take it. Up to sixteen fry together. Eggs go in cracked and fry
+  sunny side up, with no toss.
 - **Stove.** Up to six pieces grill on its top. Each one smokes when its lower side is done: click it to turn it over.
   Once both sides are done it waits on the grill until you take it. Eggs would run through the grill: fry them in a
   skillet.

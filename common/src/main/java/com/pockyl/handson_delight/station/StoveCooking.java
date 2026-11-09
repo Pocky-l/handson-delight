@@ -88,7 +88,11 @@ public final class StoveCooking {
             if (!lit || recipe.isEmpty() || grill.waits(place)) {
                 continue;
             }
-            grill.grill(place, 1.0F / sideTicks(recipe.get().getCookingTime()));
+            if (SkilletCooking.isOneSided(stack)) {
+                grill.grillThrough(place, 0.5F / sideTicks(recipe.get().getCookingTime()));
+            } else {
+                grill.grill(place, 1.0F / sideTicks(recipe.get().getCookingTime()));
+            }
             if (grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
                 ItemStack done = recipe.get().assemble(new SingleRecipeInput(stack.copyWithCount(1)), level.registryAccess());
                 Platform.INSTANCE.setItem(stove, place, done);
@@ -164,12 +168,12 @@ public final class StoveCooking {
         return taken;
     }
 
-    /** Whether {@code stack} on the grill is done: nothing the fire makes of it any more. */
     /** Whether the grill takes {@code stack}: campfire food that stays on the bars. */
     public static boolean canGrill(Level level, ItemStack stack) {
         return !stack.is(KitchenTags.NOT_ON_GRILL) && SkilletCooking.recipe(level, stack).isPresent();
     }
 
+    /** Whether {@code stack} on the grill is done: nothing the fire makes of it any more. */
     public static boolean isDone(Level level, ItemStack stack) {
         return SkilletCooking.isDone(level, stack);
     }

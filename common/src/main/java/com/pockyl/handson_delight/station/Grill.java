@@ -65,6 +65,12 @@ public final class Grill {
         down[place] = Math.min(1.0F, down[place] + amount);
     }
 
+    /** A piece grilled on one side only cooks through from below and never waits to be turned. */
+    void grillThrough(int place, float amount) {
+        down[place] = Math.min(1.0F, down[place] + amount);
+        up[place] = down[place];
+    }
+
     void turn(int place, long now) {
         float was = down[place];
         down[place] = up[place];

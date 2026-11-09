@@ -14,7 +14,8 @@
 - The cutting board cuts food along its own length: a kelp roll into even round slices, a fish into steaks, never
   lengthwise. Pies and cakes are cut in wedges through the middle, dough in strips. Food takes as many cuts as the
   pieces it falls into: one for beef or a cabbage, two for a kelp roll or a ham, three at most.
-- An egg goes into the skillet cracked, with a clear white that turns white as it fries, never in its shell. The
+- An egg goes into the skillet cracked, with a clear white that turns white as it fries, never in its shell. It fries
+  sunny side up: no toss needed, it is done in the time both sides of other food take. The
   stove's grill does not take eggs: they belong in the skillet. Other food on the skillet and stove takes on the colour
   it cooks to, so kelp darkens green and a potato turns golden.
 - In the cooking pot, milk is poured in and colours the soup, an egg is cracked into it, and sugar, cocoa and ink

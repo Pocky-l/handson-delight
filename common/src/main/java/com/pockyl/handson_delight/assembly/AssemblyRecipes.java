@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
+import java.util.function.Function;
 
 /**
  * Food that Farmer's Delight and its addons make in the crafting table and that is put together on the cutting board instead. The
@@ -73,6 +73,11 @@ public final class AssemblyRecipes {
     private static final String DOUGH = FarmersDelightContent.id("dough").toString();
     private static final String SHAPELESS = "minecraft:crafting_shapeless";
     private static final String SHAPED = "minecraft:crafting_shaped";
+    /**
+     * Forge's choice among recipes by their conditions: addons put food in it (Delightful wraps its own and other addons' dishes, burgers
+     * from a bun when there is one). The board reads the one the recipe manager loaded.
+     */
+    private static final String CONDITIONAL = "forge:conditional";
     private static final int GRID = 3;
 
     /** Every recipe that may be put together, as the recipe manager loaded it; the tags choose among them once they are bound. */
@@ -191,6 +196,11 @@ public final class AssemblyRecipes {
 
     /** The recipes chosen among the candidates, and the list the clients get. */
     private record Chosen(List<Assembly> all, Set<ResourceLocation> ids, ListTag book) {
+    }
+
+    /** Every recipe that may be put together, before the tags choose: for the recipe audit. */
+    public static List<Assembly> candidates() {
+        return candidates;
     }
 
     public static List<Assembly> all() {
@@ -312,15 +322,19 @@ public final class AssemblyRecipes {
         });
     }
 
-    /** Reads the recipes {@link #collect} found, after the recipe manager has read its own: only those it {@code loaded}. */
-    public static void load(Map<ResourceLocation, JsonObject> taken, Predicate<ResourceLocation> loaded) {
+    /**
+     * Reads the recipes {@link #collect} found, after the recipe manager has read its own: only those it {@code loaded}, and of a
+     * conditional recipe the choice that it loaded.
+     */
+    public static void load(Map<ResourceLocation, JsonObject> taken, Function<ResourceLocation, Recipe<?>> loaded) {
         List<Assembly> read = new ArrayList<>();
         taken.forEach((id, json) -> {
-            if (!loaded.test(id)) {
+            Recipe<?> recipe = loaded.apply(id);
+            if (recipe == null) {
                 return;
             }
             try {
-                parse(id, json).ifPresent(read::add);
+                (CONDITIONAL.equals(string(json, "type")) ? chosenOf(id, json, recipe) : parse(id, json)).ifPresent(read::add);
             } catch (RuntimeException broken) {
                 HandsOnDelight.LOGGER.error("Could not read the recipe {} for the cutting board", id, broken);
             }
@@ -330,12 +344,70 @@ public final class AssemblyRecipes {
         HandsOnDelight.LOGGER.info("{} crafting recipes of Farmer's Delight may be put together on the cutting board", read.size());
     }
 
-    /** The recipe as the board reads it, when it is one the board could make: else empty. */
+    /**
+     * The recipe as the board reads it, when it is one the board could make: else empty. A conditional recipe is kept whole when one
+     * of its choices could be made: which one counts is known once the manager has loaded it.
+     */
     private static Optional<JsonObject> candidate(ResourceLocation id, JsonObject json) {
-        String type = string(json, "type");
         if (!id.getNamespace().equals(FarmersDelightContent.MOD_ID) && !Platform.INSTANCE.isFarmersDelightAddon(id.getNamespace())) {
             return Optional.empty();
         }
+        if (CONDITIONAL.equals(string(json, "type"))) {
+            return choices(json).stream().anyMatch(choice -> plain(choice).isPresent()) ? Optional.of(json) : Optional.empty();
+        }
+        return plain(json);
+    }
+
+    /** The recipes a conditional recipe chooses among, in its order. */
+    private static List<JsonObject> choices(JsonObject json) {
+        List<JsonObject> choices = new ArrayList<>();
+        if (json.has("recipes") && json.get("recipes").isJsonArray()) {
+            for (JsonElement entry : json.getAsJsonArray("recipes")) {
+                if (entry.isJsonObject() && entry.getAsJsonObject().has("recipe") && entry.getAsJsonObject().get("recipe").isJsonObject()) {
+                    choices.add(entry.getAsJsonObject().getAsJsonObject("recipe"));
+                }
+            }
+        }
+        return choices;
+    }
+
+    /**
+     * The choice of a conditional recipe that the manager {@code loaded}: the same ingredients and result. Its conditions are not read
+     * again; a choice naming items that are not there cannot be read and is passed over.
+     */
+    private static Optional<Assembly> chosenOf(ResourceLocation id, JsonObject json, Recipe<?> loaded) {
+        if (!(loaded instanceof CraftingRecipe crafting)) {
+            return Optional.empty();
+        }
+        for (JsonObject choice : choices(json)) {
+            Optional<JsonObject> recipe = plain(choice);
+            if (recipe.isEmpty()) {
+                continue;
+            }
+            Optional<Assembly> read;
+            try {
+                read = parse(id, recipe.get());
+            } catch (RuntimeException unknown) {
+                continue;
+            }
+            if (read.isPresent() && same(read.get().recipe(), crafting)) {
+                return read;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static boolean same(CraftingRecipe read, CraftingRecipe loaded) {
+        ItemStack result = read.getResultItem(RegistryAccess.EMPTY);
+        ItemStack other = loaded.getResultItem(RegistryAccess.EMPTY);
+        return read.getClass() == loaded.getClass() && ItemStack.isSameItemSameTags(result, other) && result.getCount() == other.getCount()
+                && read.getIngredients().stream().map(Ingredient::toJson).toList()
+                .equals(loaded.getIngredients().stream().map(Ingredient::toJson).toList());
+    }
+
+    /** A recipe of the crafting table or Farmer's Delight's dough, as the board reads it, when the board could make it. */
+    private static Optional<JsonObject> plain(JsonObject json) {
+        String type = string(json, "type");
         JsonObject recipe = json;
         if (DOUGH.equals(type)) {
             // One wheat and a water bucket, which stays: the recipe's own matches and remainders say so, the board only lays them.

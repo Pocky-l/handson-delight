@@ -128,6 +128,18 @@ public final class StoveTests {
         helper.succeed();
     }
 
+    /** An egg would run through the bars: the station keeps it off the grill, Farmer's Delight's own use still lays it. */
+    public static void anEggStaysOffTheGrill(GameTestHelper helper) {
+        Top top = stove(helper);
+        top.place(Items.EGG, 3);
+        helper.assertTrue(top.on(0).isEmpty() && top.cook.inventoryMenu.getCarried().getCount() == 3, "no egg on the grill");
+        helper.assertTrue(top.station.effects.contains(StoveStation.EFFECT_REFUSED), "it bounces back to the hand");
+        ItemStack egg = new ItemStack(Items.EGG);
+        top.stove.placeFood(top.cook, egg, top.stove.getCookingRecipe(egg).orElseThrow());
+        helper.assertTrue(top.on(0).is(Items.EGG) && !top.grill().byHand(0), "Farmer's Delight's right click is its own way");
+        helper.succeed();
+    }
+
     /** The stove's station as the library would hold it, without a player at it. */
     private static final class Station implements StationContext {
         private final Level level;
@@ -174,8 +186,12 @@ public final class StoveTests {
             return List.of();
         }
 
+        /** The effects sent, for the tests to look at. */
+        final java.util.List<ResourceLocation> effects = new java.util.ArrayList<>();
+
         @Override
         public void effect(ResourceLocation effect, String node, CompoundTag data) {
+            effects.add(effect);
         }
     }
 }

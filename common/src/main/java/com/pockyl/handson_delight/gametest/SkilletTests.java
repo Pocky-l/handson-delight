@@ -105,6 +105,19 @@ public final class SkilletTests {
         });
     }
 
+    /** An egg goes into the pan cracked and fries there like any food. */
+    public static void anEggFriesInThePan(GameTestHelper helper) {
+        Pan pan = pan(helper);
+        pan.place(Items.EGG, 2);
+        helper.assertTrue(pan.skillet.getStoredStack().is(Items.EGG) && pan.skillet.getStoredStack().getCount() == 2,
+                "both eggs go into the pan, got " + pan.skillet.getStoredStack());
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(pan.skillet.getStoredStack().is(Items.EGG) && pan.skillet.getStoredStack().getCount() == 2,
+                    "and stay there frying, got " + pan.skillet.getStoredStack());
+            helper.succeed();
+        });
+    }
+
     public static void farmersDelightsRightClickCooksItsWay(GameTestHelper helper) {
         Pan pan = pan(helper);
         pan.skillet.addItemToCook(new ItemStack(Items.BEEF), pan.cook);

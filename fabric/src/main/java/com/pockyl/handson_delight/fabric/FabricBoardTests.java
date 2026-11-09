@@ -118,6 +118,11 @@ public final class FabricBoardTests implements FabricGameTest {
         BoardTests.marksAreCutInOrderAtNewPlaces(helper);
     }
 
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void marksFollowWhatTheFoodFallsInto(GameTestHelper helper) {
+        BoardTests.marksFollowWhatTheFoodFallsInto(helper);
+    }
+
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void aCarvedKnifeStaysFarmersDelights(GameTestHelper helper) {
         BoardTests.aCarvedKnifeStaysFarmersDelights(helper);

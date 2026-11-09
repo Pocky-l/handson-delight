@@ -13,6 +13,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ShovelItem;
 import org.joml.Vector3f;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
@@ -94,10 +95,42 @@ public final class BoardBehavior implements StationBehavior {
     private static final float SKEWER_SLIDE = 0.18F;
     private static final float SKEWER_STAGGER = 0.1F;
     private static final float SKEWER_PUSH = 0.16F;
-    private static final float SKEWER_LENGTH = 6.0F;
-    private static final float SKEWER_PUSH_ALONG = 0.8F;
+    /** Where the pieces sit along the stick, as fractions of its length from the tip: the handle's end stays bare. */
+    private static final float SKEWER_FIRST = 0.12F;
+    private static final float SKEWER_LAST = 0.62F;
+    /**
+     * How far a piece stands up from lying flat, degrees, its face to the handle and so to the camera: upright, or facing the tip,
+     * it would show only its edges (the voxel pieces have no underside).
+     */
     private static final float SKEWER_STAND = -60.0F;
     private static final float SKEWER_SCALE = 0.7F;
+    /** Arranged in a bowl: the main piece in the middle, the rest round it this far out, each sliding in after the last. */
+    private static final float ARRANGE_SLIDE = 0.18F;
+    private static final float ARRANGE_STAGGER = 0.08F;
+    private static final float ARRANGE_RING = 2.4F;
+    private static final float ARRANGE_SCALE = 0.8F;
+    /** A sandwich: the loaf's top half lifts, comes over the filling and closes it with a press. */
+    private static final float LID_LIFT = 0.16F;
+    private static final float LID_CLOSE = 0.16F;
+    private static final float LID_PRESS = 0.1F;
+    private static final float LID_HEIGHT = 3.0F;
+    /** Nigiri: the rice pressed into a block, the slices laid along it one by one, one press. */
+    private static final float SHAPE_GATHER = 0.14F;
+    private static final float SHAPE_LAY = 0.12F;
+    private static final float SHAPE_PRESS = 0.1F;
+    /** A popsicle: the fruit gathers round the stick's top, the ice is gone in a frost. */
+    private static final float FREEZE_GATHER = 0.2F;
+    private static final float FREEZE_SET = 0.3F;
+    private static final float FREEZE_AT = 0.28F;
+    private static final int FROST = 0xFFE8F4FF;
+    /** A liquid poured over the layers: its container hangs over them, tips, and goes back to the cook. */
+    private static final float POUR_TIP = 0.14F;
+    private static final float POUR_FLOW = 0.3F;
+    private static final float POUR_HEIGHT = 3.5F;
+    private static final float POUR_TILT = 35.0F;
+    private static final float POUR_SCALE = 0.7F;
+    private static final float FILM_SHARE = 0.85F;
+    private static final float FILM_THICK = 0.12F;
     /** Kneading: pressed into a lump, then pushed flat and gathered again a few times. */
     private static final float KNEAD_PRESS = 0.12F;
     private static final int KNEAD_PUSHES = 3;
@@ -174,6 +207,11 @@ public final class BoardBehavior implements StationBehavior {
     private int drawnMarks = -1;
     private float markFade = 1.0F;
     private ItemStack lastCut = ItemStack.EMPTY;
+    /** When the liquid being poured over the layers has run out, on {@link #clock}. */
+    private float pourUntil;
+    /** The item {@link #plan} was read for. */
+    private ItemStack planned;
+    private Cutting.Plan plan;
     /** Where the item that is being cut was cut so far: the pieces fly off split there. */
     private final List<ItemVoxels.Cut> lastCuts = new ArrayList<>();
     /** The first look at the board after its scene is made: what lies there is just there, nothing lands. */
@@ -307,19 +345,18 @@ public final class BoardBehavior implements StationBehavior {
             view.node("layer_" + i).ifPresent(node -> {
                 node.setVisible(!layer.isEmpty() && !arrives);
                 if (!layer.isEmpty()) {
-                    node.setShape(shape(layer, index == 0 ? ITEM_SIZE : LAYER_SIZE, List.of(), 0.0F), sprite(layer));
+                    dress(node, index, layer, layers);
                     node.rotateTo(0.0F, turn(index), 0.0F, 0.0F);
                     node.moveTo(jitterX(index), 0.0F, jitterZ(index), 0.0F);
                     if (arrives) {
                         after(delay, () -> {
                             if (ItemStack.isSameItemSameComponents(shownLayers[index], layer)) {
                                 node.setVisible(true);
-                                landFromPlayer(view, node, jitterX(index), 0.0F, jitterZ(index));
-                                view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.7F, 1.15F + 0.05F * index);
+                                arrives(view, node, index, layer, true);
                             }
                         });
                     } else if (!quiet) {
-                        land(view, node, jitterX(index), 0.0F, jitterZ(index));
+                        arrives(view, node, index, layer, false);
                     }
                 }
             });
@@ -489,9 +526,9 @@ public final class BoardBehavior implements StationBehavior {
     /** The marks cut so far on {@code stack}: what the server says and what the local hand has just done. */
     private List<ItemVoxels.Cut> cutsMade(StationView view, ItemStack stack) {
         List<ItemVoxels.Cut> cuts = new ArrayList<>();
-        int made = Math.min(Cutting.CHOPS, view.state().data().getInt(CuttingBoardStation.MARKS) + pendingChops);
+        int made = Math.min(plan(view, stack).marks(), view.state().data().getInt(CuttingBoardStation.MARKS) + pendingChops);
         for (int mark = 0; mark < made && !stack.isEmpty(); mark++) {
-            cuts.add(mark(view.state().data(), stack, mark));
+            cuts.add(mark(view, stack, mark));
         }
         return cuts;
     }
@@ -608,14 +645,14 @@ public final class BoardBehavior implements StationBehavior {
         float wantY = HOVER;
         int next = nextMark(view);
         if (next >= 0) {
-            knifeAngle = mark(view.state().data(), shownItem, next).angle();
+            knifeAngle = mark(view, shownItem, next).angle();
         }
         if (over.isPresent()) {
             wantX = over.get().x;
             wantZ = over.get().z;
             // Near the mark the knife stands right over it, along it: that is where it will come down.
             if (next >= 0) {
-                ItemVoxels.Cut mark = mark(view.state().data(), shownItem, next);
+                ItemVoxels.Cut mark = mark(view, shownItem, next);
                 float off = mark.distance(wantX, wantZ);
                 if (Math.abs(off) < SNAP) {
                     overMark = next;
@@ -666,26 +703,56 @@ public final class BoardBehavior implements StationBehavior {
                 (icon.get().height() / 2.0F - bounds[3] - 1) * pixel, (icon.get().height() / 2.0F - bounds[2]) * pixel};
     }
 
-    /**
-     * Mark {@code mark} on {@code stack}, where the server chose: through the middle of its width at its spot (a fraction of what is
-     * solid of the icon from its far end), at its angle. Without word from the server yet, straight across a third from either end.
-     */
-    private static ItemVoxels.Cut mark(CompoundTag data, ItemStack stack, int mark) {
-        ListTag spots = data.getList(CuttingBoardStation.SPOTS, Tag.TAG_FLOAT);
-        ListTag angles = data.getList(CuttingBoardStation.ANGLES, Tag.TAG_FLOAT);
-        float spot = mark < spots.size() ? spots.getFloat(mark) : (mark + 1.0F) / (Cutting.CHOPS + 1.0F);
-        return line(stack, spot, mark < angles.size() ? angles.getFloat(mark) : 0.0F);
+    /** How {@code stack} is cut, read again only when another item lies there. */
+    private Cutting.Plan plan(StationView view, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return new Cutting.Plan(1, Cutting.Style.ACROSS);
+        }
+        if (planned == null || planned.getItem() != stack.getItem()) {
+            planned = stack.copyWithCount(1);
+            plan = Cutting.plan(view.level(), planned);
+        }
+        return plan;
     }
 
-    private static ItemVoxels.Cut line(ItemStack stack, float spot, float angle) {
-        float[] extent = extent(stack);
-        return new ItemVoxels.Cut((extent[0] + extent[1]) / 2.0F, extent[3] - (extent[3] - extent[2]) * spot, angle);
+    /**
+     * Mark {@code mark} on {@code stack}, where the server chose: a spot along the item's own length and a lean from square across
+     * it (see {@code BoardLogic.restart}). Without word from the server yet, square across at even places.
+     */
+    private ItemVoxels.Cut mark(StationView view, ItemStack stack, int mark) {
+        CompoundTag data = view.state().data();
+        ListTag spots = data.getList(CuttingBoardStation.SPOTS, Tag.TAG_FLOAT);
+        ListTag angles = data.getList(CuttingBoardStation.ANGLES, Tag.TAG_FLOAT);
+        Cutting.Plan plan = plan(view, stack);
+        float spot = mark < spots.size() ? spots.getFloat(mark) : (mark + 1.0F) / (plan.marks() + 1.0F);
+        return line(stack, plan.style(), spot, mark < angles.size() ? angles.getFloat(mark) : 0.0F);
+    }
+
+    /** How far a mark across a long item leans from square at most: a fish is cut in steaks, never along its spine. */
+    private static final float LONG_LEAN = 20.0F * Mth.DEG_TO_RAD;
+    /** Longer than wide by this much, an item is long. */
+    private static final float LONG = 1.4F;
+
+    /** The line of a mark: through the item's own length at {@code spot}, square across it give or take its lean. */
+    private static ItemVoxels.Cut line(ItemStack stack, Cutting.Style style, float spot, float angle) {
+        ItemVoxels.Axis axis = axis(stack);
+        if (style == Cutting.Style.WEDGES) {
+            return new ItemVoxels.Cut(axis.x(), axis.z(), ItemVoxels.Axis.normalized(angle));
+        }
+        float[] at = axis.at(spot);
+        float lean = style == Cutting.Style.ACROSS ? angle * (axis.elongation() >= LONG ? LONG_LEAN : BoardLogic.MOST_LEAN) : 0.0F;
+        return new ItemVoxels.Cut(at[0], at[1], ItemVoxels.Axis.normalized(axis.across() + lean));
+    }
+
+    /** The length of {@code stack} lying on the board to be cut. */
+    private static ItemVoxels.Axis axis(ItemStack stack) {
+        return ItemVoxels.icon(stack).map(icon -> icon.axis(ITEM_SIZE)).orElse(ItemVoxels.Axis.square(BLOCK_SIZE / 2.0F));
     }
 
     /** The mark to cut next, -1 when none: what the server says is cut and what the local hand has just done. */
     private int nextMark(StationView view) {
         int next = view.state().data().getInt(CuttingBoardStation.MARKS) + pendingChops;
-        return next < Cutting.CHOPS ? next : -1;
+        return next < plan(view, shownItem).marks() ? next : -1;
     }
 
     /**
@@ -698,7 +765,7 @@ public final class BoardBehavior implements StationBehavior {
             return;
         }
         int next = shown ? nextMark(view) : -1;
-        ItemVoxels.Cut mark = next < 0 ? null : mark(view.state().data(), shownItem, next);
+        ItemVoxels.Cut mark = next < 0 ? null : mark(view, shownItem, next);
         int key = next < 0 ? 0 : Objects.hash(next, mark, itemHeight(), shownItem.getItem());
         if (markFade < 1.0F) {
             markFade = Math.min(1.0F, markFade + dt / MARK_FADE);
@@ -713,14 +780,18 @@ public final class BoardBehavior implements StationBehavior {
             return;
         }
         markFade = 0.0F;
-        // The line runs across what is solid of the item, at its angle: clipped to the item's box.
-        float[] extent = extent(shownItem);
+        // The line runs across what is solid of the item, at its angle: over its pixels, or a block's box.
         float alongX = Mth.cos(mark.angle());
         float alongZ = Mth.sin(mark.angle());
-        float from = -100.0F;
-        float to = 100.0F;
-        float[] ends = clip(mark.x(), alongX, extent[0], extent[1], from, to);
-        ends = clip(mark.z(), alongZ, extent[2], extent[3], ends[0], ends[1]);
+        Optional<ItemVoxels.Icon> icon = ItemVoxels.icon(shownItem);
+        float[] ends;
+        if (icon.isPresent()) {
+            ends = icon.get().solidSpan(mark.x(), mark.z(), mark.angle(), ITEM_SIZE);
+        } else {
+            float[] extent = extent(shownItem);
+            ends = clip(mark.x(), alongX, extent[0], extent[1], -100.0F, 100.0F);
+            ends = clip(mark.z(), alongZ, extent[2], extent[3], ends[0], ends[1]);
+        }
         float y = itemHeight() + 0.03F;
         float wideX = mark.normalX() * MARK_WIDTH;
         float wideZ = mark.normalZ() * MARK_WIDTH;
@@ -904,8 +975,9 @@ public final class BoardBehavior implements StationBehavior {
                 return;
             }
             // Split where it was really cut: the first cut as last seen, the last one now.
-            List<ItemVoxels.Cut> spread = new ArrayList<>(lastCuts.subList(0, Math.min(lastCuts.size(), Cutting.CHOPS - 1)));
-            spread.add(line(lastCut, data.getFloat(CuttingBoardStation.SPOT), data.getFloat(CuttingBoardStation.ANGLE)));
+            Cutting.Plan cut = Cutting.plan(view.level(), lastCut);
+            List<ItemVoxels.Cut> spread = new ArrayList<>(lastCuts.subList(0, Math.min(lastCuts.size(), cut.marks() - 1)));
+            spread.add(line(lastCut, cut.style(), data.getFloat(CuttingBoardStation.SPOT), data.getFloat(CuttingBoardStation.ANGLE)));
             gone.setShape(ItemVoxels.build(ItemVoxels.icon(lastCut).get(), ITEM_SIZE, spread, GAP * 1.6F), sprite(lastCut));
             gone.setVisible(true);
             gone.moveTo(0.0F, 0.0F, 0.0F, 0.0F);
@@ -940,13 +1012,18 @@ public final class BoardBehavior implements StationBehavior {
         for (int i = 0; i < CuttingBoardStation.MOST_LAYERS; i++) {
             rest(i, jitterX(i), i * LAYER_STEP, jitterZ(i));
         }
-        float arrive = arrive(view, made);
+        // A liquid still being poured over the stack runs out before the dish is finished.
+        float arrive = Math.max(arrive(view, made), pourUntil - clock);
         int count = lastLayers.size();
         float finishing = switch (finish) {
             case TOSS -> TOSS_TIME + TOSS_REST;
             case ROLL -> ROLL_GATHER + (ROLLS + 1) * ROLL_STROKE;
             case SKEWER -> SKEWER_SLIDE + (count - 1) * SKEWER_STAGGER + SKEWER_PUSH;
             case KNEAD -> KNEAD_PRESS + KNEAD_PUSHES * KNEAD_PUSH * 2.0F;
+            case ARRANGE -> ARRANGE_SLIDE + Math.max(0, count - 2) * ARRANGE_STAGGER;
+            case SANDWICH -> LID_LIFT + LID_CLOSE + LID_PRESS;
+            case SHAPE -> SHAPE_GATHER + Math.max(1, count - 1) * SHAPE_LAY + SHAPE_PRESS;
+            case FREEZE -> FREEZE_GATHER + FREEZE_SET;
             case PRESS -> 0.0F;
         };
         melting = arrive + finishing + MELT_TIME;
@@ -961,6 +1038,10 @@ public final class BoardBehavior implements StationBehavior {
                 case ROLL -> roll(view);
                 case SKEWER -> skewer(view);
                 case KNEAD -> knead(view);
+                case ARRANGE -> arrange(view);
+                case SANDWICH -> sandwich(view);
+                case SHAPE -> shape(view);
+                case FREEZE -> freeze(view);
                 case PRESS -> {
                 }
             }
@@ -997,11 +1078,13 @@ public final class BoardBehavior implements StationBehavior {
             float delay = order * LAYER_STAGGER;
             if (!seen) {
                 order++;
-                landed = delay + PLAYER_LAND_TIME + SETTLE_TIME;
+                // A liquid is poured, which takes longer than landing.
+                float takes = i > 0 && KitchenLooks.isPoured(layer) ? POUR_TIP + POUR_FLOW : PLAYER_LAND_TIME + SETTLE_TIME;
+                landed = Math.max(landed, delay + takes);
             }
             int index = i;
             view.node("layer_" + i).ifPresent(node -> {
-                node.setShape(shape(layer, index == 0 ? ITEM_SIZE : LAYER_SIZE, List.of(), 0.0F), sprite(layer));
+                dress(node, index, layer, layers);
                 node.rotateTo(0.0F, turn(index), 0.0F, 0.0F);
                 node.scaleTo(1.0F, 0.0F);
                 node.setVisible(seen);
@@ -1011,8 +1094,7 @@ public final class BoardBehavior implements StationBehavior {
                 }
                 after(delay, () -> {
                     node.setVisible(true);
-                    landFromPlayer(view, node, jitterX(index), 0.0F, jitterZ(index));
-                    view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.7F, 1.15F + 0.05F * index);
+                    arrives(view, node, index, layer, true);
                 });
             });
         }
@@ -1045,7 +1127,9 @@ public final class BoardBehavior implements StationBehavior {
         // Flour dust off what was pressed, rolled or kneaded; a dish tossed in its bowl only glints (owner: "no particles that do not
         // fit, green ones": crumbs in the food's own colour flew green off every salad).
         Vector3f middle = new Vector3f(MIDDLE_X, TOP + 1.0F, MIDDLE_Z);
-        if (finish != AssemblyRecipes.Finish.TOSS) {
+        if (finish == AssemblyRecipes.Finish.FREEZE) {
+            view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 2.0F, 0.0F), 2.5F, 12, FROST);
+        } else if (finish != AssemblyRecipes.Finish.TOSS && finish != AssemblyRecipes.Finish.ARRANGE) {
             view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 3.0F, 0.0F), 2.5F, 12, FLOUR);
         }
         view.spawnParticles(DiegesisParticles.GLINT, middle, new Vector3f(0.0F, 2.0F, 0.0F), 2.0F, 5, 0xFFFFE9A0);
@@ -1117,23 +1201,31 @@ public final class BoardBehavior implements StationBehavior {
     }
 
     /**
-     * Pushed along the stick: one after the other each piece goes onto the stick, standing across it, then all of them are pushed
-     * along towards its tip together.
+     * Skewered: one after the other each piece goes onto the stick at its tip, standing across it, and is pushed down towards the
+     * handle; the first one in goes farthest. The stick lies as its icon does (vanilla draws sticks from the handle at the bottom
+     * left to the tip at the top right), so its line is read from the icon.
      */
     private void skewer(StationView view) {
         int count = lastLayers.size();
         int pieces = Math.max(1, count - 1);
+        ItemVoxels.Axis stick = axis(lastLayers.get(0));
+        float baseX = jitterX(0);
+        float baseZ = jitterZ(0);
+        float[] tip = stick.at(0.0F);
+        float stand = (float) Math.toDegrees(Math.atan2(stick.dirX(), stick.dirZ()));
+        float y = LAYER_STEP;
         for (int i = 1; i < count; i++) {
             int index = i;
-            // From the handle's end of the stick to its tip, the icon's diagonal.
-            float t = (i - 0.5F) / pieces - 0.5F;
-            float x = -t * SKEWER_LENGTH;
-            float z = -t * SKEWER_LENGTH;
-            float y = LAYER_STEP;
-            rest(i, x + SKEWER_PUSH_ALONG, y, z + SKEWER_PUSH_ALONG);
+            // The first piece on goes deepest, towards the handle; the last stays near the tip.
+            float share = pieces == 1 ? (SKEWER_FIRST + SKEWER_LAST) / 2.0F
+                    : SKEWER_LAST - (SKEWER_LAST - SKEWER_FIRST) * (i - 1) / (pieces - 1.0F);
+            float[] at = stick.at(share);
+            float x = baseX + at[0];
+            float z = baseZ + at[1];
+            rest(i, x, y, z);
             after((i - 1) * SKEWER_STAGGER, () -> view.node("layer_" + index).ifPresent(node -> {
-                node.moveTo(x, y - index * LAYER_STEP, z, SKEWER_SLIDE);
-                node.rotateTo(SKEWER_STAND, 45.0F, 0.0F, SKEWER_SLIDE);
+                node.moveTo(baseX + tip[0], y - index * LAYER_STEP, baseZ + tip[1], SKEWER_SLIDE);
+                node.rotateTo(SKEWER_STAND, stand, 0.0F, SKEWER_SLIDE);
                 node.scaleTo(SKEWER_SCALE, SKEWER_SLIDE);
                 after(SKEWER_SLIDE * 0.8F, () -> view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.3F, 1.4F + 0.06F * index));
             }));
@@ -1182,6 +1274,209 @@ public final class BoardBehavior implements StationBehavior {
                             node.moveTo(restX[index], restY[index] - index * LAYER_STEP, restZ[index], KNEAD_PUSH));
                 }
             });
+        }
+    }
+
+    /**
+     * Laid in the bowl: the main piece slides to the middle, the others to their places round it, one after the other; nothing
+     * flies (a steak and fried eggs are not tossed like a salad).
+     */
+    private void arrange(StationView view) {
+        int count = lastLayers.size();
+        int sides = Math.max(1, count - 2);
+        for (int i = 1; i < count; i++) {
+            int index = i;
+            float x = jitterX(0);
+            float z = jitterZ(0);
+            if (i > 1) {
+                float around = Mth.TWO_PI * (i - 2) / sides + 0.6F;
+                x += Mth.cos(around) * ARRANGE_RING;
+                z += Mth.sin(around) * ARRANGE_RING;
+            }
+            float y = LAYER_STEP;
+            rest(i, x, y, z);
+            float px = x;
+            float pz = z;
+            after(Math.max(0, i - 2) * ARRANGE_STAGGER, () -> view.node("layer_" + index).ifPresent(node -> {
+                node.moveTo(px, y - index * LAYER_STEP, pz, ARRANGE_SLIDE);
+                node.scaleTo(index == 1 ? 1.0F : ARRANGE_SCALE, ARRANGE_SLIDE);
+                node.rotateTo(0.0F, turn(index) * 0.5F, 0.0F, ARRANGE_SLIDE);
+                after(ARRANGE_SLIDE * 0.8F, () -> view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.3F, 1.25F + 0.05F * index));
+            }));
+        }
+    }
+
+    /**
+     * Closed: the loaf is split along its length, its top half lifts off the bottom one, comes over the filling and closes it, and
+     * the whole is pressed down once. The bottom half stays where the loaf lay.
+     */
+    private void sandwich(StationView view) {
+        int count = lastLayers.size();
+        ItemStack bread = lastLayers.get(0);
+        Optional<ItemVoxels.Icon> icon = ItemVoxels.icon(bread);
+        if (icon.isEmpty()) {
+            return;
+        }
+        ItemVoxels.Icon bottom = icon.get().half(false);
+        ItemVoxels.Icon top = icon.get().half(true);
+        view.node("layer_0").ifPresent(node -> node.setShape(ItemVoxels.build(bottom, ITEM_SIZE, List.of(), 0.0F), bottom.sprite()));
+        float x = jitterX(0);
+        float z = jitterZ(0);
+        float over = count * LAYER_STEP;
+        ghost(view, bread, ITEM_SIZE).ifPresent(lid -> {
+            lid.setShape(ItemVoxels.build(top, ITEM_SIZE, List.of(), 0.0F), top.sprite());
+            lid.moveTo(x, 0.0F, z, 0.0F);
+            lid.moveTo(x, over + LID_HEIGHT, z, LID_LIFT);
+            after(LID_LIFT, () -> lid.moveTo(x, over, z, LID_CLOSE));
+            after(LID_LIFT + LID_CLOSE, () -> {
+                view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.6F, 0.9F);
+                lid.moveTo(x, over - 0.3F, z, LID_PRESS / 2.0F);
+                after(LID_PRESS / 2.0F, () -> lid.moveTo(x, over, z, LID_PRESS / 2.0F));
+            });
+            // It melts into the dish with the layers.
+            after(LID_LIFT + LID_CLOSE + LID_PRESS, () -> {
+                lid.scaleTo(0.1F, MELT_TIME);
+                lid.moveTo(x * 0.4F, over * 0.08F, z * 0.4F, MELT_TIME);
+            });
+            after(LID_LIFT + LID_CLOSE + LID_PRESS + MELT_TIME, () -> lid.setVisible(false));
+        });
+        for (int i = 0; i < count; i++) {
+            rest(i, jitterX(i), i * LAYER_STEP, jitterZ(i));
+        }
+    }
+
+    /**
+     * Nigiri: the rice is pressed together into a block where it lies, the slices are laid along its top one after the other, and
+     * a last press holds them.
+     */
+    private void shape(StationView view) {
+        int count = lastLayers.size();
+        ItemVoxels.Axis rice = axis(lastLayers.get(0));
+        float along = (float) Math.toDegrees(-rice.along());
+        view.node("layer_0").ifPresent(node -> {
+            node.scaleTo(0.8F, SHAPE_GATHER);
+            node.hopTo(jitterX(0), 0.0F, jitterZ(0), 0.3F, SHAPE_GATHER);
+        });
+        view.playSound(SoundEvents.WOOL_STEP, "surface", 0.35F, 1.1F);
+        for (int i = 1; i < count; i++) {
+            int index = i;
+            float shift = (i - (count - 1) / 2.0F - 0.5F) * 0.8F;
+            float x = jitterX(0) + rice.dirX() * shift;
+            float z = jitterZ(0) + rice.dirZ() * shift;
+            float y = LAYER_STEP * 0.8F + (i - 1) * 0.15F;
+            rest(i, x, y, z);
+            after(SHAPE_GATHER + (i - 1) * SHAPE_LAY, () -> view.node("layer_" + index).ifPresent(node -> {
+                node.moveTo(x, y - index * LAYER_STEP, z, SHAPE_LAY);
+                node.rotateTo(0.0F, along + 45.0F, 0.0F, SHAPE_LAY);
+                view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.3F, 1.3F + 0.05F * index);
+            }));
+        }
+        rest(0, jitterX(0), 0.0F, jitterZ(0));
+        float pressAt = SHAPE_GATHER + Math.max(1, count - 1) * SHAPE_LAY;
+        after(pressAt, () -> {
+            for (int i = 0; i < count; i++) {
+                int index = i;
+                view.node("layer_" + i).ifPresent(node ->
+                        node.hopTo(restX[index], restY[index] - index * LAYER_STEP, restZ[index], -0.25F, SHAPE_PRESS));
+            }
+            view.playSound(SoundEvents.WOOL_STEP, "surface", 0.4F, 0.9F);
+        });
+    }
+
+    /**
+     * Frozen on the stick: the fruit gathers round the stick's top into one lump, the ice gives its cold and is gone in a frost,
+     * and the lump turns frosty before it becomes the popsicle.
+     */
+    private void freeze(StationView view) {
+        int count = lastLayers.size();
+        ItemVoxels.Axis stick = axis(lastLayers.get(0));
+        float[] top = stick.at(FREEZE_AT);
+        float x = jitterX(0) + top[0];
+        float z = jitterZ(0) + top[1];
+        for (int i = 1; i < count; i++) {
+            int index = i;
+            boolean ice = lastLayers.get(i).is(Items.ICE) || lastLayers.get(i).is(Items.PACKED_ICE);
+            float ox = ((i * 37) % 5 - 2) * 0.35F;
+            float oz = ((i * 53) % 5 - 2) * 0.35F;
+            float y = LAYER_STEP + i * 0.12F;
+            rest(i, x + ox, y, z + oz);
+            view.node("layer_" + i).ifPresent(node -> {
+                node.moveTo(x + ox, y - index * LAYER_STEP, z + oz, FREEZE_GATHER);
+                node.scaleTo(ice ? 0.0F : 0.75F, ice ? FREEZE_GATHER + FREEZE_SET * 0.5F : FREEZE_GATHER);
+            });
+        }
+        after(FREEZE_GATHER, () -> {
+            Vector3f at = new Vector3f(MIDDLE_X + x, TOP + LAYER_STEP * 2.0F, MIDDLE_Z + z);
+            view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 1.5F, 0.0F), 1.8F, 10, FROST);
+            view.spawnParticles(DiegesisParticles.GLINT, at, new Vector3f(0.0F, 1.0F, 0.0F), 1.5F, 4, FROST);
+            view.playSound(SoundEvents.GLASS_BREAK, "surface", 0.2F, 1.8F);
+            for (int i = 1; i < count; i++) {
+                view.node("layer_" + i).ifPresent(node -> node.setTint(FROST));
+            }
+        });
+    }
+
+    /**
+     * Draws layer {@code index}: an egg cracked open, a liquid as a film over the layer under it, anything else as its icon.
+     */
+    private void dress(NodeView node, int index, ItemStack layer, List<ItemStack> layers) {
+        if (index > 0 && index - 1 < layers.size() && KitchenLooks.isPoured(layer)) {
+            ItemStack under = KitchenLooks.opened(layers.get(index - 1));
+            Optional<ItemVoxels.Icon> shape = ItemVoxels.icon(under);
+            Optional<KitchenLooks.Liquid> liquid = KitchenLooks.liquid(layer);
+            if (shape.isPresent() && liquid.isPresent()) {
+                float size = (index - 1 == 0 ? ITEM_SIZE : LAYER_SIZE) * FILM_SHARE;
+                KitchenLooks.Liquid it = liquid.get();
+                node.setShape(ItemVoxels.film(shape.get(), size, FILM_THICK, it.icon(), it.column(), it.row()), it.icon().sprite());
+                node.setTint(0xFFFFFFFF);
+                return;
+            }
+        }
+        ItemStack look = KitchenLooks.opened(layer);
+        node.setShape(shape(look, index == 0 ? ITEM_SIZE : LAYER_SIZE, List.of(), 0.0F), sprite(look));
+        node.setTint(KitchenLooks.isCracked(layer) ? KitchenLooks.RAW_EGG : 0xFFFFFFFF);
+    }
+
+    /**
+     * Layer {@code index} goes down: from the player or the hand it lands; an egg cracks over the stack first; a liquid is poured
+     * from its container, which hangs over the stack, tips and goes back to the cook.
+     */
+    private void arrives(StationView view, NodeView node, int index, ItemStack layer, boolean fromPlayer) {
+        float x = jitterX(index);
+        float z = jitterZ(index);
+        Vector3f at = new Vector3f(MIDDLE_X + x, TOP + index * LAYER_STEP + 0.6F, MIDDLE_Z + z);
+        if (index > 0 && KitchenLooks.isPoured(layer)) {
+            node.moveTo(x, 0.0F, z, 0.0F);
+            node.scaleTo(0.2F, 0.0F);
+            pourUntil = clock + POUR_TIP + POUR_FLOW;
+            ghost(view, layer, LAYER_SIZE).ifPresent(container -> {
+                container.scaleTo(POUR_SCALE, 0.0F);
+                float y = index * LAYER_STEP + POUR_HEIGHT;
+                Vector3f from = fromPlayer ? FromPlayer.offset(view, TOP + y, 0, 1) : fromHand(view, container, y);
+                container.moveTo(x + from.x, y, z + from.z, 0.0F);
+                container.moveTo(x + 1.5F, y, z, POUR_TIP);
+                container.rotateTo(0.0F, 0.0F, POUR_TILT, POUR_TIP);
+                after(POUR_TIP, () -> {
+                    KitchenLooks.pour(view, "surface", layer, new Vector3f(MIDDLE_X + x + 0.8F, TOP + y - 0.5F, MIDDLE_Z + z), at);
+                    node.scaleTo(1.0F, POUR_FLOW);
+                });
+                after(POUR_TIP + POUR_FLOW, () -> {
+                    container.rotateTo(0.0F, 0.0F, 0.0F, LIFT_TIME);
+                    container.moveTo(x + 1.5F, y + LIFT_HEIGHT, z, LIFT_TIME + AWAY_TIME);
+                    container.scaleTo(0.0F, LIFT_TIME + AWAY_TIME);
+                });
+                after(POUR_TIP + POUR_FLOW + LIFT_TIME + AWAY_TIME, () -> container.setVisible(false));
+            });
+            return;
+        }
+        if (fromPlayer) {
+            landFromPlayer(view, node, x, 0.0F, z);
+            view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.7F, 1.15F + 0.05F * index);
+        } else {
+            land(view, node, x, 0.0F, z);
+        }
+        if (KitchenLooks.isCracked(layer)) {
+            after(fromPlayer ? PLAYER_LAND_TIME : LAND_TIME, () -> KitchenLooks.crack(view, "surface", at));
         }
     }
 

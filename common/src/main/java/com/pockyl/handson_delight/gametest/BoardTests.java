@@ -181,8 +181,17 @@ public final class BoardTests {
                 Map.entry("gleaming_salad_block", AssemblyRecipes.Base.BOWL));
         kinds.forEach((dish, base) ->
                 helper.assertTrue(made(dish).filter(it -> it.kind() == base).isPresent(), dish + " goes down from its " + base));
-        helper.assertTrue(made("honey_glazed_ham_block").map(AssemblyRecipes.Assembly::finish).orElse(null) == AssemblyRecipes.Finish.PRESS,
-                "a feast is pressed together, not tossed");
+        Map<String, AssemblyRecipes.Finish> finishes = Map.ofEntries(
+                Map.entry("honey_glazed_ham_block", AssemblyRecipes.Finish.ARRANGE), Map.entry("bacon_and_eggs", AssemblyRecipes.Finish.ARRANGE),
+                Map.entry("steak_and_potatoes", AssemblyRecipes.Finish.ARRANGE), Map.entry("grilled_salmon", AssemblyRecipes.Finish.ARRANGE),
+                Map.entry("mixed_salad", AssemblyRecipes.Finish.TOSS), Map.entry("fruit_salad", AssemblyRecipes.Finish.TOSS),
+                Map.entry("nether_salad", AssemblyRecipes.Finish.TOSS), Map.entry("hamburger", AssemblyRecipes.Finish.SANDWICH),
+                Map.entry("egg_sandwich", AssemblyRecipes.Finish.SANDWICH), Map.entry("mutton_wrap", AssemblyRecipes.Finish.ROLL),
+                Map.entry("cod_roll", AssemblyRecipes.Finish.SHAPE), Map.entry("kelp_roll", AssemblyRecipes.Finish.ROLL),
+                Map.entry("barbecue_stick", AssemblyRecipes.Finish.SKEWER), Map.entry("melon_popsicle", AssemblyRecipes.Finish.FREEZE),
+                Map.entry("apple_pie", AssemblyRecipes.Finish.PRESS));
+        finishes.forEach((dish, finish) -> helper.assertTrue(made(dish).map(AssemblyRecipes.Assembly::finish).orElse(null) == finish,
+                dish + " is finished by " + finish));
         for (String crafted : List.of("cake_from_slices", "pumpkin_pie_from_slices", "pumpkin_from_slices", "milk_bucket_from_bottles",
                 "milk_bottle", "rice_panicle", "tomato_seeds")) {
             helper.assertTrue(made(crafted).isEmpty(), crafted + " stays in the crafting table");
@@ -428,11 +437,7 @@ public final class BoardTests {
         first.putFloat(CuttingBoardStation.AT, 10.0F);
         setup.act(CuttingBoardStation.ACTION_CHOP, first);
         helper.runAfterDelay(4, () -> {
-            CompoundTag second = new CompoundTag();
-            second.putInt(CuttingBoardStation.MARK, 1);
-            second.putFloat(CuttingBoardStation.AT, 6.0F);
-            setup.act(CuttingBoardStation.ACTION_CHOP, second);
-            helper.assertTrue(setup.onBoard().isEmpty(), "both cabbages are cut");
+            helper.assertTrue(setup.onBoard().isEmpty(), "one cut halves both cabbages");
             helper.assertTrue(setup.cook.getInventory().countItem(fd("cabbage_leaf")) == 4, "the leaves go to the cook");
             helper.assertTrue(setup.cook.getInventory().getItem(7).is(fd("iron_knife")), "the knife stays in its slot");
             helper.assertTrue(setup.cook.inventoryMenu.getCarried().isEmpty(), "the hand stays empty");
@@ -461,14 +466,10 @@ public final class BoardTests {
         setup.carry(new ItemStack(fd("cabbage"), 20));
         setup.place();
         setup.chop(0);
+        helper.assertTrue(setup.onBoard().getCount() == 20 - CuttingBoardStation.BATCH, "one cut goes through sixteen cabbages");
+        helper.assertTrue(setup.cook.getInventory().countItem(fd("cabbage_leaf")) == 2 * CuttingBoardStation.BATCH, "two leaves each");
         helper.runAfterDelay(4, () -> {
-            setup.chop(1);
-            helper.assertTrue(setup.onBoard().getCount() == 20 - CuttingBoardStation.BATCH, "one cut goes through sixteen cabbages");
-            helper.assertTrue(setup.cook.getInventory().countItem(fd("cabbage_leaf")) == 2 * CuttingBoardStation.BATCH, "two leaves each");
-        });
-        helper.runAfterDelay(8, () -> setup.chop(0));
-        helper.runAfterDelay(12, () -> {
-            setup.chop(1);
+            setup.chop(0);
             helper.assertTrue(setup.onBoard().isEmpty(), "the next cut takes the rest");
             helper.succeed();
         });
@@ -493,18 +494,20 @@ public final class BoardTests {
 
     public static void marksAreCutInOrderAtNewPlaces(GameTestHelper helper) {
         Board setup = board(helper);
-        setup.carry(new ItemStack(fd("cabbage"), 2));
+        setup.carry(new ItemStack(fd("ham"), 2));
         setup.place();
+        helper.assertTrue(setup.logic.plan().marks() == 2, "a ham falls into three pieces: two marks");
         float[] first = setup.logic.spots();
-        helper.assertTrue(Math.abs(first[0] - first[1]) >= 0.3F, "the two marks lie apart");
-        for (float spot : first) {
-            helper.assertTrue(spot >= 0.2F && spot <= 0.8F, "on the item, never at its ends");
+        helper.assertTrue(Math.abs(first[0] - first[1]) >= 0.15F, "the two marks lie apart");
+        for (int mark = 0; mark < 2; mark++) {
+            helper.assertTrue(first[mark] >= 0.2F && first[mark] <= 0.8F, "on the item, never at its ends");
         }
         float[] angles = setup.logic.angles();
-        for (float angle : angles) {
-            helper.assertTrue(Math.abs(angle) <= 60.0F * Mth.DEG_TO_RAD + 1.0e-4F, "straight across or diagonal, never along the item");
+        for (int mark = 0; mark < 2; mark++) {
+            helper.assertTrue(Math.abs(angles[mark]) <= 1.0F, "a share of the most lean: never along the item");
         }
-        helper.assertFalse(BoardLogic.crossOnTheItem(first[0], angles[0], first[1], angles[1]), "the two cuts never meet on the item");
+        helper.assertFalse(BoardLogic.crossOnTheItem(first[0], angles[0] * BoardLogic.MOST_LEAN, first[1], angles[1] * BoardLogic.MOST_LEAN),
+                "the two cuts never meet on the item");
         helper.assertTrue(BoardLogic.crossOnTheItem(0.5F, 0.5F, 0.5F, -0.5F), "two marks through one point do");
         helper.assertFalse(BoardLogic.crossOnTheItem(0.2F, 0.0F, 0.8F, 0.0F), "two straight across do not");
         setup.chop(1);
@@ -515,7 +518,7 @@ public final class BoardTests {
         helper.runAfterDelay(8, () -> {
             setup.chop(1);
             helper.assertTrue(setup.onBoard().isEmpty(), "then it cuts");
-            setup.carry(new ItemStack(fd("cabbage")));
+            setup.carry(new ItemStack(fd("ham")));
             setup.place();
             float[] next = setup.logic.spots();
             helper.assertFalse(next[0] == first[0] && next[1] == first[1], "the next item has marks of its own");
@@ -569,7 +572,7 @@ public final class BoardTests {
     /** A chop the board does not take is answered, so the cook's client can close the cut it drew at once. */
     public static void anIgnoredChopIsAnswered(GameTestHelper helper) {
         Board setup = board(helper);
-        setup.carry(new ItemStack(fd("cabbage"), 2));
+        setup.carry(new ItemStack(fd("ham"), 2));
         setup.place();
         setup.station.effects.clear();
         setup.chop(1);
@@ -587,7 +590,7 @@ public final class BoardTests {
         Board setup = board(helper);
         Player other = helper.makeMockPlayer(GameType.CREATIVE);
         setup.station.users.add(other);
-        setup.carry(new ItemStack(fd("cabbage"), 2));
+        setup.carry(new ItemStack(fd("ham"), 2));
         setup.place();
         setup.chop(0);
         setup.logic.onClose(setup.station, setup.cook);
@@ -611,6 +614,32 @@ public final class BoardTests {
         helper.assertTrue(setup.onBoard().isEmpty(), "and can be taken back");
         helper.assertTrue(setup.cook.getInventory().countItem(fd("cabbage")) == 1, "into the inventory");
         helper.succeed();
+    }
+
+    /** As many marks as the pieces ask, laid as the food is cut: slices of a roll even, a pie in wedges, pasta in strips. */
+    public static void marksFollowWhatTheFoodFallsInto(GameTestHelper helper) {
+        Level level = helper.getLevel();
+        helper.assertTrue(Cutting.plan(level, new ItemStack(Items.BEEF)).marks() == 1, "beef into two: one cut");
+        helper.assertTrue(Cutting.plan(level, new ItemStack(Items.COD)).marks() == 2, "a cod into two slices and its bones: two");
+        Cutting.Plan roll = Cutting.plan(level, new ItemStack(fd("kelp_roll")));
+        helper.assertTrue(roll.marks() == 2 && roll.style() == Cutting.Style.STRAIGHT, "a kelp roll into three even slices");
+        Cutting.Plan pie = Cutting.plan(level, new ItemStack(fd("apple_pie")));
+        helper.assertTrue(pie.marks() == 2 && pie.style() == Cutting.Style.WEDGES, "a pie into four wedges: two cuts through its middle");
+        helper.assertTrue(Cutting.plan(level, new ItemStack(Items.CAKE)).marks() == Cutting.MOST_MARKS, "a cake into seven: three cuts at most");
+        helper.assertTrue(Cutting.plan(level, new ItemStack(fd("wheat_dough"))).style() == Cutting.Style.STRIPS, "dough into strips");
+        Board setup = board(helper);
+        setup.carry(new ItemStack(fd("kelp_roll")));
+        setup.place();
+        float[] spots = setup.logic.spots();
+        float[] angles = setup.logic.angles();
+        helper.assertTrue(Math.abs(spots[0] - 1.0F / 3.0F) < 1.0e-4F && Math.abs(spots[1] - 2.0F / 3.0F) < 1.0e-4F, "even slices");
+        helper.assertTrue(angles[0] == 0.0F && angles[1] == 0.0F, "square across");
+        setup.chop(0);
+        helper.runAfterDelay(4, () -> {
+            setup.chop(1);
+            helper.assertTrue(setup.cook.getInventory().countItem(fd("kelp_roll_slice")) == 3, "the second cut makes the slices");
+            helper.succeed();
+        });
     }
 
     /** The board's station as the library would hold it, without a player at it. */

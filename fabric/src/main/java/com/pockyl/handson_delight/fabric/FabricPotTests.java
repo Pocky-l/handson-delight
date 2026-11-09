@@ -68,6 +68,11 @@ public final class FabricPotTests implements FabricGameTest {
         PotTests.theSetsSavedGoBack(helper);
     }
 
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 500)
+    public void theEmptiedContainerGoesToTheCook(GameTestHelper helper) {
+        PotTests.theEmptiedContainerGoesToTheCook(helper);
+    }
+
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 360)
     public void aPotLeftByItsCookCooksOn(GameTestHelper helper) {
         PotTests.aPotLeftByItsCookCooksOn(helper);

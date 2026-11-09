@@ -21,6 +21,12 @@ public interface PotStirring {
     /** A cook works at the pot's station in this tick: food coming in now is put in by hand. */
     void handson$attend(long gameTime);
 
+    /**
+     * What the ingredients left (a milk bucket's bucket) while a cook was at the station, taken once: the cook gets it instead of
+     * Farmer's Delight throwing it out beside the pot.
+     */
+    java.util.List<net.minecraft.world.item.ItemStack> handson$takeLeftovers();
+
     /** Every tick of the pot: sees whether food came in, and whether by hand or by itself (a hopper, a pipe, a menu). */
     void handson$watchFood(long gameTime);
 }

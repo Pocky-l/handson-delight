@@ -287,7 +287,7 @@ public final class SkilletBehavior implements StationBehavior {
         if (!visible) {
             return;
         }
-        ItemStack look = shownUp >= 1.0F ? cooked(view, shown) : shown;
+        ItemStack look = shownUp >= 1.0F ? cooked(view, shown) : KitchenLooks.opened(shown);
         float size = size(shownPieces);
         Optional<ItemVoxels.Icon> icon = ItemVoxels.icon(look);
         if (icon.isPresent()) {
@@ -297,7 +297,7 @@ public final class SkilletBehavior implements StationBehavior {
             node.setShape(null, null);
             node.setVisual(Visual.ofItem(look.getItem()).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));
         }
-        node.setTint(shownUp >= 1.0F ? 0xFFFFFFFF : mix(0xFFFFFFFF, SEARED, Math.max(0.0F, shownUp) * SEAR));
+        node.setTint(KitchenLooks.fryingTint(shown, cooked(view, shown), shownUp, SEARED, SEAR));
         // What lies there already moves over to its place in the new layout; what is landing or in the air of a toss is on its way.
         if (!landing(index, under) && !(tossing() && node.isMoving())) {
             float[] at = place(index, shownPieces);
@@ -766,6 +766,11 @@ public final class SkilletBehavior implements StationBehavior {
         } else if (SkilletStation.EFFECT_PLACED.equals(effect)) {
             if (view.state().data().getBoolean(SkilletStation.HEATED)) {
                 view.playSound(FarmersDelightContent.SKILLET_ADD_FOOD, "pan", 0.8F, 1.0F);
+            }
+            // An egg is cracked on the pan's rim and goes in without its shell.
+            ItemStack placed = view.state().getItem(SkilletStation.PAN_SLOT);
+            if (KitchenLooks.isCracked(placed)) {
+                KitchenLooks.crack(view, "pan", roundFood());
             }
             view.playSound(SoundEvents.LANTERN_PLACE, "pan", 0.5F, 1.0F);
         } else if (SkilletStation.EFFECT_REFUSED.equals(effect)) {

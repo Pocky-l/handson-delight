@@ -84,6 +84,11 @@ public final class ModGameTests {
         PotTests.theSetsSavedGoBack(helper);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 500)
+    public static void theEmptiedContainerGoesToTheCook(GameTestHelper helper) {
+        PotTests.theEmptiedContainerGoesToTheCook(helper);
+    }
+
     @GameTest(template = "empty", timeoutTicks = 360)
     public static void aPotLeftByItsCookCooksOn(GameTestHelper helper) {
         PotTests.aPotLeftByItsCookCooksOn(helper);
@@ -245,6 +250,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 100)
+    public static void marksFollowWhatTheFoodFallsInto(GameTestHelper helper) {
+        BoardTests.marksFollowWhatTheFoodFallsInto(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
     public static void layersStayOnTheBoard(GameTestHelper helper) {
         BoardTests.layersStayOnTheBoard(helper);
     }
@@ -292,5 +302,15 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void onlyFoodGoesOnAnOpenGrill(GameTestHelper helper) {
         StoveTests.onlyFoodGoesOnAnOpenGrill(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void anEggStaysOffTheGrill(GameTestHelper helper) {
+        StoveTests.anEggStaysOffTheGrill(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void anEggFriesInThePan(GameTestHelper helper) {
+        SkilletTests.anEggFriesInThePan(helper);
     }
 }

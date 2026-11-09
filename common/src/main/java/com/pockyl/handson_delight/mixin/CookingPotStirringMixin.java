@@ -135,11 +135,50 @@ abstract class CookingPotStirringMixin implements PotStirring {
             handson$byHand = gameTime - handson$attendedAt <= 1;
         }
         handson$fed = count;
+        handson$ejectForgotten(gameTime);
     }
 
     @Inject(method = "cookingTick", at = @At("HEAD"))
     private static void handson$seeWhoFeedsIt(Level level, BlockPos pos, BlockState state, CookingPotBlockEntity pot, CallbackInfo callback) {
         ((PotStirring) pot).handson$watchFood(level.getGameTime());
+    }
+
+    /** Containers emptied into the pot while a cook is at it, for the station to hand over. */
+    @Unique
+    private final java.util.List<ItemStack> handson$leftovers = new java.util.ArrayList<>();
+    @Unique
+    private boolean handson$ejecting;
+
+    @Shadow
+    protected abstract void ejectIngredientRemainder(ItemStack remainder);
+
+    /** With a cook at the station, what the ingredients leave goes to them: no bucket lands on the floor beside the pot. */
+    @Inject(method = "ejectIngredientRemainder", at = @At("HEAD"), cancellable = true)
+    private void handson$keepLeftover(ItemStack remainder, CallbackInfo callback) {
+        CookingPotBlockEntity pot = (CookingPotBlockEntity) (Object) this;
+        if (!handson$ejecting && pot.getLevel() != null && pot.getLevel().getGameTime() - handson$attendedAt <= AWAY) {
+            handson$leftovers.add(remainder.copy());
+            callback.cancel();
+        }
+    }
+
+    /** Leftovers nobody took (the cook left that very tick) go out as Farmer's Delight would throw them. */
+    @Unique
+    private void handson$ejectForgotten(long gameTime) {
+        if (handson$leftovers.isEmpty() || gameTime - handson$attendedAt <= AWAY) {
+            return;
+        }
+        handson$ejecting = true;
+        handson$leftovers.forEach(this::ejectIngredientRemainder);
+        handson$ejecting = false;
+        handson$leftovers.clear();
+    }
+
+    @Override
+    public java.util.List<ItemStack> handson$takeLeftovers() {
+        java.util.List<ItemStack> taken = java.util.List.copyOf(handson$leftovers);
+        handson$leftovers.clear();
+        return taken;
     }
 
     @Inject(method = "saveAdditional", at = @At("TAIL"), remap = true)

@@ -15,10 +15,12 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -31,6 +33,7 @@ import vectorwing.farmersdelight.common.block.PieBlock;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
@@ -73,16 +76,24 @@ public final class AssemblyRecipes {
 
     /** How a dish is finished once its layers make it: what the cook's hands would do. */
     public enum Finish {
-        /** Pressed together from the top: a sandwich, a pie into its crust, a juice. */
+        /** Pressed together from the top: a pie into its crust, a juice, a cake. */
         PRESS,
-        /** Tossed in the bowl. */
+        /** Tossed in the bowl: a salad. */
         TOSS,
-        /** Rolled up. */
+        /** Rolled up: a kelp roll, a wrap round its filling. */
         ROLL,
-        /** Pushed along the stick. */
+        /** Pushed along the stick, from its tip down. */
         SKEWER,
         /** Kneaded. */
-        KNEAD
+        KNEAD,
+        /** Laid in the bowl, each piece in its place: a plated meal, a feast. */
+        ARRANGE,
+        /** The bread is split and its top half closes the filling: a sandwich, a burger. */
+        SANDWICH,
+        /** Rice pressed into a block, the slices laid along its top: nigiri. */
+        SHAPE,
+        /** Fruit frozen together round the top of the stick: a popsicle. */
+        FREEZE
     }
 
     /**
@@ -120,9 +131,47 @@ public final class AssemblyRecipes {
      */
     public record Assembly(ResourceLocation id, CraftingRecipe recipe, List<Ingredient> ingredients, int[] slots, int base, Base kind,
             ItemStack result, JsonObject json) {
-        /** A feast, a pie or a cake is pressed together whatever goes down first: it comes up whole. */
+        /**
+         * What the cook's hands do: a bowl of plants is tossed and anything else in a bowl arranged; a pie or a cake is pressed
+         * whatever goes down first; a stick with ice freezes, bread closes over the filling or is rolled round it, rice is shaped.
+         */
         public Finish finish() {
-            return isBlock() ? Finish.PRESS : kind.finish();
+            if (kind == Base.BOWL) {
+                return isTossed() ? Finish.TOSS : Finish.ARRANGE;
+            }
+            if (isBlock()) {
+                return Finish.PRESS;
+            }
+            return switch (kind) {
+                case STICK -> result.is(KitchenTags.FROZEN) || ingredients.stream().anyMatch(in -> in.test(new ItemStack(Items.ICE)))
+                        ? Finish.FREEZE : Finish.SKEWER;
+                case BREAD -> result.is(KitchenTags.WRAPPED) ? Finish.ROLL : Finish.SANDWICH;
+                case RICE -> Finish.SHAPE;
+                default -> kind.finish();
+            };
+        }
+
+        /** A salad: tagged so, or, untagged, a bowl of nothing but plants. Meat, fish and eggs are laid in their places. */
+        private boolean isTossed() {
+            if (result.is(KitchenTags.TOSSED)) {
+                return true;
+            }
+            if (result.is(KitchenTags.ARRANGED) || isBlock()) {
+                return false;
+            }
+            for (int i = 0; i < ingredients.size(); i++) {
+                ItemStack[] choices = ingredients.get(i).getItems();
+                if (i == base || choices.length == 0) {
+                    continue;
+                }
+                ItemStack food = choices[0];
+                boolean meat = food.is(ItemTags.MEAT);
+                String name = BuiltInRegistries.ITEM.getKey(food.getItem()).getPath();
+                if (meat || food.is(ItemTags.FISHES) || food.is(KitchenTags.CRACKED) || name.contains("egg") || name.contains("bacon")) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /** Whether the dish is a block put down whole: a feast, a pie, a cake. */

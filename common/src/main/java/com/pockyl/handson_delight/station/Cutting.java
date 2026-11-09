@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -12,6 +13,7 @@ import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 
@@ -24,8 +26,13 @@ import java.util.WeakHashMap;
 
 /** Farmer's Delight's cutting recipes, read for the board's station: what an item is cut with and into how many strokes. */
 public final class Cutting {
-    /** Every cut is two chops (owner: "two cuts in different places"), at marks the server places anew for every item, one after the other. */
-    public static final int CHOPS = 2;
+    /**
+     * The most marks an item gets (owner, 2026-11-09: as many cuts as the pieces it falls into, "do everything"): a cake into seven is
+     * cut three times, never more.
+     */
+    public static final int MOST_MARKS = 3;
+    /** Strips of pasta: this many cuts side by side, whatever comes out. */
+    private static final int STRIPS = 3;
     /**
      * Per recipe manager: the client's and the server's of a single-player game are two. Read again when the manager's map of
      * recipes is a new one (a reload, a server's recipes): looked up every frame at the board, so never built anew in between.
@@ -110,7 +117,44 @@ public final class Cutting {
         return found;
     }
 
-    /** The recipe for {@code item} that {@code tool} cuts it by. */
+    /** How the marks of an item lie on it. */
+    public enum Style {
+        /** Across its length, a little askew each time: meat, fish, a cabbage. */
+        ACROSS,
+        /** Square across its length, in even slices: a roll. */
+        STRAIGHT,
+        /** Through its middle, crossing each other: a pie, a cake. */
+        WEDGES,
+        /** Square across, close side by side: pasta from dough. */
+        STRIPS
+    }
+
+    /** How {@code item} is cut: in how many marks, laid how. Both sides read the same recipes and tags, so they agree. */
+    public record Plan(int marks, Style style) {
+    }
+
+    public static Plan plan(Level level, ItemStack item) {
+        Style style = item.is(KitchenTags.CUT_IN_WEDGES) ? Style.WEDGES
+                : item.is(KitchenTags.CUT_IN_STRIPS) ? Style.STRIPS
+                : item.is(KitchenTags.SLICED_STRAIGHT) ? Style.STRAIGHT : Style.ACROSS;
+        if (style == Style.STRIPS) {
+            return new Plan(STRIPS, style);
+        }
+        int pieces = recipesFor(level, item).stream().findFirst().map(Cutting::pieces).orElse(2);
+        // n cuts across make n + 1 pieces; n cuts through the middle make 2n wedges.
+        int marks = style == Style.WEDGES ? (pieces + 1) / 2 : pieces - 1;
+        return new Plan(Mth.clamp(marks, 1, MOST_MARKS), style);
+    }
+
+    /** What an item falls into: the main result as many as it gives, and one piece for each thing besides (the bone of a ham). */
+    static int pieces(CuttingBoardRecipe recipe) {
+        List<ItemStack> results = recipe.getResults();
+        if (results.isEmpty()) {
+            return 2;
+        }
+        return results.get(0).getCount() + results.size() - 1;
+    }
+
     /** The inventory slot whose tool cuts {@code item}: the one in hand first, then the hotbar and the rest; -1 without one. */
     public static int toolSlot(Level level, ItemStack item, Inventory inventory) {
         if (findWith(level, item, inventory.getSelected()).isPresent()) {

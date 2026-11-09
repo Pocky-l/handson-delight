@@ -3,11 +3,24 @@
 ## [1.1.0+1.21.1]
 
 - Plated meals and salads are made on the cutting board instead of the crafting table: put the bowl down, then what
-  goes into it, and the food is tossed in the bowl.
-- So are the rest of Farmer's Delight's food crafts. Rolls start from kelp or rice and are rolled, skewers start from the
-  stick and are pushed along it, dough, pie crust, cookies and the cake start from wheat and are kneaded, pies go into
-  their crust, melon juice into its bottle. The five feasts are put together in their bowl.
-- A bucket of milk or a honey bottle gives its bucket or bottle back, and dough from water keeps the water.
+  goes into it. A salad is tossed in the bowl; bacon and eggs, a steak or a fish is laid in its place.
+- So are the rest of Farmer's Delight's food crafts. The kelp roll is rolled up, cod and salmon rolls are pressed onto
+  their rice, a barbecue stick is skewered from the tip down, a melon popsicle freezes on its stick, a sandwich or a
+  burger is closed with the top half of its bread and a mutton wrap is rolled. Dough, pie crust, cookies and the cake
+  start from wheat and are kneaded, pies go into their crust, melon juice into its bottle. The five feasts are laid out
+  in their bowl.
+- Milk, honey and water are poured over the food instead of lying on it in their bucket or bottle, which goes back to
+  you. Eggs are cracked open. Dough from water keeps the water.
+- The cutting board cuts food along its own length: a kelp roll into even round slices, a fish into steaks, never
+  lengthwise. Pies and cakes are cut in wedges through the middle, dough in strips. Food takes as many cuts as the
+  pieces it falls into: one for beef or a cabbage, two for a kelp roll or a ham, three at most.
+- An egg goes into the skillet cracked, with a clear white that turns white as it fries, never in its shell. The
+  stove's grill does not take eggs: they belong in the skillet. Other food on the skillet and stove takes on the colour
+  it cooks to, so kelp darkens green and a potato turns golden.
+- In the cooking pot, milk is poured in and colours the soup, an egg is cracked into it, and sugar, cocoa and ink
+  dissolve instead of floating whole. A soup shows egg ribbons and grains of rice, never slices of eggshell, sugar or
+  bone. The empty bucket or bottle goes back to you instead of dropping beside the pot.
+- Item tags under `handson_delight` let modpacks say how their food is cut, poured, cracked or dissolved.
 - A dish picked in the board's recipe book is laid from your inventory, one at a time or sixteen with Shift.
 - The board's recipe book has tabs: everything, dishes only, or cuts only. It remembers your choice.
 - The stove opens as a station too: lay up to six pieces on its grill, and each one smokes when its lower side is done.

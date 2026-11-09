@@ -99,7 +99,7 @@ public final class StoveBehavior implements StationBehavior {
         book.opened(view);
         usable.clear();
         view.setInventoryFilter(stack -> usable.computeIfAbsent(stack.getItem(),
-                item -> SkilletCooking.recipe(view.level(), stack).isPresent()));
+                item -> StoveCooking.canGrill(view.level(), stack)));
         // A right click with food lays it on the grill, as Farmer's Delight's stove takes it: never slower than without the station.
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
@@ -187,7 +187,7 @@ public final class StoveBehavior implements StationBehavior {
             return;
         }
         boolean done = shownUp[place] >= 1.0F;
-        ItemStack look = done ? cooked(view, stack) : stack;
+        ItemStack look = done ? cooked(view, stack) : KitchenLooks.opened(stack);
         Optional<ItemVoxels.Icon> icon = ItemVoxels.icon(look);
         if (icon.isPresent()) {
             node.setVisual(null);
@@ -196,7 +196,7 @@ public final class StoveBehavior implements StationBehavior {
             node.setShape(null, null);
             node.setVisual(Visual.ofItem(look.getItem()).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));
         }
-        node.setTint(done ? 0xFFFFFFFF : mix(0xFFFFFFFF, SEARED, Math.max(0.0F, shownUp[place]) * SEAR));
+        node.setTint(KitchenLooks.fryingTint(stack, cooked(view, stack), shownUp[place], SEARED, SEAR));
         if (!node.isMoving()) {
             node.moveTo(0.0F, 0.0F, 0.0F, 0.0F);
             node.rotateTo(0.0F, yaw(place), 0.0F, 0.0F);

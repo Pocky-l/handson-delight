@@ -27,6 +27,7 @@
   Click it to turn it over; once both sides are done it waits on the grill until you take it. Food put on by sneaking
   cooks the Farmer's Delight way.
 - The recipe book is drawn with smooth edges instead of jagged steps.
+- The recipe book shows its page arrows again, and the food on its pages is as bright as in the inventory.
 - Two quick presses of A or D go two stations on at once; the recipe book flies along.
 - A dish picked in the recipe book no longer appears in the station at once: its ingredients jump in from you one
   after the other, into the soup, onto the board and into the pan. A stack put into the pan does the same.

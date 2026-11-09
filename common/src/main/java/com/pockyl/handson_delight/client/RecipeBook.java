@@ -53,6 +53,10 @@ import java.util.Optional;
 final class RecipeBook implements NodePainter {
     @SuppressWarnings("removal")
     private static final ResourceLocation PAPER = ResourceLocation.parse("textures/gui/book.png");
+    private static final ResourceLocation PAGE_FORWARD = ResourceLocation.parse("textures/gui/sprites/widget/page_forward.png");
+    private static final ResourceLocation PAGE_FORWARD_LIT = ResourceLocation.parse("textures/gui/sprites/widget/page_forward_highlighted.png");
+    private static final ResourceLocation PAGE_BACKWARD = ResourceLocation.parse("textures/gui/sprites/widget/page_backward.png");
+    private static final ResourceLocation PAGE_BACKWARD_LIT = ResourceLocation.parse("textures/gui/sprites/widget/page_backward_highlighted.png");
     @SuppressWarnings("removal")
     private static final ResourceLocation WHITE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
     private static final Quaternionf LYING = new Matrix3f(0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F).getNormalizedRotation(new Quaternionf());
@@ -692,10 +696,10 @@ final class RecipeBook implements NodePainter {
             String number = String.valueOf(listPage + 1);
             canvas.text(number, GRID_X + (COLUMNS * PITCH - font.width(number)) / 2.0F, ARROW_Y + 3.0F);
             if (listPage > 0) {
-                canvas.arrow(GRID_X, ARROW_Y, 205);
+                canvas.arrow(GRID_X, ARROW_Y, false);
             }
             if (listPage < pages() - 1) {
-                canvas.arrow(GRID_X + COLUMNS * PITCH - ARROW_WIDTH, ARROW_Y, 192);
+                canvas.arrow(GRID_X + COLUMNS * PITCH - ARROW_WIDTH, ARROW_Y, true);
             }
         }
     }
@@ -829,11 +833,11 @@ final class RecipeBook implements NodePainter {
             rect(x + size - 1.0F, y, 1.0F, size, COVER_LIFT, WELL_PICKED);
         }
 
-        void arrow(float x, float y, int v) {
+        /** Vanilla's page arrow: since 1.20.2 its own sprite, no longer in the book's texture. */
+        void arrow(float x, float y, boolean forward) {
             boolean over = cursorX >= x && cursorX < x + ARROW_WIDTH && cursorY >= y && cursorY < y + ARROW_HEIGHT;
-            float u = (over ? ARROW_WIDTH : 0.0F) / 256.0F;
-            quad(buffers.getBuffer(RenderType.text(PAPER)), x, y, x + ARROW_WIDTH, y + ARROW_HEIGHT, WELL_LIFT, 0xFFFFFFFF, u, u + ARROW_WIDTH / 256.0F, v / 256.0F,
-                    (v + ARROW_HEIGHT) / 256.0F);
+            ResourceLocation sprite = (forward ? (over ? PAGE_FORWARD_LIT : PAGE_FORWARD) : (over ? PAGE_BACKWARD_LIT : PAGE_BACKWARD));
+            quad(buffers.getBuffer(RenderType.text(sprite)), x, y, x + ARROW_WIDTH, y + ARROW_HEIGHT, WELL_LIFT, 0xFFFFFFFF, 0.0F, 1.0F, 0.0F, 1.0F);
         }
 
         private void quad(VertexConsumer consumer, float x0, float y0, float x1, float y1, float lift, int argb, float u0, float u1, float v0, float v1) {
@@ -859,7 +863,7 @@ final class RecipeBook implements NodePainter {
             boolean block = Minecraft.getInstance().getItemRenderer().getModel(stack, station.level(), null, 0).isGui3d();
             poseStack.scale(size, -size, block ? BLOCK_DEPTH : ITEM_DEPTH);
             Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.GUI, shade, OverlayTexture.NO_OVERLAY, poseStack,
-                    faded ? DiegesisClient.tinted(buffers, FADED) : buffers, station.level(), 0);
+                    faded ? DiegesisClient.tinted(FlatLit.of(buffers), FADED) : FlatLit.of(buffers), station.level(), 0);
             poseStack.popPose();
         }
 

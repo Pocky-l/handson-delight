@@ -5,6 +5,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 
 import com.pockyl.handson_delight.gametest.BoardTests;
+import com.pockyl.handson_delight.gametest.RecipeAudit;
 
 /** {@link BoardTests} on Fabric: they run when the game starts with {@code -Dfabric-api.gametest}. */
 public final class FabricBoardTests implements FabricGameTest {
@@ -21,6 +22,11 @@ public final class FabricBoardTests implements FabricGameTest {
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void everyFoodCraftComesToTheBoard(GameTestHelper helper) {
         BoardTests.everyFoodCraftComesToTheBoard(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyRecipeReachesItsStation(GameTestHelper helper) {
+        RecipeAudit.everyRecipeReachesItsStation(helper);
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)

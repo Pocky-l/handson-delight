@@ -7,7 +7,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.handson_delight.HandsOnDelight;
 
-/** {@link PotTests}, {@link BoardTests}, {@link SkilletTests} and {@link StoveTests} on NeoForge. */
+/** {@link PotTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests} and {@link RecipeAudit} on NeoForge. */
 @GameTestHolder(HandsOnDelight.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ModGameTests {
@@ -312,5 +312,10 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void anEggFriesWithoutATurn(GameTestHelper helper) {
         SkilletTests.anEggFriesWithoutATurn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void everyRecipeReachesItsStation(GameTestHelper helper) {
+        RecipeAudit.everyRecipeReachesItsStation(helper);
     }
 }

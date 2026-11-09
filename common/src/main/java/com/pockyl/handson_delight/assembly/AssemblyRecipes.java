@@ -184,6 +184,11 @@ public final class AssemblyRecipes {
     private record Chosen(List<Assembly> all, Set<ResourceLocation> ids, ListTag book) {
     }
 
+    /** Every recipe that may be put together, before the tags choose: for the recipe audit. */
+    public static List<Assembly> candidates() {
+        return candidates;
+    }
+
     public static List<Assembly> all() {
         return chosen().all();
     }
@@ -315,10 +320,15 @@ public final class AssemblyRecipes {
 
     /** The recipe as the board reads it, when it is one the board could make: else empty. */
     private static Optional<JsonObject> candidate(ResourceLocation id, JsonObject json) {
-        String type = string(json, "type");
         if (!id.getNamespace().equals(FarmersDelightContent.MOD_ID) && !Platform.INSTANCE.isFarmersDelightAddon(id.getNamespace())) {
             return Optional.empty();
         }
+        return plain(json);
+    }
+
+    /** A recipe of the crafting table or Farmer's Delight's dough, as the board reads it, when the board could make it. */
+    private static Optional<JsonObject> plain(JsonObject json) {
+        String type = string(json, "type");
         JsonObject recipe = json;
         if (DOUGH.equals(type)) {
             // One wheat and a water bucket, which stays: the recipe's own matches and remainders say so, the board only lays them.

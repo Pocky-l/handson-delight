@@ -29,7 +29,7 @@ import com.pockyl.handson_delight.station.StirSkill;
  * servings. That is cooking by hand: food a cook put in at the station waits for the spoon while the cook is there. Food that came in
  * by itself (a hopper, a pipe, an autocrafter, Farmer's Delight's own menu on a client without this mod) cooks as Farmer's Delight
  * cooks it, a serving at a time at its own pace, so that automation in a modpack goes on working; so does a cook's food once they
- * walked away (owner, 2026-11-08: a pot is something you fill and leave). So do pots of other mods built on this class.
+ * walked away, since a pot is something you fill and leave. So do pots of other mods built on this class.
  */
 @Mixin(value = CookingPotBlockEntity.class, remap = false)
 abstract class CookingPotStirringMixin implements PotStirring {

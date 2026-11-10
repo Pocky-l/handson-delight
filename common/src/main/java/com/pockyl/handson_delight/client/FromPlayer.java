@@ -8,7 +8,7 @@ import java.util.Optional;
 
 /**
  * Where what the player puts into a station comes from: the player, at the bottom of their screen where the inventory is
- * (owner: "they must fly from the player, not from the book"). An offset on a level plane, scene pixels.
+ * rather than the recipe book that was clicked. An offset on a level plane, scene pixels.
  */
 final class FromPlayer {
     /** How low on the screen they start: just over the bottom edge, at the inventory. */

@@ -140,7 +140,7 @@ public final class BoardBehavior implements StationBehavior {
     /** How far apart the layers of a dish lie, as the scene repeats them. */
     private static final float LAYER_STEP = 0.65F;
     /**
-     * Putting down and taking off (owner: "everything cozy and animated"): a stack let go lands from the cursor with a hop and settles
+     * Putting down and taking off, animated so the board feels alive: a stack let go lands from the cursor with a hop and settles
      * with a little bounce; what is taken lifts and melts away, the drawer showing it come in; what the board refuses comes down and
      * bounces back to the hand. Seconds and pixels.
      */
@@ -322,8 +322,8 @@ public final class BoardBehavior implements StationBehavior {
             });
         }
         List<ItemStack> layers = BoardLogic.layers(state);
-        // Several layers at once (a dish picked in the book) come from the player one after the other (owner: "cozy", "they must
-        // fly from the player"); one put down by hand lands from the hand.
+        // Several layers at once (a dish picked in the book) come from the player one after the other, not all at
+        // once and not out of the book; one put down by hand lands from the hand.
         int arriving = 0;
         for (int i = 0; i < CuttingBoardStation.MOST_LAYERS && Float.isNaN(melting) && !quiet; i++) {
             ItemStack layer = i < layers.size() ? layers.get(i) : ItemStack.EMPTY;
@@ -592,7 +592,7 @@ public final class BoardBehavior implements StationBehavior {
 
     /**
      * The knife that cuts what lies on the board: the one on the cook's cursor, or with an empty hand one in the inventory, offered
-     * see-through over the food (owner, 2026-11-09: "I need not take the knife from its slot to cut").
+     * see-through over the food, so cutting never needs a trip to the inventory.
      */
     private Optional<ItemStack> tool(StationView view) {
         LocalPlayer player = Minecraft.getInstance().player;
@@ -756,7 +756,7 @@ public final class BoardBehavior implements StationBehavior {
     }
 
     /**
-     * A dashed line across the item where it is to be cut next, for the cook alone (owner: "one mark at a time"); the second shows,
+     * A dashed line across the item where it is to be cut next, for the cook alone, one at a time; the second shows,
      * fading in, once the first is cut.
      */
     private void drawMarks(StationView view, boolean shown, float dt) {
@@ -883,8 +883,8 @@ public final class BoardBehavior implements StationBehavior {
     }
 
     /**
-     * The knife on the cursor chops, and the right button puts it away (owner, 2026-11-08: "a right click must put away what is in
-     * the hand, a knife for one"); any other stack let go on the board goes where the board says: onto the dish or to be cut, all
+     * The knife on the cursor chops, and the right button puts it away, as a right click puts away whatever
+     * the cursor holds; any other stack let go on the board goes where the board says: onto the dish or to be cut, all
      * of it or, with the right button, one.
      */
     @Override
@@ -1129,8 +1129,8 @@ public final class BoardBehavior implements StationBehavior {
         });
         // Under the layers still melting it would fight them for the same place.
         after(MELT_TIME, () -> view.node("pile").ifPresent(pile -> pile.setVisible(shownItem.getCount() > 1)));
-        // Flour dust off what was pressed, rolled or kneaded; a dish tossed in its bowl only glints (owner: "no particles that do not
-        // fit, green ones": crumbs in the food's own colour flew green off every salad).
+        // Flour dust off what was pressed, rolled or kneaded; a dish tossed in its bowl only glints (crumbs in the
+        // food's own colour flew green off every salad).
         Vector3f middle = new Vector3f(MIDDLE_X, TOP + 1.0F, MIDDLE_Z);
         if (finish == AssemblyRecipes.Finish.FREEZE) {
             view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 2.0F, 0.0F), 2.5F, 12, FROST);

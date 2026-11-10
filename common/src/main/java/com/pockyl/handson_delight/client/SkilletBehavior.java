@@ -44,7 +44,7 @@ public final class SkilletBehavior implements StationBehavior {
     private static final int SEARED = 0xFFB8875C;
     private static final float SEAR = 0.7F;
     /**
-     * The toss (owner of the idea: the plan's "turning"): the far lip of the pan comes up and the pan jerks towards the cook, the food
+     * The toss that turns the food: the far lip of the pan comes up and the pan jerks towards the cook, the food
      * leaves it, turns over in the air and comes down. Degrees, pixels, seconds.
      */
     private static final float TILT = 11.0F;
@@ -86,8 +86,8 @@ public final class SkilletBehavior implements StationBehavior {
     private static final float EDGE = 0.5F;
     private static final float WAITING_SIZZLE = 1.3F;
     /**
-     * How the pan tells the cook where the food is (owner: "it is unclear when to turn it and when it is done; make it answer with
-     * sound"): the frying sizzle grows louder and higher as the side on the pan browns, seconds apart; when that side is done the fat
+     * How the pan tells the cook where the food is, by ear, since the food alone does not show
+     * when to turn it and when it is done: the frying sizzle grows louder and higher as the side on the pan browns, seconds apart; when that side is done the fat
      * pops and the food gives a little jump, and soft pops go on while it waits; a done batch settles with a deep sizzle and a
      * crackle. Pieces already in the pan move over to their new places this fast when more come.
      */
@@ -212,8 +212,8 @@ public final class SkilletBehavior implements StationBehavior {
         int pieces = Math.min(batch, PIECES);
         int unders = Math.min(Math.max(0, batch - PIECES), PIECES);
         float up = clock < lookHeldUntil ? shownUp : Float.isNaN(tossedUp) ? state.data().getFloat(SkilletStation.UP) : tossedUp;
-        // Food that became what the fire makes of it is the same food: it stays where it lay, nothing lands (owner, 2026-11-09:
-        // a potato done in the pan landed again as if put in).
+        // Food that became what the fire makes of it is the same food: it stays where it lay, nothing lands (a potato
+        // done in the pan used to land again as if put in).
         boolean sameFood = ItemStack.isSameItemSameTags(inPan, shown)
                 || !shown.isEmpty() && !inPan.isEmpty() && ItemStack.isSameItemSameTags(cooked(view, shown), inPan);
         if (sameFood && pieces == shownPieces && unders == shownUnders && look(up) == look(shownUp)) {
@@ -237,8 +237,8 @@ public final class SkilletBehavior implements StationBehavior {
             view.node("under_" + i).ifPresent(node -> drawPiece(view, node, index, index < unders, true));
         }
         if (!quiet) {
-            // What came in lands; several at once (a stack, the book) come from the player one after the other (owner: "cozy",
-            // "they must fly from the player"). What was there stays.
+            // What came in lands; several at once (a stack, the book) come from the player one after the other. What was there
+            // stays.
             boolean hot = state.data().getBoolean(SkilletStation.HEATED);
             boolean together = pieces - before > 1;
             for (int i = before; i < pieces; i++) {
@@ -800,7 +800,7 @@ public final class SkilletBehavior implements StationBehavior {
     private void ready(StationView view) {
         view.spawnParticles(DiegesisParticles.STEAM, onFood(), new Vector3f(0.0F, 3.0F, 0.0F), 2.0F, 4, 0x60FFFFFF);
         view.spawnParticles(DiegesisParticles.GLINT, onFood(), new Vector3f(0.0F, 2.0F, 0.0F), 2.5F, 4, 0xFFFFE9A0);
-        // Done: one last deep sizzle as the food settles, then only the fire crackles under it (owner: a chime "does not fit").
+        // Done: one last deep sizzle as the food settles, then only the fire crackles under it; a chime would not fit a kitchen.
         view.playSound(FarmersDelightContent.SKILLET_ADD_FOOD, "pan", 0.4F, 0.75F);
         after(0.35F, () -> view.playSound(SoundEvents.CAMPFIRE_CRACKLE, "pan", 0.6F, 0.9F));
     }

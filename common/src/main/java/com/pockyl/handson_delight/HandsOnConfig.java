@@ -97,7 +97,7 @@ public final class HandsOnConfig {
         return stirringRequired && cookingPot;
     }
 
-    /** Whether the recipe book hangs beside the stations; the client's own file decides (owner, 2026-11-08). */
+    /** Whether the recipe book hangs beside the stations; the client's own file decides, as it is a matter of taste. */
     public static boolean recipeBook() {
         return recipeBook;
     }

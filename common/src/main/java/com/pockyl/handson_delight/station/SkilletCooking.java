@@ -26,7 +26,7 @@ import java.util.Optional;
 /**
  * Frying by hand. Food put into the skillet at the station fries on the side that lies on the pan; once that side is done it waits
  * until the cook turns it with a toss of the pan, and when both sides are done it is ready and stays in the pan until the cook takes
- * it (owner, 2026-11-08: "I must take it out of the skillet myself once it is cooked"). Up to {@link #BATCH} fry together, a bigger
+ * it out by hand. Up to {@link #BATCH} fry together, a bigger
  * batch taking longer by the square root, as in the pot; the cook puts in no more than that. Food put in with Farmer's Delight's own right click (a
  * player without this mod, or sneaking) cooks Farmer's Delight's way, one after the other.
  */

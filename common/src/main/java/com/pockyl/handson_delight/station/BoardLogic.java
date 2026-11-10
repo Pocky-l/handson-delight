@@ -385,8 +385,8 @@ public final class BoardLogic implements StationLogic {
             return;
         }
         lastChop = now;
-        // The knife is the one the cook took on the cursor; with an empty hand, one from the inventory (owner: "I need not take
-        // the knife from its slot to cut").
+        // The knife is the one the cook took on the cursor; with an empty hand, one from the inventory, so cutting never
+        // needs a trip to the inventory.
         ItemStack tool = player.inventoryMenu.getCarried();
         int toolSlot = -1;
         if (Cutting.findWith(level, onBoard, tool).isEmpty()) {

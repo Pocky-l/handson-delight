@@ -62,6 +62,11 @@ public final class AssemblyRecipes {
     public static final TagKey<Item> ASSEMBLED = TagKey.create(Registries.ITEM, HandsOnDelight.id("assembled"));
     /** Results whose recipes stay in the crafting table although the rule would take them. */
     public static final TagKey<Item> NOT_ASSEMBLED = TagKey.create(Registries.ITEM, HandsOnDelight.id("not_assembled"));
+    /**
+     * Materials of a workshop, not of a kitchen: a recipe with one of them stays in the crafting table, as a golden carrot does (an
+     * addon's golden egg, a copper carrot, a dragon egg of obsidian).
+     */
+    public static final TagKey<Item> WORKSHOP = TagKey.create(Registries.ITEM, HandsOnDelight.id("workshop"));
 
     /** Farmer's Delight's dough from water is a recipe type of its own, with nothing to read: the board knows what it takes. */
     private static final String DOUGH = FarmersDelightContent.id("dough").toString();
@@ -105,9 +110,13 @@ public final class AssemblyRecipes {
     public enum Base {
         BOWL("bowl", Finish.TOSS),
         BOTTLE("glass_bottle", Finish.PRESS),
-        BREAD("bread", Finish.PRESS),
+        /** Bread, or a burger already made that gets more on top: its bread opens and closes again. */
+        BREAD(Finish.PRESS, "bread", "burger"),
+        /** Toast, with what is spread on it. */
+        TOAST("toast", Finish.PRESS),
         CRUST("pie_crust", Finish.PRESS),
-        STICK("stick", Finish.SKEWER),
+        /** A stick, or a blaze rod for a Nether skewer; packs often name sticks by their tag, wooden rods. */
+        STICK(Finish.SKEWER, "stick", "rods/wooden", "blaze_rod"),
         KELP("kelp", Finish.ROLL),
         RICE("rice", Finish.ROLL),
         WHEAT(Finish.KNEAD, "wheat", "dough", "flour"),
@@ -147,6 +156,9 @@ public final class AssemblyRecipes {
             }
             if (isBlock()) {
                 return Finish.PRESS;
+            }
+            if (BuiltInRegistries.ITEM.getKey(result.getItem()).getPath().endsWith("dough")) {
+                return Finish.KNEAD;
             }
             return switch (kind) {
                 case STICK -> result.is(KitchenTags.FROZEN) || ingredients.stream().anyMatch(in -> in.test(new ItemStack(Items.ICE)))
@@ -240,8 +252,8 @@ public final class AssemblyRecipes {
         ListTag book = new ListTag();
         for (Assembly assembly : from) {
             ItemStack result = assembly.result();
-            boolean taken = result.is(ASSEMBLED) || !result.is(NOT_ASSEMBLED) && (isDishResult(result) || isCutIntoFood(result)
-                    || isDrinkOfFood(assembly));
+            boolean taken = result.is(ASSEMBLED) || !result.is(NOT_ASSEMBLED) && !usesWorkshop(assembly.ingredients())
+                    && (isDishResult(result) || isCutIntoFood(result) || isDrinkOfFood(assembly));
             if (!taken) {
                 continue;
             }
@@ -290,6 +302,12 @@ public final class AssemblyRecipes {
             }
         }
         return false;
+    }
+
+    /** Whether some ingredient can only be a workshop's material. */
+    public static boolean usesWorkshop(List<Ingredient> ingredients) {
+        return ingredients.stream().anyMatch(ingredient -> ingredient.getItems().length > 0
+                && Arrays.stream(ingredient.getItems()).allMatch(item -> item.is(WORKSHOP)));
     }
 
     /** A drink made of food (melon juice); milk poured from a bucket into bottles is no dish. */

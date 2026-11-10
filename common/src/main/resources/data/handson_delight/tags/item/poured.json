@@ -23,6 +23,40 @@
     {
       "id": "#c:drinks/milk",
       "required": false
+    },
+    {
+      "id": "farmersdelight:tomato_sauce",
+      "required": false
+    },
+    "minecraft:dragon_breath",
+    "minecraft:lava_bucket",
+    {
+      "id": "delightful:glow_jam_jar",
+      "required": false
+    },
+    {
+      "id": "delightful:nut_butter_bottle",
+      "required": false
+    },
+    {
+      "id": "delightful:matcha_latte",
+      "required": false
+    },
+    {
+      "id": "delightful:cactus_chili",
+      "required": false
+    },
+    {
+      "id": "endersdelight:chorus_juice",
+      "required": false
+    },
+    {
+      "id": "ends_delight:chorus_sauce",
+      "required": false
+    },
+    {
+      "id": "mynethersdelight:hot_cream",
+      "required": false
     }
   ]
 }

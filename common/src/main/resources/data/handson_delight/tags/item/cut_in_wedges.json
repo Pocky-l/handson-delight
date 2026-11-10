@@ -16,6 +16,30 @@
     "minecraft:pumpkin_pie",
     "minecraft:cake",
     "minecraft:melon",
-    "minecraft:pumpkin"
+    "minecraft:pumpkin",
+    {
+      "id": "brewinandchewin:flaxen_cheese_wheel",
+      "required": false
+    },
+    {
+      "id": "brewinandchewin:scarlet_cheese_wheel",
+      "required": false
+    },
+    {
+      "id": "brewinandchewin:pizza",
+      "required": false
+    },
+    {
+      "id": "delightful:mini_melon",
+      "required": false
+    },
+    {
+      "id": "endersdelight:chorus_pie",
+      "required": false
+    },
+    {
+      "id": "mynethersdelight:magma_cake_block",
+      "required": false
+    }
   ]
 }

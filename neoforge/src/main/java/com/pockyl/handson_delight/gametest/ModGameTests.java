@@ -225,6 +225,21 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 100)
+    public static void everyCuttableFoodLiesDownToBeCut(GameTestHelper helper) {
+        BoardTests.everyCuttableFoodLiesDownToBeCut(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void cutFoodBecomesItsDishWhenTheNextLayerComes(GameTestHelper helper) {
+        BoardTests.cutFoodBecomesItsDishWhenTheNextLayerComes(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void aKnifeIsNoLayer(GameTestHelper helper) {
+        BoardTests.aKnifeIsNoLayer(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
     public static void aHamTakesTwoChopsAndFeedsTheCook(GameTestHelper helper) {
         BoardTests.aHamTakesTwoChopsAndFeedsTheCook(helper);
     }

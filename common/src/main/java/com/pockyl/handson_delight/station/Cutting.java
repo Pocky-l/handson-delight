@@ -176,6 +176,11 @@ public final class Cutting {
         return -1;
     }
 
+    /** Whether {@code item} is what some cutting recipe cuts with: a knife, an axe, an addon's rolling pin. */
+    public static boolean isTool(Level level, ItemStack item) {
+        return !item.isEmpty() && everything(level).stream().anyMatch(recipe -> recipe.getTool().test(item));
+    }
+
     public static Optional<CuttingBoardRecipe> findWith(Level level, ItemStack item, ItemStack tool) {
         return tool.isEmpty() ? Optional.empty() : recipesFor(level, item).stream().filter(recipe -> recipe.getTool().test(tool)).findFirst();
     }

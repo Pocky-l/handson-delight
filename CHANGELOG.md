@@ -16,6 +16,8 @@
 - Works with older Farmer's Delight: 1.3.1 and newer on Forge, Refabricated 2.5.0 and newer on Fabric.
 - The camera at a station no longer ends up inside wall cabinets, a low ceiling or a wall: the blocks in its way are
   left out of the picture while you cook, and come back when you leave.
+- A resource pack that remodels Farmer's Delight's cooking pot ([Excalibur](https://www.curseforge.com/minecraft/texture-packs/excalibur)) no longer gives it a second spoon that does
+  nothing, or a floor over the soup. The pot keeps the pack's textures.
 - Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.6.
 
 ## [1.1.0+1.20.1]

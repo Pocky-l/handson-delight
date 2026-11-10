@@ -12,6 +12,7 @@ public final class HandsOnDelightFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         HandsOnDelightClient.init();
+        PotModels.register();
         ClientPlayNetworking.registerGlobalReceiver(BoardDishes.CHANNEL,
                 (client, handler, buffer, sender) -> BoardDishes.receive(BoardDishes.read(buffer)));
         // The next server may not have the mod: its sandwiches are crafted.

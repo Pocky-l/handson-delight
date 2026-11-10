@@ -88,6 +88,10 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 [![Embeddium](https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/embeddium.png)](https://www.curseforge.com/minecraft/mc-mods/embeddium) ✅ **[Embeddium](https://www.curseforge.com/minecraft/mc-mods/embeddium)** and [![Oculus](https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/oculus.png)](https://www.curseforge.com/minecraft/mc-mods/oculus) **[Oculus](https://www.curseforge.com/minecraft/mc-mods/oculus)** (optional) - the stations draw as usual
 
+Addons of Farmer's Delight work too: their dishes are made on the board, their pies and cakes are cut in wedges, and
+the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) and
+[My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) open as stations.
+
 Hoppers, pipes and drops use the blocks' own inventories. A pot fed by automation cooks by itself, as in Farmer's Delight.
 
 ## Configuration

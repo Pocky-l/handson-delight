@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0+1.20.1] - Unreleased
+
+- Food the knife cuts lies down to be cut again, even when a dish could start from it. With some addons bread, dough,
+  chorus fruit or peppers went onto a sandwich pile instead, showed no marks and could not be cut. A dish now starts
+  from such food when its next layer goes on top.
+- A knife clicked on a dish in the making knocks on the board and stays in your hand instead of jumping onto the pile.
+- Works with Farmer's Delight addons: Delightful's dishes, and the recipes it changes, are made on the board as it
+  loads them; addon pies, cakes and dough are cut in wedges and strips, their liquids poured and their eggs cracked;
+  skewers, toast and wraps of addons are put together like Farmer's Delight's. The stoves of End's Delight and My
+  Nether's Delight open as stations. With Autochef's Delight the pot still cooks its batch at once. Crafts made of
+  ingots, gems or obsidian (golden eggs, copper carrots) stay in the crafting table.
+- Works with older Farmer's Delight: 1.3.1 and newer on Forge, Refabricated 2.5.0 and newer on Fabric.
+- The camera at a station no longer ends up inside wall cabinets, a low ceiling or a wall: the blocks in its way are
+  left out of the picture while you cook, and come back when you leave.
+- Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.6.
+
 ## [1.1.0+1.20.1]
 
 - Plated meals and salads are made on the cutting board instead of the crafting table: put the bowl down, then what

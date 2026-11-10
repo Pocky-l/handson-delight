@@ -3,21 +3,22 @@
 ## [1.2.0+1.20.1] - Unreleased
 
 - Food the knife cuts lies down to be cut again, even when a dish could start from it. With some addons bread, dough,
-  chorus fruit or peppers went onto a sandwich pile instead, showed no marks and could not be cut. A dish now starts
-  from such food when its next layer goes on top.
-- A knife clicked on a dish in the making knocks on the board and stays in your hand instead of jumping onto the pile.
-- Food that a 3D item resource pack turns into a model lies flat on the board, the skillet and the stove again and is
-  cut along its marks, instead of standing upright without them.
-- Works with Farmer's Delight addons: Delightful's dishes, and the recipes it changes, are made on the board as it
-  loads them; addon pies, cakes and dough are cut in wedges and strips, their liquids poured and their eggs cracked;
-  skewers, toast and wraps of addons are put together like Farmer's Delight's. The stoves of End's Delight and My
-  Nether's Delight open as stations. With Autochef's Delight the pot still cooks its batch at once. Crafts made of
-  ingots, gems or obsidian (golden eggs, copper carrots) stay in the crafting table.
-- Works with older Farmer's Delight: 1.3.1 and newer on Forge, Refabricated 2.5.0 and newer on Fabric.
-- The camera at a station no longer ends up inside wall cabinets, a low ceiling or a wall: the blocks in its way are
-  left out of the picture while you cook, and come back when you leave.
-- A resource pack that remodels Farmer's Delight's cooking pot ([Excalibur](https://www.curseforge.com/minecraft/texture-packs/excalibur)) no longer gives it a second spoon that does
-  nothing, or a floor over the soup. The pot keeps the pack's textures.
+  chorus fruit or peppers went onto a sandwich pile and could not be cut; now the dish starts when its next layer goes
+  on top.
+- A knife clicked on a dish in the making stays in your hand instead of jumping onto the pile.
+- [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight) addons work at the stations: [Delightful](https://www.curseforge.com/minecraft/mc-mods/delightful)'s dishes and the recipes it changes are made on the board; addon pies and cakes are cut in wedges, dough
+  in strips, liquids are poured and eggs cracked. The stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) and
+  [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) open as stations, the pot still cooks a batch with
+  [Autochef's Delight](https://www.curseforge.com/minecraft/mc-mods/autochefs-delight), and [Pizza Delight](https://www.curseforge.com/minecraft/mc-mods/pizza-delight)'s rolling pin rolls dough on the
+  board. Crafts made of ingots, gems or obsidian stay in the crafting table.
+- Works with older [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight): 1.3.1 and newer on Forge, [Refabricated](https://www.curseforge.com/minecraft/mc-mods/farmers-delight-refabricated) 2.5.0 and newer on Fabric.
+- The camera no longer ends up inside wall cabinets, a low ceiling or a wall over a station.
+- A resource pack that remodels the cooking pot ([Excalibur](https://www.curseforge.com/minecraft/texture-packs/excalibur))
+  no longer gives it a second spoon and a floor over the soup. The pack's textures stay.
+- Food that a 3D item resource pack turns into a model lies flat on the board, the skillet and the stove and gets its
+  cut marks.
+- [Armourer's Workshop](https://www.curseforge.com/minecraft/mc-mods/armourers-workshop) skins no longer turn invisible after cooking.
+- Joining a world on Fabric no longer crashes.
 - Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.6.
 
 ## [1.1.0+1.20.1]

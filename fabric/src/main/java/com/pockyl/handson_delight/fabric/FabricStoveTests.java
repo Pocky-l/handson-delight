@@ -22,4 +22,9 @@ public final class FabricStoveTests implements FabricGameTest {
     public void onlyFoodGoesOnAnOpenGrill(GameTestHelper helper) {
         StoveTests.onlyFoodGoesOnAnOpenGrill(helper);
     }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyStoveOfTheTagIsAStation(GameTestHelper helper) {
+        StoveTests.everyStoveOfTheTagIsAStation(helper);
+    }
 }

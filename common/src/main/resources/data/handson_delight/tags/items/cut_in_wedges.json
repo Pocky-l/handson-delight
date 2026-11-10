@@ -40,6 +40,10 @@
     {
       "id": "mynethersdelight:magma_cake_block",
       "required": false
+    },
+    {
+      "id": "pizzadelight:pizza",
+      "required": false
     }
   ]
 }

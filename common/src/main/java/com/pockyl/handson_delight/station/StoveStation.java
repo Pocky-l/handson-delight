@@ -1,9 +1,12 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
@@ -62,8 +65,15 @@ public final class StoveStation {
             .slots(HAND, 1, SlotRules.DEFAULT)
             .build();
 
+    /**
+     * Stoves that open as this station: Farmer's Delight's and addons' built on its class (End's Delight's End stove, My Nether's
+     * Delight's Nether stove). A pack adds its own.
+     */
+    public static final TagKey<Block> STOVES = TagKey.create(Registries.BLOCK, HandsOnDelight.id("stoves"));
+
     public static final StationType TYPE = Diegesis.station(ID)
             .block(FarmersDelightContent.STOVE)
+            .tag(STOVES)
             .schema(SCHEMA)
             .logic(StoveLogic::new)
             .orientation(StationType.Orientation.BLOCK)

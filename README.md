@@ -83,6 +83,10 @@ open as stations, and its recipes, and those of its addons, work in them.
 
 [![Sodium](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/sodium.png)](https://modrinth.com/mod/sodium) ✅ **[Sodium](https://modrinth.com/mod/sodium)** and [![Iris](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/iris.png)](https://modrinth.com/mod/iris) **[Iris](https://modrinth.com/mod/iris)** (optional) - the stations draw as usual
 
+Addons of Farmer's Delight work too: their dishes are made on the board, their pies and cakes are cut in wedges, and
+the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) and
+[My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) open as stations.
+
 Hoppers, pipes and drops use the blocks' own inventories. A pot fed by automation cooks by itself, as in Farmer's Delight.
 
 ## Configuration

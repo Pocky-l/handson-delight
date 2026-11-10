@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0+1.21.1] - Unreleased
+
+- Food the knife cuts lies down to be cut again, even when a dish could start from it. With some addons such food went
+  onto a sandwich pile instead, showed no marks and could not be cut. A dish now starts from it when its next layer
+  goes on top.
+- A knife clicked on a dish in the making knocks on the board and stays in your hand instead of jumping onto the pile.
+- Works with Farmer's Delight addons: their dishes are made on the board, addon pies and cakes are cut in wedges, their
+  liquids poured and their eggs cracked; skewers, toast and wraps of addons are put together like Farmer's Delight's.
+  The stoves of End's Delight and My Nether's Delight open as stations. With Autochef's Delight the pot still cooks its
+  batch at once. Crafts made of ingots, gems or obsidian (golden eggs, copper carrots) stay in the crafting table.
+
 ## [1.1.0+1.21.1]
 
 - Plated meals and salads are made on the cutting board instead of the crafting table: put the bowl down, then what

@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.gametest;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -9,6 +10,7 @@ import net.minecraft.world.item.crafting.CampfireCookingRecipe;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
@@ -61,14 +63,15 @@ public final class RecipeAudit {
 
         List<AssemblyRecipes.Assembly> assembled = new ArrayList<>(AssemblyRecipes.all());
         Set<ResourceLocation> onTheBoard = assembled.stream().map(AssemblyRecipes.Assembly::id).collect(Collectors.toSet());
-        for (Recipe<?> recipe : level.getRecipeManager().getRecipes()) {
-            String namespace = recipe.getId().getNamespace();
+        for (RecipeHolder<?> holder : level.getRecipeManager().getRecipes()) {
+            Recipe<?> recipe = holder.value();
+            String namespace = holder.id().getNamespace();
             boolean ours = namespace.equals(FarmersDelightContent.MOD_ID) || Platform.INSTANCE.isFarmersDelightAddon(namespace);
             ResourceLocation type = BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType());
-            if (recipe instanceof CraftingRecipe crafting && ours && !onTheBoard.contains(recipe.getId())
+            if (recipe instanceof CraftingRecipe crafting && ours && !onTheBoard.contains(holder.id())
                     && isDish(crafting.getResultItem(level.registryAccess())) && kinds(crafting.getIngredients()) > 1
                     && !crafting.isSpecial() && !AssemblyRecipes.usesWorkshop(crafting.getIngredients())) {
-                ResourceLocation id = recipe.getId();
+                ResourceLocation id = holder.id();
                 String why = AssemblyRecipes.candidates().stream().anyMatch(candidate -> candidate.id().equals(id))
                         ? "a candidate, not chosen" : "not a candidate";
                 missed.add(id + " -> " + name(crafting.getResultItem(level.registryAccess())) + " (" + why + ", "
@@ -102,22 +105,23 @@ public final class RecipeAudit {
                     + assembly.kind() + " | " + assembly.finish() + " | " + String.join(", ", ingredients) + flags(look));
         }
 
-        List<CookingPotRecipe> pot = new ArrayList<>(Platform.INSTANCE.cookingRecipes(level));
-        pot.sort(Comparator.comparing(recipe -> recipe.getId().toString()));
+        List<RecipeHolder<CookingPotRecipe>> pot = new ArrayList<>(Platform.INSTANCE.cookingRecipes(level));
+        pot.sort(Comparator.comparing(holder -> holder.id().toString()));
         section(report, "COOKING POT (" + pot.size() + ")", "id | result | container | ingredients | look at");
-        for (CookingPotRecipe recipe : pot) {
+        for (RecipeHolder<CookingPotRecipe> holder : pot) {
+            CookingPotRecipe recipe = holder.value();
             List<String> look = new ArrayList<>();
             recipe.getIngredients().forEach(ingredient -> hints(ingredient, look));
             if (recipe.getIngredients().size() > 6) {
                 look.add("more than six ingredients");
             }
-            report.add(recipe.getId() + " | " + name(recipe.getResultItem(level.registryAccess())) + " | " + name(recipe.getOutputContainer())
+            report.add(holder.id() + " | " + name(recipe.getResultItem(level.registryAccess())) + " | " + name(recipe.getOutputContainer())
                     + " | " + recipe.getIngredients().stream().map(RecipeAudit::name).collect(Collectors.joining(", ")) + flags(look));
         }
 
         List<CuttingBoardRecipe> cooking = Cutting.all(level);
         List<CuttingBoardRecipe> cutting = new ArrayList<>(Cutting.everything(level));
-        cutting.sort(Comparator.comparing(recipe -> recipe.getId().toString()));
+        cutting.sort(Comparator.comparing(recipe -> String.valueOf(Cutting.id(level, recipe))));
         section(report, "CUTTING BOARD (" + cutting.size() + ", " + cooking.size() + " at the station)",
                 "id | input | tool | results | station: marks style | look at");
         for (CuttingBoardRecipe recipe : cutting) {
@@ -139,14 +143,15 @@ public final class RecipeAudit {
                     look.add(Cutting.recipesFor(level, item).size() + " recipes for the input");
                 }
             }
-            report.add(recipe.getId() + " | " + name(input) + " | " + name(recipe.getTool()) + " | "
+            report.add(Cutting.id(level, recipe) + " | " + name(input) + " | " + name(recipe.getTool()) + " | "
                     + recipe.getResults().stream().map(RecipeAudit::name).collect(Collectors.joining(", ")) + " | " + station + flags(look));
         }
 
-        List<CampfireCookingRecipe> campfire = new ArrayList<>(level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING));
-        campfire.sort(Comparator.comparing(recipe -> recipe.getId().toString()));
+        List<RecipeHolder<CampfireCookingRecipe>> campfire = new ArrayList<>(level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING));
+        campfire.sort(Comparator.comparing(holder -> holder.id().toString()));
         section(report, "SKILLET AND STOVE (" + campfire.size() + ")", "id | input | result | time | look at");
-        for (CampfireCookingRecipe recipe : campfire) {
+        for (RecipeHolder<CampfireCookingRecipe> holder : campfire) {
+            CampfireCookingRecipe recipe = holder.value();
             List<String> look = new ArrayList<>();
             Ingredient input = recipe.getIngredients().get(0);
             for (ItemStack item : input.getItems()) {
@@ -154,7 +159,7 @@ public final class RecipeAudit {
                     look.add(name(item) + " not one_sided");
                 }
             }
-            report.add(recipe.getId() + " | " + name(input) + " | " + name(recipe.getResultItem(level.registryAccess())) + " | "
+            report.add(holder.id() + " | " + name(input) + " | " + name(recipe.getResultItem(level.registryAccess())) + " | "
                     + recipe.getCookingTime() + flags(look));
         }
 
@@ -202,7 +207,7 @@ public final class RecipeAudit {
         if (item.is(KitchenTags.GRAINS)) {
             return;
         }
-        if (item.getItem().hasCraftingRemainingItem() && !item.isEdible() || POURED.matcher(path).find()) {
+        if (item.getItem().hasCraftingRemainingItem() && !item.has(DataComponents.FOOD) || POURED.matcher(path).find()) {
             look.add(name + " poured?");
         } else if (CRACKED.matcher(path).find() && !COOKED.matcher(path).find()) {
             look.add(name + " cracked?");

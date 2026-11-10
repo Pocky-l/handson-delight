@@ -448,7 +448,7 @@ public final class BoardTests {
             setup.cook.getInventory().clearContent();
             setup.carry(food.copy());
             setup.place();
-            helper.assertTrue(setup.layers() == 0 && ItemStack.isSameItemSameTags(setup.onBoard(), food),
+            helper.assertTrue(setup.layers() == 0 && ItemStack.isSameItemSameComponents(setup.onBoard(), food),
                     food.getItem() + " lies down to be cut");
             setup.act(CuttingBoardStation.ACTION_TAKE, new CompoundTag());
             helper.assertTrue(setup.onBoard().isEmpty(), food.getItem() + " comes back");
@@ -465,7 +465,7 @@ public final class BoardTests {
                 }
                 for (int i = 0; i < dish.ingredients().size(); i++) {
                     ItemStack[] next = dish.ingredients().get(i).getItems();
-                    if (i == dish.base() || next.length == 0 || ItemStack.isSameItemSameTags(next[0], base)
+                    if (i == dish.base() || next.length == 0 || ItemStack.isSameItemSameComponents(next[0], base)
                             || Cutting.isTool(helper.getLevel(), next[0])) {
                         continue;
                     }
@@ -475,7 +475,7 @@ public final class BoardTests {
                     helper.assertTrue(setup.layers() == 0 && setup.onBoard().getCount() == 3, "it lies down to be cut first");
                     setup.carry(next[0].copyWithCount(3));
                     setup.place();
-                    helper.assertTrue(setup.onBoard().isEmpty() || !ItemStack.isSameItemSameTags(setup.onBoard(), base),
+                    helper.assertTrue(setup.onBoard().isEmpty() || !ItemStack.isSameItemSameComponents(setup.onBoard(), base),
                             base.getItem() + " is no longer there to be cut once " + next[0].getItem() + " goes on it");
                     helper.assertTrue(setup.layers() == 2 || setup.layers() == 0 && setup.onBoard().is(dish.result().getItem()),
                             "they are the layers of " + dish.id() + ", or the dish already");

@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.gametest;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -11,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import vectorwing.farmersdelight.common.block.AbstractStoveBlock;
@@ -129,6 +131,22 @@ public final class StoveTests {
     }
 
     /** An egg would run through the bars: the station keeps it off the grill, Farmer's Delight's own use still lays it. */
+    /** Every stove of the tag, an addon's too, opens as the station, and grills on its own block entity. */
+    public static void everyStoveOfTheTagIsAStation(GameTestHelper helper) {
+        List<Block> stoves = new java.util.ArrayList<>();
+        BuiltInRegistries.BLOCK.getTagOrEmpty(StoveStation.STOVES).forEach(holder -> stoves.add(holder.value()));
+        helper.assertTrue(stoves.contains(FarmersDelightContent.STOVE.get()), "Farmer's Delight's stove is one");
+        BlockPos at = new BlockPos(1, 1, 1);
+        for (Block block : stoves) {
+            BlockState state = block.defaultBlockState();
+            helper.setBlock(at, state);
+            helper.assertTrue(StoveStation.TYPE.matches(state), BuiltInRegistries.BLOCK.getKey(block) + " opens as the station");
+            helper.assertTrue(helper.getBlockEntity(at) instanceof AbstractStoveBlockEntity,
+                    BuiltInRegistries.BLOCK.getKey(block) + " grills on a stove's block entity");
+        }
+        helper.succeed();
+    }
+
     public static void anEggStaysOffTheGrill(GameTestHelper helper) {
         Top top = stove(helper);
         top.place(Items.EGG, 3);

@@ -315,6 +315,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void everyStoveOfTheTagIsAStation(GameTestHelper helper) {
+        StoveTests.everyStoveOfTheTagIsAStation(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void everyRecipeReachesItsStation(GameTestHelper helper) {
         RecipeAudit.everyRecipeReachesItsStation(helper);
     }

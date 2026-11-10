@@ -30,7 +30,7 @@ import java.util.WeakHashMap;
 /** Farmer's Delight's cutting recipes, read for the board's station: what an item is cut with and into how many strokes. */
 public final class Cutting {
     /**
-     * The most marks an item gets (owner, 2026-11-09: as many cuts as the pieces it falls into, "do everything"): a cake into seven is
+     * The most marks an item gets, one for each piece it falls into up to a limit: a cake into seven is
      * cut three times, never more.
      */
     public static final int MOST_MARKS = 3;

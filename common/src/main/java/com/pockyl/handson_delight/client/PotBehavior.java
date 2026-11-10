@@ -56,7 +56,7 @@ public final class PotBehavior implements StationBehavior {
     /**
      * Where the liquid starts and how deep a full pot is, in pixels; slots stand at {@link #ITEM_REST}. A full pot stays 1.5 px under
      * the rim (10): at 9.5 what floats, the foam at the walls and the waves showed as a thin line over the rim from the side
-     * (owner's screenshot, 2026-11-08). The scene's {@code broth} tank ends at the same height.
+     * at a low camera angle. The scene's {@code broth} tank ends at the same height.
      */
     private static final float BROTH_FLOOR = 2.0F;
     private static final float BROTH_DEPTH = 6.5F;
@@ -184,7 +184,7 @@ public final class PotBehavior implements StationBehavior {
     /** Bubbles along the walls are small beside the ones that rise from the bottom. */
     private static final float EDGE_BUBBLE_SIZE = 0.5F;
     /**
-     * Several things put in at once (a dish picked in the book, a stack shared out) jump in one after the other (owner: "cozy"),
+     * Several things put in at once (a dish picked in the book, a stack shared out) jump in one after the other,
      * from the player at the bottom of the screen ({@link FromPlayer}): seconds between them, seconds in the air, how high they
      * start over the soup and how high the arc goes, pixels.
      */
@@ -193,8 +193,8 @@ public final class PotBehavior implements StationBehavior {
     private static final float ARRIVE_FROM = 9.0F;
     private static final float ARRIVE_ARC = 4.0F;
     /**
-     * A bowl from the inventory offered over a finished soup to an empty hand (owner: "offer to scoop it if there is a bowl in the
-     * inventory"): how see-through, how high over the soup it hangs (pixels), how long it stays away after a scoop (seconds).
+     * A bowl from the inventory offered over a finished soup to an empty hand, so a
+     * soup can be served without picking the bowl first: how see-through, how high over the soup it hangs (pixels), how long it stays away after a scoop (seconds).
      */
     private static final int OFFERED = 0x8CFFFFFF;
     private static final float OFFER_LIFT = 1.5F;

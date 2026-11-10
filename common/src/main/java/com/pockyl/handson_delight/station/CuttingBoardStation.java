@@ -74,7 +74,7 @@ public final class CuttingBoardStation {
      * from its far end, the next one first to cut. The server cannot see the icon, so the client lays them over its solid pixels.
      */
     public static final String SPOTS = "spots";
-    /** Data: how each mark lies, radians from straight across the item (owner: "random, diagonal ones too"). */
+    /** Data: how each mark lies, radians from straight across the item, random so diagonal cuts happen too. */
     public static final String ANGLES = "angles";
     /** Effect data of a chop: the spot and angle of the mark it cut. */
     public static final String SPOT = "spot";

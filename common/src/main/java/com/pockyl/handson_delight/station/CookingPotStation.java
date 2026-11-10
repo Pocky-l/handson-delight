@@ -54,7 +54,7 @@ public final class CookingPotStation {
     public static final String ACTION_STIR = "stir";
     /**
      * A custom action: a dish picked in the recipe book; its ingredients go from the inventory into the pot, one set or, with
-     * {@link #SCOOP_ALL}, as many as fit (owner's backlog: "as vanilla's book does"). Data: {@link #DISH}, the recipe's id.
+     * {@link #SCOOP_ALL}, as many as fit, as vanilla's recipe book does. Data: {@link #DISH}, the recipe's id.
      */
     public static final String ACTION_FILL = "fill";
     public static final String DISH = "dish";
@@ -63,8 +63,7 @@ public final class CookingPotStation {
     /** Data of {@link #ACTION_SCOOP}: the whole stack on the cursor, not one container. */
     public static final String SCOOP_ALL = "all";
     /**
-     * Data of {@link #ACTION_SCOOP}: the hand is empty, the containers come from the inventory (owner: "with an empty hand over
-     * the soup, offer to scoop it if there is a bowl in the inventory").
+     * Data of {@link #ACTION_SCOOP}: the hand is empty, the containers come from the inventory.
      */
     public static final String FROM_INVENTORY = "from_inventory";
     public static final String STIR_X = "x";

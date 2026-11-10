@@ -169,7 +169,7 @@ final class RecipeBook implements NodePainter {
     private StationView station;
     /** The player closed the book by its ribbon: it stays shut at the next station until they open it again. */
     private static boolean putAway;
-    /** The book in the air between two stations, while the camera flies over (owner: "the book must not vanish and open again"). */
+    /** The book in the air between two stations, while the camera flies over, so it does not vanish and open again. */
     private static Handoff handoff;
     /** The one this book handed over and still draws at its own place until the next station takes it. */
     private Handoff leaving;

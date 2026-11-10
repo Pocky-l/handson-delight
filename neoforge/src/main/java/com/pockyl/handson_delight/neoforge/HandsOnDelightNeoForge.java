@@ -14,6 +14,7 @@ public final class HandsOnDelightNeoForge {
         modBus.addListener(NeoForgeNetwork::register);
         if (dist.isClient()) {
             NeoForgeClient.init();
+            modBus.addListener(PotPack::add);
         }
     }
 }

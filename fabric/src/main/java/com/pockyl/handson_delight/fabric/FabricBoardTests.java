@@ -74,6 +74,21 @@ public final class FabricBoardTests implements FabricGameTest {
         BoardTests.theTopLayerComesBack(helper);
     }
 
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyCuttableFoodLiesDownToBeCut(GameTestHelper helper) {
+        BoardTests.everyCuttableFoodLiesDownToBeCut(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void cutFoodBecomesItsDishWhenTheNextLayerComes(GameTestHelper helper) {
+        BoardTests.cutFoodBecomesItsDishWhenTheNextLayerComes(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aKnifeIsNoLayer(GameTestHelper helper) {
+        BoardTests.aKnifeIsNoLayer(helper);
+    }
+
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
     public void aHamTakesTwoChopsAndFeedsTheCook(GameTestHelper helper) {
         BoardTests.aHamTakesTwoChopsAndFeedsTheCook(helper);

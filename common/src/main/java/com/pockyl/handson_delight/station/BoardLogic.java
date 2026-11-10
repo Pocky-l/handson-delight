@@ -183,7 +183,19 @@ public final class BoardLogic implements StationLogic {
         StationState state = station.state();
         List<ItemStack> layers = layers(state);
         ItemStack onBoard = Platform.INSTANCE.getItem(board);
-        if (!layers.isEmpty() || onBoard.isEmpty() && AssemblyRecipes.isBase(carried)) {
+        // The knife cuts; it is never a layer of a dish, nor something to be cut.
+        if (Cutting.isTool(station.level(), carried)) {
+            return;
+        }
+        boolean cuttable = !Cutting.recipesFor(station.level(), carried).isEmpty();
+        // Food the knife cuts lies down to be cut, even when a dish could start from it: the dish starts when its next layer goes
+        // on top (below). Anything else that starts a dish begins the layers.
+        if (layers.isEmpty() && !onBoard.isEmpty() && !ItemStack.isSameItemSameTags(onBoard, carried)
+                && AssemblyRecipes.fits(List.of(onBoard.copyWithCount(1), carried.copyWithCount(1)))) {
+            layers = startDish(station, player, onBoard);
+            onBoard = ItemStack.EMPTY;
+        }
+        if (!layers.isEmpty() || onBoard.isEmpty() && !cuttable && AssemblyRecipes.isBase(carried)) {
             List<ItemStack> next = new ArrayList<>(layers);
             next.add(carried.copyWithCount(1));
             if (layers.size() >= CuttingBoardStation.MOST_LAYERS || !AssemblyRecipes.fits(next)) {
@@ -200,8 +212,7 @@ public final class BoardLogic implements StationLogic {
             finishIfWanted(station, player, next);
             return;
         }
-        boolean fits = onBoard.isEmpty() ? !Cutting.recipesFor(station.level(), carried).isEmpty()
-                : ItemStack.isSameItemSameTags(onBoard, carried);
+        boolean fits = onBoard.isEmpty() ? cuttable : ItemStack.isSameItemSameTags(onBoard, carried);
         int room = Math.min(carried.getMaxStackSize(), board.getMaxStackSize()) - onBoard.getCount();
         int moved = Math.min(one ? 1 : carried.getCount(), room);
         if (!fits || moved <= 0) {
@@ -217,6 +228,23 @@ public final class BoardLogic implements StationLogic {
             restart(station);
         }
         station.effect(CuttingBoardStation.EFFECT_PLACED, "surface", new CompoundTag());
+    }
+
+    /**
+     * What lay there to be cut (or a dish that grows into a bigger one) becomes the first layer of a dish, a batch of it at most; the
+     * rest goes back to the cook. The marks start over.
+     */
+    private List<ItemStack> startDish(StationContext station, Player player, ItemStack onBoard) {
+        ItemStack base = onBoard.copyWithCount(Math.min(onBoard.getCount(), CuttingBoardStation.BATCH));
+        ItemStack rest = onBoard.copyWithCount(onBoard.getCount() - base.getCount());
+        Platform.INSTANCE.setItem(board, ItemStack.EMPTY);
+        cutting = ItemStack.EMPTY;
+        restart(station);
+        station.state().setItem(SlotRef.of(CuttingBoardStation.LAYERS, 0), base);
+        if (!rest.isEmpty()) {
+            give(player, rest);
+        }
+        return List.of(base);
     }
 
     /**
@@ -252,7 +280,12 @@ public final class BoardLogic implements StationLogic {
         ItemStack onBoard = Platform.INSTANCE.getItem(board);
         if (layers.isEmpty() && !onBoard.isEmpty() && !AssemblyRecipes.isDish(onBoard.getItem())
                 && !Cutting.recipesFor(station.level(), onBoard).isEmpty()) {
-            return;
+            // Unless it is where the picked dish starts: then it is its first layer.
+            if (!dish.ingredients().get(dish.base()).test(onBoard)) {
+                return;
+            }
+            layers = startDish(station, player, onBoard);
+            onBoard = ItemStack.EMPTY;
         }
         int[] taken = layers.isEmpty() ? new int[0] : AssemblyRecipes.assign(dish, layers, false);
         if (taken == null) {

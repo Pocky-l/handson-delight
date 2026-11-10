@@ -25,6 +25,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
+import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
@@ -370,12 +371,15 @@ public final class BoardTests {
 
         setup.carry(new ItemStack(Items.BREAD, 3));
         setup.place();
-        helper.assertTrue(setup.layers() == 1, "the bread goes down");
+        // Addons slice bread on the board: then it lies there to be cut until the patty goes on it.
+        boolean sliced = !Cutting.recipesFor(helper.getLevel(), new ItemStack(Items.BREAD)).isEmpty();
+        helper.assertTrue(sliced ? setup.onBoard().is(Items.BREAD) : setup.layers() == 1, "the bread goes down");
         helper.assertTrue(setup.cook.inventoryMenu.getCarried().isEmpty(), "all three: a batch of three");
         for (Item layer : List.of(fd("beef_patty"), fd("cabbage_leaf"), fd("tomato"))) {
             setup.carry(new ItemStack(layer));
             setup.place();
         }
+        helper.assertTrue(setup.layers() == 4 && setup.onBoard().isEmpty(), "bread, patty, leaf and tomato");
         setup.carry(new ItemStack(Items.CARROT));
         setup.place();
         helper.assertTrue(setup.layers() == 4, "a carrot belongs to no burger");
@@ -420,6 +424,73 @@ public final class BoardTests {
         setup.act(CuttingBoardStation.ACTION_TAKE, new CompoundTag());
         helper.assertTrue(setup.layers() == 1, "one layer off");
         helper.assertTrue(setup.cook.getInventory().countItem(fd("tomato")) == 1, "the top one, back to the cook");
+        helper.succeed();
+    }
+
+    /**
+     * Whatever the board cuts lies down to be cut, even when a dish starts from it (addons start many dishes from raw meat or
+     * vegetables): players found such food going onto a sandwich pile that the knife could not cut.
+     */
+    public static void everyCuttableFoodLiesDownToBeCut(GameTestHelper helper) {
+        Board setup = board(helper);
+        for (CuttingBoardRecipe recipe : Cutting.all(helper.getLevel())) {
+            ItemStack[] items = recipe.getIngredients().get(0).getItems();
+            if (items.length == 0) {
+                continue;
+            }
+            ItemStack food = items[0].copyWithCount(1);
+            setup.cook.getInventory().clearContent();
+            setup.carry(food.copy());
+            setup.place();
+            helper.assertTrue(setup.layers() == 0 && ItemStack.isSameItemSameTags(setup.onBoard(), food),
+                    food.getItem() + " lies down to be cut");
+            setup.act(CuttingBoardStation.ACTION_TAKE, new CompoundTag());
+            helper.assertTrue(setup.onBoard().isEmpty(), food.getItem() + " comes back");
+        }
+        helper.succeed();
+    }
+
+    /** Food lying to be cut becomes the first layer of a dish when the dish's next layer goes on top of it. */
+    public static void cutFoodBecomesItsDishWhenTheNextLayerComes(GameTestHelper helper) {
+        for (AssemblyRecipes.Assembly dish : AssemblyRecipes.all()) {
+            for (ItemStack base : dish.ingredients().get(dish.base()).getItems()) {
+                if (Cutting.recipesFor(helper.getLevel(), base).isEmpty()) {
+                    continue;
+                }
+                for (int i = 0; i < dish.ingredients().size(); i++) {
+                    ItemStack[] next = dish.ingredients().get(i).getItems();
+                    if (i == dish.base() || next.length == 0 || ItemStack.isSameItemSameTags(next[0], base)
+                            || Cutting.isTool(helper.getLevel(), next[0])) {
+                        continue;
+                    }
+                    Board setup = board(helper);
+                    setup.carry(base.copyWithCount(3));
+                    setup.place();
+                    helper.assertTrue(setup.layers() == 0 && setup.onBoard().getCount() == 3, "it lies down to be cut first");
+                    setup.carry(next[0].copyWithCount(3));
+                    setup.place();
+                    helper.assertTrue(setup.onBoard().isEmpty() || !ItemStack.isSameItemSameTags(setup.onBoard(), base),
+                            base.getItem() + " is no longer there to be cut once " + next[0].getItem() + " goes on it");
+                    helper.assertTrue(setup.layers() == 2 || setup.layers() == 0 && setup.onBoard().is(dish.result().getItem()),
+                            "they are the layers of " + dish.id() + ", or the dish already");
+                    helper.succeed();
+                    return;
+                }
+            }
+        }
+        // Farmer's Delight alone starts no dish from food the board cuts; addons (-Paddons) do.
+        helper.succeed();
+    }
+
+    /** A knife is never a layer of a dish: it knocks on the pile and stays in the hand. */
+    public static void aKnifeIsNoLayer(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.carry(new ItemStack(Items.BOWL));
+        setup.place();
+        setup.carry(setup.knife.copy());
+        setup.place();
+        helper.assertTrue(setup.layers() == 1, "the bowl alone lies there");
+        helper.assertTrue(setup.cook.inventoryMenu.getCarried().is(setup.knife.getItem()), "the knife stays in the hand");
         helper.succeed();
     }
 

@@ -901,6 +901,11 @@ public final class BoardBehavior implements StationBehavior {
             chop(view);
             return true;
         }
+        if (Cutting.isTool(view.level(), stack)) {
+            // Nothing there for this knife to cut: it knocks on the board and stays in the hand, never a layer of a dish.
+            view.playSound(SoundEvents.WOOD_HIT, "item", 0.25F, 1.6F);
+            return true;
+        }
         CompoundTag how = new CompoundTag();
         how.putBoolean(CuttingBoardStation.ONE, button == 1);
         view.sendAction(CuttingBoardStation.ACTION_PLACE, how);

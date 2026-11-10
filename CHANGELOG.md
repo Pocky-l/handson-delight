@@ -6,6 +6,8 @@
   chorus fruit or peppers went onto a sandwich pile instead, showed no marks and could not be cut. A dish now starts
   from such food when its next layer goes on top.
 - A knife clicked on a dish in the making knocks on the board and stays in your hand instead of jumping onto the pile.
+- Food that a 3D item resource pack turns into a model lies flat on the board, the skillet and the stove again and is
+  cut along its marks, instead of standing upright without them.
 - Works with Farmer's Delight addons: Delightful's dishes, and the recipes it changes, are made on the board as it
   loads them; addon pies, cakes and dough are cut in wedges and strips, their liquids poured and their eggs cracked;
   skewers, toast and wraps of addons are put together like Farmer's Delight's. The stoves of End's Delight and My

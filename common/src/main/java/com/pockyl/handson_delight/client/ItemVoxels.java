@@ -2,10 +2,15 @@ package com.pockyl.handson_delight.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.SpriteContents;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Vector3f;
@@ -228,10 +233,16 @@ final class ItemVoxels {
 
     private static Optional<Icon> read(ItemStack stack) {
         BakedModel model = Minecraft.getInstance().getItemRenderer().getModel(stack, null, null, 0);
+        TextureAtlasSprite sprite = model.getParticleIcon();
         if (model.isGui3d()) {
-            return Optional.empty();
+            // A block lies as a block. Food that a resource pack (3D items) gave a model of its own still has its flat texture in
+            // the atlas: it lies flat and is cut like any food, instead of standing up without marks.
+            sprite = stack.getItem() instanceof BlockItem ? null : flatTexture(stack.getItem());
+            if (sprite == null) {
+                return Optional.empty();
+            }
         }
-        SpriteContents contents = model.getParticleIcon().contents();
+        SpriteContents contents = sprite.contents();
         NativeImage image = ((SpriteContentsAccessor) contents).handson$originalImage();
         int width = contents.width();
         int height = contents.height();
@@ -245,6 +256,14 @@ final class ItemVoxels {
             }
         }
         return Optional.of(new Icon(contents.name(), width, height, solid, colors));
+    }
+
+    /** The item's own flat texture, {@code <namespace>:item/<path>}, as the block atlas holds every item texture; null without one. */
+    private static TextureAtlasSprite flatTexture(Item item) {
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+        TextureAtlasSprite sprite = Minecraft.getInstance().getModelManager().getAtlas(InventoryMenu.BLOCK_ATLAS)
+                .getSprite(id.withPrefix("item/"));
+        return sprite.contents().name().equals(MissingTextureAtlasSprite.getLocation()) ? null : sprite;
     }
 
     /**

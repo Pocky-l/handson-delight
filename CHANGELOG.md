@@ -6,6 +6,8 @@
   onto a sandwich pile instead, showed no marks and could not be cut. A dish now starts from it when its next layer
   goes on top.
 - A knife clicked on a dish in the making knocks on the board and stays in your hand instead of jumping onto the pile.
+- Food that a 3D item resource pack turns into a model lies flat on the board, the skillet and the stove again and is
+  cut along its marks, instead of standing upright without them.
 - Works with Farmer's Delight addons: their dishes are made on the board, addon pies and cakes are cut in wedges, their
   liquids poured and their eggs cracked; skewers, toast and wraps of addons are put together like Farmer's Delight's.
   The stoves of End's Delight and My Nether's Delight open as stations. With Autochef's Delight the pot still cooks its

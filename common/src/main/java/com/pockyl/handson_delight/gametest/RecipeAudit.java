@@ -41,11 +41,12 @@ import java.util.stream.Collectors;
  */
 public final class RecipeAudit {
     /** Names that suggest a kitchen tag the item lacks: worth a look, never a failure. */
-    private static final Pattern POURED = Pattern.compile("milk|water|honey|oil|juice|sauce|syrup|broth|cream|vinegar|wine|_tea|coffee|"
-            + "cider|_bucket|_bottle|_jar");
+    private static final Pattern POURED = Pattern.compile("milk|water|(^|_)honey$|(^|_)oil$|juice|sauce|syrup|broth|(?<!ice|magma)_cream$|vinegar|"
+            + "wine|(^|_)tea$|coffee$|latte|cider|jam|_bucket$|(?<!glass)_bottle$|_jar$");
     private static final Pattern CRACKED = Pattern.compile("(^|_)eggs?($|_)");
+    private static final Pattern COOKED = Pattern.compile("fried|boiled|cooked|scrambled|smoked|baked|roasted");
     private static final Pattern DISSOLVES = Pattern.compile("sugar|salt|powder|dust|spice|cinnamon|cocoa|flour|seasoning|ground");
-    private static final Pattern GRAINS = Pattern.compile("rice|grain|oat|barley|kernel|seeds|corn$");
+    private static final Pattern GRAINS = Pattern.compile("rice|grain|oat|barley|kernel|seeds|(^|_)corn$");
     private static final Pattern WEDGES = Pattern.compile("pie|cake|tart|cheese_wheel|wheel_of|melon$|pumpkin$|pizza|quiche");
     private static final Pattern STRAIGHT = Pattern.compile("roll$|loaf|sausage|baguette|log$");
 
@@ -66,7 +67,7 @@ public final class RecipeAudit {
             ResourceLocation type = BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType());
             if (recipe instanceof CraftingRecipe crafting && ours && !onTheBoard.contains(recipe.getId())
                     && isDish(crafting.getResultItem(level.registryAccess())) && kinds(crafting.getIngredients()) > 1
-                    && !crafting.isSpecial()) {
+                    && !crafting.isSpecial() && !AssemblyRecipes.usesWorkshop(crafting.getIngredients())) {
                 ResourceLocation id = recipe.getId();
                 String why = AssemblyRecipes.candidates().stream().anyMatch(candidate -> candidate.id().equals(id))
                         ? "a candidate, not chosen" : "not a candidate";
@@ -149,7 +150,7 @@ public final class RecipeAudit {
             List<String> look = new ArrayList<>();
             Ingredient input = recipe.getIngredients().get(0);
             for (ItemStack item : input.getItems()) {
-                if (CRACKED.matcher(path(item)).find() && !item.is(KitchenTags.ONE_SIDED)) {
+                if (CRACKED.matcher(path(item)).find() && !COOKED.matcher(path(item)).find() && !item.is(KitchenTags.ONE_SIDED)) {
                     look.add(name(item) + " not one_sided");
                 }
             }
@@ -198,9 +199,12 @@ public final class RecipeAudit {
                 || KitchenTags.is(item, KitchenTags.DISSOLVES) || KitchenTags.is(item, KitchenTags.STRAINED)) {
             return;
         }
-        if (item.getItem().hasCraftingRemainingItem() || POURED.matcher(path).find()) {
+        if (item.is(KitchenTags.GRAINS)) {
+            return;
+        }
+        if (item.getItem().hasCraftingRemainingItem() && !item.isEdible() || POURED.matcher(path).find()) {
             look.add(name + " poured?");
-        } else if (CRACKED.matcher(path).find()) {
+        } else if (CRACKED.matcher(path).find() && !COOKED.matcher(path).find()) {
             look.add(name + " cracked?");
         } else if (DISSOLVES.matcher(path).find()) {
             look.add(name + " dissolves?");

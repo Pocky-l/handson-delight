@@ -2,11 +2,14 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.CakeBlock;
+import vectorwing.farmersdelight.common.block.PieBlock;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
@@ -123,7 +126,7 @@ public final class Cutting {
     }
 
     public static Plan plan(Level level, ItemStack item) {
-        Style style = item.is(KitchenTags.CUT_IN_WEDGES) ? Style.WEDGES
+        Style style = item.is(KitchenTags.CUT_IN_WEDGES) || isRound(item) ? Style.WEDGES
                 : item.is(KitchenTags.CUT_IN_STRIPS) ? Style.STRIPS
                 : item.is(KitchenTags.SLICED_STRAIGHT) ? Style.STRAIGHT : Style.ACROSS;
         if (style == Style.STRIPS) {
@@ -133,6 +136,11 @@ public final class Cutting {
         // n cuts across make n + 1 pieces; n cuts through the middle make 2n wedges.
         int marks = style == Style.WEDGES ? (pieces + 1) / 2 : pieces - 1;
         return new Plan(Mth.clamp(marks, 1, MOST_MARKS), style);
+    }
+
+    /** A pie or a cake put down whole, an addon's too: cut in wedges like Farmer's Delight's. */
+    private static boolean isRound(ItemStack item) {
+        return item.getItem() instanceof BlockItem block && (block.getBlock() instanceof PieBlock || block.getBlock() instanceof CakeBlock);
     }
 
     /** What an item falls into: the main result as many as it gives, and one piece for each thing besides (the bone of a ham). */

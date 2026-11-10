@@ -24,6 +24,18 @@
     {
       "id": "#c:grains",
       "required": false
+    },
+    {
+      "id": "ends_delight:ender_pearl_grain",
+      "required": false
+    },
+    {
+      "id": "#forge:seeds",
+      "required": false
+    },
+    {
+      "id": "#c:seeds",
+      "required": false
     }
   ]
 }

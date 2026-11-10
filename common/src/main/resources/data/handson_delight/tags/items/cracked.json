@@ -9,6 +9,10 @@
     {
       "id": "#c:eggs",
       "required": false
+    },
+    {
+      "id": "ends_delight:liquid_dragon_egg",
+      "required": false
     }
   ]
 }

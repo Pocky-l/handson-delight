@@ -1,7 +1,6 @@
 # Changelog
 
-## [1.2.0+1.21.1] - Unreleased
-
+## [1.2.0+1.21.1] - 2026-11-10
 - Food the knife cuts lies down to be cut again, even when a dish could start from it. With some addons bread, dough,
   chorus fruit or peppers went onto a sandwich pile and could not be cut; now the dish starts when its next layer goes
   on top.

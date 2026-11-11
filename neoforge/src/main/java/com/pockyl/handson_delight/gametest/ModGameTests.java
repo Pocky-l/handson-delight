@@ -89,6 +89,11 @@ public final class ModGameTests {
         PotTests.theEmptiedContainerGoesToTheCook(helper);
     }
 
+    @GameTest(template = "empty")
+    public static void whatWentInWithoutFloatingComesBackOut(GameTestHelper helper) {
+        PotTests.whatWentInWithoutFloatingComesBackOut(helper);
+    }
+
     @GameTest(template = "empty", timeoutTicks = 360)
     public static void aPotLeftByItsCookCooksOn(GameTestHelper helper) {
         PotTests.aPotLeftByItsCookCooksOn(helper);

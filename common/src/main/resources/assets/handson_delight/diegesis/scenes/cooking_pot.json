@@ -229,6 +229,22 @@
       }
     },
     {
+      "id": "sunk",
+      "$comment": "The surface of the soup, moved to its level by the code: takes the click of an empty hand off anything floating while something went in without floating (milk poured, an egg cracked, sugar dissolved), and it comes back out. Off otherwise.",
+      "collider": {
+        "from": [
+          4,
+          -0.3,
+          4
+        ],
+        "to": [
+          12,
+          0.3,
+          12
+        ]
+      }
+    },
+    {
       "id": "melt_0",
       "pos": [
         8,

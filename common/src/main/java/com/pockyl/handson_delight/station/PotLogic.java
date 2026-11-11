@@ -25,6 +25,7 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.mixin.CookingPotBlockEntityAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 
@@ -491,6 +492,8 @@ public final class PotLogic implements StationLogic {
             ResourceLocation id = ResourceLocation.tryParse(data.getString(CookingPotStation.DISH));
             Platform.INSTANCE.cookingRecipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).map(RecipeHolder::value).findFirst()
                     .ifPresent(recipe -> fill(player, recipe, data.getBoolean(CookingPotStation.SCOOP_ALL) ? CookingPotStation.FILL_MOST : 1));
+        } else if (CookingPotStation.ACTION_TAKE_BACK.equals(action)) {
+            takeBack(player);
         } else if (CookingPotStation.ACTION_STIR.equals(action)) {
             long now = station.level().getGameTime();
             if (isStirring(station) && !player.getUUID().equals(cook)) {
@@ -508,6 +511,33 @@ public final class PotLogic implements StationLogic {
             station.state().setControl(CookingPotStation.SPOON_X, x);
             station.state().setControl(CookingPotStation.SPOON_Z, z);
         }
+    }
+
+    /**
+     * What went in without floating, so that no click on it can take it (milk poured, an egg cracked, sugar dissolved), comes back
+     * out whole to the inventory, the last first: nothing put in by mistake stays in the pot for good, and milk comes back in its
+     * bucket.
+     */
+    private void takeBack(Player player) {
+        for (int i = CookingPotBlockEntity.MEAL_DISPLAY_SLOT - 1; i >= 0; i--) {
+            ItemStack stack = Platform.INSTANCE.getItem(pot, i);
+            if (!stack.isEmpty() && sinks(stack)) {
+                Platform.INSTANCE.setItem(pot, i, ItemStack.EMPTY);
+                for (int count = stack.getCount(); count > 0; count -= stack.getMaxStackSize()) {
+                    ItemStack back = stack.copyWithCount(Math.min(count, stack.getMaxStackSize()));
+                    if (!player.getInventory().add(back)) {
+                        player.drop(back, false);
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    /** Whether {@code stack} goes into the soup without floating in it: a liquid poured, an egg cracked, what dissolves. */
+    public static boolean sinks(ItemStack stack) {
+        return KitchenTags.is(stack, KitchenTags.POURED) || KitchenTags.is(stack, KitchenTags.CRACKED)
+                || KitchenTags.is(stack, KitchenTags.DISSOLVES);
     }
 
     /** Where the client says the spoon is, -1 to 1 across the pot; a broken value is the middle, never a NaN kept in the stars. */

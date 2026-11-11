@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -31,7 +32,6 @@ import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
-import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.PotLogic;
@@ -254,6 +254,8 @@ public final class PotBehavior implements StationBehavior {
     /** A block container waits this small, this high over the soup. */
     private static final float FILLED_SCALE = 0.45F;
     private static final float FILLED_LIFT = 5.0F;
+    /** What is taken back hangs this small over the soup: a hand's container, not a pot's worth. */
+    private static final float TAKE_BACK_SCALE = 0.6F;
 
     private float shownTurn = Float.NaN;
     private float shownFacing = Float.NaN;
@@ -284,6 +286,8 @@ public final class PotBehavior implements StationBehavior {
     /** The container offered over the soup, empty while none is; when the last scoop with it went. */
     private ItemStack offered = ItemStack.EMPTY;
     private Item offeredItem;
+    /** What went in without floating, shown over the soup to be taken back out; empty while none is. */
+    private ItemStack takeBack = ItemStack.EMPTY;
     private float scoopedAt = -10.0F;
     private boolean heldByClick;
     /** Kept between frames, not made anew in each. */
@@ -390,6 +394,9 @@ public final class PotBehavior implements StationBehavior {
             how.putBoolean(CookingPotStation.SCOOP_ALL, Screen.hasShiftDown());
             view.sendAction(CookingPotStation.ACTION_SCOOP, how);
             scoopedAt = time;
+        } else if (event instanceof SceneEvent.Click click && click.node().equals("sunk") && !takeBack.isEmpty()) {
+            view.sendAction(CookingPotStation.ACTION_TAKE_BACK, new CompoundTag());
+            view.playSound(PotSounds.PLOP, "broth", 0.4F, 1.1F);
         }
     }
 
@@ -459,6 +466,52 @@ public final class PotBehavior implements StationBehavior {
         }
         float lift = isFilledNotDipped(offered) ? FILLED_LIFT : OFFER_LIFT;
         node.moveTo(over.get().x - 8.0F, surface + lift - 8.0F, over.get().z - 8.0F, 0.0F);
+    }
+
+    /**
+     * With an empty hand over the soup and off anything floating, what went in without floating (milk poured, an egg cracked, sugar
+     * dissolved) hangs see-through where the hand is: a click takes it back out, the last first. A bowl offered over a done soup
+     * comes first.
+     */
+    private void offerTakeBack(StationView view) {
+        takeBack = ItemStack.EMPTY;
+        NodeView sunkNode = view.node("sunk").orElse(null);
+        LocalPlayer player = Minecraft.getInstance().player;
+        int last = -1;
+        for (int i = 0; i < SLOTS; i++) {
+            if (sunk[i] && !shown[i].isEmpty()) {
+                last = i;
+            }
+        }
+        boolean spoon = stroking || heldByClick || view.node("ladle").map(NodeView::isHovered).orElse(false);
+        boolean on = sunkNode != null && player != null && view.isFocused() && !spoon && offered.isEmpty() && last >= 0
+                && player.inventoryMenu.getCarried().isEmpty();
+        float surface = BROTH_FLOOR + BROTH_DEPTH * level;
+        if (sunkNode != null) {
+            // The whole surface of the soup takes the click; what floats lies higher and keeps its own.
+            sunkNode.setEnabled(on);
+            sunkNode.moveTo(0.0F, surface, 0.0F, 0.0F);
+        }
+        NodeView node = view.node("scoop").orElse(null);
+        if (!on || node == null || !sunkNode.isHovered()) {
+            return;
+        }
+        Optional<Vector3f> over = view.cursorOn(surface + OFFER_LIFT);
+        if (over.isEmpty()) {
+            return;
+        }
+        takeBack = shown[last];
+        // A liquid is scooped back with its empty container; an egg or sugar shows as itself.
+        Item container = takeBack.getItem().getCraftingRemainingItem();
+        Item shownItem = container != null && container != Items.AIR ? container : takeBack.getItem();
+        if (offeredItem != shownItem) {
+            offeredItem = shownItem;
+            node.setVisual(Visual.ofItem(offeredItem).withAnchor(ITEM_MIDDLE));
+            node.setTint(OFFERED);
+        }
+        node.scaleTo(TAKE_BACK_SCALE, 0.0F);
+        node.setVisible(true);
+        node.moveTo(over.get().x - 8.0F, surface + OFFER_LIFT - 8.0F, over.get().z - 8.0F, 0.0F);
     }
 
     /** A container that is a block (a pumpkin for a stuffed pumpkin): filled from the pot, never dipped into it. */
@@ -570,7 +623,7 @@ public final class PotBehavior implements StationBehavior {
      * cracked, sugar and the like dissolve.
      */
     private static boolean sinks(ItemStack stack) {
-        return KitchenLooks.isPoured(stack) || KitchenLooks.isCracked(stack) || KitchenTags.is(stack, KitchenTags.DISSOLVES);
+        return PotLogic.sinks(stack);
     }
 
     /** Something that does not float whole went in: it starts its way out of sight. */
@@ -914,6 +967,7 @@ public final class PotBehavior implements StationBehavior {
         melt(view, dt);
         book.frame(view, dt);
         offerBowl(view);
+        offerTakeBack(view);
         boolean offering = view.node("mouth").map(NodeView::isHovered).orElse(false) || bowlOverSoup(view) || !offered.isEmpty();
         view.node("pot").ifPresent(pot -> pot.setOutlined(offering));
         view.node("broth").ifPresent(broth -> {

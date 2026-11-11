@@ -127,4 +127,14 @@ public final class FabricPotTests implements FabricGameTest {
     public void aDishWithoutAContainerComesOutWhole(GameTestHelper helper) {
         PotTests.aDishWithoutAContainerComesOutWhole(helper);
     }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 320)
+    public void moreRiceThanAStackStillCooks(GameTestHelper helper) {
+        PotTests.moreRiceThanAStackStillCooks(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 200)
+    public void riceAddedWhileCookingKeepsTheProgress(GameTestHelper helper) {
+        PotTests.riceAddedWhileCookingKeepsTheProgress(helper);
+    }
 }

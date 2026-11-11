@@ -57,6 +57,11 @@ public final class CookingPotStation {
      * {@link #SCOOP_ALL}, as many as fit, as vanilla's recipe book does. Data: {@link #DISH}, the recipe's id.
      */
     public static final String ACTION_FILL = "fill";
+    /**
+     * A custom action: an empty hand clicked the soup off anything floating; what went in without floating (milk poured, an egg
+     * cracked, sugar dissolved) comes back out whole, the last first.
+     */
+    public static final String ACTION_TAKE_BACK = "take_back";
     public static final String DISH = "dish";
     /** How many sets one fill puts in at most: as many as one batch cooks without taking longer. */
     public static final int FILL_MOST = 16;

@@ -403,6 +403,29 @@ public final class PotTests {
         });
     }
 
+    /**
+     * What went in without floating cannot be clicked: an empty hand on the soup takes it back out whole, the last first, milk in its
+     * bucket. What floats stays for its own click.
+     */
+    public static void whatWentInWithoutFloatingComesBackOut(GameTestHelper helper) {
+        Setup setup = pot(helper);
+        ServerPlayer cook = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), new GameProfile(UUID.randomUUID(), "cook"));
+        setup.station.users.add(cook);
+        Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(Items.MILK_BUCKET));
+        Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.CARROT, 2));
+        Platform.INSTANCE.setItem(setup.pot, 2, new ItemStack(Items.SUGAR, 3));
+        setup.logic.onCustomAction(setup.station, cook, CookingPotStation.ACTION_TAKE_BACK, new CompoundTag());
+        helper.assertTrue(cook.getInventory().countItem(Items.SUGAR) == 3, "the sugar, the last in, comes back first");
+        helper.assertTrue(cook.getInventory().countItem(Items.MILK_BUCKET) == 0, "the milk stays for the next click");
+        setup.logic.onCustomAction(setup.station, cook, CookingPotStation.ACTION_TAKE_BACK, new CompoundTag());
+        helper.assertTrue(cook.getInventory().countItem(Items.MILK_BUCKET) == 1, "the milk comes back in its bucket");
+        helper.assertTrue(Platform.INSTANCE.getItem(setup.pot, 0).isEmpty(), "no milk is left in the pot");
+        setup.logic.onCustomAction(setup.station, cook, CookingPotStation.ACTION_TAKE_BACK, new CompoundTag());
+        helper.assertTrue(Platform.INSTANCE.getItem(setup.pot, 1).getCount() == 2, "the carrots float and stay");
+        helper.assertTrue(cook.getInventory().countItem(Items.CARROT) == 0, "no carrot comes back this way");
+        helper.succeed();
+    }
+
     /** Food a cook put in waits for the spoon while they are at the pot; once they walked away it cooks Farmer's Delight's way. */
     public static void aPotLeftByItsCookCooksOn(GameTestHelper helper) {
         Setup setup = pot(helper);

@@ -9,6 +9,11 @@ import com.pockyl.handson_delight.gametest.PotTests;
 /** {@link PotTests} on Fabric: they run when the game starts with {@code -Dfabric-api.gametest}. */
 public final class FabricPotTests implements FabricGameTest {
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void whatWentInWithoutFloatingComesBackOut(GameTestHelper helper) {
+        PotTests.whatWentInWithoutFloatingComesBackOut(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void slotsAreThePotsOwn(GameTestHelper helper) {
         PotTests.slotsAreThePotsOwn(helper);
     }

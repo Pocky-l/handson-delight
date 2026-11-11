@@ -83,6 +83,14 @@ public final class SkilletBehavior implements StationBehavior {
     private static final float SHIMMER_EMPTY_RATE = 2.4F;
     /** The pan's floor, scene pixels, and how far round a piece its oil seethes, times its size. */
     private static final float FLOOR = 1.05F;
+    /**
+     * An egg is cracked on the rim on the right, away from the handle the camera looks along: how far out the rim is from the
+     * middle and how high, how high over the pan an egg comes in, how big it is, pixels.
+     */
+    private static final float RIM_OUT = 6.2F;
+    private static final float RIM_TOP = 2.4F;
+    private static final float CRACK_FROM = 6.0F;
+    private static final float EGG_SIZE = 3.4F;
     private static final float EDGE = 0.5F;
     private static final float WAITING_SIZZLE = 1.3F;
     /**
@@ -96,6 +104,15 @@ public final class SkilletBehavior implements StationBehavior {
     private static final float POP_HOP = 0.6F;
     private static final float POP_TIME = 0.18F;
     private static final float GLIDE = 0.16F;
+    /**
+     * Done food glows in the pan until it is taken, a steady sign that it is ready: every piece swells a touch and back, all in step,
+     * a warm glint at each swell, steam rising all along. Nothing hops or turns: that read as something alive in the food. No sound:
+     * pops at the skillet mean "turn me".
+     */
+    private static final float READY_SWELL = 0.05F;
+    private static final float READY_BEAT = 1.3F;
+    private static final int READY_GLINTS = 2;
+    private static final float WISP_RATE = 1.4F;
 
     private final SkilletBook pages = new SkilletBook();
     private final RecipeBook book = new RecipeBook(pages);
@@ -130,6 +147,8 @@ public final class SkilletBehavior implements StationBehavior {
     private float fryVoice;
     private float waitingPop;
     private boolean wasWaiting;
+    private float readySince = Float.NaN;
+    private float wisp;
     /**
      * Pieces coming into the pan (piece_i at i, under_i at PIECES + i): seconds in the air (NaN: lying), where from, how long, how
      * high. Where to is asked every frame, so a piece still landing when more come lands on its new place.
@@ -142,6 +161,8 @@ public final class SkilletBehavior implements StationBehavior {
     private final float[] landHop = new float[PIECES * 2];
     /** Pieces that wait for their turn to come in: hidden until then, whatever the state says meanwhile. */
     private final boolean[] waitingIn = new boolean[PIECES * 2];
+    /** Eggs being cracked into the pan, one hand each so that a few go in one after the other. */
+    private final KitchenMotions.Crack[] cracking = new KitchenMotions.Crack[PIECES];
     private final List<Step> steps = new ArrayList<>();
 
     private record Step(float at, Runnable run) {
@@ -251,6 +272,13 @@ public final class SkilletBehavior implements StationBehavior {
                     if (index >= shownPieces) {
                         return;
                     }
+                    if (KitchenLooks.isCracked(shown) && cracks(view, index, from, hot)) {
+                        view.node("under_" + index).filter(node -> index < shownUnders).ifPresent(node -> {
+                            node.setVisible(true);
+                            land(node, index, true, from);
+                        });
+                        return;
+                    }
                     view.node("piece_" + index).ifPresent(node -> {
                         node.setVisible(true);
                         land(node, index, false, from);
@@ -352,6 +380,47 @@ public final class SkilletBehavior implements StationBehavior {
         return color;
     }
 
+    /**
+     * Egg {@code index} is knocked on the rim on the right and opened over its place: its inside drops into the pan, and only then
+     * does the piece lie there. False when the scene has no hand for it.
+     */
+    private boolean cracks(StationView view, int index, Vector3f fromPlayer, boolean hot) {
+        Optional<NodeView> hand = view.node("hand_" + index);
+        Optional<NodeView> spill = view.node("spill_" + index);
+        Optional<NodeView> piece = view.node("piece_" + index);
+        if (hand.isEmpty() || spill.isEmpty() || piece.isEmpty()) {
+            return false;
+        }
+        float[] at = place(index, Math.max(1, shownPieces));
+        float height = FLOOR + CRACK_FROM;
+        Vector3f from = fromPlayer != null ? new Vector3f(8.0F + at[0] + fromPlayer.x, height, 8.0F + at[1] + fromPlayer.z)
+                : (view.isFocused() ? view.cursorOn(height) : Optional.<Vector3f>empty()).orElse(new Vector3f(8.0F + at[0], height + 2.0F,
+                        8.0F + at[1]));
+        Vector3f rim = new Vector3f(8.0F + RIM_OUT, RIM_TOP, 8.0F + at[1] * 0.5F);
+        int k = index;
+        waitingIn[k] = true;
+        piece.get().setVisible(false);
+        if (cracking[k] != null) {
+            cracking[k].stop();
+        }
+        cracking[k] = new KitchenMotions.Crack(hand.get(), spill.get(), shown, from, rim, new Vector3f(8.0F + at[0], 0.0F, 8.0F + at[1]),
+                () -> FLOOR + height(false, shown), null, EGG_SIZE, size(shownPieces), false, 180.0F)
+                .insideTurn(yaw(index, false))
+                .onLanded(() -> {
+                    waitingIn[k] = false;
+                    if (k < shownPieces) {
+                        float[] now = place(k, shownPieces);
+                        piece.get().moveTo(now[0], height(false, shown), now[1], 0.0F);
+                        piece.get().rotateTo(0.0F, yaw(k, false), 0.0F, 0.0F);
+                        piece.get().setVisible(true);
+                    }
+                    if (hot) {
+                        hitsTheFat(view);
+                    }
+                });
+        return true;
+    }
+
     /** Comes down into the pan from a little above, or with {@code from} over from the player, with a hop. */
     private void land(NodeView node, int index, boolean under, Vector3f from) {
         float[] at = place(index, shownPieces);
@@ -397,6 +466,11 @@ public final class SkilletBehavior implements StationBehavior {
     @Override
     public void frame(StationView view, float dt) {
         clock += dt;
+        for (int i = 0; i < PIECES; i++) {
+            if (cracking[i] != null && !cracking[i].frame(view, dt)) {
+                cracking[i] = null;
+            }
+        }
         if (!steps.isEmpty()) {
             List<Step> due = steps.stream().filter(step -> step.at() <= clock).toList();
             steps.removeAll(due);
@@ -415,6 +489,7 @@ public final class SkilletBehavior implements StationBehavior {
         }
         landings(view, dt);
         frying(view, dt);
+        readyGlow(view, dt);
         book.frame(view, dt);
     }
 
@@ -545,6 +620,45 @@ public final class SkilletBehavior implements StationBehavior {
             }
         }
     }
+
+    /** Done food waiting to be taken: the steady glow of {@link #READY_SWELL}; everything back to size once it is not. */
+    private void readyGlow(StationView view, float dt) {
+        if (shown.isEmpty() || shownPieces == 0 || !SkilletCooking.isDone(view.level(), shown)) {
+            if (!Float.isNaN(readySince)) {
+                readySince = Float.NaN;
+                swell(view, 1.0F);
+            }
+            return;
+        }
+        if (Float.isNaN(readySince)) {
+            readySince = clock;
+        }
+        float before = (clock - dt - readySince) / READY_BEAT;
+        float beat = (clock - readySince) / READY_BEAT;
+        swell(view, 1.0F + READY_SWELL * (0.5F - 0.5F * Mth.cos(beat * Mth.TWO_PI)));
+        // The glints come as the food is at its fullest, so the shine and the swell are one beat.
+        if (Mth.floor(beat - 0.5F) > Mth.floor(before - 0.5F) && !tossing()) {
+            for (int i = 0; i < READY_GLINTS; i++) {
+                view.spawnParticles(DiegesisParticles.GLINT, onFood(), new Vector3f(0.0F, 0.8F, 0.0F), 0.4F, 1, 0xFFFFE9A0);
+            }
+        }
+        wisp += dt * WISP_RATE;
+        while (wisp >= 1.0F) {
+            wisp -= 1.0F;
+            view.spawnParticles(DiegesisParticles.STEAM, onFood(), new Vector3f(randomly(0.2F), 1.4F, randomly(0.2F)), 0.3F, 1, 0x30FFFFFF);
+        }
+    }
+
+    /** Every piece lying in the pan at {@code factor} of its size; one landing or in the air of a toss at its own. */
+    private void swell(StationView view, float factor) {
+        for (int i = 0; i < PIECES; i++) {
+            for (boolean under : new boolean[] {false, true}) {
+                boolean lying = !landing(i, under) && !waitingIn[under ? PIECES + i : i] && !tossing();
+                view.node((under ? "under_" : "piece_") + i).ifPresent(node -> node.scaleTo(lying ? factor : 1.0F, 0.0F));
+            }
+        }
+    }
+
 
     /** Nothing waits to be turned: no outline but the cursor's, and the next wait is new. */
     private void calm(StationView view) {
@@ -769,11 +883,6 @@ public final class SkilletBehavior implements StationBehavior {
             if (view.state().data().getBoolean(SkilletStation.HEATED)) {
                 view.playSound(FarmersDelightContent.SKILLET_ADD_FOOD, "pan", 0.8F, 1.0F);
             }
-            // An egg is cracked on the pan's rim and goes in without its shell.
-            ItemStack placed = view.state().getItem(SkilletStation.PAN_SLOT);
-            if (KitchenLooks.isCracked(placed)) {
-                KitchenLooks.crack(view, "pan", roundFood());
-            }
             view.playSound(SoundEvents.LANTERN_PLACE, "pan", 0.5F, 1.0F);
         } else if (SkilletStation.EFFECT_REFUSED.equals(effect)) {
             ItemStack refused = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(SkilletStation.STACK));
@@ -797,7 +906,6 @@ public final class SkilletBehavior implements StationBehavior {
         }
     }
 
-    /** What lay in the pan leaves it: lifted off for the cook's inventory, or thrown out over the side. */
     /** The batch is done and waits in the pan: a puff of steam and a glint over it, the fat calms down. */
     private void ready(StationView view) {
         view.spawnParticles(DiegesisParticles.STEAM, onFood(), new Vector3f(0.0F, 3.0F, 0.0F), 2.0F, 4, 0x60FFFFFF);
@@ -807,6 +915,7 @@ public final class SkilletBehavior implements StationBehavior {
         after(0.35F, () -> view.playSound(SoundEvents.CAMPFIRE_CRACKLE, "pan", 0.6F, 0.9F));
     }
 
+    /** What lay in the pan leaves it: lifted off for the cook's inventory, or thrown out over the side. */
     private void leaves(StationView view, ItemStack stack, boolean toCook) {
         if (stack.isEmpty()) {
             return;

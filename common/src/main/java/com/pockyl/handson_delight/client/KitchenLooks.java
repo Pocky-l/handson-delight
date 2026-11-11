@@ -1,7 +1,6 @@
 package com.pockyl.handson_delight.client;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Item;
@@ -55,7 +54,7 @@ final class KitchenLooks {
     }
 
     /** The icon of a full container and the pixel of it that shows the liquid. */
-    record Liquid(ItemVoxels.Icon icon, int column, int row) {
+    record Liquid(ItemVoxels.Icon icon, int column, int row, int lightColumn, int lightRow) {
     }
 
     static Optional<Liquid> liquid(ItemStack stack) {
@@ -66,7 +65,8 @@ final class KitchenLooks {
         Item container = stack.getItem().getCraftingRemainingItem();
         Optional<ItemVoxels.Icon> empty = container == null ? Optional.empty() : ItemVoxels.icon(new ItemStack(container));
         int[] at = ItemVoxels.contents(full.get(), empty);
-        return Optional.of(new Liquid(full.get(), at[0], at[1]));
+        int[] light = ItemVoxels.lightest(full.get(), empty);
+        return Optional.of(new Liquid(full.get(), at[0], at[1], light[0], light[1]));
     }
 
     /**
@@ -111,18 +111,5 @@ final class KitchenLooks {
     static void crack(StationView view, String node, Vector3f at) {
         view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 3.0F, 0.0F), 1.0F, 5, SHELL);
         view.playSound(SoundEvents.TURTLE_EGG_CRACK, node, 0.35F, 1.5F);
-    }
-
-    /** A stream of {@code stack}'s liquid from {@code from} down to {@code to} (scene pixels), with the sound of its container emptied. */
-    static void pour(StationView view, String node, ItemStack stack, Vector3f from, Vector3f to) {
-        int color = liquidColor(stack);
-        Vector3f fall = new Vector3f(to).sub(from).mul(3.0F);
-        view.spawnParticles(DiegesisParticles.DROPLET, from, fall, 0.25F, 10, color);
-        view.playSound(pourSound(stack), node, 0.45F, 1.15F);
-    }
-
-    private static SoundEvent pourSound(ItemStack stack) {
-        Item container = stack.getItem().getCraftingRemainingItem();
-        return container == Items.BUCKET ? SoundEvents.BUCKET_EMPTY : SoundEvents.BOTTLE_EMPTY;
     }
 }

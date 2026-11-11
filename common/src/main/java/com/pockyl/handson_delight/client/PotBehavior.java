@@ -216,6 +216,11 @@ public final class PotBehavior implements StationBehavior {
     private final float[] places = new float[SLOTS];
     private float level;
     private float turned;
+    /**
+     * Where the circle of what floats starts, radians: the spoon at rest lies in a gap between the things, a lone one floats
+     * across from it, never behind it. NaN until the spoon is first seen at rest.
+     */
+    private float circleStart = Float.NaN;
     private int drawnDial = -1;
     private int drawnTrack = -1;
     private int bubbleColor = 0xFFFFFFFF;
@@ -232,22 +237,45 @@ public final class PotBehavior implements StationBehavior {
     private final float[] arriveX = new float[SLOTS];
     private final float[] arriveZ = new float[SLOTS];
     /**
-     * What does not float whole (a liquid poured, an egg cracked, sugar dissolving): how long since it went in, NaN while it floats or
-     * before it is in; once gone it stays gone for as long as the slot holds it.
+     * What does not float whole (a liquid poured, an egg cracked, sugar dissolving) is brought over the soup by a hand first: the
+     * motion while it runs, null while it floats or before it is in; once gone it stays gone for as long as the slot holds it.
      */
-    private final float[] sinkAge = new float[SLOTS];
+    private final KitchenMotions.Motion[] going = new KitchenMotions.Motion[SLOTS];
     private final boolean[] sunk = new boolean[SLOTS];
+    /** More of what is in a slot went in while its hand was still busy: the hand comes again once it is done. */
+    private final boolean[] again = new boolean[SLOTS];
+    /** A container offered over the soup dipped into it, coming up full; null while none is. */
+    private KitchenMotions.Dip dip;
+    /** Where the offered container hangs now (scene pixels), and how much it is scaled. */
+    private final Vector3f scoopAt = new Vector3f();
+    private float scoopScale = 1.0F;
+    /** When the local hand last scooped with a bowl it held: the soup rang where the bowl went in. */
+    private float scoopedHere = -10.0F;
+    /** The colour the soup is going to and the one shown, which follows it: a liquid poured in spreads as it runs. */
+    private int brothTarget;
+    private int brothShown;
+    private boolean brothKnown;
+    private boolean recolour;
     private float piecesWait;
     private int brothColor;
 
-    /** A liquid's container hangs this high over the soup, tips over this long, pours, and is gone. */
-    private static final float POUR_HOVER = 3.0F;
-    private static final float POUR_TIP = 0.15F;
-    private static final float POUR_FLOW = 0.4F;
-    private static final float POUR_TILT = 110.0F;
-    /** How long a dissolving or cracked thing takes to be gone. */
-    private static final float SINK_TIME = 0.6F;
-    private static final float CRACK_TIME = 0.15F;
+    /**
+     * How big what a hand brings over the soup is, pixels: a bottle or a bucket, sugar; an egg and its inside. How far from the
+     * middle what is poured lands; where the rim an egg is knocked on is, from the middle and over the floor.
+     */
+    private static final float HAND_SIZE = 2.9F;
+    private static final float EGG_SIZE = 2.4F;
+    private static final float EGG_INSIDE = 2.6F;
+    private static final float POUR_SPREAD = 1.4F;
+    private static final float POUR_X = 7.4F;
+    private static final float POUR_Z = 8.8F;
+    private static final float RIM_OUT = 5.0F;
+    private static final float RIM_TOP = 10.0F;
+    /** How fast the soup's colour follows what goes in, per second. */
+    private static final float RECOLOUR_RATE = 4.0F;
+    private static final Vector3f SCOOP_ORIGIN = new Vector3f(8.0F, 8.0F, 8.0F);
+    /** The scene's {@code scoop} node is this scaled: an item 16 pixels high drawn so many pixels high. */
+    private static final float SCOOP_BASE = 0.3F;
 
     /** How much of the water a liquid poured into it takes over. */
     private static final float POURED_SHARE = 0.6F;
@@ -315,7 +343,6 @@ public final class PotBehavior implements StationBehavior {
         java.util.Arrays.fill(shown, ItemStack.EMPTY);
         java.util.Arrays.fill(meltAge, Float.NaN);
         java.util.Arrays.fill(arriveAge, Float.NaN);
-        java.util.Arrays.fill(sinkAge, Float.NaN);
         java.util.Arrays.fill(sunk, false);
     }
 
@@ -335,6 +362,10 @@ public final class PotBehavior implements StationBehavior {
             pixels(shape, -9, 12, 18, 1);
             plate.setShape(shape.build(), BADGE_TEXTURE, true);
         });
+        // The badge stays in sight over the pot's own walls and whatever stands beside it, as the book does.
+        for (String part : List.of("badge", "dial_track", "dial", "preview")) {
+            view.node(part).ifPresent(node -> node.setOnTop(true));
+        }
         view.node("book_open").ifPresent(node -> node.setPainter(book));
         refresh(view, true);
     }
@@ -394,9 +425,14 @@ public final class PotBehavior implements StationBehavior {
             how.putBoolean(CookingPotStation.SCOOP_ALL, Screen.hasShiftDown());
             view.sendAction(CookingPotStation.ACTION_SCOOP, how);
             scoopedAt = time;
+            ItemStack meal = view.state().getItem(CookingPotStation.MEAL_SLOT);
+            if (!isFilledNotDipped(offered) && !meal.isEmpty()) {
+                dipOffered(view, meal.getItem(), () -> {
+                });
+            }
         } else if (event instanceof SceneEvent.Click click && click.node().equals("sunk") && !takeBack.isEmpty()) {
             view.sendAction(CookingPotStation.ACTION_TAKE_BACK, new CompoundTag());
-            view.playSound(PotSounds.PLOP, "broth", 0.4F, 1.1F);
+            dipOffered(view, takeBack.getItem(), () -> view.playSound(PotSounds.SCOOP, "broth", 0.45F, 1.1F));
         }
     }
 
@@ -413,7 +449,27 @@ public final class PotBehavior implements StationBehavior {
         CompoundTag how = new CompoundTag();
         how.putBoolean(CookingPotStation.SCOOP_ALL, shift);
         view.sendAction(CookingPotStation.ACTION_SCOOP, how);
+        // The bowl in the hand goes in where the hand is: the soup rings there.
+        float surface = BROTH_FLOOR + BROTH_DEPTH * level;
+        view.cursorOn(surface).ifPresent(point -> {
+            scoopedHere = time;
+            view.node("broth").ifPresent(broth -> broth.ripple(point.x, point.z, 0.45F));
+            view.spawnParticles(DiegesisParticles.SPLASH, new Vector3f(point.x, surface, point.z), new Vector3f(0.0F, 6.0F, 0.0F), 0.6F, 4,
+                    0xFF000000 | brothColor);
+        });
         return true;
+    }
+
+    /** The container offered over the soup goes down into it where it hangs and comes up as {@code filled}, for the cook. */
+    private void dipOffered(StationView view, Item filled, Runnable onDipped) {
+        NodeView node = view.node("scoop").orElse(null);
+        if (node == null || !node.isVisible()) {
+            return;
+        }
+        float surface = BROTH_FLOOR + BROTH_DEPTH * level;
+        Vector3f away = FromPlayer.point(view, surface + 6.0F, 0, 1).orElse(new Vector3f(scoopAt.x, surface + 8.0F, scoopAt.z));
+        dip = new KitchenMotions.Dip(node, filled, scoopAt, SCOOP_ORIGIN, away, () -> BROTH_FLOOR + BROTH_DEPTH * level,
+                view.node("broth").orElse(null), scoopScale, 8.0F * SCOOP_BASE * scoopScale, 0xFF000000 | brothColor, onDipped);
     }
 
     private static boolean usable(StationView view, ItemStack stack) {
@@ -436,6 +492,11 @@ public final class PotBehavior implements StationBehavior {
      */
     private void offerBowl(StationView view) {
         offered = ItemStack.EMPTY;
+        if (dip != null) {
+            // The last one is on its way to the cook; the next is offered once it is gone.
+            view.node("soup").ifPresent(soup -> soup.setEnabled(false));
+            return;
+        }
         LocalPlayer player = Minecraft.getInstance().player;
         NodeView node = view.node("scoop").orElse(null);
         boolean spoon = stroking || heldByClick || view.node("ladle").map(NodeView::isHovered).orElse(false);
@@ -462,9 +523,11 @@ public final class PotBehavior implements StationBehavior {
             node.setVisual(Visual.ofItem(offeredItem).withAnchor(ITEM_MIDDLE));
             node.setTint(OFFERED);
             // A pumpkin to be stuffed is not dipped like a bowl: it waits over the rim, small, and the soup is ladled into it.
-            node.scaleTo(isFilledNotDipped(offered) ? FILLED_SCALE : 1.0F, 0.0F);
         }
+        scoopScale = isFilledNotDipped(offered) ? FILLED_SCALE : 1.0F;
+        node.scaleTo(scoopScale, 0.0F);
         float lift = isFilledNotDipped(offered) ? FILLED_LIFT : OFFER_LIFT;
+        scoopAt.set(over.get().x, surface + lift, over.get().z);
         node.moveTo(over.get().x - 8.0F, surface + lift - 8.0F, over.get().z - 8.0F, 0.0F);
     }
 
@@ -485,7 +548,7 @@ public final class PotBehavior implements StationBehavior {
         }
         boolean spoon = stroking || heldByClick || view.node("ladle").map(NodeView::isHovered).orElse(false);
         boolean on = sunkNode != null && player != null && view.isFocused() && !spoon && offered.isEmpty() && last >= 0
-                && player.inventoryMenu.getCarried().isEmpty();
+                && player.inventoryMenu.getCarried().isEmpty() && dip == null && time - scoopedAt >= OFFER_AWAY;
         float surface = BROTH_FLOOR + BROTH_DEPTH * level;
         if (sunkNode != null) {
             // The whole surface of the soup takes the click; what floats lies higher and keeps its own.
@@ -509,8 +572,10 @@ public final class PotBehavior implements StationBehavior {
             node.setVisual(Visual.ofItem(offeredItem).withAnchor(ITEM_MIDDLE));
             node.setTint(OFFERED);
         }
+        scoopScale = TAKE_BACK_SCALE;
         node.scaleTo(TAKE_BACK_SCALE, 0.0F);
         node.setVisible(true);
+        scoopAt.set(over.get().x, surface + OFFER_LIFT, over.get().z);
         node.moveTo(over.get().x - 8.0F, surface + OFFER_LIFT - 8.0F, over.get().z - 8.0F, 0.0F);
     }
 
@@ -533,8 +598,11 @@ public final class PotBehavior implements StationBehavior {
     public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
         if (CookingPotStation.EFFECT_SCOOPED.equals(effect)) {
             book.statsChanged();
-            view.node("broth").ifPresent(broth -> broth.ripple(8.0F, 8.0F, 0.5F));
-            view.spawnOnLiquid(DiegesisParticles.SPLASH, "broth", 4, 0xFF000000 | brothColor, SPLASH_UP);
+            // The cook's own scoop rang the soup where the bowl went in; the others see a bowl go in somewhere.
+            if (dip == null && time - scoopedHere > 1.0F) {
+                view.node("broth").ifPresent(broth -> broth.ripple(8.0F, 8.0F, 0.5F));
+                view.spawnOnLiquid(DiegesisParticles.SPLASH, "broth", 4, 0xFF000000 | brothColor, SPLASH_UP);
+            }
             if (isFilledNotDipped(offered)) {
                 // Ladled up into the pumpkin over the rim.
                 view.node("scoop").map(NodeView::scenePosition).ifPresent(into -> view.spawnParticles(DiegesisParticles.DROPLET,
@@ -556,17 +624,25 @@ public final class PotBehavior implements StationBehavior {
         }
         servings = meal.getCount();
         List<Integer> arrivals = new ArrayList<>();
+        List<Integer> more = new ArrayList<>();
         for (int i = 0; i < SLOTS; i++) {
             ItemStack now = items[i];
             if (!now.isEmpty() && shown[i].isEmpty() && !quiet) {
                 arrivals.add(i);
+            } else if (!quiet && sinks(now) && ItemStack.isSameItem(now, shown[i]) && now.getCount() > shown[i].getCount()) {
+                // A second egg or bottle of milk stacks in the slot of the first: it is cracked or poured all the same.
+                more.add(i);
             }
             if (now.isEmpty() || quiet) {
                 arriveAge[i] = Float.NaN;
             }
             if (!ItemStack.isSameItem(now, shown[i])) {
                 // Another thing in this slot: it floats until it goes in; one found there when the pot is first seen is in already.
-                sinkAge[i] = Float.NaN;
+                if (going[i] != null) {
+                    going[i].stop();
+                    going[i] = null;
+                }
+                again[i] = false;
                 sunk[i] = quiet && sinks(now);
                 int index = i;
                 view.node(ITEM_NODES[i]).ifPresent(node -> node.scaleTo(sunk[index] ? 0.0F : 1.0F, 0.0F));
@@ -581,9 +657,20 @@ public final class PotBehavior implements StationBehavior {
                 arriveAge[index] = -k * ARRIVE_STAGGER;
                 arriveX[index] = from.x - 8.0F;
                 arriveZ[index] = from.z - 8.0F;
+                if (sinks(shown[index])) {
+                    // Brought by a hand when its turn comes; until then it is nowhere.
+                    view.node(ITEM_NODES[index]).ifPresent(node -> node.scaleTo(0.0F, 0.0F));
+                }
             }
         } else {
             arrivals.forEach(index -> splashIn(view, index));
+        }
+        for (int index : more) {
+            if (going[index] != null || arriveAge[index] < 0.0F) {
+                again[index] = true;
+            } else {
+                splashIn(view, index);
+            }
         }
         for (int i = 0; i < SLOTS; i++) {
             boolean there = !shown[i].isEmpty() && !(arriveAge[i] < 0.0F) && !sunk[i];
@@ -601,13 +688,17 @@ public final class PotBehavior implements StationBehavior {
         badge(view);
         tooltip(view, meal);
         colour(view, meal, items);
+        if (quiet) {
+            brothKnown = false;
+        }
         pieces(view, meal);
     }
 
     /** An item comes into the soup: rings, drops, a plop, and a hiss on a hot pot. */
     private void splashIn(StationView view, int index) {
         if (sinks(shown[index])) {
-            goesIn(view, index);
+            float height = BROTH_FLOOR + BROTH_DEPTH * level + ARRIVE_FROM;
+            goesIn(view, index, view.cursorOn(height).orElse(new Vector3f(8.0F, height, 8.0F)));
             return;
         }
         view.node("broth").ifPresent(broth -> broth.ripple(8.0F, 8.0F, 0.5F));
@@ -626,60 +717,44 @@ public final class PotBehavior implements StationBehavior {
         return PotLogic.sinks(stack);
     }
 
-    /** Something that does not float whole went in: it starts its way out of sight. */
-    private void goesIn(StationView view, int index) {
-        sinkAge[index] = 0.0F;
+    /**
+     * Something that does not float whole went in: a hand brings it from {@code from} (scene pixels) and pours it out, cracks it on
+     * the rim or shakes it out over the soup. The slot's own node shows nothing meanwhile.
+     */
+    private void goesIn(StationView view, int index, Vector3f from) {
         ItemStack stack = shown[index];
-        Vector3f at = view.node(ITEM_NODES[index]).map(NodeView::scenePosition).orElse(new Vector3f(8.0F, 8.0F, 8.0F));
+        view.node(ITEM_NODES[index]).ifPresent(node -> node.scaleTo(0.0F, 0.0F));
+        NodeView hand = view.node("hand_" + index).orElse(null);
+        NodeView broth = view.node("broth").orElse(null);
+        if (hand == null) {
+            sunk[index] = true;
+            return;
+        }
+        java.util.function.DoubleSupplier surface = () -> BROTH_FLOOR + BROTH_DEPTH * level;
+        // Poured on the right of the pot, where the spoon is not, tipped towards the middle; things that go in together come
+        // down one behind the other, so that they do not stand in each other.
+        Vector3f onto = new Vector3f(POUR_X, 0.0F, POUR_Z + POUR_SPREAD * (index % 3 - 1));
         if (KitchenLooks.isCracked(stack)) {
-            KitchenLooks.crack(view, ITEM_NODES[index], at);
-            view.node("broth").ifPresent(broth -> broth.ripple(8.0F, 8.0F, 0.3F));
-        } else if (!KitchenLooks.isPoured(stack)) {
-            view.spawnInLiquid(DiegesisParticles.BUBBLE, "broth", 6, bubbleColor, RISE);
-            view.playSound(PotSounds.PLOP, ITEM_NODES[index], 0.3F, 1.3F);
+            // Knocked on the right rim, away from the spoon, and opened over the soup next to it.
+            Vector3f rim = new Vector3f(8.0F - RIM_OUT, RIM_TOP, onto.z);
+            Vector3f over = new Vector3f(8.0F - 2.0F, 0.0F, onto.z);
+            NodeView inside = view.node("spill_" + index).orElse(hand);
+            going[index] = new KitchenMotions.Crack(hand, inside, stack, from, rim, over, surface, broth, EGG_SIZE, EGG_INSIDE, true, 0.0F)
+                    .onLanded(() -> view.playSound(PotSounds.PLOP, "broth", 0.35F, 1.25F));
+        } else if (KitchenLooks.isPoured(stack)) {
+            going[index] = new KitchenMotions.Pour(hand, "pour_" + index, stack, from, onto, surface, "broth", HAND_SIZE, -1.0F, 0.0F)
+                    .onFlow(() -> recolour = true);
+        } else {
+            going[index] = new KitchenMotions.Shake(hand, stack, from, onto, surface, broth, HAND_SIZE * 0.8F, -1.0F, 0.0F);
         }
     }
 
-    /**
-     * Where something that does not float whole is on its way out of sight: a container hangs over the soup and tips it out, an egg's
-     * shell is gone at once, what dissolves sinks and shrinks. Moves its node; once gone, the slot shows nothing.
-     */
-    private void sinking(StationView view, int index, float dt, float surface) {
-        sinkAge[index] += dt;
-        float age = sinkAge[index];
+    /** What was brought over the soup is in it now: what dissolves sends up its last bubbles. */
+    private void wentIn(StationView view, int index) {
         ItemStack stack = shown[index];
-        NodeView node = view.node(ITEM_NODES[index]).orElse(null);
-        if (node == null) {
-            return;
-        }
-        float x = itemX[index];
-        float z = itemZ[index];
-        float gone;
-        if (KitchenLooks.isPoured(stack)) {
-            float tip = Math.min(1.0F, age / POUR_TIP);
-            node.moveTo(x, surface + POUR_HOVER * tip, z, 0.0F);
-            node.rotateTo(0.0F, 0.0F, POUR_TILT * tip, 0.0F);
-            if (age - dt < POUR_TIP && age >= POUR_TIP) {
-                Vector3f from = node.scenePosition();
-                KitchenLooks.pour(view, ITEM_NODES[index], stack, from, new Vector3f(from.x, from.y - POUR_HOVER - 1.0F, from.z));
-                view.node("broth").ifPresent(broth -> broth.ripple(x + 8.0F, z + 8.0F, 0.4F));
-            }
-            gone = POUR_TIP + POUR_FLOW;
-            if (age > gone - 0.2F) {
-                node.scaleTo(0.0F, 0.2F);
-            }
-        } else if (KitchenLooks.isCracked(stack)) {
-            gone = CRACK_TIME;
-            node.scaleTo(0.0F, CRACK_TIME);
-        } else {
-            gone = SINK_TIME;
-            node.moveTo(x, surface - 3.0F * age / SINK_TIME, z, 0.0F);
-            node.scaleTo(0.0F, SINK_TIME);
-        }
-        if (age >= gone) {
-            sinkAge[index] = Float.NaN;
-            sunk[index] = true;
-            node.setEnabled(false);
+        if (!KitchenLooks.isCracked(stack) && !KitchenLooks.isPoured(stack)) {
+            view.spawnInLiquid(DiegesisParticles.BUBBLE, "broth", 6, bubbleColor, RISE);
+            view.playSound(PotSounds.PLOP, "broth", 0.25F, 1.35F);
         }
     }
 
@@ -691,6 +766,11 @@ public final class PotBehavior implements StationBehavior {
             }
             float before = arriveAge[i];
             arriveAge[i] += dt;
+            if (before < 0.0F && arriveAge[i] >= 0.0F && sinks(shown[i])) {
+                arriveAge[i] = Float.NaN;
+                goesIn(view, i, new Vector3f(arriveX[i] + 8.0F, BROTH_FLOOR + BROTH_DEPTH * level + ARRIVE_FROM, arriveZ[i] + 8.0F));
+                continue;
+            }
             if (before < 0.0F && arriveAge[i] >= 0.0F) {
                 view.node(ITEM_NODES[i]).ifPresent(node -> node.setEnabled(true));
             }
@@ -863,9 +943,12 @@ public final class PotBehavior implements StationBehavior {
     private void colour(StationView view, ItemStack meal, ItemStack[] items) {
         int water = WATER_ALPHA << 24 | BiomeColors.getAverageWaterColor(view.level(), view.pos()) & 0xFFFFFF;
         if (meal.isEmpty()) {
-            // A liquid poured in colours the water at once: milk makes it milky before anything cooks.
-            for (ItemStack item : items) {
-                if (KitchenLooks.isPoured(item)) {
+            // A liquid poured in colours the water from when it runs: milk makes it milky before anything cooks.
+            for (int i = 0; i < items.length; i++) {
+                ItemStack item = items[i];
+                boolean waiting = i < SLOTS && !sunk[i] && (going[i] instanceof KitchenMotions.Pour pour && !pour.hasFlowed()
+                        || sinks(item) && arriveAge[i] < 0.0F);
+                if (KitchenLooks.isPoured(item) && !waiting) {
                     water = blend(water, SOUP_ALPHA << 24 | KitchenLooks.liquidColor(item) & 0xFFFFFF, POURED_SHARE);
                 }
             }
@@ -891,9 +974,25 @@ public final class PotBehavior implements StationBehavior {
             broth.setMottle(mottle);
             broth.setWakeLook(Mth.lerp(mottle, WATER_WAKE_LIFE, SOUP_WAKE_LIFE), Mth.lerp(mottle, WATER_WAKE_CONTRAST, SOUP_WAKE_CONTRAST));
         });
-        int shownColor = colour;
-        brothColor = colour & 0xFFFFFF;
-        bubbleColor = 0xE0000000 | blend(colour, 0xFFFFFFFF, 0.6F) & 0xFFFFFF;
+        brothTarget = colour;
+    }
+
+    /** The soup's colour follows what it is made of: what is poured in spreads through it as it runs. */
+    private void showColour(StationView view, float dt) {
+        if (recolour) {
+            recolour = false;
+            StationState state = view.state();
+            colour(view, state.getItem(CookingPotStation.MEAL_SLOT), state.getItems(CookingPotStation.INGREDIENTS));
+        }
+        int was = brothShown;
+        brothShown = brothKnown ? blend(brothShown, brothTarget, Math.min(1.0F, dt * RECOLOUR_RATE)) : brothTarget;
+        if (brothKnown && was == brothShown) {
+            return;
+        }
+        brothKnown = true;
+        int shownColor = brothShown;
+        brothColor = shownColor & 0xFFFFFF;
+        bubbleColor = 0xE0000000 | blend(shownColor, 0xFFFFFFFF, 0.6F) & 0xFFFFFF;
         view.node("broth").ifPresent(broth -> broth.setLiquidColor(shownColor));
     }
 
@@ -966,8 +1065,15 @@ public final class PotBehavior implements StationBehavior {
         drift(view, dt);
         melt(view, dt);
         book.frame(view, dt);
+        if (dip != null && !dip.frame(view, dt)) {
+            dip = null;
+            // The offer is drawn anew, as whatever is offered next.
+            offeredItem = null;
+            scoopedAt = time;
+        }
         offerBowl(view);
         offerTakeBack(view);
+        showColour(view, dt);
         boolean offering = view.node("mouth").map(NodeView::isHovered).orElse(false) || bowlOverSoup(view) || !offered.isEmpty();
         view.node("pot").ifPresent(pot -> pot.setOutlined(offering));
         view.node("broth").ifPresent(broth -> {
@@ -1169,12 +1275,18 @@ public final class PotBehavior implements StationBehavior {
             present += floats(i) ? 1 : 0;
         }
         float surface = BROTH_FLOOR + BROTH_DEPTH * level - ITEM_REST;
+        if (grip < 0.05F && spoonX * spoonX + spoonZ * spoonZ > 0.01F) {
+            float wanted = (float) Mth.atan2(spoonZ, spoonX) + Mth.PI / Math.max(present, 1);
+            circleStart = Float.isNaN(circleStart) ? wanted
+                    : circleStart + Mth.wrapDegrees((wanted - circleStart) * Mth.RAD_TO_DEG) * Mth.DEG_TO_RAD * Math.min(1.0F, dt * 2.5F);
+        }
+        float start = Float.isNaN(circleStart) ? 0.0F : circleStart;
         int rank = 0;
         for (int i = 0; i < SLOTS; i++) {
             // What floats shares the circle evenly, and makes room when something new drops in.
             if (floats(i)) {
                 places[i] = Mth.lerp(Math.min(1.0F, dt * 2.5F), places[i], rank++ * Mth.TWO_PI / Math.max(present, 1));
-                float angle = turned + places[i];
+                float angle = turned + start + places[i];
                 place(i, Mth.cos(angle) * DRIFT_RADIUS, Mth.sin(angle) * DRIFT_RADIUS, dt);
             }
         }
@@ -1182,15 +1294,23 @@ public final class PotBehavior implements StationBehavior {
         itemWakes(view, dt);
         for (int i = 0; i < SLOTS; i++) {
             int index = i;
-            if (!Float.isNaN(sinkAge[i])) {
-                sinking(view, i, dt, surface);
+            if (going[i] != null) {
+                if (!going[i].frame(view, dt)) {
+                    going[i] = null;
+                    sunk[i] = true;
+                    wentIn(view, i);
+                    if (again[i]) {
+                        again[i] = false;
+                        splashIn(view, i);
+                    }
+                }
                 continue;
             }
             if (sunk[i]) {
                 continue;
             }
             view.node(ITEM_NODES[i]).ifPresent(node -> {
-                float angle = turned + places[index];
+                float angle = turned + start + places[index];
                 float bob = Mth.sin(time * 0.9F + index * 1.3F) * 0.07F;
                 float roll = tumble(view, index, dt);
                 float hop = Mth.sin(roll * Mth.PI) * TUMBLE_HOP;
@@ -1256,7 +1376,7 @@ public final class PotBehavior implements StationBehavior {
 
     /** Whether the thing in slot {@code i} floats whole in the soup now. */
     private boolean floats(int i) {
-        return !shown[i].isEmpty() && !sunk[i] && Float.isNaN(sinkAge[i]);
+        return !shown[i].isEmpty() && !sunk[i] && going[i] == null && !(sinks(shown[i]) && arriveAge[i] < 0.0F);
     }
 
     /** Items in the pot do not lie on each other: they push apart, and neither the spoon nor a wall lets them through. */

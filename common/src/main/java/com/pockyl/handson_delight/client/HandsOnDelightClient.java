@@ -21,6 +21,7 @@ public final class HandsOnDelightClient {
     public static final ResourceLocation FAT = HandsOnDelight.id("fat");
     public static final ResourceLocation PAN_SMOKE = HandsOnDelight.id("pan_smoke");
     public static final ResourceLocation HEAT = HandsOnDelight.id("heat");
+    public static final ResourceLocation GRAIN = HandsOnDelight.id("grain");
     @SuppressWarnings("removal")
     private static final ResourceLocation DIEGESIS_BUBBLE = ResourceLocation.fromNamespaceAndPath("diegesis", "bubble");
 
@@ -63,6 +64,9 @@ public final class HandsOnDelightClient {
                 .gravity(-4.0F).drag(0.75F).grow(3.0F).wobble(1.0F).fadeIn(0.3F).build());
         DiegesisClient.registerParticle(HEAT, ParticleStyle.builder(frames("heat", 4)).color(0x48FFFFFF)
                 .size(3.0F, 4.0F).life(0.8F, 1.3F).gravity(-5.0F).drag(0.6F).grow(0.4F).wobble(0.3F).fadeIn(0.4F).build());
+        // Sugar, cocoa and the like shaken out over a pot: fine grains that fall straight and are gone in the soup.
+        DiegesisClient.registerParticle(GRAIN, ParticleStyle.builder(ResourceLocation.withDefaultNamespace("generic_0")).color(0xFFFFFFFF)
+                .size(0.28F, 0.42F).life(0.35F, 0.6F).gravity(55.0F).drag(0.2F).pop().build());
     }
 
     /** Whether a scene stands in for the block at {@code pos} on this client. */

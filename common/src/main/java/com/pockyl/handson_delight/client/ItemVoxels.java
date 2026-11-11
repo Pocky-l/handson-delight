@@ -357,33 +357,78 @@ final class ItemVoxels {
         return shape.build();
     }
 
+    /** Drizzled lines: a line every so many rows of the icon, zigzagging this many rows up and down every so many columns. */
+    private static final int DRIZZLE_EVERY = 5;
+    private static final float DRIZZLE_SWING = 1.5F;
+    private static final int DRIZZLE_TURN = 4;
+
     /**
-     * A thin film the shape of {@code shape} drawn {@code size} across, {@code thick} pixels high, all in the colour of one pixel of
-     * {@code colour}'s sprite: a liquid poured over food. Only its top and edges are drawn.
+     * A liquid drizzled over food the shape of {@code shape}, drawn {@code size} across: zigzag lines {@code thick} pixels high over
+     * the food, coloured by pixels of {@code colour}'s sprite, the liquid's own ({@code column, row}) with its lightest
+     * ({@code lightColumn, lightRow}) along the top edge of each line, as light catches a thick drizzle. Only its top and edges are
+     * drawn.
      */
-    static MeshShape film(Icon shape, float size, float thick, Icon colour, int column, int row) {
+    static MeshShape film(Icon shape, float size, float thick, Icon colour, int column, int row, int lightColumn, int lightRow) {
         float pixel = shape.pixel(size);
         float u = (column + 0.5F) / colour.width();
         float v = (row + 0.5F) / colour.height();
+        float lightU = (lightColumn + 0.5F) / colour.width();
+        float lightV = (lightRow + 0.5F) / colour.height();
         MeshShape.Builder mesh = MeshShape.builder();
         for (int r = 0; r < shape.height(); r++) {
             for (int c = 0; c < shape.width(); c++) {
-                if (!shape.solid(c, r)) {
+                int line = drizzle(c, r);
+                if (!shape.solid(c, r) || line < 0) {
                     continue;
                 }
+                boolean lit = line == 0;
+                float cu = lit ? lightU : u;
+                float cv = lit ? lightV : v;
                 float left = (shape.width() / 2.0F - c) * pixel;
                 float right = left - pixel;
                 float far = (shape.height() / 2.0F - r) * pixel;
                 float near = far - pixel;
-                mesh.corner(right, thick, near, u, v, 0, 1, 0).corner(right, thick, far, u, v, 0, 1, 0)
-                        .corner(left, thick, far, u, v, 0, 1, 0).corner(left, thick, near, u, v, 0, 1, 0);
-                if (!shape.solid(c, r + 1)) {
+                mesh.corner(right, thick, near, cu, cv, 0, 1, 0).corner(right, thick, far, cu, cv, 0, 1, 0)
+                        .corner(left, thick, far, cu, cv, 0, 1, 0).corner(left, thick, near, cu, cv, 0, 1, 0);
+                if (!shape.solid(c, r + 1) || drizzle(c, r + 1) < 0) {
                     side(mesh, new Vector3f(left, 0, near), new Vector3f(left, thick, near), new Vector3f(right, thick, near),
                             new Vector3f(right, 0, near), 0, 0, -1, u, v);
                 }
             }
         }
         return mesh.build();
+    }
+
+    /** Which row of a drizzled line pixel {@code (c, r)} is, 0 its top and 1 below it; -1 between the lines. */
+    private static int drizzle(int c, int r) {
+        float phase = (float) (c % (2 * DRIZZLE_TURN)) / DRIZZLE_TURN;
+        float swing = (phase < 1.0F ? phase : 2.0F - phase) * 2.0F - 1.0F;
+        int at = Math.floorMod(Math.round(r + swing * DRIZZLE_SWING + c / (2 * DRIZZLE_TURN) * 2), DRIZZLE_EVERY);
+        return at < 2 ? at : -1;
+    }
+
+    /**
+     * The lightest pixel of {@code full} where {@code empty} (its container) differs, {column, row}: where light catches the liquid.
+     */
+    static int[] lightest(Icon full, Optional<Icon> empty) {
+        int[] best = contents(full, empty);
+        float brightest = -1.0F;
+        for (int row = 0; row < full.height(); row++) {
+            for (int column = 0; column < full.width(); column++) {
+                if (!full.solid(column, row)) {
+                    continue;
+                }
+                int color = full.color(column, row);
+                boolean same = empty.isPresent() && empty.get().width() == full.width() && empty.get().height() == full.height()
+                        && empty.get().solid(column, row) && empty.get().color(column, row) == color;
+                float light = 0.3F * (color >> 16 & 0xFF) + 0.59F * (color >> 8 & 0xFF) + 0.11F * (color & 0xFF);
+                if (!same && light > brightest) {
+                    brightest = light;
+                    best = new int[] {column, row};
+                }
+            }
+        }
+        return best;
     }
 
     /**

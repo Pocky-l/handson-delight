@@ -123,12 +123,14 @@ public final class BoardBehavior implements StationBehavior {
     private static final float FREEZE_SET = 0.3F;
     private static final float FREEZE_AT = 0.28F;
     private static final int FROST = 0xFFE8F4FF;
-    /** A liquid poured over the layers: its container hangs over them, tips, and goes back to the cook. */
-    private static final float POUR_TIP = 0.14F;
-    private static final float POUR_FLOW = 0.3F;
-    private static final float POUR_HEIGHT = 3.5F;
-    private static final float POUR_TILT = 35.0F;
-    private static final float POUR_SCALE = 0.7F;
+    /**
+     * A liquid poured over the layers: how high its container is drawn, pixels, and where it comes from over the stack. An egg is
+     * cracked on the board beside the food: how high it is, and how far to the right of the food (pixels) it is knocked.
+     */
+    private static final float POUR_SIZE = 5.0F;
+    private static final float POUR_HEIGHT = 4.0F;
+    private static final float EGG_SIZE = 3.6F;
+    private static final float KNOCK_ASIDE = 5.5F;
     private static final float FILM_SHARE = 0.85F;
     private static final float FILM_THICK = 0.12F;
     /** Kneading: pressed into a lump, then pushed flat and gathered again a few times. */
@@ -223,6 +225,8 @@ public final class BoardBehavior implements StationBehavior {
     /** How high the item's node was last put to rest: a pile under it that came or went meanwhile moves it there. */
     private float itemRestY;
     private final List<Step> steps = new ArrayList<>();
+    /** What a hand pours or cracks over the stack, while it does; one at a time, there is one hand. */
+    private KitchenMotions.Motion handMotion;
 
     /** A part of an animation that comes after another: at {@link #clock} {@code at}. */
     private record Step(float at, Runnable run) {
@@ -584,6 +588,9 @@ public final class BoardBehavior implements StationBehavior {
         if (pendingChops > 0 && clock - pendingSince > PENDING_WAIT) {
             pendingChops = 0;
             refresh(view);
+        }
+        if (handMotion != null && !handMotion.frame(view, dt)) {
+            handMotion = null;
         }
         keepOnPile(view);
         moveKnife(view, dt);
@@ -1083,8 +1090,9 @@ public final class BoardBehavior implements StationBehavior {
             float delay = order * LAYER_STAGGER;
             if (!seen) {
                 order++;
-                // A liquid is poured, which takes longer than landing.
-                float takes = i > 0 && KitchenLooks.isPoured(layer) ? POUR_TIP + POUR_FLOW : PLAYER_LAND_TIME + SETTLE_TIME;
+                // A liquid is poured and an egg cracked over the stack, which takes longer than landing.
+                float takes = i > 0 && KitchenLooks.isPoured(layer) ? KitchenMotions.Pour.pouredBy(layer)
+                        : KitchenLooks.isCracked(layer) ? KitchenMotions.Crack.landsBy() + SETTLE_TIME : PLAYER_LAND_TIME + SETTLE_TIME;
                 landed = Math.max(landed, delay + takes);
             }
             int index = i;
@@ -1432,7 +1440,9 @@ public final class BoardBehavior implements StationBehavior {
             if (shape.isPresent() && liquid.isPresent()) {
                 float size = (index - 1 == 0 ? ITEM_SIZE : LAYER_SIZE) * FILM_SHARE;
                 KitchenLooks.Liquid it = liquid.get();
-                node.setShape(ItemVoxels.film(shape.get(), size, FILM_THICK, it.icon(), it.column(), it.row()), it.icon().sprite());
+                node.setShape(ItemVoxels.film(shape.get(), size, FILM_THICK, it.icon(), it.column(), it.row(), it.lightColumn(), it.lightRow()),
+                        it.icon().sprite());
+                // Solid: a see-through drizzle over the food drew in the wrong order with it; the food shows between the lines.
                 node.setTint(0xFFFFFFFF);
                 return;
             }
@@ -1443,35 +1453,45 @@ public final class BoardBehavior implements StationBehavior {
     }
 
     /**
-     * Layer {@code index} goes down: from the player or the hand it lands; an egg cracks over the stack first; a liquid is poured
-     * from its container, which hangs over the stack, tips and goes back to the cook.
+     * Layer {@code index} goes down: from the player or the hand it lands; an egg is cracked and its inside dropped onto the stack;
+     * a liquid is poured from its container, which is brought over the stack, tipped and taken back to the cook.
      */
     private void arrives(StationView view, NodeView node, int index, ItemStack layer, boolean fromPlayer) {
         float x = jitterX(index);
         float z = jitterZ(index);
-        Vector3f at = new Vector3f(MIDDLE_X + x, TOP + index * LAYER_STEP + 0.6F, MIDDLE_Z + z);
-        if (index > 0 && KitchenLooks.isPoured(layer)) {
+        if (index > 0 && KitchenLooks.isPoured(layer) && view.node("hand_0").isPresent()) {
             node.moveTo(x, 0.0F, z, 0.0F);
             node.scaleTo(0.2F, 0.0F);
-            pourUntil = clock + POUR_TIP + POUR_FLOW;
-            ghost(view, layer, LAYER_SIZE).ifPresent(container -> {
-                container.scaleTo(POUR_SCALE, 0.0F);
-                float y = index * LAYER_STEP + POUR_HEIGHT;
-                Vector3f from = fromPlayer ? FromPlayer.offset(view, TOP + y, 0, 1) : fromHand(view, container, y);
-                container.moveTo(x + from.x, y, z + from.z, 0.0F);
-                container.moveTo(x + 1.5F, y, z, POUR_TIP);
-                container.rotateTo(0.0F, 0.0F, POUR_TILT, POUR_TIP);
-                after(POUR_TIP, () -> {
-                    KitchenLooks.pour(view, "surface", layer, new Vector3f(MIDDLE_X + x + 0.8F, TOP + y - 0.5F, MIDDLE_Z + z), at);
-                    node.scaleTo(1.0F, POUR_FLOW);
-                });
-                after(POUR_TIP + POUR_FLOW, () -> {
-                    container.rotateTo(0.0F, 0.0F, 0.0F, LIFT_TIME);
-                    container.moveTo(x + 1.5F, y + LIFT_HEIGHT, z, LIFT_TIME + AWAY_TIME);
-                    container.scaleTo(0.0F, LIFT_TIME + AWAY_TIME);
-                });
-                after(POUR_TIP + POUR_FLOW + LIFT_TIME + AWAY_TIME, () -> container.setVisible(false));
+            node.setVisible(false);
+            NodeView hand = view.node("hand_0").get();
+            float top = TOP + index * LAYER_STEP + 0.3F;
+            Vector3f from = handFrom(view, top + POUR_HEIGHT, fromPlayer, x, z);
+            KitchenMotions.Pour pour = new KitchenMotions.Pour(hand, "pour", layer, from, new Vector3f(MIDDLE_X + x, top, MIDDLE_Z + z),
+                    () -> top, null, POUR_SIZE, -1.0F, 0.0F);
+            // The liquid spreads over the layer under it as it runs.
+            pour.onFlow(() -> {
+                node.setVisible(true);
+                node.scaleTo(1.0F, pour.flowTime());
             });
+            startHand(pour);
+            pourUntil = clock + pour.pouredBy();
+            return;
+        }
+        if (KitchenLooks.isCracked(layer) && view.node("hand_0").isPresent() && view.node("spill_0").isPresent()) {
+            // Knocked on the board beside the food, opened over it: its inside drops onto the stack and lies there.
+            node.moveTo(x, 0.0F, z, 0.0F);
+            node.setVisible(false);
+            float top = TOP + index * LAYER_STEP;
+            Vector3f from = handFrom(view, top + POUR_HEIGHT, fromPlayer, x, z);
+            Vector3f knock = new Vector3f(MIDDLE_X - KNOCK_ASIDE, TOP, MIDDLE_Z + z);
+            float size = index == 0 ? ITEM_SIZE : LAYER_SIZE;
+            startHand(new KitchenMotions.Crack(view.node("hand_0").get(), view.node("spill_0").get(), layer, from, knock,
+                    new Vector3f(MIDDLE_X + x, 0.0F, MIDDLE_Z + z), () -> top, null, EGG_SIZE, size, false, 0.0F)
+                    .insideTurn(turn(index))
+                    .onLanded(() -> {
+                        node.setVisible(true);
+                        view.playSound(FarmersDelightContent.BOARD_PLACE, "surface", 0.4F, 1.4F);
+                    }));
             return;
         }
         if (fromPlayer) {
@@ -1480,9 +1500,27 @@ public final class BoardBehavior implements StationBehavior {
         } else {
             land(view, node, x, 0.0F, z);
         }
-        if (KitchenLooks.isCracked(layer)) {
-            after(fromPlayer ? PLAYER_LAND_TIME : LAND_TIME, () -> KitchenLooks.crack(view, "surface", at));
+    }
+
+    /** One hand: what it was doing is put down for what it does now. */
+    private void startHand(KitchenMotions.Motion motion) {
+        if (handMotion != null) {
+            handMotion.stop();
         }
+        handMotion = motion;
+    }
+
+    /**
+     * Where a hand brings something from to lay it over the stack at ({@code x, z} from the middle), {@code height} over the board,
+     * scene pixels: from the player at the bottom of the screen, or from the cook's cursor, straight above for the others.
+     */
+    private Vector3f handFrom(StationView view, float height, boolean fromPlayer, float x, float z) {
+        if (fromPlayer) {
+            Vector3f off = FromPlayer.offset(view, height, 0, 1);
+            return new Vector3f(MIDDLE_X + x + off.x, height, MIDDLE_Z + z + off.z);
+        }
+        Optional<Vector3f> cursor = view.isFocused() ? view.cursorOn(height) : Optional.empty();
+        return cursor.orElse(new Vector3f(MIDDLE_X + x, height + 2.0F, MIDDLE_Z + z));
     }
 
     @Override

@@ -1,7 +1,6 @@
 # Changelog
 
-## [1.3.0+1.21.1] - Unreleased
-
+## [1.3.0+1.21.1] - 2026-11-11
 ### New
 - The stations work on the flying ships of [Create Aeronautics](https://modrinth.com/mod/create-aeronautics): the pot, the board, the skillet
   and the stove open there instead of Farmer's Delight's menus, and the camera and the food stay with the ship as it

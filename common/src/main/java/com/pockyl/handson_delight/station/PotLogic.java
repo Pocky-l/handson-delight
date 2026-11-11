@@ -217,18 +217,67 @@ public final class PotLogic implements StationLogic {
                         .ifPresentOrElse(kind -> kind.grow(stack.getCount()), () -> kinds.add(stack.copy()));
             }
         }
-        for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(level)) {
-            CookingPotRecipe recipe = holder.value();
-            int[] parts = parts(recipe, kinds);
+        List<CookingPotRecipe> recipes = Platform.INSTANCE.cookingRecipes(level).stream().map(RecipeHolder::value).toList();
+        for (CookingPotRecipe recipe : recipes) {
+            int[] parts = parts(recipe, kinds, false);
             if (parts != null) {
                 lay(pot, kinds, parts);
                 return;
             }
         }
+        // More than any recipe's slots hold (cooked rice has one ingredient, so one slot: a second stack of rice lay beside it and
+        // nothing cooked). The recipe that keeps the most gets it, the rest goes back to the cook; with nobody there it stays.
+        if (station.users().isEmpty()) {
+            return;
+        }
+        int[] best = null;
+        int bestKept = 0;
+        for (CookingPotRecipe recipe : recipes) {
+            int[] parts = parts(recipe, kinds, true);
+            int kept = parts == null ? 0 : kept(kinds, parts);
+            if (kept > bestKept) {
+                best = parts;
+                bestKept = kept;
+            }
+        }
+        if (best != null) {
+            handBack(station, lay(pot, kinds, best));
+        }
     }
 
-    /** In how many slots every kind must lie for the recipe; null when what is there does not make it, all of it and nothing else. */
-    private static int[] parts(CookingPotRecipe recipe, List<ItemStack> kinds) {
+    /** How many items the slots {@code parts} gives every kind hold. */
+    private static int kept(List<ItemStack> kinds, int[] parts) {
+        int kept = 0;
+        for (int kind = 0; kind < parts.length; kind++) {
+            kept += Math.min(kinds.get(kind).getCount(), parts[kind] * kinds.get(kind).getMaxStackSize());
+        }
+        return kept;
+    }
+
+    /** Gives what the pot cannot hold to the cook, or to anyone at the pot. */
+    private void handBack(StationContext station, List<ItemStack> rest) {
+        Player to = null;
+        for (Player user : station.users()) {
+            if (to == null || user.getUUID().equals(cook)) {
+                to = user;
+            }
+        }
+        for (ItemStack kind : rest) {
+            // One kind may be more than a stack: the inventory takes any count, a dropped item only one stack.
+            for (int count = kind.getCount(); count > 0; count -= kind.getMaxStackSize()) {
+                ItemStack stack = kind.copyWithCount(Math.min(count, kind.getMaxStackSize()));
+                if (!to.getInventory().add(stack)) {
+                    to.drop(stack, false);
+                }
+            }
+        }
+    }
+
+    /**
+     * In how many slots every kind must lie for the recipe; null when what is there does not make it, all of it and nothing else. With
+     * {@code overflow}, a kind may hold more than its slots take.
+     */
+    private static int[] parts(CookingPotRecipe recipe, List<ItemStack> kinds, boolean overflow) {
         int[] parts = new int[kinds.size()];
         for (Ingredient ingredient : recipe.getIngredients()) {
             int fits = -1;
@@ -245,26 +294,33 @@ public final class PotLogic implements StationLogic {
         }
         for (int kind = 0; kind < parts.length; kind++) {
             // What will not go into the slots it gets stays as it is.
-            if (parts[kind] == 0 || (kinds.get(kind).getCount() + parts[kind] - 1) / parts[kind] > kinds.get(kind).getMaxStackSize()) {
+            if (parts[kind] == 0 || !overflow && (kinds.get(kind).getCount() + parts[kind] - 1) / parts[kind] > kinds.get(kind).getMaxStackSize()) {
                 return null;
             }
         }
         return parts;
     }
 
-    private static void lay(CookingPotBlockEntity pot, List<ItemStack> kinds, int[] parts) {
+    /** Lays every kind over its slots, at most a full stack a slot; returns what did not fit. */
+    private static List<ItemStack> lay(CookingPotBlockEntity pot, List<ItemStack> kinds, int[] parts) {
+        List<ItemStack> rest = new ArrayList<>();
         int slot = 0;
         for (int kind = 0; kind < parts.length; kind++) {
-            int left = kinds.get(kind).getCount();
+            ItemStack stack = kinds.get(kind);
+            int left = Math.min(stack.getCount(), parts[kind] * stack.getMaxStackSize());
+            if (left < stack.getCount()) {
+                rest.add(stack.copyWithCount(stack.getCount() - left));
+            }
             for (int part = parts[kind]; part > 0; part--) {
                 int share = (left + part - 1) / part;
-                Platform.INSTANCE.setItem(pot, slot++, kinds.get(kind).copyWithCount(share));
+                Platform.INSTANCE.setItem(pot, slot++, stack.copyWithCount(share));
                 left -= share;
             }
         }
         while (slot < CookingPotBlockEntity.MEAL_DISPLAY_SLOT) {
             Platform.INSTANCE.setItem(pot, slot++, ItemStack.EMPTY);
         }
+        return rest;
     }
 
     @Override

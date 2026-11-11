@@ -159,6 +159,16 @@ public final class ModGameTests {
         PotTests.aModdedRecipeCooksAsABatch(helper);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void riceAddedWhileCookingKeepsTheProgress(GameTestHelper helper) {
+        PotTests.riceAddedWhileCookingKeepsTheProgress(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 320)
+    public static void moreRiceThanAStackStillCooks(GameTestHelper helper) {
+        PotTests.moreRiceThanAStackStillCooks(helper);
+    }
+
     @GameTest(template = "empty", timeoutTicks = 220)
     public static void aDishWithoutAContainerComesOutWhole(GameTestHelper helper) {
         PotTests.aDishWithoutAContainerComesOutWhole(helper);

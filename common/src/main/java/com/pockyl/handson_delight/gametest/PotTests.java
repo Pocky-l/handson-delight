@@ -392,8 +392,12 @@ public final class PotTests {
         helper.runAfterDelay(405, () -> {
             helper.assertTrue(setup.pot.getMeal().is(fd("hot_cocoa")), "the cocoa is made, got " + setup.pot.getMeal());
             helper.assertTrue(cook.getInventory().countItem(Items.GLASS_BOTTLE) == 1, "the cook has the bottle back");
-            helper.assertTrue(helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
-                    new net.minecraft.world.phys.AABB(setup.station.pos()).inflate(3)).isEmpty(), "nothing lands beside the pot");
+            List<net.minecraft.world.entity.item.ItemEntity> landed = helper.getLevel().getEntitiesOfClass(
+                    net.minecraft.world.entity.item.ItemEntity.class, new net.minecraft.world.phys.AABB(setup.station.pos()).inflate(3),
+                    // Only the bottle: the pots of the tests beside this one spill what they held when their structures are cleared.
+                    entity -> entity.getItem().is(Items.GLASS_BOTTLE));
+            helper.assertTrue(landed.isEmpty(), "the bottle does not land beside the pot, got " + landed.stream()
+                    .map(entity -> entity.getItem() + " at " + entity.blockPosition()).toList());
             helper.succeed();
         });
     }
@@ -570,6 +574,84 @@ public final class PotTests {
             helper.assertTrue(Platform.INSTANCE.getItem(setup.pot, 0).getCount() == 4, "the wheat left over stays");
             helper.succeed();
         });
+    }
+
+    /**
+     * Cooked rice has one ingredient, so Farmer's Delight cooks it from one slot only: a second stack of rice beside the first made no
+     * recipe and nothing cooked. The pot keeps a stack and gives the rest back; the rice is served in the bowl the item leaves behind.
+     */
+    public static void moreRiceThanAStackStillCooks(GameTestHelper helper) {
+        Setup setup = pot(helper);
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        setup.station.users.add(player);
+        Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(fd("rice"), 40));
+        Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(fd("rice"), 40));
+        setup.logic.onSlotChanged(setup.station, SlotRef.of(CookingPotStation.INGREDIENTS, 1));
+        setup.logic.tick(setup.station);
+        // Without a mod that matches stacks (Autochef's Delight) a stack stays in the pot and the rest goes back.
+        helper.assertTrue(cooks(helper, setup.pot), "the rice makes the recipe, got " + Platform.INSTANCE.getItem(setup.pot, 0) + " + "
+                + Platform.INSTANCE.getItem(setup.pot, 1));
+        helper.assertTrue(riceInPot(setup.pot) + player.getInventory().countItem(fd("rice")) == 80, "no rice is lost");
+        stirFor(helper, setup, 300);
+        helper.runAfterDelay(300, () -> {
+            // Sixteen servings of a 5 s recipe: 5 s * 4 / 1.5, about thirteen seconds.
+            helper.assertTrue(setup.pot.getMeal().is(fd("cooked_rice")) && setup.pot.getMeal().getCount() == 16,
+                    "sixteen servings of rice, got " + setup.pot.getMeal());
+            player.inventoryMenu.setCarried(new ItemStack(Items.BOWL, 2));
+            setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_SCOOP, new CompoundTag());
+            helper.assertTrue(player.getInventory().contains(new ItemStack(fd("cooked_rice"))), "a bowl takes a serving");
+            empty(setup.pot);
+            helper.succeed();
+        });
+    }
+
+    /** A stack of rice put in while the pot cooks: the batch goes on from where it was. */
+    public static void riceAddedWhileCookingKeepsTheProgress(GameTestHelper helper) {
+        Setup setup = pot(helper);
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        setup.station.users.add(player);
+        Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(fd("rice"), 60));
+        stirFor(helper, setup, 300);
+        float[] before = new float[1];
+        helper.runAfterDelay(100, () -> {
+            setup.logic.tick(setup.station);
+            before[0] = setup.station.state().getControl(CookingPotStation.PROGRESS);
+            Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(fd("rice"), 20));
+            setup.logic.onSlotChanged(setup.station, SlotRef.of(CookingPotStation.INGREDIENTS, 1));
+            // The station shares the rice out on its tick, as in game: the pot never stands a tick without its recipe.
+            setup.logic.tick(setup.station);
+        });
+        helper.runAfterDelay(110, () -> {
+            setup.logic.tick(setup.station);
+            float after = setup.station.state().getControl(CookingPotStation.PROGRESS);
+            helper.assertTrue(before[0] > 0.2F && after > before[0], "the progress goes on, " + before[0] + " -> " + after);
+            helper.assertTrue(cooks(helper, setup.pot), "the rice makes the recipe");
+            empty(setup.pot);
+            helper.succeed();
+        });
+    }
+
+    private static boolean cooks(GameTestHelper helper, CookingPotBlockEntity pot) {
+        List<ItemStack> inPot = new ArrayList<>();
+        for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
+            inPot.add(Platform.INSTANCE.getItem(pot, i));
+        }
+        return Platform.INSTANCE.findRecipe(helper.getLevel(), inPot).isPresent();
+    }
+
+    private static int riceInPot(CookingPotBlockEntity pot) {
+        int rice = 0;
+        for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
+            rice += Platform.INSTANCE.getItem(pot, i).is(fd("rice")) ? Platform.INSTANCE.getItem(pot, i).getCount() : 0;
+        }
+        return rice;
+    }
+
+    /** Empties the pot, so nothing spills over the tests beside it when its structure is cleared. */
+    private static void empty(CookingPotBlockEntity pot) {
+        for (int i = 0; i <= CookingPotBlockEntity.OUTPUT_SLOT; i++) {
+            Platform.INSTANCE.setItem(pot, i, ItemStack.EMPTY);
+        }
     }
 
     private static final class TestStation implements StationContext {

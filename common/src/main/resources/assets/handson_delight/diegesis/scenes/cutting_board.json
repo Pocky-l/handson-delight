@@ -50,6 +50,10 @@
       "pickable": false,
       "hidden": true
     },
+    {"$comment": "What a hand brings over and pours or cracks (a bottle of milk, an egg), moved by the code in scene pixels.",
+      "id": "hand_0", "pos": [0, 0, 0], "pickable": false, "hidden": true},
+    {"$comment": "The inside of an egg cracked over food, dropping into it.",
+      "id": "spill_0", "pos": [0, 0, 0], "pickable": false, "hidden": true},
     {
       "id": "book_open",
       "pos": [15.83, 15.72, -4],

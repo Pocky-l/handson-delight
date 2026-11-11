@@ -11,6 +11,7 @@
     "ItemUtilsMixin",
     "RecipeManagerMixin",
     "RecipeManagerAccessor",
+    "KubeJsRecipesMixin",
     "ShapelessRecipeMixin",
     "ShapedRecipeMixin",
     "TransientCraftingContainerAccessor",

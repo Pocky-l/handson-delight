@@ -120,6 +120,8 @@ final class RecipeBook implements NodePainter {
     private static final float TAB_DROP = 3.0F;
     private static final float TAB_ICON = 11.0F;
     private static final int TAB_EDGE = 0x905A3C18;
+    /** The least room kept between the tabs and the page's edges once the row has to move over to fit. */
+    private static final float TAB_MARGIN = 2.0F;
     private static final int RIBBON_X = 62;
     private static final int RIBBON_WIDTH = 6;
     private static final int RIBBON_HEIGHT = 13;
@@ -516,7 +518,7 @@ final class RecipeBook implements NodePainter {
         float y = (PAGE_HEIGHT / 2.0F - point.z) / UNIT;
         // The left page runs from its edge at +x to the fold at 0; the right one on from there.
         float x = point.x > 0.0F ? (PAGE_WIDTH - point.x) / UNIT : UNITS_WIDE - point.x / UNIT;
-        boolean overTabs = !tabs.isEmpty() && x < UNITS_WIDE && y >= -TAB_HIGH && y < 0.0F;
+        boolean overTabs = !tabs.isEmpty() && x >= 0.0F && x < UNITS_WIDE && y >= -TAB_HIGH && y < 0.0F;
         if (x >= 0.0F && x < UNITS_WIDE * 2 && (y >= 0.0F || overTabs) && y < UNITS_HIGH) {
             cursorX = x;
             cursorY = y;
@@ -533,9 +535,25 @@ final class RecipeBook implements NodePainter {
     }
 
     private Tab tabAt(float x) {
-        int index = Mth.floor((x - TABS_X) / TAB_PITCH);
-        float into = x - TABS_X - index * TAB_PITCH;
-        return index >= 0 && index < tabs.size() && into < TAB_WIDE ? tabs.get(index) : null;
+        float start = tabsX();
+        float pitch = tabPitch();
+        // A tab drawn later lies over the one before it: each shows from its own left edge to the next one's.
+        int index = Math.min(Mth.floor((x - start) / pitch), tabs.size() - 1);
+        float into = x - start - index * pitch;
+        return index >= 0 && into < TAB_WIDE ? tabs.get(index) : null;
+    }
+
+    /** Where the row of tabs starts: its usual place while they fit over the left page, else nearer its edge. */
+    private float tabsX() {
+        return TABS_X + (tabs.size() - 1) * TAB_PITCH + TAB_WIDE <= UNITS_WIDE - TAB_MARGIN ? TABS_X : TAB_MARGIN;
+    }
+
+    /** How far apart the tabs stand: as usual, or closer, overlapping, so that however many there are all stay over the left page. */
+    private float tabPitch() {
+        if (tabs.size() < 2) {
+            return TAB_PITCH;
+        }
+        return Math.min(TAB_PITCH, (UNITS_WIDE - TAB_MARGIN - tabsX() - TAB_WIDE) / (tabs.size() - 1));
     }
 
     private boolean onRibbon() {
@@ -671,7 +689,7 @@ final class RecipeBook implements NodePainter {
     private void drawTabs(Sheet canvas) {
         for (int i = 0; i < tabs.size(); i++) {
             Tab shown = tabs.get(i);
-            canvas.tab(TABS_X + i * TAB_PITCH, Objects.equals(shown.kind(), tab), shown == hoveredTab, shown.icon());
+            canvas.tab(tabsX() + i * tabPitch(), Objects.equals(shown.kind(), tab), shown == hoveredTab, shown.icon());
         }
     }
 

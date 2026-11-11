@@ -4,6 +4,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CampfireCookingRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
@@ -16,7 +17,7 @@ import com.pockyl.handson_delight.station.StoveStation;
 import java.util.ArrayList;
 import java.util.List;
 
-/** The stove's book: what the fire cooks, each with the time a piece takes on the grill at the station's pace, both sides. */
+/** The stove's book: what the fire cooks and the grill takes (no eggs), each with the time a piece takes on the grill at the station's pace, both sides. */
 final class StoveBook implements RecipeBook.Source {
     @Override
     public List<RecipeBook.Page> pages(StationView view) {
@@ -27,9 +28,13 @@ final class StoveBook implements RecipeBook.Source {
             if (dish.isEmpty() || recipe.getIngredients().isEmpty()) {
                 continue;
             }
+            Ingredient food = StoveCooking.grillable(recipe.getIngredients().get(0));
+            if (food.isEmpty()) {
+                continue;
+            }
             int ticks = 2 * StoveCooking.sideTicks(recipe.getCookingTime());
             Component seconds = Component.translatable("handson_delight.book.seconds", Math.round(ticks / 20.0F));
-            pages.add(new RecipeBook.Page(recipe.getId(), dish.copy(), List.of(recipe.getIngredients().get(0)),
+            pages.add(new RecipeBook.Page(recipe.getId(), dish.copy(), List.of(food),
                     List.of(new ItemStack(Items.CLOCK)), seconds, false));
         }
         return pages;

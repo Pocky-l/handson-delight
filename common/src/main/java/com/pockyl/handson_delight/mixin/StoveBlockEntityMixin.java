@@ -30,6 +30,9 @@ import com.pockyl.handson_delight.station.StoveTop;
 abstract class StoveBlockEntityMixin implements StoveTop {
     @Unique
     private static final String GRILL = HandsOnDelight.MOD_ID + ":grill";
+    /** Farmer's Delight's own key for the cooking times of the six places. */
+    @Unique
+    private static final String TOTAL_TIMES = "CookingTotalTimes";
 
     @Shadow(remap = false)
     @Final
@@ -102,6 +105,7 @@ abstract class StoveBlockEntityMixin implements StoveTop {
         handson$grill.save(grill);
         if (!grill.isEmpty()) {
             tag.put(GRILL, grill);
+            tag.putIntArray(TOTAL_TIMES, StoveCooking.savedTimes((AbstractStoveBlockEntity) (Object) this));
         }
     }
 

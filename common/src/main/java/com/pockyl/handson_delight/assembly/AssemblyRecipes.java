@@ -370,8 +370,13 @@ public final class AssemblyRecipes {
      */
     public static void collect(Map<ResourceLocation, JsonElement> json, Map<ResourceLocation, JsonObject> found) {
         json.forEach((id, element) -> {
-            if (element.isJsonObject()) {
-                candidate(id, element.getAsJsonObject()).ifPresent(recipe -> found.put(id, recipe));
+            // One broken recipe of an addon or datapack must not stop the reload: the game itself only logs it.
+            try {
+                if (element.isJsonObject()) {
+                    candidate(id, element.getAsJsonObject()).ifPresent(recipe -> found.put(id, recipe));
+                }
+            } catch (RuntimeException broken) {
+                HandsOnDelight.LOGGER.warn("Could not read the recipe {} for the cutting board", id, broken);
             }
         });
     }

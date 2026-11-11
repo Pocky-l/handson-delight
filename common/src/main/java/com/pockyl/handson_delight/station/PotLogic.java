@@ -261,9 +261,13 @@ public final class PotLogic implements StationLogic {
                 to = user;
             }
         }
-        for (ItemStack stack : rest) {
-            if (!to.getInventory().add(stack)) {
-                to.drop(stack, false);
+        for (ItemStack kind : rest) {
+            // One kind may be more than a stack: the inventory takes any count, a dropped item only one stack.
+            for (int count = kind.getCount(); count > 0; count -= kind.getMaxStackSize()) {
+                ItemStack stack = kind.copyWithCount(Math.min(count, kind.getMaxStackSize()));
+                if (!to.getInventory().add(stack)) {
+                    to.drop(stack, false);
+                }
             }
         }
     }
@@ -492,15 +496,21 @@ public final class PotLogic implements StationLogic {
             }
             stirredAt = now;
             ((PotStirring) pot).handson$stir(now + STIR_TICKS);
-            float x = Mth.clamp(data.getFloat(CookingPotStation.STIR_X), -1.0F, 1.0F);
-            float z = Mth.clamp(data.getFloat(CookingPotStation.STIR_Z), -1.0F, 1.0F);
+            float x = spoon(data.getFloat(CookingPotStation.STIR_X));
+            float z = spoon(data.getFloat(CookingPotStation.STIR_Z));
             ItemStack dish = result(station);
             cook = player.getUUID();
-            float at = data.contains(CookingPotStation.STIR_AT) ? data.getFloat(CookingPotStation.STIR_AT) : Float.NaN;
+            float at = data.contains(CookingPotStation.STIR_AT) && Float.isFinite(data.getFloat(CookingPotStation.STIR_AT))
+                    ? data.getFloat(CookingPotStation.STIR_AT) : Float.NaN;
             ((PotStirring) pot).handson$skill().move(now, at, x, z, pot.isHeated() && batch(station) > 0, openStars(player, dish));
             station.state().setControl(CookingPotStation.SPOON_X, x);
             station.state().setControl(CookingPotStation.SPOON_Z, z);
         }
+    }
+
+    /** Where the client says the spoon is, -1 to 1 across the pot; a broken value is the middle, never a NaN kept in the stars. */
+    private static float spoon(float at) {
+        return Float.isFinite(at) ? Mth.clamp(at, -1.0F, 1.0F) : 0.0F;
     }
 
     /**

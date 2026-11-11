@@ -4,7 +4,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -20,9 +20,9 @@ import com.pockyl.handson_delight.station.CuttingBoardStation;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * The board's book: what can be cut, listed by what comes off (a cabbage leaf: a cabbage and a knife, with everything else the cut
@@ -35,6 +35,8 @@ final class BoardBook implements RecipeBook.Source {
     private static ListTag received = new ListTag();
     private static final String DISHES = "dishes";
     private static final String KNIFE = "knife";
+    /** Cuts made with anything but a knife: an axe, shears, an addon's rolling pin, all under one tab. */
+    private static final String TOOLS = "tools";
     private ListTag readFrom;
     private List<RecipeBook.Page> dishes = List.of();
     /** Goes up each time the dishes are read anew: what the drawer shows depends on them. */
@@ -56,7 +58,10 @@ final class BoardBook implements RecipeBook.Source {
         return pages;
     }
 
-    /** The tabs: everything, the dishes, then a tab for each tool the board cuts with, the knife first. */
+    /**
+     * The tabs: everything, the dishes, the knife's cuts, and the cuts of every other tool under one tab, shown by the tool most of
+     * them take. One tab per tool overflowed the page with addons, which bring axes, shears, pickaxes and their own tools.
+     */
     @Override
     public List<RecipeBook.Tab> tabs(StationView view) {
         List<RecipeBook.Tab> tabs = new ArrayList<>();
@@ -65,14 +70,21 @@ final class BoardBook implements RecipeBook.Source {
         if (!dishes(view).isEmpty()) {
             tabs.add(new RecipeBook.Tab(DISHES, new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("hamburger")))));
         }
-        Set<String> tools = new LinkedHashSet<>();
-        Cutting.all(view.level()).stream().map(BoardBook::toolKind).sorted(Comparator.comparing(kind -> !kind.equals(KNIFE)))
-                .forEach(tools::add);
-        for (String tool : tools) {
-            ItemStack icon = tool.equals(KNIFE) ? new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")))
-                    : new ItemStack(BuiltInRegistries.ITEM.get(new ResourceLocation(tool)));
-            tabs.add(new RecipeBook.Tab(tool, icon));
+        Map<Item, Integer> others = new HashMap<>();
+        boolean knife = false;
+        for (CuttingBoardRecipe recipe : Cutting.all(view.level())) {
+            if (toolKind(recipe).equals(KNIFE)) {
+                knife = true;
+            } else {
+                others.merge(recipe.getTool().getItems()[0].getItem(), 1, Integer::sum);
+            }
         }
+        if (knife) {
+            tabs.add(new RecipeBook.Tab(KNIFE, new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")))));
+        }
+        others.entrySet().stream().max(Map.Entry.<Item, Integer>comparingByValue()
+                        .thenComparing(entry -> BuiltInRegistries.ITEM.getKey(entry.getKey()).toString(), Comparator.reverseOrder()))
+                .ifPresent(most -> tabs.add(new RecipeBook.Tab(TOOLS, new ItemStack(most.getKey()))));
         return tabs;
     }
 
@@ -81,14 +93,13 @@ final class BoardBook implements RecipeBook.Source {
         return CuttingBoardStation.ID.toString();
     }
 
-    /** What a cut is made with: the knife, or the first item of its tool (an axe), by id. */
+    /** What a cut is made with: the knife, or another tool. */
     private static String toolKind(CuttingBoardRecipe recipe) {
         ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")));
         if (recipe.getTool().test(knife)) {
             return KNIFE;
         }
-        ItemStack[] tools = recipe.getTool().getItems();
-        return tools.length == 0 ? KNIFE : BuiltInRegistries.ITEM.getKey(tools[0].getItem()).toString();
+        return recipe.getTool().getItems().length == 0 ? KNIFE : TOOLS;
     }
 
     static void received(ListTag book) {

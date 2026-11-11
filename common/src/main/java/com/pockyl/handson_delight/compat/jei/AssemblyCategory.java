@@ -49,16 +49,25 @@ import static com.pockyl.handson_delight.compat.AssemblyLayout.layers;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.result;
 import static com.pockyl.handson_delight.compat.AssemblyLayout.title;
 
-/** A dish put together on the cutting board, laid out by {@link AssemblyLayout}. */
+/**
+ * A dish put together on the cutting board, laid out by {@link AssemblyLayout}.
+ *
+ * <p>Works with every JEI for 1.20.1, not only the one compiled against: JEI before 15.20.0 draws {@link #getBackground()} and
+ * has it abstract, JEI before 15.12.3 has no rich tooltip callback, and either missing method crashes the game when the
+ * category opens. Many modpacks keep an older JEI.
+ */
+@SuppressWarnings({"removal", "deprecation"})
 final class AssemblyCategory implements IRecipeCategory<Assembly> {
     static final RecipeType<Assembly> TYPE = new RecipeType<>(CATEGORY, Assembly.class);
 
+    private final IDrawable background;
     private final IDrawable board;
     private final IDrawable slot;
     private final IDrawable arrow;
     private final IDrawable icon;
 
     AssemblyCategory(IGuiHelper gui) {
+        background = gui.createBlankDrawable(WIDTH, HEIGHT);
         board = gui.createDrawable(TEXTURE, BOARD_U, BOARD_V, BOARD_WIDTH, BOARD_HEIGHT);
         slot = gui.createDrawable(TEXTURE, SLOT_U, SLOT_V, SLOT_SIZE, SLOT_SIZE);
         arrow = gui.createDrawable(TEXTURE, ARROW_U, ARROW_V, ARROW_WIDTH, ARROW_HEIGHT);
@@ -73,6 +82,11 @@ final class AssemblyCategory implements IRecipeCategory<Assembly> {
     @Override
     public Component getTitle() {
         return title();
+    }
+
+    @Override
+    public IDrawable getBackground() {
+        return background;
     }
 
     @Override
@@ -93,7 +107,7 @@ final class AssemblyCategory implements IRecipeCategory<Assembly> {
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, Assembly dish, IFocusGroup focuses) {
         builder.addSlot(RecipeIngredientRole.INPUT, BASE_X, BASE_Y).addIngredients(base(dish))
-                .addRichTooltipCallback((view, tooltip) -> tooltip.add(goesDownFirst()));
+                .addTooltipCallback((view, tooltip) -> tooltip.add(goesDownFirst()));
         List<Ingredient> layers = layers(dish);
         for (int i = 0; i < layers.size(); i++) {
             builder.addSlot(RecipeIngredientRole.INPUT, layerX(i) + 1, layerY(i, layers.size()) + 1).addIngredients(layers.get(i))

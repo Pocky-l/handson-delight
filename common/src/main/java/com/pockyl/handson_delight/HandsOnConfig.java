@@ -3,7 +3,7 @@ package com.pockyl.handson_delight;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.io.IOException;
-import java.io.Reader;
+import java.io.StringReader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -40,11 +40,14 @@ public final class HandsOnConfig {
     static void load() {
         Path path = Platform.INSTANCE.configDir().resolve(FILE);
         Properties values = new Properties();
+        boolean unread = false;
         if (Files.exists(path)) {
-            try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                values.load(reader);
+            // Read leniently: a file saved in another encoding (a comment in Cyrillic in Windows-1251) keeps its values.
+            try {
+                values.load(new StringReader(new String(Files.readAllBytes(path), StandardCharsets.UTF_8)));
             } catch (IOException | IllegalArgumentException exception) {
                 HandsOnDelight.LOGGER.warn("Could not read {}, using the defaults", path, exception);
+                unread = true;
             }
         }
         cookingPot = read(values, "cooking_pot", cookingPot);
@@ -54,6 +57,10 @@ public final class HandsOnConfig {
         removeCraftingRecipes = read(values, "remove_crafting_recipes", removeCraftingRecipes);
         stirringRequired = read(values, "stirring_required", stirringRequired);
         recipeBook = read(values, "recipe_book", recipeBook);
+        if (unread) {
+            // Never write the defaults over a file the player wrote and the game could not read.
+            return;
+        }
         // Written back every start, so a file from an older version gets the new keys.
         try {
             Files.createDirectories(path.getParent());
@@ -66,8 +73,12 @@ public final class HandsOnConfig {
     }
 
     private static boolean read(Properties values, String key, boolean fallback) {
-        String value = values.getProperty(key, String.valueOf(fallback)).trim();
-        boolean read = value.equalsIgnoreCase("true") || !value.equalsIgnoreCase("false") && fallback;
+        String value = values.getProperty(key, String.valueOf(fallback)).trim().toLowerCase(java.util.Locale.ROOT);
+        boolean read = switch (value) {
+            case "true", "yes", "on", "1" -> true;
+            case "false", "no", "off", "0" -> false;
+            default -> fallback;
+        };
         values.setProperty(key, String.valueOf(read));
         return read;
     }

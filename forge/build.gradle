@@ -97,6 +97,19 @@ if (providers.gradleProperty('addons').isPresent()) {
     }
 }
 
+// -Pkubejs runs the game tests with KubeJS and a server script listening to its recipe event: KubeJS for 1.20.1 then loads the
+// recipes itself and cancels the game's own loading, and the board must still find its dishes (KubeJsRecipesMixin).
+var kubejs = providers.gradleProperty('kubejs').isPresent()
+if (kubejs) {
+    dependencies {
+        [
+                'kubejs:hVR2xUSr',                // KubeJS 2001.6.5-build.26
+                'rhino:uNALdylI',                 // Rhino 2001.2.3-build.10, needed by KubeJS
+                'architectury-api:1MKTLiiG',      // Architectury 9.2.14, needed by KubeJS
+        ].each { modRuntimeOnly "maven.modrinth:${it}" }
+    }
+}
+
 var syncDevMods = tasks.register('syncDevMods', Sync) {
     from(configurations.devMods)
     into 'run/gametest/mods'
@@ -105,12 +118,20 @@ var syncDevMods = tasks.register('syncDevMods', Sync) {
 // Forge 1.20.1 runs the game tests on a dedicated server, in a world made from server.properties: a flat one.
 var prepareGameTestServer = tasks.register('prepareGameTestServer') {
     var dir = project.file('run/gametest')
+    inputs.property('kubejs', kubejs)
     outputs.file(new File(dir, 'server.properties'))
     doLast {
         dir.mkdirs()
         new File(dir, 'server.properties').text = [
                 'level-type=minecraft:flat', 'generate-structures=false', 'spawn-protection=0'
         ].join(System.lineSeparator()) + System.lineSeparator()
+        var script = new File(dir, 'kubejs/server_scripts/handson_delight_test.js')
+        if (kubejs) {
+            script.parentFile.mkdirs()
+            script.text = 'ServerEvents.recipes(event => {})' + System.lineSeparator()
+        } else {
+            script.delete()
+        }
     }
 }
 tasks.named('runGameTestServer') { dependsOn syncDevMods, prepareGameTestServer }

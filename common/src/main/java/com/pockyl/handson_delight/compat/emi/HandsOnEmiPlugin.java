@@ -42,7 +42,9 @@ public final class HandsOnEmiPlugin implements EmiPlugin {
         registry.addWorkstation(CATEGORY, BOARD);
         List<Assembly> dishes = BoardDishes.all();
         Set<ResourceLocation> ids = BoardDishes.ids();
-        registry.removeRecipes(recipe -> recipe.getCategory() == VanillaEmiRecipeCategories.CRAFTING && ids.contains(recipe.getId()));
+        // EMI recipes may have no id, and the set refuses a null lookup: one such recipe in a modpack broke the whole plugin.
+        registry.removeRecipes(recipe -> recipe.getCategory() == VanillaEmiRecipeCategories.CRAFTING && recipe.getId() != null
+                && ids.contains(recipe.getId()));
         for (Assembly dish : dishes) {
             registry.addRecipe(new AssemblyRecipe(dish));
         }

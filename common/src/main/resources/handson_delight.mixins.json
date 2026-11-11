@@ -27,9 +27,7 @@
     "CookingPotBlockEntityMixin",
     "CookingPotBlockMixin",
     "SpriteContentsAccessor",
-    "CuttingBoardRendererMixin",
-    "SkilletRendererMixin",
-    "StoveRendererMixin",
+    "StationRenderersMixin",
     "StoveSmokeMixin",
     "CampfireSmokeMixin"
   ],

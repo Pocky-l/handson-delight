@@ -15,7 +15,7 @@ import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
 
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.station.BoardLayers;
-import com.pockyl.handson_delight.station.BoardResults;
+import com.pockyl.handson_delight.station.CaughtDrops;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 
 /**
@@ -66,7 +66,7 @@ abstract class CuttingBoardBlockEntityMixin implements BoardLayers {
 
     @Inject(method = "playProcessingSound", at = @At("HEAD"), cancellable = true, remap = false)
     private void handson$oneSoundForABatch(String sound, ItemStack tool, ItemStack item, CallbackInfo callback) {
-        if (BoardResults.isQuiet()) {
+        if (CaughtDrops.isQuiet()) {
             callback.cancel();
         }
     }

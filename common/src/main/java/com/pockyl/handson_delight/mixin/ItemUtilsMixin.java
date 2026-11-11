@@ -8,18 +8,19 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import vectorwing.farmersdelight.common.utility.ItemUtils;
 
-import com.pockyl.handson_delight.station.BoardResults;
+import com.pockyl.handson_delight.station.CaughtDrops;
 
 /**
- * Farmer's Delight throws what a cut makes off the board into the world, where a cook whose camera is at the board would have to
- * walk after it. While the board's station cuts, the pieces are caught and handed to the cook instead.
+ * Farmer's Delight throws what its board, skillet and stove make into the world, where a cook whose camera is at the station would
+ * have to walk after it. While a station lets Farmer's Delight's code make it, the items are caught ({@code CaughtDrops}) and the
+ * station hands them to the cook or lays them where the cook looks.
  */
 @Mixin(value = ItemUtils.class, remap = false)
 abstract class ItemUtilsMixin {
     @Inject(method = "spawnItemEntity", at = @At("HEAD"), cancellable = true)
     private static void handson$catch(Level level, ItemStack stack, double x, double y, double z, double dx, double dy, double dz,
             CallbackInfo callback) {
-        if (BoardResults.take(stack)) {
+        if (CaughtDrops.take(stack, x, y, z, dx, dy, dz)) {
             callback.cancel();
         }
     }

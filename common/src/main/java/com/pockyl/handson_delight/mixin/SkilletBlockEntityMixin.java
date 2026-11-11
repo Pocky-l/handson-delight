@@ -31,6 +31,18 @@ abstract class SkilletBlockEntityMixin implements FryingPan {
 
     @Shadow(remap = false)
     private int fireAspectLevel;
+    @Shadow(remap = false)
+    private int cookingTime;
+    @Shadow(remap = false)
+    private int cookingTimeTotal;
+    /** On while {@link #handson$cookOneNow} runs Farmer's Delight's cooking for the station. */
+    @Unique
+    private boolean handson$cookingNow;
+
+    @Shadow(remap = false)
+    private void cookAndOutputItems(ItemStack stack, Level level) {
+        throw new AssertionError();
+    }
 
     @Unique
     private final Frying handson$frying = new Frying();
@@ -45,9 +57,21 @@ abstract class SkilletBlockEntityMixin implements FryingPan {
         return fireAspectLevel;
     }
 
+    @Override
+    public void handson$cookOneNow(Level level) {
+        // Farmer's Delight counts one more tick, then cooks once its count reaches its total.
+        cookingTime = Math.max(cookingTime, cookingTimeTotal);
+        handson$cookingNow = true;
+        try {
+            cookAndOutputItems(((SkilletBlockEntity) (Object) this).getStoredStack(), level);
+        } finally {
+            handson$cookingNow = false;
+        }
+    }
+
     @Inject(method = "cookAndOutputItems", at = @At("HEAD"), cancellable = true, remap = false)
     private void handson$fryByHand(ItemStack stack, Level level, CallbackInfo callback) {
-        if (SkilletCooking.fry((SkilletBlockEntity) (Object) this, stack)) {
+        if (!handson$cookingNow && SkilletCooking.fry((SkilletBlockEntity) (Object) this, stack)) {
             callback.cancel();
         }
     }

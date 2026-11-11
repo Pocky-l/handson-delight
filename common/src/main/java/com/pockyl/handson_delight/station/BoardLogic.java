@@ -412,7 +412,7 @@ public final class BoardLogic implements StationLogic {
         restart(station);
         int done = 0;
         while (done < CuttingBoardStation.BATCH && !Platform.INSTANCE.getItem(board).isEmpty() && !tool.isEmpty()) {
-            List<ItemStack> results = BoardResults.catching(done > 0, () -> board.processStoredItemUsingTool(knife, player));
+            List<ItemStack> results = CaughtDrops.catching(done > 0, () -> board.processStoredItemUsingTool(knife, player));
             if (results == null) {
                 break;
             }

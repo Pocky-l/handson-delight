@@ -316,6 +316,7 @@ public final class PotBehavior implements StationBehavior {
 
     @Override
     public void onSceneReady(StationView view) {
+        PotLookCheck.check(view.level().getBlockState(view.pos()), view.level().getBlockEntity(view.pos()));
         drawnDial = -1;
         drawnTrack = -1;
         shownTurn = Float.NaN;

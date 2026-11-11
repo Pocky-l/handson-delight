@@ -42,6 +42,14 @@ abstract class StoveBlockEntityMixin implements StoveTop {
     @Unique
     private final Grill handson$grill = new Grill();
 
+    @Unique
+    private final boolean[] handson$cookingNow = new boolean[Grill.PLACES];
+
+    @Override
+    public boolean[] handson$cookingNow() {
+        return handson$cookingNow;
+    }
+
     @Override
     public Grill handson$grill() {
         return handson$grill;
@@ -62,6 +70,22 @@ abstract class StoveBlockEntityMixin implements StoveTop {
             CallbackInfo callback) {
         StoveCooking.tick(stove);
     }
+
+    /** Farmer's Delight cooks what is due on the grill: the pieces the station finished come back to it, cooked by its own code. */
+    @Inject(method = "serverTick", at = @At(value = "INVOKE", target = COOK), remap = false)
+    private static void handson$beforeCooking(Level level, BlockPos pos, BlockState state, AbstractStoveBlockEntity stove,
+            CallbackInfo callback) {
+        StoveCooking.beforeFarmersDelightCooks(stove);
+    }
+
+    @Inject(method = "serverTick", at = @At(value = "INVOKE", target = COOK, shift = At.Shift.AFTER), remap = false)
+    private static void handson$afterCooking(Level level, BlockPos pos, BlockState state, AbstractStoveBlockEntity stove,
+            CallbackInfo callback) {
+        StoveCooking.afterFarmersDelightCooks(stove);
+    }
+
+    @Unique
+    private static final String COOK = "Lvectorwing/farmersdelight/common/block/entity/AbstractStoveBlockEntity;cookAndOutputItems()V";
 
     /** Food put on with Farmer's Delight's own right click is its to cook. */
     @Inject(method = "placeFood", at = @At("HEAD"), remap = false)

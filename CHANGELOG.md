@@ -1,6 +1,51 @@
 # Changelog
 
-## [1.2.0+1.20.1] - Unreleased
+## [1.3.0+1.20.1] - Unreleased
+
+### New
+- Milk and other drinks are poured as a hand would: the bottle or bucket tips over the pot and the liquid runs out in a
+  stream that colours the soup. On the board honey and milk lie on the food in drizzled lines.
+- Eggs are knocked on the rim of the pot or the skillet, or on the board beside the food. Sugar, cocoa and the like are
+  shaken out over the soup.
+- Milk, eggs, sugar and the rest of what sinks into the cooking pot can be taken back out: click the soup with an empty
+  hand, off the floating food. The container dips into the soup and comes back to you full, milk in its bucket.
+- Food done in the skillet glows in a steady beat and steams until you take it, so you see at a glance that it is ready.
+- The pot's dish and stars stay in sight over its walls and the blocks beside it, and the first thing put in floats
+  across from the spoon.
+- Food fried or grilled at the stations is cooked by Farmer's Delight's own skillet and stove, so mods that add to their
+  cooking work at the stations too: [Project MMO: Farmer's Delight Compat](https://modrinth.com/mod/project-mmo-farmers-delight) experience,
+  [Quality Food](https://modrinth.com/mod/quality-food) quality, [Create: Central Kitchen](https://modrinth.com/mod/create-central-kitchen)
+  and others.
+
+### Fixed
+- Showing a dish made on the cutting board in [JEI](https://www.curseforge.com/minecraft/mc-mods/jei) no longer crashes
+  the game with JEI older than 15.20, which many modpacks keep.
+- With [KubeJS](https://www.curseforge.com/minecraft/mc-mods/kubejs) scripts that change recipes, the cutting board makes
+  its dishes again instead of leaving them in the crafting table.
+- [EMI](https://www.curseforge.com/minecraft/mc-mods/emi) no longer stops with "EMI experienced a critical error" in big
+  modpacks.
+- A broken recipe in another mod or a datapack no longer stops the game or the server from loading recipes.
+- More than a stack of rice in the cooking pot cooks. The pot keeps one stack and gives the rest back.
+- Stirring food that was left to cook alone in the pot no longer finishes the whole batch in a few seconds, and a batch
+  you walk away from keeps the time it has cooked. A pot holding more than a stack of soup no longer gives a free serving.
+- Buckets and bottles emptied into the pot after you walked away land beside it, as in Farmer's Delight, and ingredients
+  your stars saved stay in the pot for you.
+- Picking a dish in the board's book grows it from what already lies on the board, such as a cheeseburger over
+  hamburgers. Ingredients that stack to fewer than sixteen no longer make oversized stacks there.
+- The board's recipe book keeps its tabs on the page with many addons: one tab for every tool besides the knife.
+- The skillet no longer stops moving when the pan goes down to three pieces while one is still landing.
+- Food laid on the stove by hand comes off the grill when the stove station is turned off or the mod is removed. The
+  stove's recipe book no longer shows the fried egg, which falls through the grill.
+- The knife and the bowl the stations offer from your inventory are see-through again instead of solid.
+- `config/handson_delight.properties` keeps its values when saved in another encoding, and takes yes/no, on/off and 1/0.
+- With [Vanilla Delights](https://modrinth.com/mod/vanilla-delights)' dyed pots the cooking pot keeps its colour and no
+  longer shows a second spoon and a floor over the soup.
+- Food on the cutting board, the skillet or the stove no longer shows twice when another mod draws these blocks itself,
+  as [Ice and Fire Delight](https://modrinth.com/mod/ice-and-fire-delight) does with the board.
+
+Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.7.
+
+## [1.2.0+1.20.1] - 2026-11-10
 
 - Food the knife cuts lies down to be cut again, even when a dish could start from it. With some addons bread, dough,
   chorus fruit or peppers went onto a sandwich pile and could not be cut; now the dish starts when its next layer goes

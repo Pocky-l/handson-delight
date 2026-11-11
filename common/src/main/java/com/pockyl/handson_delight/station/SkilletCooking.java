@@ -22,6 +22,8 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.platform.Platform;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -163,22 +165,39 @@ public final class SkilletCooking {
     /**
      * Both sides are done: the batch becomes what the campfire makes of it and waits in the pan for the cook, who takes it. Only a
      * stack bigger than a batch (put in Farmer's Delight's way, then tossed) cannot keep the rest raw beside it: then the batch goes
-     * to the cook at the pan, or with nobody there jumps out as it does from Farmer's Delight's skillet.
+     * to the cook at the pan, or with nobody there jumps out as it does from Farmer's Delight's skillet. Farmer's Delight's own code
+     * cooks the batch, one item after the other, so that what other mods add to its skillet still happens (experience, quality);
+     * what it throws out of the pan is caught.
      */
     private static void finish(SkilletBlockEntity skillet, Frying frying, ItemStack stack, CampfireCookingRecipe recipe) {
         Level level = skillet.getLevel();
         int count = Math.min(frying.batch(), stack.getCount());
-        ItemStack one = recipe.assemble(new SingleRecipeInput(stack.copyWithCount(1)), level.registryAccess());
-        ItemStack done = one.copyWithCount(one.getCount() * count);
-        ItemStack left = stack.copyWithCount(stack.getCount() - count);
+        ItemStack raw = stack.copyWithCount(1);
+        int had = skillet.getStoredStack().getCount();
+        List<ItemStack> made = new ArrayList<>(CaughtDrops.catching(false, () -> {
+            for (int i = 0; i < count && !skillet.getStoredStack().isEmpty(); i++) {
+                ((FryingPan) skillet).handson$cookOneNow(level);
+            }
+            return true;
+        }));
+        int cooked = had - skillet.getStoredStack().getCount();
+        if (cooked < count) {
+            // Farmer's Delight did not take all of it (another mod changed what its skillet cooks): the rest as the campfire makes it.
+            ItemStack one = recipe.assemble(new SingleRecipeInput(raw), level.registryAccess());
+            made.add(one.copyWithCount(one.getCount() * (count - cooked)));
+            ItemStack inPan = skillet.getStoredStack();
+            Platform.INSTANCE.setItem(skillet, inPan.copyWithCount(Math.max(0, inPan.getCount() - (count - cooked))));
+        }
+        List<ItemStack> done = merged(made);
+        ItemStack left = skillet.getStoredStack().copy();
         Optional<StationContext> station = level instanceof ServerLevel server ? Diegesis.activeStation(server, skillet.getBlockPos())
                 : Optional.empty();
-        if (left.isEmpty() && !done.isEmpty() && done.getCount() <= done.getMaxStackSize()) {
+        if (left.isEmpty() && done.size() == 1 && done.get(0).getCount() <= done.get(0).getMaxStackSize()) {
             // Still the cook's (byHand): Farmer's Delight's own cooking stays out of a pan of finished food.
-            Platform.INSTANCE.setItem(skillet, done);
+            Platform.INSTANCE.setItem(skillet, done.get(0));
             frying.reset();
             CompoundTag ready = new CompoundTag();
-            ready.put(SkilletStation.STACK, done.saveOptional(level.registryAccess()));
+            ready.put(SkilletStation.STACK, done.get(0).saveOptional(level.registryAccess()));
             ready.putBoolean(SkilletStation.IN_PAN, true);
             station.ifPresent(at -> at.effect(SkilletStation.EFFECT_FRIED, "pan", ready));
             return;
@@ -194,16 +213,35 @@ public final class SkilletCooking {
         Optional<Player> cook = station.flatMap(at -> at.users().stream().<Player>map(player -> player)
                 .min((a, b) -> Boolean.compare(!a.getUUID().equals(frying.cook()), !b.getUUID().equals(frying.cook()))));
         CompoundTag data = new CompoundTag();
-        data.put(SkilletStation.STACK, done.saveOptional(level.registryAccess()));
+        data.put(SkilletStation.STACK, done.get(0).saveOptional(level.registryAccess()));
         data.putBoolean(SkilletStation.TO_COOK, cook.isPresent());
-        if (cook.isPresent()) {
-            if (!cook.get().getInventory().add(done)) {
-                cook.get().drop(done, false);
+        for (ItemStack each : done) {
+            if (cook.isPresent()) {
+                if (!cook.get().getInventory().add(each)) {
+                    cook.get().drop(each, false);
+                }
+            } else {
+                jumpOut(skillet, each);
             }
-        } else {
-            jumpOut(skillet, done);
         }
         station.ifPresent(at -> at.effect(SkilletStation.EFFECT_FRIED, "pan", data));
+    }
+
+    /** The items cooked one by one, as few stacks as they make: alike items together, unlike ones (another mod's quality) apart. */
+    private static List<ItemStack> merged(List<ItemStack> items) {
+        List<ItemStack> stacks = new ArrayList<>();
+        for (ItemStack item : items) {
+            if (item.isEmpty()) {
+                continue;
+            }
+            ItemStack same = stacks.stream().filter(stack -> ItemStack.isSameItemSameComponents(stack, item)).findFirst().orElse(null);
+            if (same != null) {
+                same.grow(item.getCount());
+            } else {
+                stacks.add(item.copy());
+            }
+        }
+        return stacks;
     }
 
     /** Out of the pan towards its side, as Farmer's Delight's skillet throws what it has cooked. */

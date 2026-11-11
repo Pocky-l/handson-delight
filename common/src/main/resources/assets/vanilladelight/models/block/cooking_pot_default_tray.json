@@ -1,0 +1,12 @@
+{
+  "parent": "handson_delight:diegesis/pot/body_tray",
+  "textures": {
+    "cooking_pot_top": "farmersdelight:block/cooking_pot_top",
+    "particle": "farmersdelight:block/cooking_pot_side",
+    "cooking_pot_side": "farmersdelight:block/cooking_pot_side",
+    "cooking_pot_parts": "farmersdelight:block/cooking_pot_parts",
+    "cooking_pot_bottom": "farmersdelight:block/cooking_pot_bottom",
+    "heating_tray_top": "farmersdelight:block/heating_tray_top",
+    "heating_tray_side": "farmersdelight:block/heating_tray_side"
+  }
+}

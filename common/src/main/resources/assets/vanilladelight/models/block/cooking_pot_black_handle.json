@@ -1,0 +1,11 @@
+{
+  "parent": "handson_delight:diegesis/pot/body_hoop",
+  "textures": {
+    "cooking_pot_top": "vanilladelight:block/black/cooking_pot_top",
+    "particle": "vanilladelight:block/black/cooking_pot_side",
+    "cooking_pot_side": "vanilladelight:block/black/cooking_pot_side",
+    "cooking_pot_parts": "vanilladelight:block/black/cooking_pot_parts",
+    "cooking_pot_bottom": "vanilladelight:block/black/cooking_pot_bottom",
+    "cooking_pot_handle": "farmersdelight:block/cooking_pot_handle"
+  }
+}

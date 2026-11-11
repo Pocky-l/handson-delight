@@ -9,4 +9,7 @@ public interface StoveTop {
 
     /** Farmer's Delight's ticks each slot takes: set when its own right click puts food on, endless for a piece grilled by hand. */
     int[] handson$times();
+
+    /** Places whose piece Farmer's Delight's own code cooks this tick for the station (not saved): see {@link StoveCooking}. */
+    boolean[] handson$cookingNow();
 }

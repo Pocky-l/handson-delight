@@ -1,0 +1,10 @@
+{
+  "parent": "handson_delight:diegesis/pot/body",
+  "textures": {
+    "cooking_pot_top": "vanilladelight:block/orange/cooking_pot_top",
+    "particle": "vanilladelight:block/orange/cooking_pot_side",
+    "cooking_pot_side": "vanilladelight:block/orange/cooking_pot_side",
+    "cooking_pot_parts": "vanilladelight:block/orange/cooking_pot_parts",
+    "cooking_pot_bottom": "vanilladelight:block/orange/cooking_pot_bottom"
+  }
+}

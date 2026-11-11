@@ -10,6 +10,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CampfireCookingRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -155,6 +159,18 @@ public final class StoveTests {
         ItemStack egg = new ItemStack(Items.EGG);
         top.stove.placeFood(top.cook, egg, top.stove.getCookingRecipe(egg).orElseThrow());
         helper.assertTrue(top.on(0).is(Items.EGG) && !top.grill().byHand(0), "Farmer's Delight's right click is its own way");
+        boolean eggRecipe = false;
+        for (RecipeHolder<CampfireCookingRecipe> holder : helper.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {
+            Ingredient food = holder.value().getIngredients().get(0);
+            if (food.test(new ItemStack(Items.EGG))) {
+                eggRecipe = true;
+                helper.assertFalse(StoveCooking.grillable(food).test(new ItemStack(Items.EGG)), "the book shows no egg");
+            }
+            if (food.test(new ItemStack(Items.BEEF))) {
+                helper.assertTrue(StoveCooking.grillable(food).test(new ItemStack(Items.BEEF)), "the book keeps the beef");
+            }
+        }
+        helper.assertTrue(eggRecipe, "Farmer's Delight fries an egg over the fire");
         helper.succeed();
     }
 

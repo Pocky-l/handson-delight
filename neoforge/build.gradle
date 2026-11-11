@@ -81,6 +81,33 @@ if (providers.gradleProperty('addons').isPresent()) {
     }
 }
 
+// -Pkubejs runs the game tests with KubeJS and a server script listening to its recipe event, so that the board is seen to
+// find its dishes when KubeJS changes the recipes.
+var kubejs = providers.gradleProperty('kubejs').isPresent()
+if (kubejs) {
+    dependencies {
+        [
+                'kubejs:GDXCpKlp',                // KubeJS 2101.7.2-build.381
+                'rhino:SqkDvOLG',                 // Rhino 2101.2.8-build.91, needed by KubeJS
+                'better-advanced-tooltips:uPFbnD32', // Better Advanced Tooltips 2101.1.0-build.5, needed by KubeJS
+                'architectury-api:1IiqEQGl',      // Architectury 13.0.11, for KubeJS
+        ].each { localRuntime "maven.modrinth:${it}" }
+    }
+}
+var prepareKubeJs = tasks.register('prepareKubeJs') {
+    var script = project.file('run/gametest/kubejs/server_scripts/handson_delight_test.js')
+    inputs.property('kubejs', kubejs)
+    doLast {
+        if (kubejs) {
+            script.parentFile.mkdirs()
+            script.text = 'ServerEvents.recipes(event => {})' + System.lineSeparator()
+        } else {
+            script.delete()
+        }
+    }
+}
+tasks.matching { it.name == 'runGameTestServer' }.configureEach { dependsOn prepareKubeJs }
+
 var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
     var replaceProperties = [
             minecraft_version      : minecraft_version,

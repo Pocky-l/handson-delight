@@ -53,6 +53,9 @@ abstract class CookingPotStirringMixin implements PotStirring {
     private int handson$batch;
     @Unique
     private float handson$saved;
+    /** How fast the cooking time ran on the last tick: the batch's speed, 1 the Farmer's Delight way, 0 not known yet. */
+    @Unique
+    private float handson$pace;
     /** On while the rest of a batch is made through Farmer's Delight's own code. */
     @Unique
     private boolean handson$serving;
@@ -89,6 +92,9 @@ abstract class CookingPotStirringMixin implements PotStirring {
     /** Ticks after the cook left the station from which their food cooks without them, as Farmer's Delight cooks it. */
     @Unique
     private static final int AWAY = 40;
+    /** A cook attended within this many ticks is at the station now: it ticks every tick, with one tick to spare. */
+    @Unique
+    private static final int HERE = 2;
 
     @Shadow
     private boolean processCooking(RecipeHolder<CookingPotRecipe> recipe, CookingPotBlockEntity pot) {
@@ -161,11 +167,14 @@ abstract class CookingPotStirringMixin implements PotStirring {
     @Shadow
     protected abstract void ejectIngredientRemainder(ItemStack remainder);
 
-    /** With a cook at the station, what the ingredients leave goes to them: no bucket lands on the floor beside the pot. */
+    /**
+     * With a cook at the station, what the ingredients leave goes to them: no bucket lands on the floor beside the pot. Only while the cook
+     * is there: what is kept is not saved with the pot, and a pot broken before anyone took it would lose it.
+     */
     @Inject(method = "ejectIngredientRemainder", at = @At("HEAD"), cancellable = true)
     private void handson$keepLeftover(ItemStack remainder, CallbackInfo callback) {
         CookingPotBlockEntity pot = (CookingPotBlockEntity) (Object) this;
-        if (!handson$ejecting && pot.getLevel() != null && pot.getLevel().getGameTime() - handson$attendedAt <= AWAY) {
+        if (!handson$ejecting && pot.getLevel() != null && pot.getLevel().getGameTime() - handson$attendedAt <= HERE) {
             handson$leftovers.add(remainder.copy());
             callback.cancel();
         }
@@ -174,7 +183,7 @@ abstract class CookingPotStirringMixin implements PotStirring {
     /** Leftovers nobody took (the cook left that very tick) go out as Farmer's Delight would throw them. */
     @Unique
     private void handson$ejectForgotten(long gameTime) {
-        if (handson$leftovers.isEmpty() || gameTime - handson$attendedAt <= AWAY) {
+        if (handson$leftovers.isEmpty() || gameTime - handson$attendedAt <= HERE) {
             return;
         }
         handson$ejecting = true;
@@ -220,14 +229,12 @@ abstract class CookingPotStirringMixin implements PotStirring {
         handson$cooking = null;
         if (handson$farmersDelightsWay) {
             // Fed by automation, worked in Farmer's Delight's own menu or left by the cook: its own way, a serving at a time.
+            handson$keepTimeAt(1.0F);
             handson$batch = 0;
             return;
         }
         int batch = PotLogic.batch(pot, recipe.value());
-        if (batch != handson$batch && handson$batch > 0 && batch > 0 && cookTimeTotal > 0) {
-            // More food thrown in takes longer, less takes shorter: the time already cooked stays what it was.
-            cookTime = Math.min(cookTimeTotal - 1, Math.round(cookTime * PotLogic.speed(batch) / PotLogic.speed(handson$batch)));
-        }
+        handson$keepTimeAt(PotLogic.speed(batch));
         handson$batch = batch;
         if (stirred) {
             // The pot adds one itself; a big batch takes some back.
@@ -240,6 +247,18 @@ abstract class CookingPotStirringMixin implements PotStirring {
         } else {
             callback.setReturnValue(false);
         }
+    }
+
+    /**
+     * More food thrown in takes longer, less takes shorter, and a pot left to cook the Farmer's Delight way runs at its own pace: the
+     * time already cooked stays what it was. Without this a serving's worth of time cooked alone counted as the same share of a batch.
+     */
+    @Unique
+    private void handson$keepTimeAt(float pace) {
+        if (handson$pace > 0.0F && pace != handson$pace && cookTimeTotal > 0) {
+            cookTime = Math.min(cookTimeTotal - 1, Math.round(cookTime * pace / handson$pace));
+        }
+        handson$pace = pace;
     }
 
     @Inject(method = "cookingTick", at = @At(value = "INVOKE", shift = At.Shift.AFTER, target = "Lvectorwing/farmersdelight/common/block/entity/"
@@ -270,7 +289,8 @@ abstract class CookingPotStirringMixin implements PotStirring {
     private void handson$serveTheBatch(RecipeHolder<CookingPotRecipe> recipe, CookingPotBlockEntity pot, ItemStack result, ItemStack meal) {
         // The batch as HEAD counted it, before Farmer's Delight's serving: a slot that held the last item is empty now, and a count
         // made now would leave it out and cook the rest without it.
-        int room = (result.getMaxStackSize() - meal.getCount()) / result.getCount() + 1;
+        // Farmer's Delight lets the meal grow past its stack size: the serving it made is then the only one.
+        int room = Math.max(1, (result.getMaxStackSize() - meal.getCount()) / result.getCount() + 1);
         int left = Math.min(room, handson$batch);
         int grade = handson$skill.grade(pot.getLevel().getGameTime());
         handson$grade = grade;
@@ -297,8 +317,10 @@ abstract class CookingPotStirringMixin implements PotStirring {
             pot.getMeal().grow((servings - cooked) * result.getCount());
         }
         handson$bonus = servings - cooked;
-        // A full stack needed fewer sets than the batch had: the stars saved the rest.
-        handson$setsSaved = Math.max(0, left - cooked);
+        // A full stack needed fewer sets than the batch had: the stars saved the rest, for the cook at the station. With the cook gone
+        // they stay in the pot and cook next, and nobody opening it later is handed what then lies there.
+        boolean here = pot.getLevel().getGameTime() - handson$attendedAt <= HERE;
+        handson$setsSaved = here ? Math.max(0, left - cooked) : 0;
         float earned = handson$bonusCarried + cooked * PotLogic.bonusRate(grade) - (servings - cooked);
         handson$bonusCarried = Mth.clamp(earned, 0.0F, 0.999F);
         cookTime = 0;

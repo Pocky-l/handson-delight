@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CampfireCookingRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -15,6 +16,7 @@ import vectorwing.farmersdelight.common.block.AbstractStoveBlock;
 import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
 import com.pockyl.diegesis.api.Diegesis;
+import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.platform.Platform;
 
@@ -84,6 +86,13 @@ public final class StoveCooking {
             if (!grill.byHand(place)) {
                 continue;
             }
+            if (!HandsOnConfig.stove()) {
+                // The station was turned off: nobody can turn this piece any more, Farmer's Delight cooks it or throws it off.
+                times[place] = farmersDelightsTime(stove, place);
+                grill.farmersDelightsWay(place);
+                changed = true;
+                continue;
+            }
             // Farmer's Delight would pop it off once its count reaches its time: neither ever comes.
             progress[place] = 0;
             times[place] = Integer.MAX_VALUE;
@@ -103,6 +112,33 @@ public final class StoveCooking {
             }
         }
         send(stove, changed);
+    }
+
+    /**
+     * The cooking times Farmer's Delight saves with the stove: a piece laid by hand gets one of its own instead of the station's
+     * endless one, so that in a world opened without this mod it cooks, or comes off the grill once done, as Farmer's Delight does.
+     * With the mod the station's time comes back on the next tick.
+     */
+    public static int[] savedTimes(AbstractStoveBlockEntity stove) {
+        int[] times = ((StoveTop) stove).handson$times().clone();
+        Grill grill = grill(stove);
+        for (int place = 0; place < Math.min(times.length, Grill.PLACES); place++) {
+            if (grill.byHand(place)) {
+                times[place] = farmersDelightsTime(stove, place);
+            }
+        }
+        return times;
+    }
+
+    /** How long Farmer's Delight takes for the piece at {@code place}: its recipe's time, or a tick for one done (nothing cooks it). */
+    private static int farmersDelightsTime(AbstractStoveBlockEntity stove, int place) {
+        Level level = stove.getLevel();
+        ItemStack stack = Platform.INSTANCE.getItem(stove, place);
+        Grill grill = grill(stove);
+        if (level == null || stack.isEmpty() || grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
+            return 1;
+        }
+        return SkilletCooking.recipe(level, stack).map(CampfireCookingRecipe::getCookingTime).filter(time -> time > 0).orElse(1);
     }
 
     /** The drops of Farmer's Delight's cooking this tick are caught when the station has a piece in it; the slots as they were. */
@@ -274,6 +310,24 @@ public final class StoveCooking {
     /** Whether the grill takes {@code stack}: campfire food that stays on the bars. */
     public static boolean canGrill(Level level, ItemStack stack) {
         return !stack.is(KitchenTags.NOT_ON_GRILL) && SkilletCooking.recipe(level, stack).isPresent();
+    }
+
+    /**
+     * {@code ingredient} narrowed to what stays on the bars: the stove's book shows only what the grill takes, so a recipe whose
+     * every item falls through (a fried egg) gives {@link Ingredient#EMPTY}.
+     */
+    public static Ingredient grillable(Ingredient ingredient) {
+        ItemStack[] items = ingredient.getItems();
+        List<ItemStack> kept = new ArrayList<>();
+        for (ItemStack item : items) {
+            if (!item.is(KitchenTags.NOT_ON_GRILL)) {
+                kept.add(item);
+            }
+        }
+        if (kept.size() == items.length) {
+            return ingredient;
+        }
+        return kept.isEmpty() ? Ingredient.EMPTY : Ingredient.of(kept.stream());
     }
 
     /** Whether {@code stack} on the grill is done: nothing the fire makes of it any more. */

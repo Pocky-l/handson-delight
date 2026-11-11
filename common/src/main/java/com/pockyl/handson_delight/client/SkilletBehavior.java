@@ -328,6 +328,8 @@ public final class SkilletBehavior implements StationBehavior {
 
     /** Where piece {@code index} of {@code count} lies, pixels from the middle of the pan: spread as a hand lays them. */
     private static float[] place(int index, int count) {
+        // A piece still landing or turning over when the pan held more: it lies at the last place there is.
+        index = Math.max(0, Math.min(index, Math.min(count, 4) - 1));
         return switch (count) {
             case 1 -> new float[] {0.0F, 0.0F};
             case 2 -> index == 0 ? new float[] {2.6F, 0.4F} : new float[] {-2.6F, -0.4F};

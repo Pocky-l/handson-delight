@@ -278,14 +278,15 @@ public final class BoardLogic implements StationLogic {
         // A dish made before is taken off for the new one (a pie too, which the knife could slice); what lies there to be cut keeps
         // the board.
         ItemStack onBoard = Platform.INSTANCE.getItem(board);
-        if (layers.isEmpty() && !onBoard.isEmpty() && !AssemblyRecipes.isDish(onBoard.getItem())
-                && !Cutting.recipesFor(station.level(), onBoard).isEmpty()) {
-            // Unless it is where the picked dish starts: then it is its first layer.
-            if (!dish.ingredients().get(dish.base()).test(onBoard)) {
+        if (layers.isEmpty() && !onBoard.isEmpty()) {
+            if (dish.ingredients().get(dish.base()).test(onBoard)) {
+                // Where the picked dish starts is its first layer: food to be cut, or a dish that grows into it (a hamburger into a
+                // cheeseburger).
+                layers = startDish(station, player, onBoard);
+                onBoard = ItemStack.EMPTY;
+            } else if (!AssemblyRecipes.isDish(onBoard.getItem()) && !Cutting.recipesFor(station.level(), onBoard).isEmpty()) {
                 return;
             }
-            layers = startDish(station, player, onBoard);
-            onBoard = ItemStack.EMPTY;
         }
         int[] taken = layers.isEmpty() ? new int[0] : AssemblyRecipes.assign(dish, layers, false);
         if (taken == null) {
@@ -320,6 +321,11 @@ public final class BoardLogic implements StationLogic {
             for (int m = 0; m < missing.size() && whole; m++) {
                 if (kinds[m] != null && kinds[m].getMaxStackSize() == 1) {
                     continue;
+                }
+                if (kinds[m] != null && counts[m] >= kinds[m].getMaxStackSize()) {
+                    // A layer is one stack: an item that stacks to four makes a batch of four at most.
+                    whole = false;
+                    break;
                 }
                 int slot = source(left, dish.ingredients().get(missing.get(m)), kinds[m]);
                 if (slot < 0) {

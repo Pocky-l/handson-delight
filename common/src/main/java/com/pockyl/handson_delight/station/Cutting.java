@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShearsItem;
 import net.minecraft.world.item.TieredItem;
 import net.minecraft.world.item.TridentItem;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -104,7 +105,7 @@ public final class Cutting {
         // basket taken apart into canvas and a stick, a plant cut into a stick and gunpowder are no cooking, though a stick holds a
         // marshmallow from the pot.
         ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")));
-        return !results.isEmpty() && recipe.getTool().test(knife) && results.stream().allMatch(result -> pot.stream()
+        return !results.isEmpty() && tool(recipe).test(knife) && results.stream().allMatch(result -> pot.stream()
                 .map(CookingPotRecipe::getOutputContainer).anyMatch(container -> !container.isEmpty() && container.is(result.getItem())));
     }
 
@@ -204,10 +205,18 @@ public final class Cutting {
 
     /** Whether {@code item} is what some cutting recipe cuts with: a knife, an axe, an addon's rolling pin. */
     public static boolean isTool(Level level, ItemStack item) {
-        return !item.isEmpty() && everything(level).stream().anyMatch(recipe -> recipe.getTool().test(item));
+        return !item.isEmpty() && everything(level).stream().anyMatch(recipe -> tool(recipe).test(item));
+    }
+
+    /**
+     * What {@code recipe} cuts with, to test a tool by and to show: through {@link Platform#unwrap}, as an addon's tool action on
+     * Refabricated throws when it is tested as Fabric wraps it.
+     */
+    public static Ingredient tool(CuttingBoardRecipe recipe) {
+        return Platform.INSTANCE.unwrap(recipe.getTool());
     }
 
     public static Optional<CuttingBoardRecipe> findWith(Level level, ItemStack item, ItemStack tool) {
-        return tool.isEmpty() ? Optional.empty() : recipesFor(level, item).stream().filter(recipe -> recipe.getTool().test(tool)).findFirst();
+        return tool.isEmpty() ? Optional.empty() : recipesFor(level, item).stream().filter(recipe -> tool(recipe).test(tool)).findFirst();
     }
 }

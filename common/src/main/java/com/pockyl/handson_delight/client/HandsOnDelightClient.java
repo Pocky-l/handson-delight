@@ -73,4 +73,9 @@ public final class HandsOnDelightClient {
     public static boolean isShown(BlockPos pos) {
         return DiegesisClient.station(pos).isPresent();
     }
+
+    /** Whether the scene at {@code pos} is drawn this frame: then it stands in for the block's renderer. */
+    public static boolean isSceneDrawn(BlockPos pos) {
+        return DiegesisClient.isSceneDrawn(pos);
+    }
 }

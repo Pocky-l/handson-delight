@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.platform;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
@@ -65,6 +66,12 @@ public interface Platform {
 
     /** The game's config folder. */
     Path configDir();
+
+    /**
+     * The ingredient to test and show {@code ingredient} by. An ingredient of another mod can be a wrapper whose own test is
+     * broken (Refabricated's tool action on 1.20.1): what it wraps is tested instead, as Farmer's Delight would test it.
+     */
+    Ingredient unwrap(Ingredient ingredient);
 
     /** Sends {@code AssemblyRecipes.book()} to the player's client, for {@code BoardDishes}. */
     void sendBoardDishes(ServerPlayer player);

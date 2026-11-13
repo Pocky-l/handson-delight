@@ -6,6 +6,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModDependency;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
@@ -113,5 +114,14 @@ public final class FabricPlatform implements Platform {
     @Override
     public Path configDir() {
         return FabricLoader.getInstance().getConfigDir();
+    }
+
+    /**
+     * Refabricated 3's item ability ingredient is a plain Fabric custom ingredient with its own test, so Fabric's wrapper tests
+     * it as it is (on 1.20.1 its test lost its name in the remap and had to be unwrapped).
+     */
+    @Override
+    public Ingredient unwrap(Ingredient ingredient) {
+        return ingredient;
     }
 }

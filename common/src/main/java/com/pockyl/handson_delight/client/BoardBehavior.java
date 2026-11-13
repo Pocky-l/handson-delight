@@ -952,7 +952,7 @@ public final class BoardBehavior implements StationBehavior {
             view.sendAction(CuttingBoardStation.ACTION_CARVE, new CompoundTag());
             return true;
         }
-        if (button == 1 && Cutting.all(view.level()).stream().anyMatch(recipe -> recipe.getTool().test(stack))) {
+        if (button == 1 && Cutting.all(view.level()).stream().anyMatch(recipe -> Cutting.tool(recipe).test(stack))) {
             view.putAwayCarried();
             return true;
         }
@@ -1059,7 +1059,7 @@ public final class BoardBehavior implements StationBehavior {
     /** Food the board cuts, a knife it cuts with, or what goes into a dish put together on it. */
     private boolean usable(StationView view, ItemStack stack) {
         return !Cutting.recipesFor(view.level(), stack).isEmpty() || pages.goesIntoADish(view, stack)
-                || Cutting.all(view.level()).stream().anyMatch(recipe -> recipe.getTool().test(stack));
+                || Cutting.all(view.level()).stream().anyMatch(recipe -> Cutting.tool(recipe).test(stack));
     }
 
     private static AssemblyRecipes.Finish finish(String name) {

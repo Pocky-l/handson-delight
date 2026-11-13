@@ -17,6 +17,15 @@
   nothing, so you can go over from the board to the stove with the knife in hand.
 - On Fabric the stations open on structures that [Sable](https://modrinth.com/mod/sable) moves, such as builds of
   [Sable Beyond](https://modrinth.com/mod/sable_beyond), instead of Farmer's Delight's menus.
+- With [Vanilla Delights](https://modrinth.com/mod/vanilla-delights) the soup shows in the pot at the station again, in
+  plain and dyed pots.
+- With [Shadow Drop](https://modrinth.com/mod/shadow-drop) the pictures in the stations' recipe books stay in their
+  places, without shadows over the pages.
+- In windows narrower than 16:9, such as 4:3 or a game snapped to half a screen, the stations show their whole recipe
+  book instead of cutting it off at the side.
+- Food whose data a mod changes all the time, such as
+  [FFFood Spoilage and Preservation](https://modrinth.com/mod/fffoodspoilageandpreservation) ageing it every second, no
+  longer flies into your inventory with "+N" again and again while you work at a station.
 - Things that are cut with a knife into what meals are served on are cut at the board, with their marks and a page in
   its book: [Fright's Delight](https://www.curseforge.com/minecraft/mc-mods/frights-delight)'s bone becomes the shards
   for its kebabs.
@@ -28,7 +37,8 @@
   again and food put there can be cut.
 - [Real Camera](https://www.curseforge.com/minecraft/mc-mods/real-camera) and
   [Leawind's Third Person](https://www.curseforge.com/minecraft/mc-mods/leawind-third-person) no longer turn the
-  stations' camera away: you see the pot, the board, the skillet and the stove as without them.
+  stations' camera away or zoom it out with your field of view: you see the pot, the board, the skillet and the stove as
+  without them.
 - Food a hopper or a pipe brings into the cooking pot while you stand at it cooks by itself, as it does when you are
   away. Only what you put in at the station waits for the spoon.
 - Players whose game has no Hands-On Delight can get the food laid on a stove at the station: when they use the stove,

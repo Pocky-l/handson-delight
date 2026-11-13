@@ -143,7 +143,7 @@ public final class RecipeAudit {
                     look.add(Cutting.recipesFor(level, item).size() + " recipes for the input");
                 }
             }
-            report.add(Cutting.id(level, recipe) + " | " + name(input) + " | " + name(recipe.getTool()) + " | "
+            report.add(Cutting.id(level, recipe) + " | " + name(input) + " | " + name(Cutting.tool(recipe)) + " | "
                     + recipe.getResults().stream().map(RecipeAudit::name).collect(Collectors.joining(", ")) + " | " + station + flags(look));
         }
 

@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.neoforge;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.neoforged.fml.ModList;
@@ -110,5 +111,11 @@ public final class NeoForgePlatform implements Platform {
     @Override
     public Path configDir() {
         return FMLPaths.CONFIGDIR.get();
+    }
+
+    /** NeoForge's ingredients, Farmer's Delight's item ability among them, test themselves. */
+    @Override
+    public Ingredient unwrap(Ingredient ingredient) {
+        return ingredient;
     }
 }

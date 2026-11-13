@@ -1,7 +1,6 @@
 # Changelog
 
-## [1.4.1+1.21.1] - Unreleased
-
+## [1.4.1+1.21.1] - 2026-11-14
 ### New
 - Modpacks can put any craft together on the cutting board: add its result to the item tag
   `handson_delight:assembled`, and every shaped or shapeless craft of it, from any mod, datapack or

@@ -29,6 +29,8 @@
 ### Changed
 - Going to a station and back is quicker and smoother: the camera sets off at once and lands softly, the recipe book
   and the pot's badge grow in as it arrives and go as you leave, instead of popping up and vanishing.
+- The stations' recipe book is a cookbook of its own: green cloth covers with brass corners, gilt bands on the spine and
+  a pot on the front, pages of fresh paper that fill the book with an even margin, and a frayed ribbon to close it.
 
 ### Fixed
 - Recipe viewers such as [EMI](https://modrinth.com/mod/emi) show names for this mod's item tags, such as "Foods Cracked

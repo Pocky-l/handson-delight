@@ -18,8 +18,11 @@ public interface PotStirring {
     /** Sets of ingredients the last batch saved, once: they are the cook's again. */
     int handson$takeSaved();
 
-    /** A cook works at the pot's station in this tick: food coming in now is put in by hand. */
+    /** A cook works at the pot's station in this tick. */
     void handson$attend(long gameTime);
+
+    /** A cook put food into the pot at the station: what comes in before the pot's next tick is put in by hand. */
+    void handson$feedByHand();
 
     /**
      * What the ingredients left (a milk bucket's bucket) while a cook was at the station, taken once: the cook gets it instead of

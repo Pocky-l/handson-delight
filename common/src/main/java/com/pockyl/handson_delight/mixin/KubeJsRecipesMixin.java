@@ -19,7 +19,8 @@ import java.util.Map;
 /**
  * KubeJS for 1.20.1 loads the recipes itself as soon as a server script listens to its recipe event, and cancels the recipe manager's
  * own loading, so {@link RecipeManagerMixin} never sees its end: without this the board would make no dishes in such a modpack. The
- * board's recipes are found in the same JSON and read once KubeJS has put the recipes into the manager. Applies only with KubeJS.
+ * board's recipes are found in the same JSON and read once KubeJS has put the recipes into the manager. Applied only with KubeJS
+ * installed ({@code OptionalMixins}).
  */
 @Pseudo
 @Mixin(targets = "dev.latvian.mods.kubejs.recipe.RecipesEventJS", remap = false)

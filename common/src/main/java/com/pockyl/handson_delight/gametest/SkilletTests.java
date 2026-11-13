@@ -20,6 +20,7 @@ import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.station.Frying;
 import com.pockyl.handson_delight.station.SkilletCooking;
 import com.pockyl.handson_delight.station.SkilletLogic;
@@ -118,6 +119,24 @@ public final class SkilletTests {
         helper.runAfterDelay(2 * TWO_BEEF_SIDE + 10, () -> {
             ItemStack inPan = pan.skillet.getStoredStack();
             helper.assertTrue(inPan.getCount() == 2 && !inPan.is(Items.EGG), "done in the time of both sides, never tossed, got " + inPan);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Food a cook put in waits for a toss; with the station turned off nobody can toss it, so Farmer's Delight cooks it its way. Runs in
+     * a batch of its own: the switch is the whole game's.
+     */
+    public static void aStationTurnedOffHandsThePanToFarmersDelight(GameTestHelper helper) {
+        Pan pan = pan(helper);
+        pan.place(Items.BEEF, 1);
+        helper.assertTrue(pan.frying().byHand(), "put in at the station, it fries by hand");
+        HandsOnConfig.setSkillet(false);
+        helper.runAfterDelay(140, () -> {
+            HandsOnConfig.setSkillet(true);
+            helper.assertFalse(pan.frying().byHand(), "with the station off it is Farmer's Delight's");
+            helper.assertTrue(pan.skillet.getStoredStack().isEmpty() && pan.jumpedOut(Items.COOKED_BEEF) == 1,
+                    "cooked in its own time and out of the pan, never tossed");
             helper.succeed();
         });
     }

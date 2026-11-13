@@ -123,6 +123,10 @@ public final class BoardBehavior implements StationBehavior {
     private static final float FREEZE_SET = 0.3F;
     private static final float FREEZE_AT = 0.28F;
     private static final int FROST = 0xFFE8F4FF;
+    /** Cut together: the knife goes through the stack this many times, the halves parting this far each time. */
+    private static final int CHOPS = 2;
+    private static final float CHOP_STROKE = 0.16F;
+    private static final float CHOP_PART = 0.9F;
     /**
      * A liquid poured over the layers: how high its container is drawn, pixels, and where it comes from over the stack. An egg is
      * cracked on the board beside the food: how high it is, and how far to the right of the food (pixels) it is knocked.
@@ -851,7 +855,9 @@ public final class BoardBehavior implements StationBehavior {
         }
         StationState state = view.state();
         if (!BoardLogic.layers(state).isEmpty()) {
-            boolean ready = !state.data().getString(CuttingBoardStation.DISH).isEmpty();
+            // A left click finishes the dish the layers make; a right click, or a click on layers that make none yet, takes the top
+            // one back, as a right click takes back food.
+            boolean ready = !state.data().getString(CuttingBoardStation.DISH).isEmpty() && click.button() == 0;
             view.sendAction(ready ? CuttingBoardStation.ACTION_ASSEMBLE : CuttingBoardStation.ACTION_TAKE, new CompoundTag());
             return;
         }
@@ -908,6 +914,12 @@ public final class BoardBehavior implements StationBehavior {
             chop(view);
             return true;
         }
+        boolean ready = !BoardLogic.layers(view.state()).isEmpty() && !view.state().data().getString(CuttingBoardStation.DISH).isEmpty();
+        if (Cutting.isTool(view.level(), stack) && button == 0 && ready) {
+            // The knife comes down on a stack that makes a dish: what is cut together is cut with it, the rest is finished as by hand.
+            view.sendAction(CuttingBoardStation.ACTION_ASSEMBLE, new CompoundTag());
+            return true;
+        }
         if (Cutting.isTool(view.level(), stack)) {
             // Nothing there for this knife to cut: it knocks on the board and stays in the hand, never a layer of a dish.
             view.playSound(SoundEvents.WOOD_HIT, "item", 0.25F, 1.6F);
@@ -922,7 +934,9 @@ public final class BoardBehavior implements StationBehavior {
     /** Shift + click on food in the drawer puts the whole stack on the board, as at the pot: to be cut, or as the next layer. */
     @Override
     public boolean onInventoryShiftClick(StationView view, int slot, ItemStack stack) {
-        if (stack.isEmpty() || Cutting.recipesFor(view.level(), stack).isEmpty() && !pages.goesIntoADish(view, stack)) {
+        // A knife is listed with the dishes cut together, but never goes onto the board.
+        if (stack.isEmpty() || Cutting.isTool(view.level(), stack)
+                || Cutting.recipesFor(view.level(), stack).isEmpty() && !pages.goesIntoADish(view, stack)) {
             return false;
         }
         CompoundTag how = new CompoundTag();
@@ -1036,6 +1050,7 @@ public final class BoardBehavior implements StationBehavior {
             case SANDWICH -> LID_LIFT + LID_CLOSE + LID_PRESS;
             case SHAPE -> SHAPE_GATHER + Math.max(1, count - 1) * SHAPE_LAY + SHAPE_PRESS;
             case FREEZE -> FREEZE_GATHER + FREEZE_SET;
+            case CHOP -> CHOPS * CHOP_STROKE;
             case PRESS -> 0.0F;
         };
         melting = arrive + finishing + MELT_TIME;
@@ -1054,6 +1069,7 @@ public final class BoardBehavior implements StationBehavior {
                 case SANDWICH -> sandwich(view);
                 case SHAPE -> shape(view);
                 case FREEZE -> freeze(view);
+                case CHOP -> chopTogether(view);
                 case PRESS -> {
                 }
             }
@@ -1138,11 +1154,12 @@ public final class BoardBehavior implements StationBehavior {
         // Under the layers still melting it would fight them for the same place.
         after(MELT_TIME, () -> view.node("pile").ifPresent(pile -> pile.setVisible(shownItem.getCount() > 1)));
         // Flour dust off what was pressed, rolled or kneaded; a dish tossed in its bowl only glints (crumbs in the
-        // food's own colour flew green off every salad).
+        // food's own colour flew green off every salad), and one cut together had its crumbs from the knife.
         Vector3f middle = new Vector3f(MIDDLE_X, TOP + 1.0F, MIDDLE_Z);
         if (finish == AssemblyRecipes.Finish.FREEZE) {
             view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 2.0F, 0.0F), 2.5F, 12, FROST);
-        } else if (finish != AssemblyRecipes.Finish.TOSS && finish != AssemblyRecipes.Finish.ARRANGE) {
+        } else if (finish != AssemblyRecipes.Finish.TOSS && finish != AssemblyRecipes.Finish.ARRANGE
+                && finish != AssemblyRecipes.Finish.CHOP) {
             view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 3.0F, 0.0F), 2.5F, 12, FLOUR);
         }
         view.spawnParticles(DiegesisParticles.GLINT, middle, new Vector3f(0.0F, 2.0F, 0.0F), 2.0F, 5, 0xFFFFE9A0);
@@ -1427,6 +1444,36 @@ public final class BoardBehavior implements StationBehavior {
                 view.node("layer_" + i).ifPresent(node -> node.setTint(FROST));
             }
         });
+    }
+
+    /**
+     * Cut through together, as Culinary Compat cuts on Farmer's Delight's board: each stroke of the knife parts the stack, every
+     * other piece to its side, with the knife's sound and crumbs of the top layer, and the pieces come together again.
+     */
+    private void chopTogether(StationView view) {
+        int count = lastLayers.size();
+        if (count == 0) {
+            return;
+        }
+        ItemStack top = lastLayers.get(count - 1);
+        int color = 0xFF000000 | FoodColors.main(top);
+        Vector3f at = new Vector3f(MIDDLE_X, TOP + count * LAYER_STEP + 0.5F, MIDDLE_Z);
+        for (int chop = 0; chop < CHOPS; chop++) {
+            float side = chop % 2 == 0 ? 1.0F : -1.0F;
+            after(chop * CHOP_STROKE, () -> {
+                for (int i = 0; i < count; i++) {
+                    int index = i;
+                    float out = (index % 2 == 0 ? side : -side) * CHOP_PART;
+                    view.node("layer_" + i).ifPresent(node -> {
+                        node.moveTo(restX[index] + out, restY[index] - index * LAYER_STEP, restZ[index], CHOP_STROKE * 0.4F);
+                        after(CHOP_STROKE * 0.5F, () -> node.moveTo(restX[index], restY[index] - index * LAYER_STEP, restZ[index],
+                                CHOP_STROKE * 0.5F));
+                    });
+                }
+                view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 4.0F, 0.0F), 1.2F, 5, color);
+                view.playSound(FarmersDelightContent.KNIFE_CUT, "surface", 0.8F, 0.95F + view.level().getRandom().nextFloat() * 0.15F);
+            });
+        }
     }
 
     /**

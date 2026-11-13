@@ -6,6 +6,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -16,6 +17,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import vectorwing.farmersdelight.common.block.AbstractStoveBlock;
 import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
@@ -92,6 +94,30 @@ public final class StoveTests {
             top.at(StoveStation.ACTION_TAKE, 0);
             helper.assertTrue(top.cook.getInventory().countItem(Items.COOKED_BEEF) == 1 && top.on(0).isEmpty(), "taken");
             helper.assertFalse(top.grill().byHand(0), "the place starts over");
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A player without this mod cannot turn or take what a cook laid: their use of the stove hands it to Farmer's Delight's way. A done
+     * piece pops off at once, one waiting to be turned cooks in Farmer's Delight's time.
+     */
+    public static void piecesLaidByHandGoFarmersDelightsWay(GameTestHelper helper) {
+        Top top = stove(helper);
+        top.place(Items.BEEF, 2);
+        helper.runAfterDelay(BEEF_SIDE + 10, () -> top.at(StoveStation.ACTION_TURN, 0));
+        helper.runAfterDelay(2 * BEEF_SIDE + 25, () -> {
+            helper.assertTrue(top.on(0).is(Items.COOKED_BEEF) && top.grill().waits(1), "one is done, the other waits to be turned");
+            StoveCooking.handToFarmersDelight(top.stove);
+            helper.assertFalse(top.grill().byHand(0) || top.grill().byHand(1), "both are Farmer's Delight's now");
+        });
+        helper.runAfterDelay(2 * BEEF_SIDE + 50, () -> {
+            helper.assertTrue(top.on(0).isEmpty(), "the done one came off the grill");
+            BlockPos pos = top.stove.getBlockPos();
+            helper.assertTrue(!helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3.0),
+                    item -> item.getItem().is(Items.COOKED_BEEF)).isEmpty(), "where the player can pick it up");
+            helper.assertTrue(top.on(1).is(Items.BEEF) && ((StoveTop) top.stove).handson$progress()[1] > 10,
+                    "the other cooks, counting Farmer's Delight's time");
             helper.succeed();
         });
     }

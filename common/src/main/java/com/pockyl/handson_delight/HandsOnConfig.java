@@ -95,6 +95,11 @@ public final class HandsOnConfig {
         return skillet;
     }
 
+    /** Turns the skillet's station on or off for a game test: what a restart with another file does to the cooking. */
+    public static void setSkillet(boolean on) {
+        skillet = on;
+    }
+
     public static boolean stove() {
         return stove;
     }

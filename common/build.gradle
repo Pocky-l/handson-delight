@@ -21,6 +21,8 @@ legacyForge {
 
 dependencies {
     compileOnly 'org.spongepowered:mixin:0.8.5'
+    // The mixin plugin's interface names ASM's class node; the loaders bring ASM at runtime.
+    compileOnly 'org.ow2.asm:asm-tree:9.5'
     compileOnly "com.pockyl.diegesis:common:${diegesis_version}"
     // The Forge build stands for both: the classes common uses have the same names and signatures in Refabricated.
     modCompileOnly "maven.modrinth:farmers-delight:${farmers_delight_version}"

@@ -18,6 +18,11 @@ public final class FabricSkilletTests implements FabricGameTest {
         SkilletTests.farmersDelightsRightClickCooksItsWay(helper);
     }
 
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 160, batch = "skilletOff")
+    public void aStationTurnedOffHandsThePanToFarmersDelight(GameTestHelper helper) {
+        SkilletTests.aStationTurnedOffHandsThePanToFarmersDelight(helper);
+    }
+
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void theFoodComesBackAndOnlyFoodGoesIn(GameTestHelper helper) {
         SkilletTests.theFoodComesBackAndOnlyFoodGoesIn(helper);

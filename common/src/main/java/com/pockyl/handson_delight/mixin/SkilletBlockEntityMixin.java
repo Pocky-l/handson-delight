@@ -69,6 +69,12 @@ abstract class SkilletBlockEntityMixin implements FryingPan {
         }
     }
 
+    @Override
+    public void handson$farmersDelightsTime(int ticks) {
+        cookingTime = 0;
+        cookingTimeTotal = ticks;
+    }
+
     @Inject(method = "cookAndOutputItems", at = @At("HEAD"), cancellable = true, remap = false)
     private void handson$fryByHand(ItemStack stack, Level level, CallbackInfo callback) {
         if (!handson$cookingNow && SkilletCooking.fry((SkilletBlockEntity) (Object) this, stack)) {

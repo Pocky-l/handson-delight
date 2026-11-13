@@ -18,6 +18,11 @@ public final class FabricStoveTests implements FabricGameTest {
         StoveTests.farmersDelightsWayStaysItsOwn(helper);
     }
 
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 500)
+    public void piecesLaidByHandGoFarmersDelightsWay(GameTestHelper helper) {
+        StoveTests.piecesLaidByHandGoFarmersDelightsWay(helper);
+    }
+
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void onlyFoodGoesOnAnOpenGrill(GameTestHelper helper) {
         StoveTests.onlyFoodGoesOnAnOpenGrill(helper);

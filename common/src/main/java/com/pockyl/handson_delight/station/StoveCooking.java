@@ -88,8 +88,7 @@ public final class StoveCooking {
             }
             if (!HandsOnConfig.stove()) {
                 // The station was turned off: nobody can turn this piece any more, Farmer's Delight cooks it or throws it off.
-                times[place] = farmersDelightsTime(stove, place);
-                grill.farmersDelightsWay(place);
+                handOver(stove, place);
                 changed = true;
                 continue;
             }
@@ -112,6 +111,29 @@ public final class StoveCooking {
             }
         }
         send(stove, changed);
+    }
+
+    /**
+     * Hands every piece laid by hand to Farmer's Delight's way: it cooks in Farmer's Delight's time and pops off the grill when done, a
+     * piece done already at once. For a player who cannot turn or take them: one whose client has no Hands-On Delight sees Farmer's
+     * Delight's stove, where nothing is taken by hand.
+     */
+    public static void handToFarmersDelight(AbstractStoveBlockEntity stove) {
+        Grill grill = grill(stove);
+        boolean changed = false;
+        for (int place = 0; place < Grill.PLACES; place++) {
+            if (grill.byHand(place) && !Platform.INSTANCE.getItem(stove, place).isEmpty()) {
+                handOver(stove, place);
+                changed = true;
+            }
+        }
+        send(stove, changed);
+    }
+
+    /** The piece at {@code place} cooks Farmer's Delight's way from now on, in Farmer's Delight's time; a done one comes off at once. */
+    private static void handOver(AbstractStoveBlockEntity stove, int place) {
+        ((StoveTop) stove).handson$times()[place] = farmersDelightsTime(stove, place);
+        grill(stove).farmersDelightsWay(place);
     }
 
     /**

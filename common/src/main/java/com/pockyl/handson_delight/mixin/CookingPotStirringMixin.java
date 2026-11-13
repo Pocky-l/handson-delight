@@ -77,6 +77,9 @@ abstract class CookingPotStirringMixin implements PotStirring {
     private long handson$attendedAt = Long.MIN_VALUE / 2;
     @Unique
     private int handson$fed;
+    /** A cook put food in at the station since the pot's last tick. */
+    @Unique
+    private boolean handson$handFed;
     /** Sets of ingredients the last batch did not need, the stack of the meal being full: they go back to the cook. */
     @Unique
     private int handson$setsSaved;
@@ -137,6 +140,11 @@ abstract class CookingPotStirringMixin implements PotStirring {
     }
 
     @Override
+    public void handson$feedByHand() {
+        handson$handFed = true;
+    }
+
+    @Override
     public void handson$watchFood(long gameTime) {
         CookingPotBlockEntity pot = (CookingPotBlockEntity) (Object) this;
         int count = 0;
@@ -144,9 +152,10 @@ abstract class CookingPotStirringMixin implements PotStirring {
             count += Platform.INSTANCE.getItem(pot, slot).getCount();
         }
         if (handson$fed >= 0 && count > handson$fed) {
-            // Food came in: from a cook at the station, or from a hopper, a pipe, a menu.
-            handson$byHand = gameTime - handson$attendedAt <= 1;
+            // Food came in: from a cook at the station, or by itself (a hopper, a pipe, a menu), also while a cook stands there.
+            handson$byHand = handson$handFed;
         }
+        handson$handFed = false;
         handson$fed = count;
         handson$ejectForgotten(gameTime);
     }

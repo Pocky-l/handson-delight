@@ -12,4 +12,7 @@ public interface FryingPan {
      * (experience, quality); it throws the result out of the pan, which {@link CaughtDrops} can catch.
      */
     void handson$cookOneNow(net.minecraft.world.level.Level level);
+
+    /** The food in the pan cooks Farmer's Delight's way in {@code ticks}, counted from the start. */
+    void handson$farmersDelightsTime(int ticks);
 }

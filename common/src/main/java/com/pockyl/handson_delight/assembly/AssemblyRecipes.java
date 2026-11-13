@@ -47,6 +47,7 @@ import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -85,9 +86,20 @@ public final class AssemblyRecipes {
      */
     private static final String CONDITIONAL = "forge:conditional";
     private static final int GRID = 3;
+    /**
+     * Culinary Compat's cuts of several things at once: Pam's HarvestCraft crafts that need its cutting board, made on Farmer's
+     * Delight's board with a knife instead. They come into the server's recipe manager after it loaded, when the server starts.
+     */
+    private static final ResourceLocation CUT_TOGETHER = ResourceLocation.tryParse("culinarycompat:multi_cutting");
+    /** Culinary Compat cuts them with any knife. */
+    private static final String KNIVES = "forge:tools/knives";
+    /** In a dish's JSON: what the dish is cut together with. */
+    private static final String TOOL = HandsOnDelight.id("tool").toString();
 
     /** Every recipe that may be put together, as the recipe manager loaded it; the tags choose among them once they are bound. */
     private static volatile List<Assembly> candidates = List.of();
+    /** The dishes cut together, read from the recipe manager after it loaded: see {@link #CUT_TOGETHER}. */
+    private static volatile List<Assembly> cutTogether = List.of();
     private static volatile Chosen chosen;
 
     private AssemblyRecipes() {
@@ -112,7 +124,9 @@ public final class AssemblyRecipes {
         /** Rice pressed into a block, the slices laid along its top: nigiri. */
         SHAPE,
         /** Fruit frozen together round the top of the stick: a popsicle. */
-        FREEZE
+        FREEZE,
+        /** Cut through together with the knife: a dish of Pam's HarvestCraft that Culinary Compat cuts on the board. */
+        CHOP
     }
 
     /**
@@ -154,15 +168,20 @@ public final class AssemblyRecipes {
     /**
      * A dish put together on the board: everything lies on ingredient {@code base}, which goes down first. {@code ingredients} are the
      * recipe's own, without the empty places of a shaped one; {@code slots}: where each lies in a 3 x 3 crafting grid, so the recipe
-     * itself can make the dish and say what is left (a bucket, a bottle). {@code json}: the recipe as the clients read it.
+     * itself can make the dish and say what is left (a bucket, a bottle). {@code json}: the recipe as the clients read it. {@code tool}:
+     * what the layers are cut through with to make the dish, worn by every dish made; null for a dish made by hand.
      */
     public record Assembly(ResourceLocation id, CraftingRecipe recipe, List<Ingredient> ingredients, int[] slots, int base, Base kind,
-            ItemStack result, JsonObject json) {
+            ItemStack result, JsonObject json, Ingredient tool) {
         /**
          * What the cook's hands do: a bowl of plants is tossed and anything else in a bowl arranged; a pie or a cake is pressed
          * whatever goes down first; a stick with ice freezes, bread closes over the filling or is rolled round it, rice is shaped.
+         * What is cut together is chopped through.
          */
         public Finish finish() {
+            if (tool != null) {
+                return Finish.CHOP;
+            }
             if (kind == Base.BOWL) {
                 return isTossed() ? Finish.TOSS : Finish.ARRANGE;
             }
@@ -260,7 +279,9 @@ public final class AssemblyRecipes {
             synchronized (AssemblyRecipes.class) {
                 now = chosen;
                 if (now == null) {
-                    now = choose(candidates);
+                    List<Assembly> from = new ArrayList<>(candidates);
+                    from.addAll(cutTogether);
+                    now = choose(from);
                     chosen = now;
                 }
             }
@@ -278,8 +299,9 @@ public final class AssemblyRecipes {
         ListTag book = new ListTag();
         for (Assembly assembly : from) {
             ItemStack result = assembly.result();
-            boolean taken = result.is(ASSEMBLED) || !result.is(NOT_ASSEMBLED) && !usesWorkshop(assembly.ingredients())
-                    && (isDishResult(result) || isCutIntoFood(result) || isDrinkOfFood(assembly));
+            // What another mod already cuts on Farmer's Delight's board is the board's, whatever it makes.
+            boolean taken = assembly.tool() != null ? !result.is(NOT_ASSEMBLED) : result.is(ASSEMBLED) || !result.is(NOT_ASSEMBLED)
+                    && !usesWorkshop(assembly.ingredients()) && (isDishResult(result) || isCutIntoFood(result) || isDrinkOfFood(assembly));
             if (!taken) {
                 continue;
             }
@@ -400,8 +422,56 @@ public final class AssemblyRecipes {
             }
         });
         candidates = List.copyOf(read);
+        // Culinary Compat adds its cuts again when the reloaded recipes go out to the players.
+        cutTogether = List.of();
         chosen = null;
         HandsOnDelight.LOGGER.info("{} crafting recipes of Farmer's Delight may be put together on the cutting board", read.size());
+    }
+
+    /**
+     * Reads the dishes another mod put into the server's recipe manager after it loaded: Culinary Compat's cuts of several things at
+     * once ({@link #CUT_TOGETHER}). They are found by their recipe type, so nothing of that mod is loaded here, and are laid on the
+     * board as layers, then cut through with a knife, as Culinary Compat does on Farmer's Delight's own board.
+     */
+    public static void recipesReplaced(Collection<Recipe<?>> recipes) {
+        List<Assembly> found = new ArrayList<>();
+        for (Recipe<?> recipe : recipes) {
+            if (!CUT_TOGETHER.equals(BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType()))) {
+                continue;
+            }
+            try {
+                cutTogether(recipe).ifPresent(found::add);
+            } catch (RuntimeException broken) {
+                HandsOnDelight.LOGGER.warn("Could not read the recipe {} for the cutting board", recipe.getId(), broken);
+            }
+        }
+        if (found.isEmpty() && cutTogether.isEmpty()) {
+            return;
+        }
+        cutTogether = List.copyOf(found);
+        chosen = null;
+        HandsOnDelight.LOGGER.info("{} dishes of Culinary Compat are cut together on the cutting board", found.size());
+    }
+
+    /** A cut of several things as a shapeless craft of the same ingredients and result, which the board lays and makes as its own. */
+    private static Optional<Assembly> cutTogether(Recipe<?> recipe) {
+        ItemStack result = recipe.getResultItem(RegistryAccess.EMPTY);
+        List<Ingredient> ingredients = recipe.getIngredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
+        if (result.isEmpty() || result.hasTag() || ingredients.isEmpty() || ingredients.size() > GRID * GRID) {
+            return Optional.empty();
+        }
+        JsonObject json = new JsonObject();
+        json.addProperty("type", SHAPELESS);
+        JsonArray named = new JsonArray();
+        ingredients.forEach(ingredient -> named.add(ingredient.toJson()));
+        json.add("ingredients", named);
+        JsonObject made = item(BuiltInRegistries.ITEM.getKey(result.getItem()).toString());
+        made.addProperty("count", result.getCount());
+        json.add("result", made);
+        JsonObject knife = new JsonObject();
+        knife.addProperty("tag", KNIVES);
+        json.add(TOOL, knife);
+        return parse(recipe.getId(), json);
     }
 
     /**
@@ -540,8 +610,9 @@ public final class AssemblyRecipes {
                 }
             }
         }
+        Ingredient tool = json.has(TOOL) ? Ingredient.fromJson(json.get(TOOL)) : null;
         return Optional.of(new Assembly(id, crafting, List.copyOf(ingredients), slots.stream().mapToInt(Integer::intValue).toArray(),
-                base, kind, result.copy(), json));
+                base, kind, result.copy(), json, tool));
     }
 
     /** The ingredients of a shapeless or shaped recipe's JSON, a shaped one's row by row as the recipe lists them; null if broken. */

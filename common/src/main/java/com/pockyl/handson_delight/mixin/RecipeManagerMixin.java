@@ -35,10 +35,14 @@ abstract class RecipeManagerMixin {
 
     @Unique
     private final Map<ResourceLocation, JsonObject> handson$taken = new HashMap<>();
+    /** Whether this is a server's manager, which loads the recipes itself: a client's only gets them from its server. */
+    @Unique
+    private boolean handson$loads;
 
     @Inject(method = APPLY, at = @At("HEAD"))
     private void handson$findAssembled(Map<ResourceLocation, JsonElement> recipes, ResourceManager resources, ProfilerFiller profiler,
             CallbackInfo callback) {
+        handson$loads = true;
         handson$taken.clear();
         AssemblyRecipes.collect(recipes, handson$taken);
     }
@@ -49,6 +53,14 @@ abstract class RecipeManagerMixin {
     private void handson$notInThisGrid(RecipeType<?> type, Container grid, Level level, CallbackInfoReturnable<Optional<?>> callback) {
         if (callback.getReturnValue().orElse(null) instanceof Recipe<?> recipe && AssemblyRecipes.notInThisGrid(recipe, grid)) {
             callback.setReturnValue(Optional.empty());
+        }
+    }
+
+    /** Another mod set the server's recipes anew after they loaded: Culinary Compat adds its cuts of several things this way. */
+    @Inject(method = "replaceRecipes", at = @At("TAIL"))
+    private void handson$readReplaced(Iterable<Recipe<?>> recipes, CallbackInfo callback) {
+        if (handson$loads) {
+            AssemblyRecipes.recipesReplaced(((RecipeManagerAccessor) this).handson$byName().values());
         }
     }
 

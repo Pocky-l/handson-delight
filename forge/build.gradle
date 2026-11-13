@@ -93,6 +93,20 @@ if (providers.gradleProperty('addons').isPresent()) {
                 'delightful:HbEQIqIu',            // Delightful 3.8.1-1.20.1
                 'nethers-delight:MTDQhZd2',       // Nether's Delight 1.20.1-4.0
                 'farmers-respite:kucmCxP0',       // Farmer's Respite 1.20.1-2.1
+                'frights-delight:r31i2Fd1',       // Fright's Delight 1.4.8: a bone cut into the skewers its kebabs are served on
+        ].each { modRuntimeOnly "maven.modrinth:${it}" }
+    }
+}
+
+// -Pculinary runs the game tests with Culinary Compat, which turns Pam's HarvestCraft crafts that need its cutting board into cuts of
+// several things at once on Farmer's Delight's board, made at the board's station too. It does so only with Cooking for Blockheads.
+if (providers.gradleProperty('culinary').isPresent()) {
+    dependencies {
+        [
+                'culinary-compat:BjWAP4cd',                 // Culinary Compat! 1.1.0
+                'cooking-for-blockheads:W87tG8sG',          // Cooking for Blockheads 16.0.15
+                'balm:dDN38ae7',                            // Balm 7.3.44, needed by Cooking for Blockheads
+                'pams-harvestcraft-2-food-core:RLPfpN1a',   // Pam's HarvestCraft 2: Food Core 1.0.5
         ].each { modRuntimeOnly "maven.modrinth:${it}" }
     }
 }

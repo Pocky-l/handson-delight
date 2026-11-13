@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.station;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.BlockItem;
@@ -48,8 +49,9 @@ public final class Cutting {
     }
 
     /**
-     * The cutting recipes that are cooking, the board's station: food goes in or comes out, or what comes out goes into the pot
-     * (rice, mushrooms, pasta). Wood, flowers, baskets and the rest stay with Farmer's Delight's own board.
+     * The cutting recipes that are cooking, the board's station: food goes in or comes out, what comes out goes into the pot (rice,
+     * mushrooms, pasta), or a knife cuts what the pot serves its meals on (Fright's Delight's bone into the skewers of its kebabs).
+     * Wood, flowers, baskets and the rest stay with Farmer's Delight's own board.
      */
     public static List<CuttingBoardRecipe> all(Level level) {
         return cached(level).cooking();
@@ -77,18 +79,25 @@ public final class Cutting {
         }
     }
 
-    private static boolean isCooking(CuttingBoardRecipe recipe, List<CookingPotRecipe> pot) {
+    /** Whether {@code recipe} is cooking, with {@code pot} the cooking pot's recipes: see {@link #all}. */
+    public static boolean isCooking(CuttingBoardRecipe recipe, List<CookingPotRecipe> pot) {
         for (ItemStack input : recipe.getIngredients().get(0).getItems()) {
             if (input.isEdible()) {
                 return true;
             }
         }
-        for (ItemStack result : recipe.getResults()) {
+        List<ItemStack> results = recipe.getResults();
+        for (ItemStack result : results) {
             if (result.isEdible() || pot.stream().anyMatch(cooking -> cooking.getIngredients().stream().anyMatch(in -> in.test(result)))) {
                 return true;
             }
         }
-        return false;
+        // A knife that cuts something into nothing but what the pot serves on makes skewers. A bush cut into sticks with an axe, a
+        // basket taken apart into canvas and a stick, a plant cut into a stick and gunpowder are no cooking, though a stick holds a
+        // marshmallow from the pot.
+        ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")));
+        return !results.isEmpty() && recipe.getTool().test(knife) && results.stream().allMatch(result -> pot.stream()
+                .map(CookingPotRecipe::getOutputContainer).anyMatch(container -> !container.isEmpty() && container.is(result.getItem())));
     }
 
     /** Whether the board's own use should take {@code item}: Farmer's Delight cuts it, and it is no cooking. */

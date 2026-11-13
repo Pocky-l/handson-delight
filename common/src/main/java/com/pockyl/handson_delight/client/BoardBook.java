@@ -113,8 +113,11 @@ final class BoardBook implements RecipeBook.Source {
             List<RecipeBook.Page> read = new ArrayList<>();
             for (AssemblyRecipes.Assembly dish : AssemblyRecipes.read(book)) {
                 List<Ingredient> ingredients = new ArrayList<>(dish.ingredients());
-                // What goes down first is listed first.
+                // What goes down first is listed first, and what it is cut together with last, as a cut lists its knife.
                 ingredients.add(0, ingredients.remove(dish.base()));
+                if (dish.tool() != null) {
+                    ingredients.add(dish.tool());
+                }
                 ItemStack result = dish.result().copy();
                 read.add(new RecipeBook.Page(dish.id(), result, ingredients, List.of(), null, false, DISHES));
             }

@@ -5,12 +5,9 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.model.BookModel;
-import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.blockentity.EnchantTableRenderer;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -39,6 +36,7 @@ import com.pockyl.diegesis.api.client.NodePainter;
 import com.pockyl.diegesis.api.client.NodeView;
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.handson_delight.HandsOnConfig;
+import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.station.PotLogic;
 
 import java.util.ArrayList;
@@ -48,13 +46,13 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * The pot's recipes in a book hanging in the air beside it: the flying book of the enchanting table, opened out, with the recipes on its
- * pages, so the player reads and stirs at once. The page on the left lists the dishes, what can be cooked now first; the page on the
+ * The pot's recipes in a book hanging in the air beside it: a green cookbook ({@link RecipeBookModel}), opened out, with the recipes on
+ * its pages, so the player reads and stirs at once. The page on the left lists the dishes, what can be cooked now first; the page on the
  * right shows the dish under the cursor or the one picked. Pages are measured in units of about a GUI pixel.
  */
 final class RecipeBook implements NodePainter {
-    @SuppressWarnings("removal")
-    private static final ResourceLocation PAPER = ResourceLocation.parse("textures/gui/book.png");
+    /** The page's paper, a unit to a texel, and the ribbon beside it. */
+    private static final ResourceLocation PAPER = HandsOnDelight.id("textures/entity/recipe_book_paper.png");
     private static final ResourceLocation PAGE_FORWARD = ResourceLocation.parse("textures/gui/sprites/widget/page_forward.png");
     private static final ResourceLocation PAGE_FORWARD_LIT = ResourceLocation.parse("textures/gui/sprites/widget/page_forward_highlighted.png");
     private static final ResourceLocation PAGE_BACKWARD = ResourceLocation.parse("textures/gui/sprites/widget/page_backward.png");
@@ -62,9 +60,9 @@ final class RecipeBook implements NodePainter {
     @SuppressWarnings("removal")
     private static final ResourceLocation WHITE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
     private static final Quaternionf LYING = new Matrix3f(0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F).getNormalizedRotation(new Quaternionf());
-    /** How much bigger than on the enchanting table. */
+    /** How big against the model's own pixels. */
     private static final float SIZE = 0.72F;
-    /** The paper reaches the cover's edge: a pixel wider than the model's own pages. */
+    /** The paper covers the model's blocks of pages exactly; the covers frame it with a pixel all round. */
     private static final float PAGE_WIDTH = 6.0F * SIZE;
     private static final float PAGE_HEIGHT = 8.0F * SIZE;
     private static final int UNITS_WIDE = 72;
@@ -110,18 +108,21 @@ final class RecipeBook implements NodePainter {
     private static final int STAR_OPEN = 0xFFD08A1E;
     private static final int STAR_EARNING = 0x90D08A1E;
     private static final int STAR_SHUT = 0x305A3C18;
-    /** The paper of the page in the texture: its clean middle. */
-    private static final float PAPER_U0 = 34.0F / 256.0F;
-    private static final float PAPER_U1 = 152.0F / 256.0F;
-    private static final float PAPER_V0 = 14.0F / 256.0F;
-    private static final float PAPER_V1 = 168.0F / 256.0F;
+    /** The paper texture: its size, the page in its corner (the fold on the left), the ribbon and the lit ribbon beside it. */
+    private static final float PAPER_SIZE = 128.0F;
+    private static final float PAPER_U1 = UNITS_WIDE / PAPER_SIZE;
+    private static final float PAPER_V1 = UNITS_HIGH / PAPER_SIZE;
+    private static final float RIBBON_U = 80.0F;
+    private static final float RIBBON_LIT_U = 88.0F;
+    /** Where the tabs take their paper from: clear of the page's darker edge. */
+    private static final float TAB_PAPER_U = 8.0F;
+    private static final float TAB_PAPER_V = 8.0F;
     private static final float REFRESH_TIME = 1.0F;
     /** How small it is closed. */
     private static final float CLOSED_SIZE = 0.62F;
     /** Closed, it shows its cover: the model turned about the spine, the spine moved to the left of the middle. */
     private static final float CLOSED_TURN = Mth.HALF_PI;
     private static final float CLOSED_SHIFT = 3.0F / 16.0F;
-    /** The ribbon that closes the book, at the top of the right page. */
     /** The tabs over the list: where the row starts, each one's width and spacing, height (the others lower), icon, edge. */
     private static final float TABS_X = 10.0F;
     private static final float TAB_WIDE = 16.0F;
@@ -132,11 +133,10 @@ final class RecipeBook implements NodePainter {
     private static final int TAB_EDGE = 0x905A3C18;
     /** The least room kept between the tabs and the page's edges once the row has to move over to fit. */
     private static final float TAB_MARGIN = 2.0F;
+    /** The ribbon that closes the book, at the top of the right page: a bookmark coming out from under the head of the pages. */
     private static final int RIBBON_X = 62;
     private static final int RIBBON_WIDTH = 6;
     private static final int RIBBON_HEIGHT = 13;
-    private static final int RIBBON = 0xFFB5372B;
-    private static final int RIBBON_LIT = 0xFFD9503E;
     /** The shade in the fold of the pages. */
     private static final int FOLD = 0x285A3C18;
     private static final int FOLD_WIDTH = 5;
@@ -147,7 +147,7 @@ final class RecipeBook implements NodePainter {
     /** How long a book handed over waits in the air for the next station to take it, seconds (the server lets the player in). */
     private static final float HANDOFF_WAIT = 1.0F;
 
-    private BookModel model;
+    private RecipeBookModel model;
     private List<Entry> entries = List.of();
     private boolean wanted;
     private float open;
@@ -641,25 +641,26 @@ final class RecipeBook implements NodePainter {
     public void paint(PoseStack poseStack, MultiBufferSource buffers, int light) {
         shade = LightTexture.pack(Math.max(LightTexture.block(light), LIT), Math.max(LightTexture.sky(light), LIT));
         if (model == null) {
-            model = new BookModel(Minecraft.getInstance().getEntityModels().bakeLayer(ModelLayers.BOOK));
+            model = RecipeBookModel.bake();
         }
         float eased = open * open * (3.0F - 2.0F * open);
         float closed = 1.0F - eased;
+        // How far each cover has turned from shut, as the enchanting table's book turns them.
+        float angle = 1.25F * OPEN * eased;
         poseStack.pushPose();
         poseStack.mulPose(LYING);
         poseStack.scale(16.0F * SIZE, 16.0F * SIZE, 16.0F * SIZE);
         poseStack.mulPose(new Quaternionf().rotationY(CLOSED_TURN * closed));
         poseStack.translate(-CLOSED_SHIFT * closed, 0.0F, 0.0F);
-        model.setupAnim(0.0F, 0.0F, 1.0F, OPEN * eased);
-        VertexConsumer cover = EnchantTableRenderer.BOOK_LOCATION.buffer(buffers, RenderType::entitySolid);
-        model.render(poseStack, cover, shade, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
+        model.setupAnim(angle);
+        // Cut out: the brass corners are triangles on square caps.
+        model.render(poseStack, buffers.getBuffer(RenderType.entityCutout(RecipeBookModel.TEXTURE)), shade, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
         if (open > 0.0F) {
             // The sheets go with the model: the same turn from closed, the same angle of the pages all the way open.
             poseStack.pushPose();
             poseStack.mulPose(new Quaternionf().rotationZ(CLOSED_TURN * closed));
             poseStack.translate(0.0F, -CLOSED_SHIFT * 16.0F * SIZE * closed, 0.0F);
-            float angle = 1.25F * OPEN * eased;
             spread(poseStack, buffers, Mth.HALF_PI - angle, (Mth.sin(angle) + PAGE_GAP) * SIZE);
             poseStack.popPose();
         }
@@ -838,7 +839,7 @@ final class RecipeBook implements NodePainter {
 
         void paper(boolean mirrored) {
             VertexConsumer consumer = buffers.getBuffer(RenderType.text(PAPER));
-            quad(consumer, 0.0F, 0.0F, UNITS_WIDE, UNITS_HIGH, 0.0F, 0xFFFFFFFF, mirrored ? PAPER_U1 : PAPER_U0, mirrored ? PAPER_U0 : PAPER_U1, PAPER_V0, PAPER_V1);
+            quad(consumer, 0.0F, 0.0F, UNITS_WIDE, UNITS_HIGH, 0.0F, 0xFFFFFFFF, mirrored ? PAPER_U1 : 0.0F, mirrored ? 0.0F : PAPER_U1, 0.0F, PAPER_V1);
         }
 
         void rect(float x, float y, float width, float height, float lift, int argb) {
@@ -853,22 +854,23 @@ final class RecipeBook implements NodePainter {
         void tab(float x, boolean chosen, boolean lit, ItemStack icon) {
             float high = chosen ? TAB_HIGH : TAB_HIGH - TAB_DROP;
             int paper = chosen ? 0xFFFFFFFF : lit ? 0xFFEDE4D0 : 0xFFD6C9AC;
-            float u0 = PAPER_U0 + 4.0F / 256.0F;
-            float v0 = PAPER_V0 + 4.0F / 256.0F;
             // Down into the page by a unit: the chosen one runs on into it, with no edge between.
-            quad(buffers.getBuffer(RenderType.text(PAPER)), x, -high, x + TAB_WIDE, chosen ? 1.0F : 0.0F, chosen ? 0.05F : 0.0F, paper, u0,
-                    u0 + TAB_WIDE * 1.6F / 256.0F, v0, v0 + high * 1.6F / 256.0F);
+            float bottom = chosen ? 1.0F : 0.0F;
+            float u0 = TAB_PAPER_U / PAPER_SIZE;
+            float v0 = TAB_PAPER_V / PAPER_SIZE;
+            quad(buffers.getBuffer(RenderType.text(PAPER)), x, -high, x + TAB_WIDE, bottom, chosen ? 0.05F : 0.0F, paper, u0,
+                    u0 + TAB_WIDE / PAPER_SIZE, v0, v0 + (bottom + high) / PAPER_SIZE);
             rect(x + 1.0F, -high, TAB_WIDE - 2.0F, 1.0F, 0.1F, TAB_EDGE);
             rect(x, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
             rect(x + TAB_WIDE - 1.0F, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
             item(icon, x + (TAB_WIDE - TAB_ICON) / 2.0F, -high + 2.0F, TAB_ICON, !chosen && !lit);
         }
 
+        /** The ribbon from the paper texture, its forked end frayed; lighter under the cursor. */
         void ribbon(boolean lit) {
-            int color = lit ? RIBBON_LIT : RIBBON;
-            rect(RIBBON_X, 0.0F, RIBBON_WIDTH, RIBBON_HEIGHT - 3.0F, COVER_LIFT, color);
-            rect(RIBBON_X, RIBBON_HEIGHT - 3.0F, 2.0F, 3.0F, COVER_LIFT, color);
-            rect(RIBBON_X + RIBBON_WIDTH - 2.0F, RIBBON_HEIGHT - 3.0F, 2.0F, 3.0F, COVER_LIFT, color);
+            float u = (lit ? RIBBON_LIT_U : RIBBON_U) / PAPER_SIZE;
+            quad(buffers.getBuffer(RenderType.text(PAPER)), RIBBON_X, 0.0F, RIBBON_X + RIBBON_WIDTH, RIBBON_HEIGHT, COVER_LIFT, 0xFFFFFFFF, u,
+                    u + RIBBON_WIDTH / PAPER_SIZE, 0.0F, RIBBON_HEIGHT / PAPER_SIZE);
         }
 
         void frame(float x, float y, float size) {

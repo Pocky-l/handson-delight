@@ -32,4 +32,9 @@ public final class FabricStoveTests implements FabricGameTest {
     public void everyStoveOfTheTagIsAStation(GameTestHelper helper) {
         StoveTests.everyStoveOfTheTagIsAStation(helper);
     }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void kitchenThingsOpenTheStove(GameTestHelper helper) {
+        StoveTests.kitchenThingsOpenTheStove(helper);
+    }
 }

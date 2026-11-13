@@ -156,7 +156,9 @@ public final class BoardLogic implements StationLogic {
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
         switch (action) {
             case CuttingBoardStation.ACTION_PLACE -> place(station, player, data.getBoolean(CuttingBoardStation.ONE),
-                    data.contains(CuttingBoardStation.FROM) ? data.getInt(CuttingBoardStation.FROM) : -1);
+                    data.contains(CuttingBoardStation.FROM) ? data.getInt(CuttingBoardStation.FROM) : -1,
+                    data.getBoolean(CuttingBoardStation.BY_USE));
+            case CuttingBoardStation.ACTION_CARVE -> carve(station, player);
             case CuttingBoardStation.ACTION_CHOP -> chop(station, player, data.getInt(CuttingBoardStation.MARK), data.getFloat(CuttingBoardStation.AT));
             case CuttingBoardStation.ACTION_TAKE -> take(station, player);
             case CuttingBoardStation.ACTION_ASSEMBLE -> assemble(station, player);
@@ -172,9 +174,11 @@ public final class BoardLogic implements StationLogic {
 
     /**
      * The stack on the cursor, or the one in inventory slot {@code from}, goes onto the board: on the dish when it belongs to one, else
-     * to be cut.
+     * to be cut. What lies there and is no work in hand (a tool stuck into the board, a dish made before that no knife cuts, a thing
+     * no recipe takes) goes to the cook to make room for food. {@code byUse}: the stack the cook held as they opened the board, which
+     * stays in the hand without a word when the board cannot take it.
      */
-    private void place(StationContext station, Player player, boolean one, int from) {
+    private void place(StationContext station, Player player, boolean one, int from, boolean byUse) {
         if (from >= Inventory.INVENTORY_SIZE) {
             return;
         }
@@ -196,12 +200,16 @@ public final class BoardLogic implements StationLogic {
                 && AssemblyRecipes.fits(List.of(onBoard.copyWithCount(1), carried.copyWithCount(1)))) {
             layers = startDish(station, player, onBoard);
             onBoard = ItemStack.EMPTY;
+        } else if (layers.isEmpty() && !onBoard.isEmpty() && !ItemStack.isSameItemSameTags(onBoard, carried) && isDone(station.level())
+                && (cuttable || AssemblyRecipes.isBase(carried))) {
+            clear(station, player, onBoard);
+            onBoard = ItemStack.EMPTY;
         }
         if (!layers.isEmpty() || onBoard.isEmpty() && !cuttable && AssemblyRecipes.isBase(carried)) {
             List<ItemStack> next = new ArrayList<>(layers);
             next.add(carried.copyWithCount(1));
             if (layers.size() >= CuttingBoardStation.MOST_LAYERS || !AssemblyRecipes.fits(next)) {
-                refuse(station, carried);
+                refuse(station, byUse ? ItemStack.EMPTY : carried, byUse);
                 return;
             }
             // A batch: the bread sets how many, every layer after it as many as the hand has, up to that.
@@ -214,11 +222,11 @@ public final class BoardLogic implements StationLogic {
             finishIfWanted(station, player, next);
             return;
         }
-        boolean fits = onBoard.isEmpty() ? cuttable : ItemStack.isSameItemSameTags(onBoard, carried);
+        boolean fits = onBoard.isEmpty() ? cuttable : ItemStack.isSameItemSameTags(onBoard, carried) && !board.isItemCarvingBoard();
         int room = Math.min(carried.getMaxStackSize(), board.getMaxStackSize()) - onBoard.getCount();
         int moved = Math.min(one ? 1 : carried.getCount(), room);
         if (!fits || moved <= 0) {
-            refuse(station, carried);
+            refuse(station, byUse ? ItemStack.EMPTY : carried, byUse);
             return;
         }
         ItemStack put = onBoard.isEmpty() ? carried.copyWithCount(moved) : onBoard.copyWithCount(onBoard.getCount() + moved);
@@ -230,6 +238,47 @@ public final class BoardLogic implements StationLogic {
             restart(station);
         }
         station.effect(CuttingBoardStation.EFFECT_PLACED, "surface", new CompoundTag());
+    }
+
+    /**
+     * Whether what lies on the board is no work in hand, to be moved aside for new food: a tool stuck into it, or a thing no knife
+     * cuts at the station (a dish made before, a block put down without the station). Food waiting to be cut stays.
+     */
+    private boolean isDone(Level level) {
+        ItemStack onBoard = Platform.INSTANCE.getItem(board);
+        return !onBoard.isEmpty() && (board.isItemCarvingBoard() || Cutting.recipesFor(level, onBoard).isEmpty());
+    }
+
+    /** What lay on the board goes to the cook, lifted off for everybody to see; a tool stuck in comes out of the board. */
+    private void clear(StationContext station, Player player, ItemStack onBoard) {
+        boolean carved = board.isItemCarvingBoard();
+        setOnBoard(ItemStack.EMPTY);
+        cutting = ItemStack.EMPTY;
+        restart(station);
+        taken(station, onBoard, -1, carved);
+        give(player, onBoard);
+    }
+
+    /**
+     * The tool on the cursor is stuck into the bare board, as Farmer's Delight's own use with sneaking sticks it in, and the board
+     * keeps it as Farmer's Delight's renderer shows it. A click with an empty hand, or food put down, takes it out again.
+     */
+    private void carve(StationContext station, Player player) {
+        ItemStack carried = player.inventoryMenu.getCarried();
+        if (carried.isEmpty() || !Cutting.canStick(carried) || !layers(station.state()).isEmpty()
+                || !Platform.INSTANCE.getItem(board).isEmpty()) {
+            refuse(station, carried, false);
+            return;
+        }
+        if (!board.carveToolOnBoard(carried.copyWithCount(1))) {
+            refuse(station, carried, false);
+            return;
+        }
+        carried.shrink(1);
+        player.inventoryMenu.setCarried(carried.isEmpty() ? ItemStack.EMPTY : carried);
+        cutting = Platform.INSTANCE.getItem(board).copyWithCount(1);
+        restart(station);
+        station.effect(CuttingBoardStation.EFFECT_CARVED, "surface", new CompoundTag());
     }
 
     /**
@@ -366,9 +415,7 @@ public final class BoardLogic implements StationLogic {
         if (startsOnBoard) {
             startDish(station, player, onBoard);
         } else if (layers.isEmpty() && !onBoard.isEmpty()) {
-            setOnBoard(ItemStack.EMPTY);
-            taken(station, onBoard, -1);
-            give(player, onBoard);
+            clear(station, player, onBoard);
         }
         for (int m = 0; m < missing.size(); m++) {
             state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, layers.size() + m), kinds[m].copyWithCount(counts[m]));
@@ -378,10 +425,16 @@ public final class BoardLogic implements StationLogic {
         station.effect(CuttingBoardStation.EFFECT_PLACED, "surface", where);
     }
 
-    /** The inventory slot holding what {@code ingredient} takes: the one in hand first, then the hotbar and the rest; -1 without one. */
+    /**
+     * The inventory slot holding what {@code ingredient} takes: the one in hand first, then the off hand, the hotbar and the rest; -1
+     * without one.
+     */
     private static int slotWith(Inventory inventory, Ingredient ingredient) {
         if (ingredient.test(inventory.getSelected())) {
             return inventory.selected;
+        }
+        if (ingredient.test(inventory.getItem(Inventory.SLOT_OFFHAND))) {
+            return Inventory.SLOT_OFFHAND;
         }
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
             if (ingredient.test(inventory.getItem(slot))) {
@@ -471,17 +524,14 @@ public final class BoardLogic implements StationLogic {
         if (!layers.isEmpty()) {
             SlotRef top = SlotRef.of(CuttingBoardStation.LAYERS, layers.size() - 1);
             ItemStack taken = state.getItem(top);
-            taken(station, taken, layers.size() - 1);
+            taken(station, taken, layers.size() - 1, false);
             give(player, taken);
             state.setItem(top, ItemStack.EMPTY);
             return;
         }
         ItemStack onBoard = Platform.INSTANCE.getItem(board);
         if (!onBoard.isEmpty()) {
-            setOnBoard(ItemStack.EMPTY);
-            restart(station);
-            taken(station, onBoard, -1);
-            give(player, onBoard);
+            clear(station, player, onBoard);
         }
     }
 
@@ -556,11 +606,17 @@ public final class BoardLogic implements StationLogic {
     }
 
     private static void refuse(StationContext station) {
-        refuse(station, ItemStack.EMPTY);
+        refuse(station, ItemStack.EMPTY, false);
     }
 
-    /** The board will not have it: with a {@code stack}, that stack bounces back to the cook's hand. */
-    private static void refuse(StationContext station, ItemStack stack) {
+    /**
+     * The board will not have it: with a {@code stack}, that stack bounces back to the cook's hand. {@code quiet}: nobody hears of
+     * it, as for the stack held when the board was opened, which never left the hand.
+     */
+    private static void refuse(StationContext station, ItemStack stack, boolean quiet) {
+        if (quiet) {
+            return;
+        }
         CompoundTag data = new CompoundTag();
         if (!stack.isEmpty()) {
             data.put(CuttingBoardStation.STACK, stack.copyWithCount(1).save(new CompoundTag()));
@@ -568,11 +624,17 @@ public final class BoardLogic implements StationLogic {
         station.effect(CuttingBoardStation.EFFECT_REFUSED, "surface", data);
     }
 
-    /** What came off the board, from which layer (-1: what lay to be cut, or the dish), for the clients to lift it off. */
-    private static void taken(StationContext station, ItemStack stack, int layer) {
+    /**
+     * What came off the board, from which layer (-1: what lay to be cut, or the dish), for the clients to lift it off; {@code carved}:
+     * a tool pulled out of the board.
+     */
+    private static void taken(StationContext station, ItemStack stack, int layer, boolean carved) {
         CompoundTag data = new CompoundTag();
         data.put(CuttingBoardStation.STACK, stack.save(new CompoundTag()));
         data.putInt(CuttingBoardStation.AT, layer);
+        if (carved) {
+            data.putBoolean(CuttingBoardStation.CARVED, true);
+        }
         station.effect(CuttingBoardStation.EFFECT_TAKEN, "surface", data);
     }
 

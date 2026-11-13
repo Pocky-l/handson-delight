@@ -48,9 +48,13 @@ public final class CuttingBoardStation {
 
     /**
      * Custom actions. {@code place}: the stack on the cursor goes onto the board, {@link #ONE} of it or all; with {@link #FROM}, the
-     * stack in that inventory slot instead (shift + click in the drawer).
+     * stack in that inventory slot instead (shift + click in the drawer, or the stack in hand when the board was opened by its use,
+     * {@link #BY_USE}: what the board cannot take then stays in the hand without a word).
      */
     public static final String ACTION_PLACE = "place";
+    public static final String BY_USE = "by_use";
+    /** {@code carve}: the tool on the cursor is stuck into the bare board, as Farmer's Delight's sneaking use sticks it in. */
+    public static final String ACTION_CARVE = "carve";
     /** {@code chop}: the knife on the cursor comes down on mark {@link #MARK} (the next one to cut), at {@link #AT}, scene pixels along z. */
     public static final String ACTION_CHOP = "chop";
     /** {@code take}: the top layer, or what lies to be cut, back into the inventory. */
@@ -93,8 +97,14 @@ public final class CuttingBoardStation {
     public static final String BLOCK = "block";
     /** Data: {@link #BOOK}. */
     public static final ResourceLocation EFFECT_BOOK = HandsOnDelight.id("board_book");
-    /** Something comes off the board into the inventory: {@link #STACK} from layer {@link #AT}, or from the board itself with none. */
+    /**
+     * Something comes off the board into the inventory: {@link #STACK} from layer {@link #AT}, or from the board itself with none;
+     * {@link #CARVED} when it was a tool stuck into the board.
+     */
     public static final ResourceLocation EFFECT_TAKEN = HandsOnDelight.id("taken");
+    public static final String CARVED = "carved";
+    /** A tool was stuck into the board: Farmer's Delight's sound of it. */
+    public static final ResourceLocation EFFECT_CARVED = HandsOnDelight.id("carved");
     /** What a {@link #EFFECT_TAKEN} or {@link #EFFECT_REFUSED} is about, saved as a stack. */
     public static final String STACK = "stack";
     public static final String DONE = "done";
@@ -125,15 +135,15 @@ public final class CuttingBoardStation {
     }
 
     /**
-     * Sneaking keeps the board's own use, also for carving a knife into it. A carved knife is Farmer's Delight's too: its use gives it
-     * back, the station would only show a board it cannot work with. So does what is no cooking: a log stripped with an axe, a flower
-     * cut into dye, held in the hand or lying on the board, stays Farmer's Delight's.
+     * Sneaking keeps the board's own use: a tool stuck in with it, what lies there taken off with an empty hand. So does what is no
+     * cooking: a log stripped with an axe, a flower cut into dye, held in the hand or lying on the board, stays Farmer's Delight's. A
+     * tool stuck into the board opens the station like a bare board: it comes out by a click, or by itself for the food that comes.
      */
     public static boolean opens(Player player, BlockPos pos, BlockState state) {
         if (player.isSecondaryUseActive() || Cutting.isOthers(player.level(), player.getMainHandItem())) {
             return false;
         }
         return !(player.level().getBlockEntity(pos) instanceof CuttingBoardBlockEntity board)
-                || !board.isItemCarvingBoard() && !Cutting.isOthers(player.level(), Platform.INSTANCE.getItem(board));
+                || board.isItemCarvingBoard() || !Cutting.isOthers(player.level(), Platform.INSTANCE.getItem(board));
     }
 }

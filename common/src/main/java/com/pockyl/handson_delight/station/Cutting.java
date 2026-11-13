@@ -5,6 +5,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ShearsItem;
+import net.minecraft.world.item.TieredItem;
+import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -162,10 +165,16 @@ public final class Cutting {
         return results.get(0).getCount() + results.size() - 1;
     }
 
-    /** The inventory slot whose tool cuts {@code item}: the one in hand first, then the hotbar and the rest; -1 without one. */
+    /**
+     * The inventory slot whose tool cuts {@code item}: the one in hand first, then the off hand, the hotbar and the rest; -1 without
+     * one.
+     */
     public static int toolSlot(Level level, ItemStack item, Inventory inventory) {
         if (findWith(level, item, inventory.getSelected()).isPresent()) {
             return inventory.selected;
+        }
+        if (findWith(level, item, inventory.getItem(Inventory.SLOT_OFFHAND)).isPresent()) {
+            return Inventory.SLOT_OFFHAND;
         }
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
             if (findWith(level, item, inventory.getItem(slot)).isPresent()) {
@@ -173,6 +182,14 @@ public final class Cutting {
             }
         }
         return -1;
+    }
+
+    /**
+     * Whether {@code item} can be stuck into the board, as Farmer's Delight's own sneaking use does it: a tool with a tier (a knife,
+     * a sword, an axe), a trident or shears.
+     */
+    public static boolean canStick(ItemStack item) {
+        return item.getItem() instanceof TieredItem || item.getItem() instanceof TridentItem || item.getItem() instanceof ShearsItem;
     }
 
     /** Whether {@code item} is what some cutting recipe cuts with: a knife, an axe, an addon's rolling pin. */

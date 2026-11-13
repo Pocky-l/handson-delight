@@ -6,6 +6,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -167,6 +168,29 @@ public final class StoveTests {
             helper.assertTrue(StoveStation.TYPE.matches(state), BuiltInRegistries.BLOCK.getKey(block) + " opens as the station");
             helper.assertTrue(helper.getBlockEntity(at) instanceof AbstractStoveBlockEntity,
                     BuiltInRegistries.BLOCK.getKey(block) + " grills on a stove's block entity");
+        }
+        helper.succeed();
+    }
+
+    /**
+     * What a cook carries from station to station and the stove has no use for (a knife, a bowl, bread) opens the grill as an empty
+     * hand does; what the stove uses (a flint and steel, a shovel, a water bucket) and blocks (a pot set on it) keep its own use.
+     */
+    public static void kitchenThingsOpenTheStove(GameTestHelper helper) {
+        Top top = stove(helper);
+        BlockPos pos = top.station.pos();
+        BlockState state = helper.getLevel().getBlockState(pos);
+        Item knife = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife"));
+        Item pot = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("cooking_pot"));
+        for (ItemStack held : List.of(ItemStack.EMPTY, new ItemStack(Items.BEEF), new ItemStack(knife), new ItemStack(Items.BOWL),
+                new ItemStack(Items.BREAD))) {
+            top.cook.setItemInHand(InteractionHand.MAIN_HAND, held);
+            helper.assertTrue(StoveStation.opens(top.cook, pos, state), held + " opens the grill");
+        }
+        for (ItemStack held : List.of(new ItemStack(Items.FLINT_AND_STEEL), new ItemStack(Items.IRON_SHOVEL), new ItemStack(Items.WATER_BUCKET),
+                new ItemStack(pot), new ItemStack(Items.COBBLESTONE))) {
+            top.cook.setItemInHand(InteractionHand.MAIN_HAND, held);
+            helper.assertFalse(StoveStation.opens(top.cook, pos, state), held + " keeps the stove's own use");
         }
         helper.succeed();
     }

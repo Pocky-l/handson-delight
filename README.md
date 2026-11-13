@@ -43,8 +43,8 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   stars one for every two. A dish opens its second star after 8 servings and its third after 32.
 - **Recipe book.** It hangs beside the station and puts what you can make now first. Click a dish and its ingredients
   go into the pot from your inventory; Shift + click puts in up to sixteen sets.
-- **Cutting board.** Right-click it with food to lay the food down, with a knife to take the knife in hand. Chop on
-  the dashed marks; each cut goes through sixteen items of the stack. Food is cut across its own length, a kelp roll in
+- **Cutting board.** Right-click it with food to lay the food down. The knife stays in your hand or inventory and shows
+  over the food: chop on the dashed marks; each cut goes through sixteen items of the stack. Food is cut across its own length, a kelp roll in
   even slices and a pie in wedges, with one cut for each piece it gives, three at most.
 - **Dishes on the board.** Farmer's Delight's food crafts move from the crafting table to the cutting board: lay what
   goes down first (bread, a bowl, a stick, kelp, wheat, a pie crust), put the rest on it, and the dish is made. Salads
@@ -76,6 +76,7 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 | Turn a piece on the stove | Click it |
 | Take food back | Right-click it |
 | Put the knife away | Right-click with it |
+| Stick a tool into the board | Shift + click the bare board with it; click it to take it out |
 | Go to the next station | Rest the cursor at the screen's edge on its side, or press A, D or an arrow key |
 
 ## Compatibility

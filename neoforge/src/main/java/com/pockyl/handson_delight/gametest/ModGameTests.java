@@ -1,11 +1,23 @@
 package com.pockyl.handson_delight.gametest;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import vectorwing.farmersdelight.client.recipebook.CookingPotRecipeBookTab;
+import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
 import com.pockyl.handson_delight.HandsOnDelight;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** {@link PotTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests} and {@link RecipeAudit} on NeoForge. */
 @GameTestHolder(HandsOnDelight.MOD_ID)
@@ -192,6 +204,11 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 320)
     public static void moreRiceThanAStackStillCooks(GameTestHelper helper) {
         PotTests.moreRiceThanAStackStillCooks(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 160)
+    public static void aMealOfWhatLiesThereCooksAsABatch(GameTestHelper helper) {
+        PotTests.aMealOfWhatLiesThereCooksAsABatch(helper, MealOfWhatLiesThere::new);
     }
 
     @GameTest(template = "empty", timeoutTicks = 220)
@@ -387,5 +404,39 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void everyRecipeReachesItsStation(GameTestHelper helper) {
         RecipeAudit.everyRecipeReachesItsStation(helper);
+    }
+
+    /** {@link PotTests.MealMaker}'s meal of what lies in the pot on NeoForge. */
+    private static final class MealOfWhatLiesThere extends CookingPotRecipe {
+        private final NonNullList<Ingredient> inputs;
+        private final ItemStack plain;
+
+        MealOfWhatLiesThere(NonNullList<Ingredient> inputs, ItemStack made, ItemStack plain) {
+            super("", CookingPotRecipeBookTab.MEALS, inputs, made, new ItemStack(Items.BOWL), 0.1F, 40);
+            this.inputs = inputs;
+            this.plain = plain;
+        }
+
+        /** Exactly its inputs, decided here as Modest Meals decides: the listed ingredients are none. */
+        @Override
+        public boolean matches(RecipeWrapper input, Level level) {
+            List<ItemStack> there = new ArrayList<>();
+            for (int slot = 0; slot < CookingPotRecipe.INPUT_SLOTS; slot++) {
+                if (!input.getItem(slot).isEmpty()) {
+                    there.add(input.getItem(slot));
+                }
+            }
+            return there.size() == inputs.size() && inputs.stream().allMatch(ingredient -> there.stream().anyMatch(ingredient));
+        }
+
+        @Override
+        public NonNullList<Ingredient> getIngredients() {
+            return NonNullList.create();
+        }
+
+        @Override
+        public ItemStack getResultItem(HolderLookup.Provider registries) {
+            return plain;
+        }
     }
 }

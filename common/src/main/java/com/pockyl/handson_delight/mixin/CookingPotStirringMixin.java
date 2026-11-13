@@ -66,6 +66,9 @@ abstract class CookingPotStirringMixin implements PotStirring {
      */
     @Unique
     private RecipeHolder<CookingPotRecipe> handson$cooking;
+    /** What that recipe cooks of what lay in the pot before the step: a recipe may make its dish of the ingredients (Modest Meals). */
+    @Unique
+    private ItemStack handson$made = ItemStack.EMPTY;
     @Unique
     private int handson$mealBefore;
     /** This serving cooks Farmer's Delight's way: no batch, no stars. */
@@ -242,7 +245,8 @@ abstract class CookingPotStirringMixin implements PotStirring {
             handson$batch = 0;
             return;
         }
-        int batch = PotLogic.batch(pot, recipe.value());
+        ItemStack made = PotLogic.cooked(pot, recipe.value());
+        int batch = PotLogic.batch(pot, recipe.value(), made);
         handson$keepTimeAt(PotLogic.speed(batch));
         handson$batch = batch;
         if (stirred) {
@@ -252,6 +256,7 @@ abstract class CookingPotStirringMixin implements PotStirring {
             handson$saved -= whole;
             cookTime += whole;
             handson$cooking = recipe;
+            handson$made = made;
             handson$mealBefore = pot.getMeal().getCount();
         } else {
             callback.setReturnValue(false);
@@ -285,7 +290,9 @@ abstract class CookingPotStirringMixin implements PotStirring {
         if (recipe == null || handson$serving || pot.getLevel() == null || !PotLogic.isOurs(pot)) {
             return;
         }
-        ItemStack result = recipe.value().getResultItem(pot.getLevel().registryAccess());
+        // What the step cooked of the ingredients before Farmer's Delight took them.
+        ItemStack result = handson$made;
+        handson$made = ItemStack.EMPTY;
         ItemStack meal = pot.getMeal();
         if (result.isEmpty() || !ItemStack.isSameItemSameComponents(meal, result) || meal.getCount() <= handson$mealBefore) {
             return;

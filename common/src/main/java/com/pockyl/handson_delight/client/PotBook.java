@@ -27,6 +27,10 @@ final class PotBook implements RecipeBook.Source {
         List<RecipeBook.Page> pages = new ArrayList<>();
         for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(level)) {
             CookingPotRecipe recipe = holder.value();
+            if (PotLogic.takesAnything(recipe)) {
+                // Made of whatever lies in the pot (Modest Meals' meals): no list to show, nothing to fill the pot with.
+                continue;
+            }
             List<Ingredient> ingredients = recipe.getIngredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
             List<ItemStack> foot = new ArrayList<>();
             if (!recipe.getOutputContainer().isEmpty()) {

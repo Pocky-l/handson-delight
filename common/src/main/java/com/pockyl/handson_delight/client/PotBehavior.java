@@ -20,7 +20,6 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
-import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
 import com.pockyl.diegesis.api.client.DiegesisParticles;
 import com.pockyl.diegesis.api.client.Floater;
@@ -473,13 +472,7 @@ public final class PotBehavior implements StationBehavior {
     }
 
     private static boolean usable(StationView view, ItemStack stack) {
-        for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(view.level())) {
-            CookingPotRecipe recipe = holder.value();
-            if (ItemStack.isSameItem(recipe.getOutputContainer(), stack) || recipe.getIngredients().stream().anyMatch(ingredient -> ingredient.test(stack))) {
-                return true;
-            }
-        }
-        return false;
+        return PotLogic.offered(Platform.INSTANCE.cookingRecipes(view.level()).stream().map(RecipeHolder::value).toList(), stack);
     }
 
     private static boolean canScoop(StationView view, ItemStack stack) {
@@ -1032,7 +1025,7 @@ public final class PotBehavior implements StationBehavior {
                 cookedFor[i] = items[i].copy();
             }
             cookedMade = Platform.INSTANCE.findRecipe(view.level(), Arrays.asList(items))
-                    .map(found -> found.value().getResultItem(view.level().registryAccess())).orElse(ItemStack.EMPTY);
+                    .map(found -> Platform.INSTANCE.cooked(view.level(), found.value(), Arrays.asList(items))).orElse(ItemStack.EMPTY);
         }
         return cookedMade;
     }

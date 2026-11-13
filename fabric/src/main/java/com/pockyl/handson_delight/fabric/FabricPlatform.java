@@ -39,11 +39,21 @@ public final class FabricPlatform implements Platform {
 
     @Override
     public Optional<RecipeHolder<CookingPotRecipe>> findRecipe(Level level, List<ItemStack> items) {
+        return level.getRecipeManager().getRecipeFor(ModRecipeTypes.COOKING.get(), new RecipeWrapper(slots(items)), level);
+    }
+
+    @Override
+    public ItemStack cooked(Level level, CookingPotRecipe recipe, List<ItemStack> items) {
+        return recipe.assemble(new RecipeWrapper(slots(items)), level.registryAccess());
+    }
+
+    /** The pot's slots holding copies of {@code items}, from the first one on. */
+    private static ItemStackHandler slots(List<ItemStack> items) {
         ItemStackHandler slots = new ItemStackHandler(CookingPotBlockEntity.INVENTORY_SIZE);
         for (int i = 0; i < Math.min(items.size(), CookingPotBlockEntity.MEAL_DISPLAY_SLOT); i++) {
             slots.setStackInSlot(i, items.get(i).copy());
         }
-        return level.getRecipeManager().getRecipeFor(ModRecipeTypes.COOKING.get(), new RecipeWrapper(slots), level);
+        return slots;
     }
 
     @Override

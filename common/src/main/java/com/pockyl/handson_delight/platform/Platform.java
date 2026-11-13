@@ -32,6 +32,12 @@ public interface Platform {
 
     List<RecipeHolder<CookingPotRecipe>> cookingRecipes(Level level);
 
+    /**
+     * What {@code recipe} cooks of these items, laid in the pot's slots from the first one on, as Farmer's Delight's pot makes it. A
+     * recipe may make its dish of what lies there (Modest Meals' meals carry their ingredients), so it is not always its plain result.
+     */
+    ItemStack cooked(Level level, CookingPotRecipe recipe, List<ItemStack> items);
+
     /** What lies on a cutting board: its one slot holds a stack. */
     ItemStack getItem(CuttingBoardBlockEntity board);
 

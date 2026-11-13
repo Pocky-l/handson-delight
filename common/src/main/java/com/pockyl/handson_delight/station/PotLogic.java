@@ -346,6 +346,42 @@ public final class PotLogic implements StationLogic {
         return !serves;
     }
 
+    /**
+     * Whether {@code recipe} makes its dish of whatever lies in the pot instead of a list of ingredients: Modest Meals' soups, curries
+     * and jams take any food beside their base, as Farmer's Delight's pot takes any item.
+     */
+    public static boolean takesAnything(CookingPotRecipe recipe) {
+        return recipe.getIngredients().stream().allMatch(Ingredient::isEmpty);
+    }
+
+    /**
+     * What the inventory offers at the pot, out of {@code recipes}: what some recipe cooks with, and what a soup is served in. With a recipe
+     * that takes anything, everything the pot takes: else the food it wants could never be put in at the station.
+     */
+    public static boolean offered(List<CookingPotRecipe> recipes, ItemStack stack) {
+        boolean anything = false;
+        for (CookingPotRecipe recipe : recipes) {
+            if (ItemStack.isSameItem(recipe.getOutputContainer(), stack) || recipe.getIngredients().stream().anyMatch(ingredient -> ingredient.test(stack))) {
+                return true;
+            }
+            anything |= takesAnything(recipe);
+        }
+        return anything;
+    }
+
+    /** What {@code recipe} cooks of what lies in the pot now, as Farmer's Delight's pot makes it: see {@link Platform#cooked}. */
+    public static ItemStack cooked(CookingPotBlockEntity pot, CookingPotRecipe recipe) {
+        Level level = pot.getLevel();
+        if (level == null) {
+            return recipe.getResultItem(RegistryAccess.EMPTY);
+        }
+        List<ItemStack> inPot = new ArrayList<>();
+        for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
+            inPot.add(Platform.INSTANCE.getItem(pot, i));
+        }
+        return Platform.INSTANCE.cooked(level, recipe, inPot);
+    }
+
     /** How many times the ingredients in the pot make the recipe: every slot gives one item to a serving. */
     private static int servingsLeft(CookingPotBlockEntity pot, CookingPotRecipe recipe) {
         List<ItemStack> stacks = new ArrayList<>();
@@ -419,7 +455,11 @@ public final class PotLogic implements StationLogic {
 
     /** How many servings of {@code recipe} cook together: all that the ingredients make, as far as the meal's stack has room. */
     public static int batch(CookingPotBlockEntity pot, CookingPotRecipe recipe) {
-        ItemStack result = recipe.getResultItem(pot.getLevel() == null ? RegistryAccess.EMPTY : pot.getLevel().registryAccess());
+        return batch(pot, recipe, cooked(pot, recipe));
+    }
+
+    /** {@link #batch(CookingPotBlockEntity, CookingPotRecipe)} with {@code result}, what the recipe cooks of what lies in the pot. */
+    public static int batch(CookingPotBlockEntity pot, CookingPotRecipe recipe, ItemStack result) {
         ItemStack meal = pot.getMeal();
         if (result.isEmpty() || !meal.isEmpty() && !ItemStack.isSameItemSameComponents(meal, result)) {
             return 0;
@@ -710,7 +750,7 @@ public final class PotLogic implements StationLogic {
                 resultFor[i] = inPot[i].copy();
             }
             recipeMade = Platform.INSTANCE.findRecipe(station.level(), List.of(inPot)).map(RecipeHolder::value).orElse(null);
-            resultMade = recipeMade == null ? ItemStack.EMPTY : recipeMade.getResultItem(station.level().registryAccess());
+            resultMade = recipeMade == null ? ItemStack.EMPTY : Platform.INSTANCE.cooked(station.level(), recipeMade, List.of(inPot));
         }
         return recipeMade;
     }

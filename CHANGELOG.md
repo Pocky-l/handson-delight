@@ -1,7 +1,9 @@
 # Changelog
 
-## [1.3.1+1.21.1] - Unreleased
+## [1.4.0+1.21.1] - Unreleased
 ### Fixed
+- On Fabric the stations open on structures that [Sable](https://modrinth.com/mod/sable) moves, such as builds of
+  [Sable Beyond](https://modrinth.com/mod/sable_beyond), instead of Farmer's Delight's menus.
 - Things that are cut with a knife into what meals are served on are cut at the board, with their marks and a page in
   its book: [Fright's Delight](https://www.curseforge.com/minecraft/mc-mods/frights-delight)'s bone becomes the shards
   for its kebabs.
@@ -23,6 +25,9 @@
 - The stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) and
   [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) no longer puff dark smoke
   over the food while you grill at them.
+- With [Modest Meals](https://www.curseforge.com/minecraft/mc-mods/modest-meals) the cooking pot takes at the station
+  whatever its meals are made of, such as smoked ham for a soup or fruit and sugar for jam, and a pot of its meals
+  cooks as one batch like any other dish.
 
 Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.8.
 

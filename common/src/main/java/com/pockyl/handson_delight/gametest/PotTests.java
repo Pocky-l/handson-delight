@@ -3,9 +3,11 @@ package com.pockyl.handson_delight.gametest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
@@ -571,18 +573,31 @@ public final class PotTests {
 
     /** A recipe as a data pack or another mod would add it, put among the server's recipes. */
     private static void addRecipe(GameTestHelper helper, String name, ItemStack result, ItemStack container, int cookTime, Ingredient... inputs) {
+        addRecipe(helper, name, new CookingPotRecipe("", CookingPotRecipeBookTab.MISC, NonNullList.of(Ingredient.EMPTY, inputs), result,
+                container, 0.1F, cookTime));
+    }
+
+    private static void addRecipe(GameTestHelper helper, String name, CookingPotRecipe recipe) {
         RecipeManager recipes = helper.getLevel().getRecipeManager();
         ResourceLocation id = HandsOnDelight.id("test_" + name);
         List<RecipeHolder<?>> all = new ArrayList<>(recipes.getRecipes());
-        all.removeIf(recipe -> recipe.id().equals(id));
-        all.add(new RecipeHolder<>(id, new CookingPotRecipe("", CookingPotRecipeBookTab.MISC, NonNullList.of(Ingredient.EMPTY, inputs), result,
-                container, 0.1F, cookTime)));
+        all.removeIf(holder -> holder.id().equals(id));
+        all.add(new RecipeHolder<>(id, recipe));
         recipes.replaceRecipes(all);
         // Autochef's Delight keeps its own list of pot recipes, built when the recipes load: a recipe added here must go into it too.
         try {
             Class.forName("snownee.autochefsdelight.AutochefsDelight").getMethod("buildRecipeCache", RecipeManager.class).invoke(null, recipes);
         } catch (ReflectiveOperationException absent) {
             // Not installed.
+        }
+    }
+
+    private static boolean isLoaded(String className) {
+        try {
+            Class.forName(className, false, PotTests.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException absent) {
+            return false;
         }
     }
 
@@ -607,6 +622,57 @@ public final class PotTests {
             // Five servings of a 2 s recipe: 2 s * sqrt(5) / 1.5, about three seconds.
             helper.assertTrue(setup.pot.getMeal().is(Items.HONEY_BOTTLE) && setup.pot.getMeal().getCount() == 10,
                     "five servings of two come out together, got " + setup.pot.getMeal());
+            helper.assertTrue(Platform.INSTANCE.getItem(setup.pot, 0).isEmpty() && Platform.INSTANCE.getItem(setup.pot, 1).isEmpty(),
+                    "out of all the ingredients");
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Makes a meal of what lies in the pot, as Modest Meals' are to the station: it lists no ingredients, it matches {@code inputs} by
+     * its own check, and its dish ({@code made}) carries what went in, unlike its plain result ({@code plain}). A subclass of Farmer's
+     * Delight's recipe, whose input is the loader's own type, so each loader's tests make it, served in a bowl and cooked in 2 s.
+     */
+    public interface MealMaker {
+        CookingPotRecipe make(NonNullList<Ingredient> inputs, ItemStack made, ItemStack plain);
+    }
+
+    /**
+     * With a recipe that makes its meal of whatever lies in the pot (Modest Meals), the inventory offers everything the pot takes, else
+     * its food could never go in at the station; and the meal cooks as a batch, the dish being what the recipe makes of the ingredients.
+     */
+    public static void aMealOfWhatLiesThereCooksAsABatch(GameTestHelper helper, MealMaker maker) {
+        Level level = helper.getLevel();
+        List<CookingPotRecipe> before = Platform.INSTANCE.cookingRecipes(level).stream().map(RecipeHolder::value).toList();
+        ItemStack bush = new ItemStack(Items.DEAD_BUSH);
+        if (before.stream().noneMatch(PotLogic::takesAnything)) {
+            helper.assertFalse(PotLogic.offered(before, bush), "Farmer's Delight's recipes take no dead bush: the inventory hides it");
+        }
+        ItemStack made = new ItemStack(Items.COOKIE);
+        made.set(DataComponents.CUSTOM_NAME, Component.literal("Meal of what lay there"));
+        CookingPotRecipe meal = maker.make(NonNullList.of(Ingredient.EMPTY, Ingredient.of(Items.DEAD_BUSH), Ingredient.of(Items.SPIDER_EYE)),
+                made, new ItemStack(Items.COOKIE));
+        List<CookingPotRecipe> with = new ArrayList<>(before);
+        with.add(meal);
+        helper.assertTrue(PotLogic.offered(with, bush) && PotLogic.offered(with, new ItemStack(Items.SMOOTH_STONE)),
+                "beside a meal of anything the inventory offers whatever the pot takes");
+        helper.assertTrue(PotLogic.offered(with, new ItemStack(Items.BOWL)), "and the bowl to serve with, as before");
+        if (isLoaded("snownee.autochefsdelight.AutochefsDelight")) {
+            // Autochef's Delight cooks only recipes that list their ingredients: such a meal never cooks with it, at the station or not.
+            helper.succeed();
+            return;
+        }
+
+        addRecipe(helper, "meal_of_anything", meal);
+        Setup setup = pot(helper);
+        Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(Items.DEAD_BUSH, 9));
+        Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.SPIDER_EYE, 9));
+        stirFor(helper, setup, 120);
+        helper.runAfterDelay(110, () -> {
+            // Nine servings of a 2 s recipe: 2 s * 3 / 1.5, four seconds. One at a time the ninth would take three times as long.
+            ItemStack cooked = setup.pot.getMeal();
+            helper.assertTrue(ItemStack.isSameItemSameComponents(cooked, made) && cooked.getCount() == 9,
+                    "nine meals as the recipe makes them come out together, got " + cooked);
             helper.assertTrue(Platform.INSTANCE.getItem(setup.pot, 0).isEmpty() && Platform.INSTANCE.getItem(setup.pot, 1).isEmpty(),
                     "out of all the ingredients");
             helper.succeed();

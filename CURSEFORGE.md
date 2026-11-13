@@ -53,3 +53,5 @@
 <!-- more-mods:end -->
 
 <p style="text-align:center"><span style="color:#9a9a9a;font-size:12px">Made by <strong>Pocky</strong>. Built on <a href="https://www.curseforge.com/minecraft/mc-mods/diegesis">Diegesis</a>; the models and sounds of the stations come from the installed <a href="https://www.curseforge.com/minecraft/mc-mods/farmers-delight">Farmer's Delight</a>. The broth sound is a CC0 recording by Joseph Sardin from <a href="https://bigsoundbank.com">BigSoundBank</a>. Source on <a href="https://github.com/Pocky-l/handson-delight">GitHub</a> (MIT).</span></p>
+
+<p style="text-align:center"><a href="https://ko-fi.com/pockyi"><img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/showcase/coffee.png" width="834" alt="Enjoying my mods? Buy me a coffee on Ko-fi"></a></p>

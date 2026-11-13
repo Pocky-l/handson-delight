@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.4.1+1.20.1] - Unreleased
+## [1.4.1+1.20.1] - 2026-11-14
 
 ### New
 - Modpacks can put any craft together on the cutting board: add its result to the item tag
@@ -46,7 +46,7 @@
 - A click on the recipe book picks what is under the cursor also near the outer edges of its pages, which rise a
   little, instead of the dish above or below it.
 
-## [1.4.0+1.20.1] - Unreleased
+## [1.4.0+1.20.1] - 2026-11-13
 
 ### New
 - [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg opens as a station, lying or standing: its

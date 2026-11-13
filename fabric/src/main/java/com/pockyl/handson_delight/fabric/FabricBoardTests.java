@@ -124,9 +124,9 @@ public final class FabricBoardTests implements FabricGameTest {
         BoardTests.layersStayOnTheBoard(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
-    public void woodStaysWithFarmersDelight(GameTestHelper helper) {
-        BoardTests.woodStaysWithFarmersDelight(helper);
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void everyCutIsTheStations(GameTestHelper helper) {
+        BoardTests.everyCutIsTheStations(helper);
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)

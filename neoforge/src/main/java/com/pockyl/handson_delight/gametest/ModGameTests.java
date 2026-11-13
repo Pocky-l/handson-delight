@@ -354,9 +354,9 @@ public final class ModGameTests {
         BoardTests.layersStayOnTheBoard(helper);
     }
 
-    @GameTest(template = "empty")
-    public static void woodStaysWithFarmersDelight(GameTestHelper helper) {
-        BoardTests.woodStaysWithFarmersDelight(helper);
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void everyCutIsTheStations(GameTestHelper helper) {
+        BoardTests.everyCutIsTheStations(helper);
     }
 
     @GameTest(template = "empty", timeoutTicks = 100)
@@ -512,6 +512,31 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void beerFermentsAndIsDrawnAtTheTap(GameTestHelper helper) {
         KegTests.beerFermentsAndIsDrawnAtTheTap(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void vodkaFermentsFromWaterAndPotatoes(GameTestHelper helper) {
+        KegTests.vodkaFermentsFromWaterAndPotatoes(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void meadFermentsFromHoneyBottles(GameTestHelper helper) {
+        KegTests.meadFermentsFromHoneyBottles(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void saltyFollyWantsACoolKeg(GameTestHelper helper) {
+        KegTests.saltyFollyWantsACoolKeg(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void jerkyDriesInAWarmKeg(GameTestHelper helper) {
+        KegTests.jerkyDriesInAWarmKeg(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 120)
+    public static void theLidKeepsThingsOutAndTheBrewWaitsUnderIt(GameTestHelper helper) {
+        KegTests.theLidKeepsThingsOutAndTheBrewWaitsUnderIt(helper);
     }
 
     /** {@link PotTests.MealMaker}'s meal of what lies in the pot on NeoForge. */

@@ -25,6 +25,7 @@
     "CookingPotBlockEntityMixin",
     "CookingPotBlockMixin",
     "SpriteContentsAccessor",
+    "MinecraftAccessor",
     "StationRenderersMixin",
     "StoveSmokeMixin",
     "AddonStoveSmokeMixin",

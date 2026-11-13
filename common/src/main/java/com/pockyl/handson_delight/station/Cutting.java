@@ -50,18 +50,18 @@ public final class Cutting {
     private Cutting() {
     }
 
-    /** Every cutting recipe, Farmer's Delight's and its addons', wood and flowers too. */
+    /** Every cutting recipe, Farmer's Delight's and its addons', in the order the recipe manager gives them. */
     public static List<CuttingBoardRecipe> everything(Level level) {
         return cached(level).everything();
     }
 
     /**
-     * The cutting recipes that are cooking, the board's station: food goes in or comes out, what comes out goes into the pot (rice,
-     * mushrooms, pasta), or a knife cuts what the pot serves its meals on (Fright's Delight's bone into the skewers of its kebabs).
-     * Wood, flowers, baskets and the rest stay with Farmer's Delight's own board.
+     * Every cutting recipe, the board's station: cooking first (see {@link #isCooking}), then the rest (a log stripped with an axe, a
+     * flower cut into dye, leather armour cut into leather, an addon's moulds). A board that took only food left players with a leather
+     * armour lying on it and no station, and every cut goes through it now; the book keeps the kitchen in front.
      */
     public static List<CuttingBoardRecipe> all(Level level) {
-        return cached(level).cooking();
+        return cached(level).ordered();
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -81,14 +81,20 @@ public final class Cutting {
                     }
                 }
                 List<CookingPotRecipe> pot = Platform.INSTANCE.cookingRecipes(level).stream().map(RecipeHolder::value).toList();
-                cached = new Cached(recipes, List.copyOf(everything), everything.stream().filter(recipe -> isCooking(recipe, pot)).toList(), ids);
+                List<CuttingBoardRecipe> ordered = new ArrayList<>(everything.stream().filter(recipe -> isCooking(recipe, pot)).toList());
+                everything.stream().filter(recipe -> !ordered.contains(recipe)).forEach(ordered::add);
+                cached = new Cached(recipes, List.copyOf(everything), List.copyOf(ordered), ids);
                 CACHE.put(manager, cached);
             }
             return cached;
         }
     }
 
-    /** Whether {@code recipe} is cooking, with {@code pot} the cooking pot's recipes: see {@link #all}. */
+    /**
+     * Whether {@code recipe} is cooking, with {@code pot} the cooking pot's recipes: food goes in or comes out, what comes out goes
+     * into the pot (rice, mushrooms, pasta), or a knife cuts what the pot serves its meals on (Fright's Delight's bone into the skewers
+     * of its kebabs). Cooking comes first in the board's book.
+     */
     public static boolean isCooking(CuttingBoardRecipe recipe, List<CookingPotRecipe> pot) {
         for (ItemStack input : recipe.getIngredients().get(0).getItems()) {
             if (input.has(DataComponents.FOOD)) {
@@ -109,14 +115,8 @@ public final class Cutting {
                 .map(CookingPotRecipe::getOutputContainer).anyMatch(container -> !container.isEmpty() && container.is(result.getItem())));
     }
 
-    /** Whether the board's own use should take {@code item}: Farmer's Delight cuts it, and it is no cooking. */
-    public static boolean isOthers(Level level, ItemStack item) {
-        return !item.isEmpty() && recipesFor(level, item).isEmpty()
-                && everything(level).stream().anyMatch(recipe -> recipe.getIngredients().get(0).test(item));
-    }
-
     /** The cutting recipes read from a recipe manager's map of recipes, as long as the map is the same one. */
-    private record Cached(Map<?, ?> from, List<CuttingBoardRecipe> everything, List<CuttingBoardRecipe> cooking,
+    private record Cached(Map<?, ?> from, List<CuttingBoardRecipe> everything, List<CuttingBoardRecipe> ordered,
                           Map<CuttingBoardRecipe, ResourceLocation> ids) {
     }
 

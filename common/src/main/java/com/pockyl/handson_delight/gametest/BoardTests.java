@@ -17,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -828,20 +829,58 @@ public final class BoardTests {
         helper.succeed();
     }
 
-    public static void woodStaysWithFarmersDelight(GameTestHelper helper) {
+    /**
+     * Every cut of Farmer's Delight goes through the station, cooking or not: a log is stripped there with an axe,
+     * leather armour cut into leather with shears. The book lists the kitchen's cuts first.
+     */
+    public static void everyCutIsTheStations(GameTestHelper helper) {
         Level level = helper.getLevel();
-        helper.assertTrue(Cutting.isOthers(level, new ItemStack(Items.OAK_LOG)), "a log is Farmer's Delight's own board's");
-        helper.assertTrue(Cutting.isOthers(level, new ItemStack(Items.POPPY)), "so is a flower");
-        helper.assertFalse(Cutting.isOthers(level, new ItemStack(fd("cabbage"))), "a cabbage is cooking");
-        helper.assertTrue(Cutting.all(level).stream().noneMatch(recipe -> recipe.getIngredients().get(0).test(new ItemStack(Items.OAK_LOG))),
-                "the book has no wood");
-        helper.assertTrue(Cutting.all(level).stream().anyMatch(recipe -> recipe.getIngredients().get(0).test(new ItemStack(fd("rice_panicle")))),
-                "rice for the pot is cooking");
+        List<CuttingBoardRecipe> all = Cutting.all(level);
+        int log = indexOf(all, new ItemStack(Items.OAK_LOG));
+        int cabbage = indexOf(all, new ItemStack(fd("cabbage")));
+        helper.assertTrue(log >= 0 && indexOf(all, new ItemStack(Items.LEATHER_CHESTPLATE)) >= 0, "logs and leather armour are cut at the station");
+        helper.assertTrue(cabbage >= 0 && cabbage < log, "the kitchen's cuts come first in the book");
         Board setup = board(helper);
-        setup.carry(new ItemStack(Items.OAK_LOG));
+        BlockPos pos = setup.station.pos();
+        setup.cook.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.OAK_LOG));
+        helper.assertTrue(CuttingBoardStation.opens(setup.cook, pos, helper.getLevel().getBlockState(pos)), "a log in the hand opens it");
+        setup.cook.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        setup.carry(new ItemStack(Items.OAK_LOG, 2));
         setup.place();
-        helper.assertTrue(setup.onBoard().isEmpty(), "the station puts no log down");
-        helper.succeed();
+        helper.assertTrue(setup.onBoard().is(Items.OAK_LOG), "the station puts the logs down");
+        setup.carry(new ItemStack(Items.IRON_AXE));
+        int marks = setup.logic.plan().marks();
+        for (int mark = 0; mark < marks; mark++) {
+            int next = mark;
+            helper.runAfterDelay(1 + mark * 4L, () -> setup.chop(next));
+        }
+        helper.runAfterDelay(4L * marks + 2, () -> {
+            Inventory inventory = setup.cook.getInventory();
+            helper.assertTrue(inventory.countItem(Items.STRIPPED_OAK_LOG) == 2 && inventory.countItem(fd("tree_bark")) >= 2,
+                    "stripped with the axe, the bark for the cook");
+            setup.carry(new ItemStack(Items.LEATHER_CHESTPLATE));
+            setup.place();
+            helper.assertTrue(setup.onBoard().is(Items.LEATHER_CHESTPLATE), "leather armour lies down to be cut");
+            setup.carry(new ItemStack(Items.SHEARS));
+            int cuts = setup.logic.plan().marks();
+            for (int mark = 0; mark < cuts; mark++) {
+                int next = mark;
+                helper.runAfterDelay(1 + mark * 4L, () -> setup.chop(next));
+            }
+            helper.runAfterDelay(4L * cuts + 2, () -> {
+                helper.assertTrue(setup.onBoard().isEmpty() && setup.cook.getInventory().countItem(Items.LEATHER) >= 1, "cut into leather");
+                helper.succeed();
+            });
+        });
+    }
+
+    private static int indexOf(List<CuttingBoardRecipe> recipes, ItemStack input) {
+        for (int i = 0; i < recipes.size(); i++) {
+            if (recipes.get(i).getIngredients().get(0).test(input)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -871,7 +910,6 @@ public final class BoardTests {
             helper.succeed();
             return;
         }
-        helper.assertFalse(Cutting.isOthers(level, new ItemStack(Items.BONE)), "Fright's Delight's bone is the station's");
         helper.assertTrue(Cutting.all(level).stream().anyMatch(recipe -> recipe.getIngredients().get(0).test(new ItemStack(Items.BONE))),
                 "and in its book");
         Board setup = board(helper);

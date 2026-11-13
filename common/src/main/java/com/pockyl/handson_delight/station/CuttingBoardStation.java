@@ -72,6 +72,8 @@ public final class CuttingBoardStation {
     public static final String ONE = "one";
     public static final String FROM = "from";
     public static final String AT = "at";
+    /** Across the board, scene pixels: where a tool met what it works, for the bits that fly off there. */
+    public static final String AT_X = "at_x";
     public static final String MARK = "mark";
     /** Data: how many of the marks are cut; they are cut in order, and only the next one is shown. */
     public static final String MARKS = "marks";
@@ -147,15 +149,11 @@ public final class CuttingBoardStation {
     }
 
     /**
-     * Sneaking keeps the board's own use: a tool stuck in with it, what lies there taken off with an empty hand. So does what is no
-     * cooking: a log stripped with an axe, a flower cut into dye, held in the hand or lying on the board, stays Farmer's Delight's. A
-     * tool stuck into the board opens the station like a bare board: it comes out by a click, or by itself for the food that comes.
+     * Sneaking keeps the board's own use: a tool stuck in with it, what lies there taken off with an empty hand. Everything else opens
+     * the station, whatever is cut there: food, a log, a flower, leather armour. A tool stuck into the board opens it like a bare
+     * board: it comes out by a click, or by itself for what comes to be cut.
      */
     public static boolean opens(Player player, BlockPos pos, BlockState state) {
-        if (player.isSecondaryUseActive() || Cutting.isOthers(player.level(), player.getMainHandItem())) {
-            return false;
-        }
-        return !(player.level().getBlockEntity(pos) instanceof KitchenBoard board)
-                || board.handson$isCarving() || !Cutting.isOthers(player.level(), board.handson$stored());
+        return !player.isSecondaryUseActive();
     }
 }

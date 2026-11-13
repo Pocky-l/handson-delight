@@ -74,6 +74,10 @@ final class RecipeBook implements NodePainter {
     private static final float PAGE_GAP = 0.09F;
     private static final float SHEET_LIFT = 0.13F;
     private static final float OPEN_TIME = 0.4F;
+    /** How far the camera has come when the book starts to grow, flying in (and is gone, flying back). */
+    private static final float APPEAR_FROM = 0.25F;
+    /** Smaller than this the book is a speck, not a book: it is not drawn. */
+    static final float SPECK = 0.08F;
     private static final float FLIP_TIME = 0.4F;
     /** Over the paper, in units: wells, then what lies on them, then what covers that. */
     private static final float WELL_LIFT = 0.3F;
@@ -295,7 +299,7 @@ final class RecipeBook implements NodePainter {
 
     /**
      * The player left the station. Going over to a neighbour, the book goes with them: it stays as it is until the next station's
-     * book takes its place and flies from here to there with the camera.
+     * book takes its place and flies from here to there with the camera. Leaving, it closes and goes away as the camera flies back.
      */
     void shut(StationView view) {
         Optional<NodeView> node = view.node("book_open");
@@ -306,7 +310,20 @@ final class RecipeBook implements NodePainter {
         arrivingFrom = null;
         arrivingHeld = false;
         wanted = false;
-        open = 0.0F;
+    }
+
+    /**
+     * How much of the book is there, 0 to 1: it grows where it hangs as the camera flies in, and goes as the camera flies back, so it
+     * neither pops up before the station is reached nor vanishes in the first frame of leaving. Going over, it is all there.
+     */
+    static float appear(StationView view) {
+        boolean worked = DiegesisClient.focusedStation().map(focused -> focused.pos().equals(view.pos())).orElse(false);
+        if (!worked || DiegesisClient.goingOver() < 1.0F) {
+            return 1.0F;
+        }
+        // Over the last three quarters of the way in, and gone in the first part of the way back: far off it would be a speck.
+        float t = Mth.clamp((DiegesisClient.arrival() - APPEAR_FROM) / (1.0F - APPEAR_FROM), 0.0F, 1.0F);
+        return t * t * (3.0F - 2.0F * t);
     }
 
     /** Hands the book over to the next station from where it is now, also half way here (two quick presses of D). */
@@ -349,7 +366,7 @@ final class RecipeBook implements NodePainter {
                 (float) (away.dot(alongZ) / alongZ.lengthSqr()));
     }
 
-    private static boolean isWorkedAt(StationView view) {
+    static boolean isWorkedAt(StationView view) {
         return DiegesisClient.focusedStation().map(focused -> focused.pos().equals(view.pos())).orElse(false);
     }
 
@@ -481,14 +498,22 @@ final class RecipeBook implements NodePainter {
         if (arrivingFrom != null && !arrivingHeld && (flight >= 1.0F || !isWorkedAt(view))) {
             arrivingFrom = null;
         }
-        node.setVisible(view.isFocused() || leaving != null || arrivingFrom != null);
+        float appear = appear(view);
+        node.setVisible((view.isFocused() || leaving != null || arrivingFrom != null || isWorkedAt(view)) && appear > SPECK);
+        if (!node.isVisible() && leaving == null) {
+            open = 0.0F;
+        }
         time += dt;
         open = Mth.clamp(open + (wanted ? dt : -dt) / OPEN_TIME, 0.0F, 1.0F);
+        if (wanted) {
+            // Coming in, it is open by the time the camera lands.
+            open = Math.max(open, appear);
+        }
         flip = Math.min(1.0F, flip + dt / FLIP_TIME);
         // Grows and opens where it hangs, breathing a little.
         float eased = open * open * (3.0F - 2.0F * open);
         reach = Mth.lerp(Math.min(1.0F, dt * 12.0F), reach, node.isHovered() && !wanted ? 1.0F : 0.0F);
-        node.scaleTo(Mth.lerp(eased, CLOSED_SIZE * (1.0F + 0.08F * reach), 1.0F), 0.0F);
+        node.scaleTo(Mth.lerp(eased, CLOSED_SIZE * (1.0F + 0.08F * reach), 1.0F) * appear, 0.0F);
         float bob = Mth.sin(time * 1.3F) * 0.14F;
         if (arrivingFrom != null) {
             // With the camera, on the same easing: the book keeps its place on the screen while the kitchen moves under it.

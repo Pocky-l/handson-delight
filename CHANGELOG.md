@@ -7,7 +7,13 @@
   bare board. A click takes it out again, and food you put on the board takes it out into your inventory.
 - A knife in your off hand cuts at the board, as a knife in your inventory does.
 
+### Changed
+- Going to a station and back is quicker and smoother: the camera sets off at once and lands softly, the recipe book
+  and the pot's badge grow in as it arrives and go as you leave, instead of popping up and vanishing.
+
 ### Fixed
+- Recipe viewers such as [EMI](https://modrinth.com/mod/emi) show names for this mod's item tags, such as "Foods Cracked
+  Open", instead of raw ids like `#handson_delight:cracked`.
 - A right click on the cutting board with a knife no longer puts the knife on your cursor: it stays in your hand and
   shows over the food, so the first click cuts.
 - A right click on the board with food lays it where a click at the station would: as the next layer of a dish being

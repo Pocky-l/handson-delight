@@ -4,5 +4,22 @@
   "handson_delight.book.seconds": "%s s",
   "handson_delight.book.bonus": "+%s%%",
   "handson_delight.assembly": "Cutting Board Assembly",
-  "handson_delight.assembly.first": "Goes on the board first"
+  "handson_delight.assembly.first": "Goes on the board first",
+  "tag.item.handson_delight.sliced_straight": "Foods Sliced Straight",
+  "tag.item.handson_delight.cut_in_wedges": "Foods Cut in Wedges",
+  "tag.item.handson_delight.cut_in_strips": "Foods Cut in Strips",
+  "tag.item.handson_delight.poured": "Poured Liquids",
+  "tag.item.handson_delight.cracked": "Foods Cracked Open",
+  "tag.item.handson_delight.dissolves": "Foods Dissolving in Soup",
+  "tag.item.handson_delight.strained": "Foods Strained from Soup",
+  "tag.item.handson_delight.grains": "Grains",
+  "tag.item.handson_delight.not_on_grill": "Foods Kept off the Grill",
+  "tag.item.handson_delight.one_sided": "Foods Fried on One Side",
+  "tag.item.handson_delight.frozen": "Frozen Dishes",
+  "tag.item.handson_delight.wrapped": "Wrapped Dishes",
+  "tag.item.handson_delight.tossed": "Tossed Dishes",
+  "tag.item.handson_delight.arranged": "Arranged Dishes",
+  "tag.item.handson_delight.assembled": "Dishes Made on the Board",
+  "tag.item.handson_delight.not_assembled": "Dishes Not Made on the Board",
+  "tag.item.handson_delight.workshop": "Workshop Materials"
 }

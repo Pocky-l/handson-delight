@@ -11,9 +11,11 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.EnchantTableRenderer;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
@@ -874,10 +876,14 @@ final class RecipeBook implements NodePainter {
         void item(ItemStack stack, float x, float y, float size, boolean faded) {
             poseStack.pushPose();
             poseStack.translate(x + size / 2.0F, y + size / 2.0F, ITEM_LIFT);
-            boolean block = Minecraft.getInstance().getItemRenderer().getModel(stack, station.level(), null, 0).isGui3d();
-            poseStack.scale(size, -size, block ? BLOCK_DEPTH : ITEM_DEPTH);
-            Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.GUI, shade, OverlayTexture.NO_OVERLAY, poseStack,
-                    faded ? DiegesisClient.tinted(buffers, FADED) : buffers, station.level(), 0);
+            ItemRenderer renderer = Minecraft.getInstance().getItemRenderer();
+            BakedModel model = renderer.getModel(stack, station.level(), null, 0);
+            poseStack.scale(size, -size, model.isGui3d() ? BLOCK_DEPTH : ITEM_DEPTH);
+            // The icon looks as in a GUI, but is drawn as no GUI item: mods that decorate every GUI item (Shadow Drop's shadows and
+            // its shift) take its world pose for a screen's and move or cover the icon.
+            BakedModel shown = ClientPlatform.INSTANCE.guiModel(model, poseStack);
+            renderer.render(stack, ItemDisplayContext.NONE, false, poseStack, faded ? DiegesisClient.tinted(buffers, FADED) : buffers, shade,
+                    OverlayTexture.NO_OVERLAY, shown);
             poseStack.popPose();
         }
 

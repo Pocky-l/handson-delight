@@ -366,6 +366,7 @@ public final class PotBehavior implements StationBehavior {
             view.node(part).ifPresent(node -> node.setOnTop(true));
         }
         view.node("book_open").ifPresent(node -> node.setPainter(book));
+        view.node("pot").ifPresent(node -> node.setPainter(new PotBody(view, node)));
         refresh(view, true);
     }
 

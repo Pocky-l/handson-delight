@@ -8,6 +8,7 @@ import net.fabricmc.loader.api.metadata.ModDependency;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
@@ -106,5 +107,18 @@ public final class FabricPlatform implements Platform {
     @Override
     public Path configDir() {
         return FabricLoader.getInstance().getConfigDir();
+    }
+
+    /**
+     * Refabricated's tool action ingredient (axe, shears and pickaxe cuts of addons, {@code "fabric:type":
+     * "farmersdelight:tool_action"}) is a vanilla ingredient and a Fabric custom one at once. Its custom {@code test} lost its
+     * name when the jar was remapped, so the wrapper Fabric puts round it throws {@code AbstractMethodError} on every test, and
+     * shows no items. As the vanilla ingredient it also is, it tests and lists the tools that do its action.
+     */
+    @Override
+    public Ingredient unwrap(Ingredient ingredient) {
+        // Ingredient is final in the game; Refabricated's access widener opens it, so the check goes through Object.
+        Object custom = ingredient.getCustomIngredient();
+        return custom instanceof Ingredient own ? own : ingredient;
     }
 }

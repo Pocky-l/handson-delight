@@ -51,7 +51,7 @@ final class BoardBook implements RecipeBook.Source {
             if (results.isEmpty()) {
                 continue;
             }
-            List<Ingredient> ingredients = List.of(recipe.getIngredients().get(0), recipe.getTool());
+            List<Ingredient> ingredients = List.of(recipe.getIngredients().get(0), Cutting.tool(recipe));
             List<ItemStack> foot = results.size() > 1 ? results : List.of();
             pages.add(new RecipeBook.Page(recipe.getId(), results.get(0).copy(), ingredients, foot, null, false, toolKind(recipe)));
         }
@@ -76,7 +76,7 @@ final class BoardBook implements RecipeBook.Source {
             if (toolKind(recipe).equals(KNIFE)) {
                 knife = true;
             } else {
-                others.merge(recipe.getTool().getItems()[0].getItem(), 1, Integer::sum);
+                others.merge(Cutting.tool(recipe).getItems()[0].getItem(), 1, Integer::sum);
             }
         }
         if (knife) {
@@ -96,10 +96,11 @@ final class BoardBook implements RecipeBook.Source {
     /** What a cut is made with: the knife, or another tool. */
     private static String toolKind(CuttingBoardRecipe recipe) {
         ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")));
-        if (recipe.getTool().test(knife)) {
+        Ingredient tool = Cutting.tool(recipe);
+        if (tool.test(knife)) {
             return KNIFE;
         }
-        return recipe.getTool().getItems().length == 0 ? KNIFE : TOOLS;
+        return tool.getItems().length == 0 ? KNIFE : TOOLS;
     }
 
     static void received(ListTag book) {

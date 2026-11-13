@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.forge;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.fml.ModList;
@@ -95,5 +96,11 @@ public final class ForgePlatform implements Platform {
     @Override
     public Path configDir() {
         return FMLPaths.CONFIGDIR.get();
+    }
+
+    /** Forge's ingredients, Farmer's Delight's tool action among them, test themselves. */
+    @Override
+    public Ingredient unwrap(Ingredient ingredient) {
+        return ingredient;
     }
 }

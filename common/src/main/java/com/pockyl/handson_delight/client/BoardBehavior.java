@@ -11,6 +11,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -18,6 +19,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.TridentItem;
+import net.minecraft.world.level.block.SoundType;
 import org.joml.Vector3f;
 
 
@@ -31,6 +33,7 @@ import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
+import com.pockyl.handson_delight.mixin.MinecraftAccessor;
 import com.pockyl.handson_delight.station.BoardLogic;
 import com.pockyl.handson_delight.station.Cutting;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
@@ -73,8 +76,12 @@ public final class BoardBehavior implements StationBehavior {
     private static final float DASH_GAP = 0.45F;
     private static final float SNAP = 1.4F;
     private static final int MARK_COLOR = 0xA0FFFFFF;
-    /** A block-like item, drawn as an item: its size on the board, pixels. */
-    private static final float BLOCK_SIZE = 8.0F;
+    /**
+     * A block-like item, drawn as an item at this part of its size (the scene's {@code item_block} scale): a whole block filled the
+     * view to its top, and a tool raised over it went out of sight. Its size on the board, pixels.
+     */
+    private static final float BLOCK_SCALE = 0.65F;
+    private static final float BLOCK_SIZE = 8.0F * BLOCK_SCALE;
     @SuppressWarnings("removal")
     private static final ResourceLocation WHITE = new ResourceLocation("minecraft", "block/white_concrete");
     /** The layers sink into one dish, which pops up where they were: seconds. */
@@ -187,6 +194,11 @@ public final class BoardBehavior implements StationBehavior {
     private static final float PENDING_WAIT = 1.0F;
     /** How long a new mark takes to appear, seconds. */
     private static final float MARK_FADE = 0.18F;
+    /** A lump dug into is this much smaller after each shovelful, and takes this long to settle, seconds. */
+    private static final float DUG = 0.14F;
+    private static final float WEAR_TIME = 0.12F;
+    /** How close to a block's edge a tool may come down, pixels. */
+    private static final float BLOCK_MARGIN = 1.2F;
 
     private ItemStack shownItem = ItemStack.EMPTY;
     private List<ItemVoxels.Cut> shownCuts = List.of();
@@ -238,6 +250,32 @@ public final class BoardBehavior implements StationBehavior {
     private int ghost;
     /** While what the board refused bounces back, the hand's own stack is not drawn. */
     private float bouncing;
+    /**
+     * A tool that is no knife ({@link ToolStroke}): its stroke, how far into it (NaN: ready over the work), the mark it is to make
+     * (-1: off the marks, it only knocks), whether its blow was sent, the snips heard, what tool it is and how high the work is.
+     */
+    private ToolStroke stroke = ToolStroke.CUT;
+    private float strokeAge = Float.NaN;
+    private int strokeMark = -1;
+    private boolean strokeSent;
+    private int snipsHeard;
+    private Item strokeTool;
+    private Item shownTool;
+    private float strokeHeight;
+    /** Where the tool stands over the item (pixels from its middle) and how it is turned (radians, its handle towards the cook). */
+    private float toolX;
+    private float toolZ = REST_Z;
+    private float toolYaw;
+    /** From where to where along their line shears snip, in the turn's frame. */
+    private float snipFrom;
+    private float snipTo;
+    /** Where the mark drawn last starts and ends, along it from its point. */
+    private final float[] markEnds = new float[2];
+    /** The last item seen lying on the board, one: what was worked when the pieces fly off. */
+    private ItemStack lastShown = ItemStack.EMPTY;
+    /** How worn a block is drawn: its cracks (0: none), how much of a lump dug into is left. */
+    private int crackStage;
+    private float wornScale = 1.0F;
     private float clock;
     /** How high the item's node was last put to rest: a pile under it that came or went meanwhile moves it there. */
     private float itemRestY;
@@ -258,6 +296,10 @@ public final class BoardBehavior implements StationBehavior {
         shownItem = ItemStack.EMPTY;
         Arrays.fill(shownLayers, ItemStack.EMPTY);
         knife = null;
+        shownTool = null;
+        strokeAge = Float.NaN;
+        crackStage = 0;
+        wornScale = 1.0F;
         steps.clear();
         quiet = true;
         view.node("book_open").ifPresent(node -> node.setPainter(book));
@@ -296,6 +338,7 @@ public final class BoardBehavior implements StationBehavior {
     public void onClose(StationView view) {
         book.shut(view);
         pendingChops = 0;
+        strokeAge = Float.NaN;
         refresh(view);
     }
 
@@ -325,6 +368,9 @@ public final class BoardBehavior implements StationBehavior {
                 lastCuts.clear();
                 lastCuts.addAll(cuts);
             }
+            if (!onBoard.isEmpty()) {
+                lastShown = onBoard.copyWithCount(1);
+            }
             drawItem(view);
             if (landed) {
                 boolean flat = ItemVoxels.icon(onBoard).isPresent();
@@ -335,6 +381,7 @@ public final class BoardBehavior implements StationBehavior {
                 pile.setVisible(onBoard.getCount() > 1 && Float.isNaN(melting));
                 if (onBoard.getCount() > 1) {
                     pile.setShape(shape(onBoard, ITEM_SIZE, List.of(), 0.0F), sprite(onBoard));
+                    pile.setTint(dyed(onBoard));
                 }
             });
         }
@@ -402,6 +449,54 @@ public final class BoardBehavior implements StationBehavior {
         }
         whole = nowWhole;
         quiet = false;
+        drawWear(view);
+    }
+
+    /**
+     * What the strokes so far did to a block, for everybody, from the synced count of strokes: stone and wood crack further with each
+     * blow of a pickaxe or an axe, a lump of gravel or clay grows smaller with each shovelful.
+     */
+    private void drawWear(StationView view) {
+        boolean block = !shownItem.isEmpty() && ItemVoxels.icon(shownItem).isEmpty();
+        ToolStroke how = block ? ToolStroke.of(view.level(), shownItem, ItemStack.EMPTY) : ToolStroke.CUT;
+        int marks = plan(view, shownItem).marks();
+        int done = block ? Math.min(marks, view.state().data().getInt(CuttingBoardStation.MARKS) + pendingChops) : 0;
+        int stage = (how == ToolStroke.SMASH || how == ToolStroke.CHOP) && done > 0 ? Mth.clamp(Math.round(9.0F * done / marks), 1, 9) : 0;
+        if (stage != crackStage) {
+            crackStage = stage;
+            view.node("item_crack").ifPresent(node -> {
+                node.setVisible(stage > 0);
+                if (stage > 0) {
+                    @SuppressWarnings("removal")
+                    ResourceLocation crack = new ResourceLocation("minecraft", "block/destroy_stage_" + stage);
+                    node.setShape(cube(4.0F + 0.1F), crack);
+                }
+            });
+        }
+        float scale = how == ToolStroke.DIG ? 1.0F - DUG * done : 1.0F;
+        if (scale != wornScale) {
+            wornScale = scale;
+            view.node("item_block").ifPresent(node -> {
+                node.scaleTo(scale, WEAR_TIME);
+                // Smaller, it still lies on the board; a new block is put down by its own landing.
+                if (scale < 1.0F) {
+                    node.moveTo(0.0F, -BLOCK_SIZE / 2.0F * (1.0F - scale), 0.0F, WEAR_TIME);
+                }
+            });
+        }
+    }
+
+    /** A box round the middle, {@code half} each way, every face showing the whole texture. */
+    private static MeshShape cube(float h) {
+        MeshShape.Builder shape = MeshShape.builder();
+        // Up, down, south (+z), north, east (+x), west; corners counter-clockwise seen from outside.
+        shape.corner(-h, h, -h, 0, 0, 0, 1, 0).corner(-h, h, h, 0, 1, 0, 1, 0).corner(h, h, h, 1, 1, 0, 1, 0).corner(h, h, -h, 1, 0, 0, 1, 0);
+        shape.corner(-h, -h, -h, 0, 0, 0, -1, 0).corner(h, -h, -h, 1, 0, 0, -1, 0).corner(h, -h, h, 1, 1, 0, -1, 0).corner(-h, -h, h, 0, 1, 0, -1, 0);
+        shape.corner(-h, h, h, 0, 0, 0, 0, 1).corner(-h, -h, h, 0, 1, 0, 0, 1).corner(h, -h, h, 1, 1, 0, 0, 1).corner(h, h, h, 1, 0, 0, 0, 1);
+        shape.corner(h, h, -h, 0, 0, 0, 0, -1).corner(h, -h, -h, 0, 1, 0, 0, -1).corner(-h, -h, -h, 1, 1, 0, 0, -1).corner(-h, h, -h, 1, 0, 0, 0, -1);
+        shape.corner(h, h, h, 0, 0, 1, 0, 0).corner(h, -h, h, 0, 1, 1, 0, 0).corner(h, -h, -h, 1, 1, 1, 0, 0).corner(h, h, -h, 1, 0, 1, 0, 0);
+        shape.corner(-h, h, -h, 0, 0, -1, 0, 0).corner(-h, -h, -h, 0, 1, -1, 0, 0).corner(-h, -h, h, 1, 1, -1, 0, 0).corner(-h, h, h, 1, 0, -1, 0, 0);
+        return shape.build();
     }
 
     /** Laid by hand: a layer a little turned and off the middle, never two the same way. */
@@ -487,7 +582,7 @@ public final class BoardBehavior implements StationBehavior {
                 it.setVisual(Visual.ofItem(stack.getItem()).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));
             }
             it.rotateTo(0.0F, 0.0F, 0.0F, 0.0F);
-            it.scaleTo(1.0F, 0.0F);
+            it.scaleTo(icon.isPresent() ? 1.0F : BLOCK_SCALE, 0.0F);
             it.setVisible(true);
         });
         return node;
@@ -598,6 +693,7 @@ public final class BoardBehavior implements StationBehavior {
         block.setVisible(!shownItem.isEmpty() && !flat);
         if (flat) {
             item.setShape(ItemVoxels.build(ItemVoxels.icon(shownItem).get(), ITEM_SIZE, shownCuts, gap), sprite(shownItem));
+            item.setTint(dyed(shownItem));
             // Not while it lands or pops up: once it stops, keepOnPile puts it right.
             if (!item.isMoving()) {
                 item.moveTo(0.0F, pileLift(), 0.0F, 0.0F);
@@ -610,6 +706,12 @@ public final class BoardBehavior implements StationBehavior {
 
     private static MeshShape shape(ItemStack stack, float size, List<ItemVoxels.Cut> cuts, float gap) {
         return ItemVoxels.icon(stack).map(icon -> ItemVoxels.build(icon, size, cuts, gap)).orElse(null);
+    }
+
+    /** The colour the game gives an item's icon (leather armour's dye), white for the rest: built from the icon, it is drawn so. */
+    private static int dyed(ItemStack stack) {
+        int color = ((MinecraftAccessor) Minecraft.getInstance()).handson$itemColors().getColor(stack, 0);
+        return color == -1 ? 0xFFFFFFFF : 0xFF000000 | color;
     }
 
     private static ResourceLocation sprite(ItemStack stack) {
@@ -676,8 +778,20 @@ public final class BoardBehavior implements StationBehavior {
             return;
         }
         Optional<ItemStack> tool = tool(view);
-        drawMarks(view, tool.isPresent(), dt);
+        if (Float.isNaN(strokeAge)) {
+            stroke = tool.map(stack -> ToolStroke.of(view.level(), shownItem, stack)).orElse(ToolStroke.CUT);
+        }
+        // A block is struck, stripped or dug anywhere on it: no line to follow.
+        boolean wholeBlock = stroke != ToolStroke.CUT && ItemVoxels.icon(shownItem).isEmpty();
+        drawMarks(view, tool.isPresent() && !wholeBlock, dt);
         overMark = -1;
+        if (stroke != ToolStroke.CUT) {
+            node.setVisible(false);
+            chopAge = Float.NaN;
+            moveTool(view, dt, tool);
+            return;
+        }
+        view.node("tool").ifPresent(other -> other.setVisible(false));
         Optional<Vector3f> over = tool.isPresent() ? overItem(view) : Optional.empty();
         boolean drawn = over.isPresent() || !Float.isNaN(chopAge) && tool.isPresent();
         node.setVisible(drawn);
@@ -729,6 +843,160 @@ public final class BoardBehavior implements StationBehavior {
         }
         turn.moveTo(knifeX, y + EDGE, knifeZ, 0.0F);
         turn.rotateTo(0.0F, -knifeAngle * Mth.RAD_TO_DEG, 0.0F, 0.0F);
+    }
+
+    /**
+     * A tool that is no knife, drawn by the board over the work in its own pose ({@link ToolStroke}): over a block anywhere on it, over
+     * a flat item on the line it is to cut, turned with its handle towards the cook. Its stroke plays out here, and the blow is sent
+     * when the tool meets the work, so nothing is cut before it is struck.
+     */
+    private void moveTool(StationView view, float dt, Optional<ItemStack> tool) {
+        NodeView turn = view.node("tool_turn").orElse(null);
+        NodeView node = view.node("tool").orElse(null);
+        if (turn == null || node == null) {
+            return;
+        }
+        boolean striking = !Float.isNaN(strokeAge);
+        Optional<Vector3f> over = tool.isPresent() ? overItem(view) : Optional.empty();
+        boolean drawn = over.isPresent() || striking;
+        node.setVisible(drawn);
+        view.setCarriedHidden(drawn || bouncing > 0.0F);
+        if (!drawn) {
+            return;
+        }
+        Item item = striking || tool.isEmpty() ? strokeTool : tool.get().getItem();
+        if (item != shownTool) {
+            shownTool = item;
+            node.setVisual(Visual.ofItem(item).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));
+        }
+        node.setTint(offered() && !striking ? OFFERED : 0xFFFFFFFF);
+        if (!striking) {
+            aim(view, over.get(), dt);
+            strokeTool = item;
+            strokeHeight = workHeight();
+        } else {
+            strokeAge += dt;
+            if (stroke == ToolStroke.SNIP) {
+                // Every bite but the last is heard here; the last is the cut, heard by everybody.
+                int bites = (int) ((strokeAge - ToolStroke.SNIP_START) / ToolStroke.SNIP_TIME) + 1;
+                while (snipsHeard < Math.min(bites, ToolStroke.SNIPS - 1)) {
+                    snipsHeard++;
+                    view.playSound(SoundEvents.SHEEP_SHEAR, "item", 0.3F, 1.25F + view.level().getRandom().nextFloat() * 0.15F);
+                }
+            }
+            if (!strokeSent && strokeAge >= stroke.impact) {
+                strokeSent = true;
+                impact(view);
+            }
+        }
+        ToolStroke.Pose pose = stroke.pose(new Vector3f(0.0F, strokeHeight, 0.0F), strokeAge, snipFrom, snipTo);
+        if (striking && strokeAge >= stroke.length) {
+            strokeAge = Float.NaN;
+        }
+        Vector3f at = pose.nodePosition(stroke.icon);
+        Vector3f turned = pose.degrees();
+        turn.moveTo(toolX, 0.0F, toolZ, 0.0F);
+        turn.rotateTo(0.0F, -toolYaw * Mth.RAD_TO_DEG, 0.0F, 0.0F);
+        node.moveTo(at.x, at.y, at.z, 0.0F);
+        node.rotateTo(turned.x, turned.y, turned.z, 0.0F);
+    }
+
+    /** Where the tool waits over the work: a block anywhere on it (a shovel at its near side), a flat item on its next line. */
+    private void aim(StationView view, Vector3f over, float dt) {
+        float wantX = over.x;
+        float wantZ = over.z;
+        int next = nextMark(view);
+        if (ItemVoxels.icon(shownItem).isEmpty()) {
+            float reach = BLOCK_SIZE / 2.0F - BLOCK_MARGIN;
+            wantX = Mth.clamp(wantX, -reach, reach);
+            wantZ = switch (stroke) {
+                case STRIP -> -BLOCK_SIZE / 2.0F - 0.15F;
+                case DIG -> -BLOCK_SIZE / 2.0F - 0.3F;
+                default -> Mth.clamp(wantZ, -reach, reach);
+            };
+            toolYaw = 0.0F;
+            overMark = next;
+        } else if (next >= 0) {
+            ItemVoxels.Cut mark = mark(view, shownItem, next);
+            toolYaw = towardsCook(mark.angle());
+            float off = mark.distance(wantX, wantZ);
+            if (Math.abs(off) < SNAP) {
+                overMark = next;
+                wantX -= mark.normalX() * off;
+                wantZ -= mark.normalZ() * off;
+            }
+        }
+        float follow = 1.0F - (float) Math.exp(-dt * 22.0F);
+        toolX += (wantX - toolX) * follow;
+        toolZ += (wantZ - toolZ) * follow;
+    }
+
+    /** A line's angle, turned half round when that brings the handle of a tool laid square across it to the cook's side. */
+    private static float towardsCook(float angle) {
+        return Mth.cos(angle) < 0.0F ? angle + Mth.PI : angle;
+    }
+
+    /** Where the tool's working point meets the work: a shovel goes in below the top of the lump, a hoe hooks just into the seam. */
+    private float workHeight() {
+        float top = itemHeight();
+        return switch (stroke) {
+            case DIG -> top - 1.2F;
+            case STRIP -> top - 0.3F;
+            case PRY -> top - 0.1F;
+            default -> top;
+        };
+    }
+
+    /** A click with a tool that is no knife: its stroke starts, if it is not in one, over the work. */
+    private void startStroke(StationView view, Optional<Vector3f> over) {
+        Optional<ItemStack> tool = tool(view);
+        if (over.isEmpty() || tool.isEmpty() || !Float.isNaN(strokeAge)) {
+            return;
+        }
+        strokeTool = tool.get().getItem();
+        strokeAge = 0.0F;
+        strokeSent = false;
+        snipsHeard = 0;
+        strokeMark = overMark;
+        strokeHeight = workHeight();
+        if (stroke == ToolStroke.SNIP) {
+            snipFrom = -0.5F;
+            snipTo = 0.5F;
+            int next = nextMark(view);
+            if (strokeMark >= 0 && next >= 0) {
+                // From one end of the line to the other, points first, wherever along it the shears were.
+                ItemVoxels.Cut mark = mark(view, shownItem, next);
+                float here = (toolX - mark.x()) * Mth.cos(mark.angle()) + (toolZ - mark.z()) * Mth.sin(mark.angle());
+                float sign = Mth.cos(toolYaw - mark.angle()) >= 0.0F ? 1.0F : -1.0F;
+                float a = sign * (markEnds[0] - here);
+                float b = sign * (markEnds[1] - here);
+                snipFrom = Math.min(a, b) + 0.4F;
+                snipTo = Math.max(snipFrom, Math.max(a, b) - 0.4F);
+            }
+        }
+    }
+
+    /** The tool meets the work: on the work it is a stroke the server makes, beside the marks a knock. */
+    private void impact(StationView view) {
+        if (shownItem.isEmpty()) {
+            return;
+        }
+        boolean block = ItemVoxels.icon(shownItem).isEmpty();
+        if (stroke != ToolStroke.STRIP && stroke != ToolStroke.SNIP) {
+            view.node(block ? "item_block" : "item").ifPresent(work -> work.shake(0.25F, 0.12F));
+        }
+        if (strokeMark < 0) {
+            view.playSound(SoundEvents.WOOD_HIT, "item", 0.25F, 1.6F);
+            return;
+        }
+        pendingChops++;
+        pendingSince = clock;
+        CompoundTag at = new CompoundTag();
+        at.putInt(CuttingBoardStation.MARK, strokeMark);
+        at.putFloat(CuttingBoardStation.AT, MIDDLE_Z + toolZ);
+        at.putFloat(CuttingBoardStation.AT_X, MIDDLE_X + toolX);
+        view.sendAction(CuttingBoardStation.ACTION_CHOP, at);
+        refresh(view);
     }
 
     /** How high the top of the item is over the board. */
@@ -844,6 +1112,8 @@ public final class BoardBehavior implements StationBehavior {
             ends = clip(mark.x(), alongX, extent[0], extent[1], -100.0F, 100.0F);
             ends = clip(mark.z(), alongZ, extent[2], extent[3], ends[0], ends[1]);
         }
+        markEnds[0] = ends[0];
+        markEnds[1] = ends[1];
         float y = itemHeight() + 0.03F;
         float wideX = mark.normalX() * MARK_WIDTH;
         float wideZ = mark.normalZ() * MARK_WIDTH;
@@ -923,6 +1193,10 @@ public final class BoardBehavior implements StationBehavior {
     /** The knife on the cursor comes down: on a mark it cuts there, off the marks it only knocks. */
     private void chop(StationView view) {
         Optional<Vector3f> over = overItem(view);
+        if (stroke != ToolStroke.CUT) {
+            startStroke(view, over);
+            return;
+        }
         if (over.isEmpty() || !Float.isNaN(chopAge)) {
             return;
         }
@@ -1037,36 +1311,114 @@ public final class BoardBehavior implements StationBehavior {
         }
     }
 
-    /** A chop: the tool's sound and bits of the food; the last one sends the pieces off to the cook. */
+    /**
+     * A stroke, for everybody who sees the board: the tool's sound and bits of what it works (the food's colour, bark, stone chips,
+     * crumbs of gravel); the last one sends the pieces off to the cook.
+     */
     private void chopped(StationView view, CompoundTag data) {
         ResourceLocation toolId = ResourceLocation.tryParse(data.getString(CuttingBoardStation.TOOL));
         Item tool = toolId == null ? null : BuiltInRegistries.ITEM.get(toolId);
-        ItemStack food = shownItem.isEmpty() ? lastCut : shownItem;
-        int color = food.isEmpty() ? 0xFFE0D0A0 : 0xFF000000 | FoodColors.main(food);
-        Vector3f at = new Vector3f(MIDDLE_X, TOP + itemHeight(), data.getFloat(CuttingBoardStation.AT));
-        // Bits of the food, not drops: a splash in the food's colour read as green water off a cabbage.
-        view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 4.0F, 0.0F), 1.2F, 4, color);
-        if (!data.getBoolean(CuttingBoardStation.DONE)) {
-            // The last chop sounds through Farmer's Delight, as its own cut does.
-            view.playSound(chopSound(tool), "item", 0.8F, 0.95F + view.level().getRandom().nextFloat() * 0.15F);
+        ItemStack worked = !shownItem.isEmpty() ? shownItem : !lastShown.isEmpty() ? lastShown : lastCut;
+        ItemStack toolStack = tool == null ? ItemStack.EMPTY : new ItemStack(tool);
+        ToolStroke how = ToolStroke.of(view.level(), worked, toolStack);
+        List<ItemStack> results = worked.isEmpty() || toolStack.isEmpty() ? List.of()
+                : Cutting.findWith(view.level(), worked, toolStack).map(recipe -> recipe.getResults()).orElse(List.of());
+        boolean block = !worked.isEmpty() && ItemVoxels.icon(worked).isEmpty();
+        int color = worked.isEmpty() ? 0xFFE0D0A0 : 0xFF000000 | FoodColors.main(worked);
+        float x = data.contains(CuttingBoardStation.AT_X) ? data.getFloat(CuttingBoardStation.AT_X) : MIDDLE_X;
+        float top = TOP + (block ? BLOCK_SIZE : ITEM_SIZE / 16.0F);
+        Vector3f at = new Vector3f(x, top, data.getFloat(CuttingBoardStation.AT));
+        boolean done = data.getBoolean(CuttingBoardStation.DONE);
+        // Bits of what is worked, not drops: a splash in the food's colour read as green water off a cabbage.
+        switch (how) {
+            case CUT -> view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 4.0F, 0.0F), 1.2F, 4, color);
+            case CHOP -> view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 5.0F, 0.0F), 1.6F, 7, color);
+            // Bark curls off the log's near side, down along it and out towards the cook.
+            case STRIP -> view.spawnParticles(DiegesisParticles.DUST, new Vector3f(x, TOP + BLOCK_SIZE * 0.35F, at.z), new Vector3f(0.0F, 1.0F, -3.0F),
+                    2.0F, 12, color);
+            case SMASH -> view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 6.0F, 0.0F), 2.2F, 10, color);
+            case DIG -> view.spawnParticles(DiegesisParticles.DUST, new Vector3f(x, TOP + BLOCK_SIZE * 0.6F, MIDDLE_Z - BLOCK_SIZE / 2.0F),
+                    new Vector3f(0.0F, 5.0F, -3.0F), 1.6F, 9, color);
+            case PRY -> view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 3.0F, -1.0F), 1.0F, 4, color);
+            case SNIP -> view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 2.0F, 0.0F), 0.8F, 3, color);
+        }
+        if (!done) {
+            // The last stroke sounds through Farmer's Delight, as its own cut does.
+            float volume = how == ToolStroke.CUT || how == ToolStroke.STRIP ? 0.8F : 0.6F;
+            view.playSound(strokeSound(how, tool, worked, results), "item", volume, 0.95F + view.level().getRandom().nextFloat() * 0.15F);
             return;
         }
-        view.node("item_gone").ifPresent(gone -> {
-            if (lastCut.isEmpty() || ItemVoxels.icon(lastCut).isEmpty()) {
-                return;
-            }
-            // Split where it was really cut: the first cut as last seen, the last one now.
-            Cutting.Plan cut = Cutting.plan(view.level(), lastCut);
-            List<ItemVoxels.Cut> spread = new ArrayList<>(lastCuts.subList(0, Math.min(lastCuts.size(), cut.marks() - 1)));
-            spread.add(line(lastCut, cut.style(), data.getFloat(CuttingBoardStation.SPOT), data.getFloat(CuttingBoardStation.ANGLE)));
-            gone.setShape(ItemVoxels.build(ItemVoxels.icon(lastCut).get(), ITEM_SIZE, spread, GAP * 1.6F), sprite(lastCut));
-            gone.setVisible(true);
-            gone.moveTo(0.0F, 0.0F, 0.0F, 0.0F);
-            gone.scaleTo(1.0F, 0.0F);
-            gone.moveTo(0.0F, 2.5F, 0.0F, 0.25F);
-            gone.scaleTo(0.0F, 0.25F);
-        });
+        if (!(worked.getItem() instanceof BlockItem) && how != ToolStroke.CUT && how != ToolStroke.SNIP && how != ToolStroke.STRIP) {
+            // Farmer's Delight is silent when what it takes apart is no block (a boat and its chest, a cart and its furnace).
+            view.playSound(material(worked, results).getBreakSound(), "item", 0.8F, 0.95F + view.level().getRandom().nextFloat() * 0.1F);
+        }
+        if (block) {
+            blockDone(view, how, results, color);
+        } else {
+            view.node("item_gone").ifPresent(gone -> {
+                if (lastCut.isEmpty() || ItemVoxels.icon(lastCut).isEmpty()) {
+                    return;
+                }
+                // Split where it was really cut: the first cut as last seen, the last one now.
+                Cutting.Plan cut = Cutting.plan(view.level(), lastCut);
+                List<ItemVoxels.Cut> spread = new ArrayList<>(lastCuts.subList(0, Math.min(lastCuts.size(), cut.marks() - 1)));
+                spread.add(line(lastCut, cut.style(), data.getFloat(CuttingBoardStation.SPOT), data.getFloat(CuttingBoardStation.ANGLE)));
+                gone.setShape(ItemVoxels.build(ItemVoxels.icon(lastCut).get(), ITEM_SIZE, spread, GAP * 1.6F), sprite(lastCut));
+                gone.setTint(dyed(lastCut));
+                gone.setVisible(true);
+                gone.moveTo(0.0F, 0.0F, 0.0F, 0.0F);
+                gone.scaleTo(1.0F, 0.0F);
+                gone.moveTo(0.0F, 2.5F, 0.0F, 0.25F);
+                gone.scaleTo(0.0F, 0.25F);
+            });
+        }
         view.playSound(SoundEvents.ITEM_PICKUP, "item", 0.35F, 1.3F);
+    }
+
+    /**
+     * A block worked to the end: a stripped log rises off the board to the cook; stone, wood, gravel and clay break apart in a
+     * shower of their bits.
+     */
+    private void blockDone(StationView view, ToolStroke how, List<ItemStack> results, int color) {
+        view.node("item_crack").ifPresent(crack -> crack.setVisible(false));
+        crackStage = 0;
+        if (how == ToolStroke.STRIP && !results.isEmpty()) {
+            view.node("block_gone").ifPresent(gone -> {
+                gone.setVisual(Visual.ofItem(results.get(0).getItem()).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));
+                gone.setVisible(true);
+                gone.moveTo(0.0F, 0.0F, 0.0F, 0.0F);
+                gone.scaleTo(1.0F, 0.0F);
+                gone.moveTo(0.0F, 3.0F, 0.0F, 0.3F);
+                gone.scaleTo(0.0F, 0.3F);
+            });
+            return;
+        }
+        Vector3f middle = new Vector3f(MIDDLE_X, TOP + BLOCK_SIZE / 2.0F, MIDDLE_Z);
+        view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 5.0F, 0.0F), 3.0F, how == ToolStroke.DIG ? 14 : 18, color);
+    }
+
+    /** What a stroke sounds like before the last: the knife's cut, the axe's strip, the snip, or the material struck. */
+    private static SoundEvent strokeSound(ToolStroke how, Item tool, ItemStack worked, List<ItemStack> results) {
+        return switch (how) {
+            case CUT -> chopSound(tool);
+            case STRIP -> SoundEvents.AXE_STRIP;
+            case SNIP -> SoundEvents.SHEEP_SHEAR;
+            default -> material(worked, results).getHitSound();
+        };
+    }
+
+    /** What is worked is made of: its block, else the first block it comes apart into (a chest off a boat), else wood. */
+    @SuppressWarnings("deprecation")
+    private static SoundType material(ItemStack worked, List<ItemStack> results) {
+        if (worked.getItem() instanceof BlockItem block) {
+            return block.getBlock().defaultBlockState().getSoundType();
+        }
+        for (ItemStack result : results) {
+            if (result.getItem() instanceof BlockItem block) {
+                return block.getBlock().defaultBlockState().getSoundType();
+            }
+        }
+        return SoundType.WOOD;
     }
 
     /** Food the board cuts, a knife it cuts with, or what goes into a dish put together on it. */
@@ -1647,6 +1999,7 @@ public final class BoardBehavior implements StationBehavior {
         }
         refresh(view);
         view.node("item_gone").filter(gone -> gone.isVisible() && !gone.isMoving()).ifPresent(gone -> gone.setVisible(false));
+        view.node("block_gone").filter(gone -> gone.isVisible() && !gone.isMoving()).ifPresent(gone -> gone.setVisible(false));
     }
 
     private static SoundEvent chopSound(Item tool) {

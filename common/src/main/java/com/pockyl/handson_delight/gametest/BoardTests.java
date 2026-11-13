@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -21,8 +22,10 @@ import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -160,6 +163,37 @@ public final class BoardTests {
         CraftingContainer machine = netherSalad(new TransientCraftingContainer(new MachineMenu(), 3, 3));
         helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, table, level).isEmpty(), "the table makes no salad");
         helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, machine, level).isPresent(), "an autocrafter does");
+        helper.succeed();
+    }
+
+    /**
+     * A modpack brings a craft of any mod, datapack or script to the board by tagging its result {@code handson_delight:assembled}.
+     * The board reads such a craft as the recipe manager loaded it, shaped ones keeping their shape; untagged, a vanilla food craft
+     * stays in the crafting table. With KubeJS ({@code -Pkubejs}) the test script adds such a recipe and the tag, as a modpack does.
+     */
+    public static void aTaggedCraftOfAnyModComesToTheBoard(GameTestHelper helper) {
+        RecipeManager recipes = helper.getLevel().getRecipeManager();
+        // Delightful takes the mushroom stew out of the crafting table, leaving the board no craft of it to read.
+        recipes.byKey(ResourceLocation.tryParse("minecraft:mushroom_stew")).filter(CraftingRecipe.class::isInstance).ifPresent(craft -> {
+            AssemblyRecipes.Assembly stew = AssemblyRecipes.fromCraft((CraftingRecipe) craft).orElseThrow();
+            helper.assertTrue(stew.kind() == AssemblyRecipes.Base.BOWL && stew.result().is(Items.MUSHROOM_STEW)
+                    && stew.ingredients().size() == 3, "a shapeless craft is read with its ingredients and result");
+        });
+        AssemblyRecipes.Assembly cake = AssemblyRecipes.fromCraft((CraftingRecipe) recipes.byKey(ResourceLocation.tryParse("minecraft:cake"))
+                .orElseThrow()).orElseThrow();
+        helper.assertTrue(cake.result().is(Items.CAKE) && cake.ingredients().size() == 9 && cake.kind() == AssemblyRecipes.Base.WHEAT,
+                "a shaped craft keeps its shape");
+        helper.assertTrue(AssemblyRecipes.fromCraft((CraftingRecipe) recipes.byKey(ResourceLocation.tryParse("minecraft:bread")).orElseThrow()).isEmpty(),
+                "one kind of thing is no dish");
+        if (Platform.INSTANCE.isLoaded("kubejs")) {
+            helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.tryParse("kubejs:fungus_stew")),
+                    "a script's recipe with a tagged result is made on the board");
+            helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.tryParse("minecraft:mushroom_stew")),
+                    "and so is every craft of that result");
+        } else {
+            helper.assertTrue(!AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.tryParse("minecraft:mushroom_stew")),
+                    "an untagged vanilla dish stays in the crafting table");
+        }
         helper.succeed();
     }
 
@@ -645,20 +679,58 @@ public final class BoardTests {
         helper.succeed();
     }
 
-    public static void woodStaysWithFarmersDelight(GameTestHelper helper) {
+    /**
+     * Every cut of Farmer's Delight goes through the station, cooking or not: a log is stripped there with an axe,
+     * leather armour cut into leather with shears. The book lists the kitchen's cuts first.
+     */
+    public static void everyCutIsTheStations(GameTestHelper helper) {
         Level level = helper.getLevel();
-        helper.assertTrue(Cutting.isOthers(level, new ItemStack(Items.OAK_LOG)), "a log is Farmer's Delight's own board's");
-        helper.assertTrue(Cutting.isOthers(level, new ItemStack(Items.POPPY)), "so is a flower");
-        helper.assertFalse(Cutting.isOthers(level, new ItemStack(fd("cabbage"))), "a cabbage is cooking");
-        helper.assertTrue(Cutting.all(level).stream().noneMatch(recipe -> recipe.getIngredients().get(0).test(new ItemStack(Items.OAK_LOG))),
-                "the book has no wood");
-        helper.assertTrue(Cutting.all(level).stream().anyMatch(recipe -> recipe.getIngredients().get(0).test(new ItemStack(fd("rice_panicle")))),
-                "rice for the pot is cooking");
+        List<CuttingBoardRecipe> all = Cutting.all(level);
+        int log = indexOf(all, new ItemStack(Items.OAK_LOG));
+        int cabbage = indexOf(all, new ItemStack(fd("cabbage")));
+        helper.assertTrue(log >= 0 && indexOf(all, new ItemStack(Items.LEATHER_CHESTPLATE)) >= 0, "logs and leather armour are cut at the station");
+        helper.assertTrue(cabbage >= 0 && cabbage < log, "the kitchen's cuts come first in the book");
         Board setup = board(helper);
-        setup.carry(new ItemStack(Items.OAK_LOG));
+        BlockPos pos = setup.station.pos();
+        setup.cook.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.OAK_LOG));
+        helper.assertTrue(CuttingBoardStation.opens(setup.cook, pos, helper.getLevel().getBlockState(pos)), "a log in the hand opens it");
+        setup.cook.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        setup.carry(new ItemStack(Items.OAK_LOG, 2));
         setup.place();
-        helper.assertTrue(setup.onBoard().isEmpty(), "the station puts no log down");
-        helper.succeed();
+        helper.assertTrue(setup.onBoard().is(Items.OAK_LOG), "the station puts the logs down");
+        setup.carry(new ItemStack(Items.IRON_AXE));
+        int marks = setup.logic.plan().marks();
+        for (int mark = 0; mark < marks; mark++) {
+            int next = mark;
+            helper.runAfterDelay(1 + mark * 4L, () -> setup.chop(next));
+        }
+        helper.runAfterDelay(4L * marks + 2, () -> {
+            Inventory inventory = setup.cook.getInventory();
+            helper.assertTrue(inventory.countItem(Items.STRIPPED_OAK_LOG) == 2 && inventory.countItem(fd("tree_bark")) >= 2,
+                    "stripped with the axe, the bark for the cook");
+            setup.carry(new ItemStack(Items.LEATHER_CHESTPLATE));
+            setup.place();
+            helper.assertTrue(setup.onBoard().is(Items.LEATHER_CHESTPLATE), "leather armour lies down to be cut");
+            setup.carry(new ItemStack(Items.SHEARS));
+            int cuts = setup.logic.plan().marks();
+            for (int mark = 0; mark < cuts; mark++) {
+                int next = mark;
+                helper.runAfterDelay(1 + mark * 4L, () -> setup.chop(next));
+            }
+            helper.runAfterDelay(4L * cuts + 2, () -> {
+                helper.assertTrue(setup.onBoard().isEmpty() && setup.cook.getInventory().countItem(Items.LEATHER) >= 1, "cut into leather");
+                helper.succeed();
+            });
+        });
+    }
+
+    private static int indexOf(List<CuttingBoardRecipe> recipes, ItemStack input) {
+        for (int i = 0; i < recipes.size(); i++) {
+            if (recipes.get(i).getIngredients().get(0).test(input)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -691,7 +763,6 @@ public final class BoardTests {
             helper.succeed();
             return;
         }
-        helper.assertFalse(Cutting.isOthers(level, new ItemStack(Items.BONE)), "Fright's Delight's bone is the station's");
         helper.assertTrue(Cutting.all(level).stream().anyMatch(recipe -> recipe.getIngredients().get(0).test(new ItemStack(Items.BONE))),
                 "and in its book");
         Board setup = board(helper);

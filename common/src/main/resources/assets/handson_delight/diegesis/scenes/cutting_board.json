@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
-  "$comment": "The board is the block itself (Farmer's Delight's model: base x 1..12 and handle 13..15, z 1..15, 1 px high). The scene draws what lies on it by code: the item built from its icon (item), or as a block (item_block); the cook's knife (knife_turn turns it along the mark it is to cut); the layers of a dish; lift_N are ghosts of what comes off the board or bounces back. mouth catches stacks let go on the board (the slot hand stays empty: the logic places them, a knife on the cursor chops), surface the clicks of an empty hand. book_open is the pot's flying recipe book, on the left. The camera stands to the board as the pot's stands to the pot, and the book hangs where it hangs there: going over from one to the other, the book keeps its place on the screen. It hangs in front of the row of blocks, where the player stands, at 0.69 of the way from the camera to where it seems to be and as much smaller: a block beside the board never covers it.",
+  "$comment": "The board is the block itself (Farmer's Delight's model: base x 1..12 and handle 13..15, z 1..15, 1 px high). The scene draws what lies on it by code: the item built from its icon (item), or as a block at 0.65 of its size (item_block, BoardBehavior.BLOCK_SCALE); the cook's knife (knife_turn turns it along the mark it is to cut) or other tool (tool_turn); the layers of a dish; lift_N are ghosts of what comes off the board or bounces back. mouth catches stacks let go on the board (the slot hand stays empty: the logic places them, a knife on the cursor chops), surface the clicks of an empty hand. book_open is the pot's flying recipe book, on the left. The camera stands to the board as the pot's stands to the pot, and the book hangs where it hangs there: going over from one to the other, the book keeps its place on the screen. It hangs in front of the row of blocks, where the player stands, at 0.69 of the way from the camera to where it seems to be and as much smaller: a block beside the board never covers it.",
   "work_plane": 3,
   "idle_visible": true,
   "camera": {
@@ -33,7 +33,19 @@
     },
     {"id": "pile", "pos": [6.5, 1.01, 8], "rotation": [0, 17, 0], "pickable": false, "hidden": true},
     {"id": "item", "pos": [6.5, 1.01, 8], "pickable": false, "hidden": true},
-    {"id": "item_block", "pos": [6.5, 5.01, 8], "pickable": false, "hidden": true},
+    {
+      "id": "item_block",
+      "pos": [6.5, 3.61, 8],
+      "scale": 0.65,
+      "pickable": false,
+      "hidden": true,
+      "children": [
+        {"$comment": "Cracks in stone or wood struck with a pickaxe or an axe, drawn by code over the block from the strokes made.",
+          "id": "item_crack", "pickable": false, "hidden": true}
+      ]
+    },
+    {"$comment": "A block worked whole (a stripped log) leaving the board for the cook.",
+      "id": "block_gone", "pos": [6.5, 3.61, 8], "scale": 0.65, "pickable": false, "hidden": true},
     {"id": "marks", "pos": [6.5, 1.01, 8], "pickable": false, "hidden": true},
     {"id": "item_gone", "pos": [6.5, 1.01, 8], "pickable": false, "hidden": true},
     {
@@ -61,6 +73,15 @@
       "scale": 0.69,
       "hidden": true,
       "collider": {"from": [-4.4, -0.4, -3.9], "to": [4.4, 1.4, 3.9]}
+    },
+    {
+      "id": "tool_turn",
+      "pos": [6.5, 1, 8],
+      "pickable": false,
+      "children": [
+        {"$comment": "Any tool but the knife (axe, pickaxe, shovel, hoe, shears), posed by code for its own stroke (ToolStroke).",
+          "id": "tool", "scale": 0.45, "pickable": false, "hidden": true}
+      ]
     },
     {
       "id": "knife_turn",

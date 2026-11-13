@@ -156,7 +156,8 @@ public final class BoardLogic implements StationLogic {
                     data.contains(CuttingBoardStation.FROM) ? data.getInt(CuttingBoardStation.FROM) : -1,
                     data.getBoolean(CuttingBoardStation.BY_USE));
             case CuttingBoardStation.ACTION_CARVE -> carve(station, player);
-            case CuttingBoardStation.ACTION_CHOP -> chop(station, player, data.getInt(CuttingBoardStation.MARK), data.getFloat(CuttingBoardStation.AT));
+            case CuttingBoardStation.ACTION_CHOP -> chop(station, player, data.getInt(CuttingBoardStation.MARK), data.getFloat(CuttingBoardStation.AT),
+                    data.contains(CuttingBoardStation.AT_X) ? data.getFloat(CuttingBoardStation.AT_X) : Float.NaN);
             case CuttingBoardStation.ACTION_TAKE -> take(station, player);
             case CuttingBoardStation.ACTION_ASSEMBLE -> assemble(station, player);
             case CuttingBoardStation.ACTION_PICK -> {
@@ -453,10 +454,11 @@ public final class BoardLogic implements StationLogic {
     }
 
     /**
-     * The knife comes down on the item; with its last chop Farmer's Delight cuts a batch of the stack, one item after the other as
-     * its own cut does (each wears the knife), and the pieces go to the cook.
+     * The knife (or the axe, pickaxe, shovel, hoe or shears the recipe takes) comes down on the item; with its last stroke Farmer's
+     * Delight cuts a batch of the stack, one item after the other as its own cut does (each wears the tool), and the pieces go to the
+     * cook.
      */
-    private void chop(StationContext station, Player player, int mark, float at) {
+    private void chop(StationContext station, Player player, int mark, float at, float atX) {
         Level level = station.level();
         ItemStack onBoard = board.handson$stored();
         long now = level.getGameTime();
@@ -481,6 +483,9 @@ public final class BoardLogic implements StationLogic {
         ItemStack knife = tool;
         CompoundTag chopped = new CompoundTag();
         chopped.putFloat(CuttingBoardStation.AT, Mth.clamp(at, 0.0F, 16.0F));
+        if (!Float.isNaN(atX)) {
+            chopped.putFloat(CuttingBoardStation.AT_X, Mth.clamp(atX, 0.0F, 16.0F));
+        }
         chopped.putFloat(CuttingBoardStation.SPOT, spots[mark]);
         chopped.putFloat(CuttingBoardStation.ANGLE, angles[mark]);
         marks++;

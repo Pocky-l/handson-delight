@@ -5,11 +5,12 @@
     "keg_side": "brewinandchewin:block/keg_side",
     "keg_back": "brewinandchewin:block/keg_back",
     "keg_top": "brewinandchewin:block/keg_top",
-    "keg_feet": "brewinandchewin:block/keg_feet"
+    "keg_feet": "brewinandchewin:block/keg_feet",
+    "inside": "handson_delight:block/keg/lying"
   },
   "elements": [
     {
-      "name": "wood_front",
+      "name": "head_front",
       "from": [
         1,
         2,
@@ -18,7 +19,7 @@
       "to": [
         15,
         16,
-        4
+        1
       ],
       "faces": {
         "north": {
@@ -32,7 +33,7 @@
         },
         "east": {
           "uv": [
-            12,
+            15,
             1,
             16,
             15
@@ -41,18 +42,18 @@
         },
         "south": {
           "uv": [
-            1,
-            1,
-            15,
-            15
+            0,
+            0,
+            3.5,
+            3.5
           ],
-          "texture": "#keg_back"
+          "texture": "#inside"
         },
         "west": {
           "uv": [
             0,
             1,
-            4,
+            1,
             15
           ],
           "texture": "#keg_side"
@@ -62,14 +63,14 @@
             1,
             0,
             15,
-            4
+            1
           ],
           "texture": "#keg_top"
         },
         "down": {
           "uv": [
             1,
-            12,
+            15,
             15,
             16
           ],
@@ -78,11 +79,11 @@
       }
     },
     {
-      "name": "wood_back",
+      "name": "head_back",
       "from": [
         1,
         2,
-        12
+        15
       ],
       "to": [
         15,
@@ -92,18 +93,18 @@
       "faces": {
         "north": {
           "uv": [
-            1,
-            1,
-            15,
-            15
+            4,
+            0,
+            7.5,
+            3.5
           ],
-          "texture": "#keg_back"
+          "texture": "#inside"
         },
         "east": {
           "uv": [
             0,
             1,
-            4,
+            1,
             15
           ],
           "texture": "#keg_side"
@@ -119,7 +120,7 @@
         },
         "west": {
           "uv": [
-            12,
+            15,
             1,
             16,
             15
@@ -129,7 +130,7 @@
         "up": {
           "uv": [
             1,
-            12,
+            15,
             15,
             16
           ],
@@ -140,39 +141,39 @@
             1,
             0,
             15,
-            4
+            1
           ],
           "texture": "#keg_top"
         }
       }
     },
     {
-      "name": "wood_west",
+      "name": "stave_west",
       "from": [
         1,
         2,
-        4
+        1
       ],
       "to": [
-        4,
+        2,
         16,
-        12
+        15
       ],
       "faces": {
         "east": {
           "uv": [
-            4,
-            1,
-            12,
-            15
+            8,
+            0,
+            11.5,
+            3.5
           ],
-          "texture": "#keg_back"
+          "texture": "#inside"
         },
         "west": {
           "uv": [
-            4,
             1,
-            12,
+            1,
+            15,
             15
           ],
           "texture": "#keg_side"
@@ -180,102 +181,102 @@
         "up": {
           "uv": [
             1,
-            4,
-            4,
-            12
+            1,
+            2,
+            15
           ],
           "texture": "#keg_top"
         },
         "down": {
           "uv": [
             1,
-            4,
-            4,
-            12
+            1,
+            2,
+            15
           ],
           "texture": "#keg_top"
         }
       }
     },
     {
-      "name": "wood_east",
+      "name": "stave_east",
       "from": [
-        12,
+        14,
         2,
-        4
+        1
       ],
       "to": [
         15,
         16,
-        12
+        15
       ],
       "faces": {
         "east": {
           "uv": [
-            4,
             1,
-            12,
+            1,
+            15,
             15
           ],
           "texture": "#keg_side"
         },
         "west": {
           "uv": [
-            4,
-            1,
             12,
-            15
+            0,
+            15.5,
+            3.5
           ],
-          "texture": "#keg_back"
+          "texture": "#inside"
         },
         "up": {
           "uv": [
-            12,
-            4,
+            14,
+            1,
             15,
-            12
+            15
           ],
           "texture": "#keg_top"
         },
         "down": {
           "uv": [
-            12,
-            4,
+            14,
+            1,
             15,
-            12
+            15
           ],
           "texture": "#keg_top"
         }
       }
     },
     {
-      "name": "wood_floor",
+      "name": "floor",
       "from": [
-        4,
         2,
-        4
+        2,
+        1
       ],
       "to": [
-        12,
+        14,
         3,
-        12
+        15
       ],
       "faces": {
         "up": {
           "uv": [
+            0,
             4,
-            4,
-            12,
-            12
+            3,
+            7.5
           ],
-          "texture": "#keg_back"
+          "texture": "#inside"
         },
         "down": {
           "uv": [
-            4,
-            4,
-            12,
-            12
+            2,
+            1,
+            14,
+            15
           ],
           "texture": "#keg_top"
         }

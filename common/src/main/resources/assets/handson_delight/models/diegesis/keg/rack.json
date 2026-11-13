@@ -1,0 +1,215 @@
+{
+  "textures": {
+    "slat": "minecraft:block/spruce_planks",
+    "particle": "minecraft:block/spruce_planks"
+  },
+  "elements": [
+    {
+      "name": "slat_3",
+      "from": [
+        2,
+        13,
+        3
+      ],
+      "to": [
+        14,
+        14,
+        5
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            2,
+            3,
+            14,
+            5
+          ],
+          "texture": "#slat"
+        },
+        "down": {
+          "uv": [
+            2,
+            3,
+            14,
+            5
+          ],
+          "texture": "#slat"
+        },
+        "north": {
+          "uv": [
+            2,
+            8,
+            14,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "south": {
+          "uv": [
+            2,
+            8,
+            14,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "west": {
+          "uv": [
+            3,
+            8,
+            5,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "east": {
+          "uv": [
+            3,
+            8,
+            5,
+            9
+          ],
+          "texture": "#slat"
+        }
+      }
+    },
+    {
+      "name": "slat_7",
+      "from": [
+        2,
+        13,
+        7
+      ],
+      "to": [
+        14,
+        14,
+        9
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            2,
+            7,
+            14,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "down": {
+          "uv": [
+            2,
+            7,
+            14,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "north": {
+          "uv": [
+            2,
+            8,
+            14,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "south": {
+          "uv": [
+            2,
+            8,
+            14,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "west": {
+          "uv": [
+            7,
+            8,
+            9,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "east": {
+          "uv": [
+            7,
+            8,
+            9,
+            9
+          ],
+          "texture": "#slat"
+        }
+      }
+    },
+    {
+      "name": "slat_11",
+      "from": [
+        2,
+        13,
+        11
+      ],
+      "to": [
+        14,
+        14,
+        13
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            2,
+            11,
+            14,
+            13
+          ],
+          "texture": "#slat"
+        },
+        "down": {
+          "uv": [
+            2,
+            11,
+            14,
+            13
+          ],
+          "texture": "#slat"
+        },
+        "north": {
+          "uv": [
+            2,
+            8,
+            14,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "south": {
+          "uv": [
+            2,
+            8,
+            14,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "west": {
+          "uv": [
+            11,
+            8,
+            13,
+            9
+          ],
+          "texture": "#slat"
+        },
+        "east": {
+          "uv": [
+            11,
+            8,
+            13,
+            9
+          ],
+          "texture": "#slat"
+        }
+      }
+    }
+  ]
+}

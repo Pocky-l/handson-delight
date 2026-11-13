@@ -4,7 +4,7 @@
 		"model_format": "java_block",
 		"box_uv": false
 	},
-	"name": "vertical_keg_body",
+	"name": "keg_vertical_body",
 	"parent": "",
 	"java_block_version": "1.9.0",
 	"ambientocclusion": true,
@@ -24,7 +24,7 @@
 	},
 	"elements": [
 		{
-			"name": "wood_front",
+			"name": "stave_north",
 			"box_uv": false,
 			"render_order": "default",
 			"rescale": false,
@@ -36,16 +36,16 @@
 			"allow_mirror_modeling": true,
 			"from": [
 				1,
-				2,
+				0,
 				1
 			],
 			"to": [
 				15,
 				16,
-				3
+				2
 			],
 			"autouv": 0,
-			"color": 8,
+			"color": 3,
 			"origin": [
 				0,
 				0,
@@ -57,25 +57,25 @@
 						1,
 						0,
 						15,
-						14
+						16
 					],
 					"texture": 0
 				},
 				"east": {
 					"uv": [
-						13,
+						14,
 						0,
 						15,
-						14
+						16
 					],
 					"texture": 1
 				},
 				"south": {
 					"uv": [
-						1,
-						1,
-						15,
-						15
+						0,
+						0,
+						3.5,
+						4
 					],
 					"texture": 4
 				},
@@ -83,8 +83,8 @@
 					"uv": [
 						1,
 						0,
-						3,
-						14
+						2,
+						16
 					],
 					"texture": 1
 				},
@@ -93,101 +93,14 @@
 						1,
 						1,
 						15,
-						3
+						2
 					],
 					"texture": 2
 				},
 				"down": {
 					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				}
-			},
-			"type": "cube",
-			"uuid": "c510e785-d9e9-6978-83be-c174c9d3eb6f"
-		},
-		{
-			"name": "wood_front_low",
-			"box_uv": false,
-			"render_order": "default",
-			"rescale": false,
-			"locked": false,
-			"shade": true,
-			"light_emission": 0,
-			"export": true,
-			"scope": 0,
-			"allow_mirror_modeling": true,
-			"from": [
-				1,
-				0,
-				1
-			],
-			"to": [
-				15,
-				2,
-				3
-			],
-			"autouv": 0,
-			"color": 6,
-			"origin": [
-				0,
-				0,
-				0
-			],
-			"faces": {
-				"north": {
-					"uv": [
 						1,
 						14,
-						15,
-						16
-					],
-					"texture": 0
-				},
-				"east": {
-					"uv": [
-						13,
-						14,
-						15,
-						16
-					],
-					"texture": 1
-				},
-				"south": {
-					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				},
-				"west": {
-					"uv": [
-						1,
-						14,
-						3,
-						16
-					],
-					"texture": 1
-				},
-				"up": {
-					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				},
-				"down": {
-					"uv": [
-						1,
-						13,
 						15,
 						15
 					],
@@ -195,10 +108,10 @@
 				}
 			},
 			"type": "cube",
-			"uuid": "9946d2dd-9b3d-8670-dc0c-b4a317cbeee3"
+			"uuid": "823189fc-b7e8-ca89-151a-48708bbeabcb"
 		},
 		{
-			"name": "wood_back",
+			"name": "stave_south",
 			"box_uv": false,
 			"render_order": "default",
 			"rescale": false,
@@ -210,8 +123,8 @@
 			"allow_mirror_modeling": true,
 			"from": [
 				1,
-				2,
-				13
+				0,
+				14
 			],
 			"to": [
 				15,
@@ -228,10 +141,10 @@
 			"faces": {
 				"north": {
 					"uv": [
-						1,
-						1,
-						15,
-						15
+						4,
+						0,
+						7.5,
+						4
 					],
 					"texture": 4
 				},
@@ -239,8 +152,8 @@
 					"uv": [
 						1,
 						0,
-						3,
-						14
+						2,
+						16
 					],
 					"texture": 1
 				},
@@ -249,23 +162,23 @@
 						1,
 						0,
 						15,
-						14
+						16
 					],
 					"texture": 1
 				},
 				"west": {
 					"uv": [
-						13,
+						14,
 						0,
 						15,
-						14
+						16
 					],
 					"texture": 1
 				},
 				"up": {
 					"uv": [
 						1,
-						13,
+						14,
 						15,
 						15
 					],
@@ -273,106 +186,19 @@
 				},
 				"down": {
 					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				}
-			},
-			"type": "cube",
-			"uuid": "63845c2f-9323-168c-4eeb-d97cd595f892"
-		},
-		{
-			"name": "wood_back_low",
-			"box_uv": false,
-			"render_order": "default",
-			"rescale": false,
-			"locked": false,
-			"shade": true,
-			"light_emission": 0,
-			"export": true,
-			"scope": 0,
-			"allow_mirror_modeling": true,
-			"from": [
-				1,
-				0,
-				13
-			],
-			"to": [
-				15,
-				2,
-				15
-			],
-			"autouv": 0,
-			"color": 3,
-			"origin": [
-				0,
-				0,
-				0
-			],
-			"faces": {
-				"north": {
-					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				},
-				"east": {
-					"uv": [
-						1,
-						14,
-						3,
-						16
-					],
-					"texture": 1
-				},
-				"south": {
-					"uv": [
-						1,
-						14,
-						15,
-						16
-					],
-					"texture": 1
-				},
-				"west": {
-					"uv": [
-						13,
-						14,
-						15,
-						16
-					],
-					"texture": 1
-				},
-				"up": {
-					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				},
-				"down": {
-					"uv": [
 						1,
 						1,
 						15,
-						3
+						2
 					],
 					"texture": 3
 				}
 			},
 			"type": "cube",
-			"uuid": "3c3e6bf3-7849-fc81-6a60-bcbca4ab0f05"
+			"uuid": "8d625603-2b91-665c-2b22-6430d85d6be0"
 		},
 		{
-			"name": "wood_west",
+			"name": "stave_west",
 			"box_uv": false,
 			"render_order": "default",
 			"rescale": false,
@@ -384,16 +210,16 @@
 			"allow_mirror_modeling": true,
 			"from": [
 				1,
-				2,
-				3
+				0,
+				2
 			],
 			"to": [
-				3,
+				2,
 				16,
-				13
+				14
 			],
 			"autouv": 0,
-			"color": 3,
+			"color": 4,
 			"origin": [
 				0,
 				0,
@@ -411,10 +237,10 @@
 				},
 				"east": {
 					"uv": [
-						3,
-						1,
-						13,
-						15
+						8,
+						0,
+						11,
+						4
 					],
 					"texture": 4
 				},
@@ -429,211 +255,37 @@
 				},
 				"west": {
 					"uv": [
-						3,
+						2,
 						0,
-						13,
-						14
-					],
-					"texture": 1
-				},
-				"up": {
-					"uv": [
-						1,
-						3,
-						3,
-						13
-					],
-					"texture": 2
-				},
-				"down": {
-					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				}
-			},
-			"type": "cube",
-			"uuid": "47754f62-f95e-4521-8c5c-d5fdd030f5c3"
-		},
-		{
-			"name": "wood_west_low",
-			"box_uv": false,
-			"render_order": "default",
-			"rescale": false,
-			"locked": false,
-			"shade": true,
-			"light_emission": 0,
-			"export": true,
-			"scope": 0,
-			"allow_mirror_modeling": true,
-			"from": [
-				1,
-				0,
-				3
-			],
-			"to": [
-				3,
-				2,
-				13
-			],
-			"autouv": 0,
-			"color": 9,
-			"origin": [
-				0,
-				0,
-				0
-			],
-			"faces": {
-				"north": {
-					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				},
-				"east": {
-					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				},
-				"south": {
-					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				},
-				"west": {
-					"uv": [
-						3,
 						14,
-						13,
 						16
 					],
 					"texture": 1
 				},
 				"up": {
 					"uv": [
-						0,
-						0,
 						1,
-						1
-					],
-					"texture": null
-				},
-				"down": {
-					"uv": [
-						1,
-						3,
-						3,
-						13
-					],
-					"texture": 3
-				}
-			},
-			"type": "cube",
-			"uuid": "4e29c4b3-1e46-535b-4ab2-cc6b73454f97"
-		},
-		{
-			"name": "wood_east",
-			"box_uv": false,
-			"render_order": "default",
-			"rescale": false,
-			"locked": false,
-			"shade": true,
-			"light_emission": 0,
-			"export": true,
-			"scope": 0,
-			"allow_mirror_modeling": true,
-			"from": [
-				13,
-				2,
-				3
-			],
-			"to": [
-				15,
-				16,
-				13
-			],
-			"autouv": 0,
-			"color": 8,
-			"origin": [
-				0,
-				0,
-				0
-			],
-			"faces": {
-				"north": {
-					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				},
-				"east": {
-					"uv": [
-						3,
-						0,
-						13,
+						2,
+						2,
 						14
-					],
-					"texture": 1
-				},
-				"south": {
-					"uv": [
-						0,
-						0,
-						1,
-						1
-					],
-					"texture": null
-				},
-				"west": {
-					"uv": [
-						3,
-						1,
-						13,
-						15
-					],
-					"texture": 4
-				},
-				"up": {
-					"uv": [
-						13,
-						3,
-						15,
-						13
 					],
 					"texture": 2
 				},
 				"down": {
 					"uv": [
-						0,
-						0,
 						1,
-						1
+						2,
+						2,
+						14
 					],
-					"texture": null
+					"texture": 3
 				}
 			},
 			"type": "cube",
-			"uuid": "690bdb97-f9db-0198-fe3b-9c3139d8dfd7"
+			"uuid": "7b77fcb1-a906-af00-88cb-cb2cfa840758"
 		},
 		{
-			"name": "wood_east_low",
+			"name": "stave_east",
 			"box_uv": false,
 			"render_order": "default",
 			"rescale": false,
@@ -644,14 +296,14 @@
 			"scope": 0,
 			"allow_mirror_modeling": true,
 			"from": [
-				13,
+				14,
 				0,
-				3
+				2
 			],
 			"to": [
 				15,
-				2,
-				13
+				16,
+				14
 			],
 			"autouv": 0,
 			"color": 7,
@@ -672,9 +324,9 @@
 				},
 				"east": {
 					"uv": [
-						3,
+						2,
+						0,
 						14,
-						13,
 						16
 					],
 					"texture": 1
@@ -690,37 +342,37 @@
 				},
 				"west": {
 					"uv": [
+						12,
 						0,
-						0,
-						1,
-						1
+						15,
+						4
 					],
-					"texture": null
+					"texture": 4
 				},
 				"up": {
 					"uv": [
-						0,
-						0,
-						1,
-						1
+						14,
+						2,
+						15,
+						14
 					],
-					"texture": null
+					"texture": 2
 				},
 				"down": {
 					"uv": [
-						13,
-						3,
+						14,
+						2,
 						15,
-						13
+						14
 					],
 					"texture": 3
 				}
 			},
 			"type": "cube",
-			"uuid": "217b40b5-c718-bff5-7c98-33f45fa00920"
+			"uuid": "61a35b78-8baa-fa20-7871-7b75fd160e0b"
 		},
 		{
-			"name": "wood_floor",
+			"name": "floor",
 			"box_uv": false,
 			"render_order": "default",
 			"rescale": false,
@@ -731,17 +383,17 @@
 			"scope": 0,
 			"allow_mirror_modeling": true,
 			"from": [
-				3,
+				2,
 				0,
-				3
+				2
 			],
 			"to": [
-				13,
-				2,
-				13
+				14,
+				1,
+				14
 			],
 			"autouv": 0,
-			"color": 6,
+			"color": 8,
 			"origin": [
 				0,
 				0,
@@ -786,38 +438,34 @@
 				},
 				"up": {
 					"uv": [
+						0,
+						8,
 						3,
-						3,
-						13,
-						13
+						11
 					],
 					"texture": 4
 				},
 				"down": {
 					"uv": [
-						3,
-						3,
-						13,
-						13
+						2,
+						2,
+						14,
+						14
 					],
 					"texture": 3
 				}
 			},
 			"type": "cube",
-			"uuid": "7bec4ef7-31b2-0555-43eb-918f06fa7723"
+			"uuid": "9eba1561-4b34-bc5a-200a-d745fa34611a"
 		}
 	],
 	"groups": [],
 	"outliner": [
-		"c510e785-d9e9-6978-83be-c174c9d3eb6f",
-		"9946d2dd-9b3d-8670-dc0c-b4a317cbeee3",
-		"63845c2f-9323-168c-4eeb-d97cd595f892",
-		"3c3e6bf3-7849-fc81-6a60-bcbca4ab0f05",
-		"47754f62-f95e-4521-8c5c-d5fdd030f5c3",
-		"4e29c4b3-1e46-535b-4ab2-cc6b73454f97",
-		"690bdb97-f9db-0198-fe3b-9c3139d8dfd7",
-		"217b40b5-c718-bff5-7c98-33f45fa00920",
-		"7bec4ef7-31b2-0555-43eb-918f06fa7723"
+		"823189fc-b7e8-ca89-151a-48708bbeabcb",
+		"8d625603-2b91-665c-2b22-6430d85d6be0",
+		"7b77fcb1-a906-af00-88cb-cb2cfa840758",
+		"61a35b78-8baa-fa20-7871-7b75fd160e0b",
+		"9eba1561-4b34-bc5a-200a-d745fa34611a"
 	],
 	"textures": [
 		{
@@ -849,7 +497,7 @@
 			"visible": true,
 			"internal": true,
 			"saved": true,
-			"uuid": "0f01ddf8-2858-7b25-fb7d-a9d9a8295d53"
+			"uuid": "8156e270-55e9-cb85-4e7c-408a474f18d6"
 		},
 		{
 			"name": "vertical_keg_side.png",
@@ -880,7 +528,7 @@
 			"visible": true,
 			"internal": true,
 			"saved": true,
-			"uuid": "63896440-31a1-a39f-dca9-672833a8106f"
+			"uuid": "2fdb42fb-d151-a05f-0564-d83bd3062091"
 		},
 		{
 			"name": "vertical_keg_top.png",
@@ -911,7 +559,7 @@
 			"visible": true,
 			"internal": true,
 			"saved": true,
-			"uuid": "0268263e-1d14-374e-fce9-5255ccbd2186"
+			"uuid": "a59b507e-4485-ac25-b5b8-11b8bd3cdadf"
 		},
 		{
 			"name": "vertical_keg_bottom.png",
@@ -942,17 +590,17 @@
 			"visible": true,
 			"internal": true,
 			"saved": true,
-			"uuid": "1de12efd-f9b1-3f9c-fa44-eaae2b772397"
+			"uuid": "7b265a77-4495-2955-c501-d055133b9d17"
 		},
 		{
-			"name": "keg_back.png",
-			"folder": "block",
-			"namespace": "brewinandchewin",
+			"name": "standing.png",
+			"folder": "block/keg",
+			"namespace": "handson_delight",
 			"id": "4",
 			"group": "",
 			"scope": 0,
-			"width": 16,
-			"height": 16,
+			"width": 64,
+			"height": 64,
 			"uv_width": 16,
 			"uv_height": 16,
 			"particle": false,
@@ -973,7 +621,7 @@
 			"visible": true,
 			"internal": true,
 			"saved": true,
-			"uuid": "4981ce24-d7c8-895b-aeb8-fb800a082625"
+			"uuid": "4d1d90fe-0f70-b552-373d-76e0a4c7dd1f"
 		}
 	]
 }

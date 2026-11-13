@@ -42,5 +42,17 @@
       "handson_delight:pot/scoop1",
       "handson_delight:pot/scoop2"
     ]
+  },
+  "keg.pour": {
+    "sounds": [
+      "handson_delight:keg/pour1",
+      "handson_delight:keg/pour2"
+    ]
+  },
+  "keg.pour_quick": {
+    "sounds": [
+      "handson_delight:keg/pour_quick1",
+      "handson_delight:keg/pour_quick2"
+    ]
   }
 }

@@ -90,7 +90,7 @@ public final class PotBehavior implements StationBehavior {
     private static final float[] GRADE_PITCH = {1.0F, 1.26F, 1.5F};
     /** The servings the stars added, shown as a stack count is, over the icon's lower right corner: digits three pixels by five. */
     private static final String[] PLUS = {"...", ".#.", "###", ".#.", "..."};
-    private static final String[][] DIGITS = {
+    static final String[][] DIGITS = {
             {"###", "#.#", "#.#", "#.#", "###"}, {".#.", "##.", ".#.", ".#.", "###"}, {"###", "..#", "###", "#..", "###"},
             {"###", "..#", ".##", "..#", "###"}, {"#.#", "#.#", "###", "..#", "..#"}, {"###", "#..", "###", "..#", "###"},
             {"###", "#..", "###", "#.#", "###"}, {"###", "..#", ".#.", ".#.", ".#."}, {"###", "#.#", "###", "#.#", "###"},
@@ -728,7 +728,7 @@ public final class PotBehavior implements StationBehavior {
             return;
         }
         view.node("broth").ifPresent(broth -> broth.ripple(8.0F, 8.0F, 0.5F));
-        view.spawnParticles(DiegesisParticles.SPLASH, ITEM_NODES[index], 5, 0);
+        view.spawnParticles(DiegesisParticles.SPLASH, ITEM_NODES[index], 5, 0xFF000000 | brothColor);
         view.playSound(PotSounds.PLOP, ITEM_NODES[index], 0.5F, 0.92F + 0.03F * index);
         if (view.state().getControl(CookingPotStation.HEATED) > 0.5F) {
             view.playSound(FarmersDelightContent.SKILLET_ADD_FOOD, ITEM_NODES[index], ADD_FOOD_VOLUME, 0.8F);

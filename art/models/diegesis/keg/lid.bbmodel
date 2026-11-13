@@ -24,7 +24,7 @@
 	},
 	"elements": [
 		{
-			"name": "wood_lid",
+			"name": "lid",
 			"box_uv": false,
 			"render_order": "default",
 			"rescale": false,
@@ -35,17 +35,17 @@
 			"scope": 0,
 			"allow_mirror_modeling": true,
 			"from": [
-				4,
+				2,
 				15,
-				4
+				1
 			],
 			"to": [
-				12,
+				14,
 				16,
-				12
+				15
 			],
 			"autouv": 0,
-			"color": 8,
+			"color": 4,
 			"origin": [
 				0,
 				0,
@@ -54,46 +54,46 @@
 			"faces": {
 				"north": {
 					"uv": [
-						4,
-						1,
-						12,
-						2
+						0,
+						8,
+						3,
+						8.25
 					],
 					"texture": 1
 				},
 				"east": {
 					"uv": [
-						4,
-						1,
-						12,
-						2
+						8,
+						8,
+						11.5,
+						8.25
 					],
 					"texture": 1
 				},
 				"south": {
 					"uv": [
 						4,
-						1,
-						12,
-						2
+						8,
+						7,
+						8.25
 					],
 					"texture": 1
 				},
 				"west": {
 					"uv": [
-						4,
-						1,
 						12,
-						2
+						8,
+						15.5,
+						8.25
 					],
 					"texture": 1
 				},
 				"up": {
 					"uv": [
-						4,
-						4,
-						12,
-						12
+						2,
+						1,
+						14,
+						15
 					],
 					"texture": 0
 				},
@@ -101,19 +101,19 @@
 					"uv": [
 						4,
 						4,
-						12,
-						12
+						7,
+						7.5
 					],
 					"texture": 1
 				}
 			},
 			"type": "cube",
-			"uuid": "46dea1c8-cfe0-464d-5293-d0e14c387598"
+			"uuid": "7a5870ea-6415-12e5-57b6-708f58d342ed"
 		}
 	],
 	"groups": [],
 	"outliner": [
-		"46dea1c8-cfe0-464d-5293-d0e14c387598"
+		"7a5870ea-6415-12e5-57b6-708f58d342ed"
 	],
 	"textures": [
 		{
@@ -145,17 +145,17 @@
 			"visible": true,
 			"internal": true,
 			"saved": true,
-			"uuid": "744c9d1e-5299-f17c-0718-516500892ed6"
+			"uuid": "bc0f35fb-4c92-1e6d-1834-63f9c6374221"
 		},
 		{
-			"name": "keg_back.png",
-			"folder": "block",
-			"namespace": "brewinandchewin",
+			"name": "lying.png",
+			"folder": "block/keg",
+			"namespace": "handson_delight",
 			"id": "1",
 			"group": "",
 			"scope": 0,
-			"width": 16,
-			"height": 16,
+			"width": 64,
+			"height": 64,
 			"uv_width": 16,
 			"uv_height": 16,
 			"particle": false,
@@ -176,7 +176,7 @@
 			"visible": true,
 			"internal": true,
 			"saved": true,
-			"uuid": "ca493fbb-9426-5dc0-6620-9f6d0a3d2d93"
+			"uuid": "8d1b61d1-c68a-9412-c70d-aaa05da12886"
 		}
 	]
 }

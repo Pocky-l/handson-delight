@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 
 import com.pockyl.diegesis.api.state.SlotRef;
@@ -30,6 +31,8 @@ public final class KegLogic implements StationLogic {
     private static final int FILL_MOST = 16;
 
     private final KitchenKeg keg;
+    /** While the lid is off: how far the keg had fermented, which it stays at until the lid is back on; -1 with the lid on. */
+    private int heldAt = -1;
 
     public KegLogic(StationContext station) {
         keg = (KitchenKeg) station.blockEntity();
@@ -67,13 +70,43 @@ public final class KegLogic implements StationLogic {
 
     @Override
     public void tick(StationContext station) {
+        if (!station.level().isClientSide()) {
+            // Nobody left to put the lid back: it is put back, a keg is never left open.
+            if (station.users().isEmpty() && isOpen(station)) {
+                station.state().setControl(KegStation.LID, 0.0F);
+            }
+            holdWhileOpen(station);
+        }
         refresh(station);
     }
 
-    /** Buckets, bottles and drinks are poured or filled at the keg, never dropped in with the ingredients. */
+    /** Whether the lid is off. */
+    public static boolean isOpen(StationContext station) {
+        return station.state().getControl(KegStation.LID) > 0.5F;
+    }
+
+    /**
+     * A brew ferments only under its lid: while the lid is off, the keg's count of how long it has fermented stays where it was
+     * (it goes down only when the keg starts something new).
+     */
+    private void holdWhileOpen(StationContext station) {
+        if (!isOpen(station)) {
+            heldAt = -1;
+            return;
+        }
+        int time = keg.handson$data().get(0);
+        if (heldAt < 0 || time < heldAt) {
+            heldAt = time;
+        }
+        if (time != heldAt) {
+            keg.handson$data().set(0, heldAt);
+        }
+    }
+
+    /** Only food goes in, and only at the open top: buckets, bottles and drinks are poured or filled, never dropped in. */
     @Override
     public boolean mayPlace(StationContext station, Player player, SlotRef slot, ItemStack stack) {
-        return !keg.handson$isVessel(stack);
+        return isOpen(station) && !keg.handson$isVessel(stack);
     }
 
     @Override
@@ -86,8 +119,14 @@ public final class KegLogic implements StationLogic {
 
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
-        if (KegStation.ACTION_USE.equals(action)) {
+        if (KegStation.ACTION_LID.equals(action)) {
+            station.state().setControl(KegStation.LID, data.getBoolean(KegStation.OPEN) ? 1.0F : 0.0F);
+        } else if (KegStation.ACTION_USE.equals(action)) {
             boolean tap = KegStation.TAP.equals(data.getString(KegStation.AT));
+            if (!tap && !isOpen(station)) {
+                // Nothing is poured in through the lid.
+                return;
+            }
             if (tap && data.getBoolean(KegStation.FROM_INVENTORY)) {
                 tapFromInventory(station, player, data.getBoolean(KegStation.ALL));
             } else {
@@ -95,6 +134,8 @@ public final class KegLogic implements StationLogic {
             }
         } else if (KegStation.ACTION_FILL.equals(action)) {
             ResourceLocation id = ResourceLocation.tryParse(data.getString(KegStation.DISH));
+            // A recipe picked in the book takes the lid off for its ingredients to go in.
+            station.state().setControl(KegStation.LID, 1.0F);
             keg.handson$recipes().stream().filter(recipe -> recipe.id().equals(id)).findFirst()
                     .ifPresent(recipe -> fill(player, recipe, data.getBoolean(KegStation.ALL) ? FILL_MOST : 1));
         }
@@ -106,6 +147,9 @@ public final class KegLogic implements StationLogic {
         if (tap ? !keg.handson$canTap(carried) : !keg.handson$canPour(carried)) {
             return;
         }
+        Fluid drawn = keg.handson$fluid();
+        int before = keg.handson$amount();
+        ItemStack vessel = carried.copyWithCount(1);
         List<ItemStack> back = useWhile(carried, tap, all, player.getAbilities().instabuild);
         boolean handFree = carried.isEmpty();
         for (ItemStack stack : back) {
@@ -120,7 +164,17 @@ public final class KegLogic implements StationLogic {
         if (handFree) {
             player.inventoryMenu.setCarried(ItemStack.EMPTY);
         }
-        station.effect(tap ? KegStation.EFFECT_TAPPED : KegStation.EFFECT_POURED, tap ? KegStation.TAP : KegStation.MOUTH, new CompoundTag());
+        station.effect(tap ? KegStation.EFFECT_TAPPED : KegStation.EFFECT_POURED, tap ? KegStation.TAP : KegStation.MOUTH,
+                used(tap ? drawn : keg.handson$fluid(), Math.abs(keg.handson$amount() - before), vessel));
+    }
+
+    /** What an effect at the keg tells the clients: which liquid ran, and how much of it, for how long its stream runs. */
+    private static CompoundTag used(Fluid fluid, int millibuckets, ItemStack vessel) {
+        CompoundTag data = new CompoundTag();
+        data.putString(KegStation.VESSEL, BuiltInRegistries.ITEM.getKey(vessel.getItem()).toString());
+        data.putString(KegStation.FLUID, fluid == Fluids.EMPTY ? "" : BuiltInRegistries.FLUID.getKey(fluid).toString());
+        data.putInt(KegStation.AMOUNT, millibuckets);
+        return data;
     }
 
     /**
@@ -151,6 +205,9 @@ public final class KegLogic implements StationLogic {
             return;
         }
         ItemStack container = player.getInventory().getItem(slot);
+        ItemStack vessel = container.copyWithCount(1);
+        Fluid drawn = keg.handson$fluid();
+        int before = keg.handson$amount();
         List<ItemStack> back = useWhile(container, true, all, player.getAbilities().instabuild);
         for (ItemStack stack : back) {
             if (!player.getInventory().add(stack)) {
@@ -158,7 +215,19 @@ public final class KegLogic implements StationLogic {
             }
         }
         player.getInventory().setChanged();
-        station.effect(KegStation.EFFECT_TAPPED, KegStation.TAP, new CompoundTag());
+        station.effect(KegStation.EFFECT_TAPPED, KegStation.TAP, used(drawn, Math.abs(keg.handson$amount() - before), vessel));
+    }
+
+    /** Brewin' and Chewin's own rule of which of the keg's temperatures, 1 to 5, a recipe that wants {@code wanted} takes. */
+    public static boolean fitsWarmth(int keg, int wanted) {
+        return switch (wanted) {
+            case 1 -> keg <= 1;
+            case 2 -> keg <= 2;
+            case 3 -> keg > 1 && keg < 5;
+            case 4 -> keg >= 4;
+            case 5 -> keg >= 5;
+            default -> true;
+        };
     }
 
     /** The inventory slot whose container the drink is drawn into: the one in hand first; -1 without one. */
@@ -253,6 +322,8 @@ public final class KegLogic implements StationLogic {
         own.putInt(KegStation.LEFT, total > 0 ? Mth.ceil((total - time) / 20.0F) * 20 : 0);
         state.setData(own);
         int capacity = Math.max(1, keg.handson$capacity());
-        state.setTank(KegStation.DRINK, TankContents.of(HandsOnDelight.id("drink"), Math.round(100.0F * keg.handson$amount() / capacity)));
+        // The tank holds the keg's own liquid, so that it looks like what it is (KegLiquids on the client).
+        ResourceLocation liquid = keg.handson$fluid() == Fluids.EMPTY ? HandsOnDelight.id("drink") : BuiltInRegistries.FLUID.getKey(keg.handson$fluid());
+        state.setTank(KegStation.DRINK, TankContents.of(liquid, Math.round(100.0F * keg.handson$amount() / capacity)));
     }
 }

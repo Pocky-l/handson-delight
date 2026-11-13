@@ -4,7 +4,7 @@
 		"model_format": "java_block",
 		"box_uv": false
 	},
-	"name": "vertical_keg_lid",
+	"name": "keg_vertical_lid",
 	"parent": "",
 	"java_block_version": "1.9.0",
 	"ambientocclusion": true,
@@ -24,7 +24,7 @@
 	},
 	"elements": [
 		{
-			"name": "wood_lid",
+			"name": "lid",
 			"box_uv": false,
 			"render_order": "default",
 			"rescale": false,
@@ -35,17 +35,17 @@
 			"scope": 0,
 			"allow_mirror_modeling": true,
 			"from": [
-				3,
+				2,
 				15,
-				3
+				2
 			],
 			"to": [
-				13,
+				14,
 				16,
-				13
+				14
 			],
 			"autouv": 0,
-			"color": 8,
+			"color": 1,
 			"origin": [
 				0,
 				0,
@@ -54,66 +54,66 @@
 			"faces": {
 				"north": {
 					"uv": [
+						0,
+						12,
 						3,
-						1,
-						13,
-						2
+						12.25
 					],
 					"texture": 1
 				},
 				"east": {
 					"uv": [
-						3,
-						1,
-						13,
-						2
+						8,
+						12,
+						11,
+						12.25
 					],
 					"texture": 1
 				},
 				"south": {
 					"uv": [
-						3,
-						1,
-						13,
-						2
+						4,
+						12,
+						7,
+						12.25
 					],
 					"texture": 1
 				},
 				"west": {
 					"uv": [
-						3,
-						1,
-						13,
-						2
+						12,
+						12,
+						15,
+						12.25
 					],
 					"texture": 1
 				},
 				"up": {
 					"uv": [
-						3,
-						3,
-						13,
-						13
+						2,
+						2,
+						14,
+						14
 					],
 					"texture": 0
 				},
 				"down": {
 					"uv": [
-						3,
-						3,
-						13,
-						13
+						4,
+						8,
+						7,
+						11
 					],
 					"texture": 1
 				}
 			},
 			"type": "cube",
-			"uuid": "f88f0ae2-f563-f0f7-d544-c3168ae73da0"
+			"uuid": "30e8be79-d6e3-ec20-af23-01683e98f1ae"
 		}
 	],
 	"groups": [],
 	"outliner": [
-		"f88f0ae2-f563-f0f7-d544-c3168ae73da0"
+		"30e8be79-d6e3-ec20-af23-01683e98f1ae"
 	],
 	"textures": [
 		{
@@ -145,17 +145,17 @@
 			"visible": true,
 			"internal": true,
 			"saved": true,
-			"uuid": "8d6bcc5b-9547-c8ff-3670-9a7aa68d65df"
+			"uuid": "95104f78-4fa3-1a70-eccd-ab1f3369b872"
 		},
 		{
-			"name": "keg_back.png",
-			"folder": "block",
-			"namespace": "brewinandchewin",
+			"name": "standing.png",
+			"folder": "block/keg",
+			"namespace": "handson_delight",
 			"id": "1",
 			"group": "",
 			"scope": 0,
-			"width": 16,
-			"height": 16,
+			"width": 64,
+			"height": 64,
 			"uv_width": 16,
 			"uv_height": 16,
 			"particle": false,
@@ -176,7 +176,7 @@
 			"visible": true,
 			"internal": true,
 			"saved": true,
-			"uuid": "0594a844-1749-af34-d6cc-1f49bcf54558"
+			"uuid": "fac1bdcd-86ae-3dba-9462-d20450ae7e9b"
 		}
 	]
 }

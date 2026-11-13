@@ -41,6 +41,14 @@ public final class KegStation {
     /** The keg's temperature, 1 (cold) to 5 (hot), and what the recipe in it wants, 0 for none. */
     public static final String TEMPERATURE = "temperature";
     public static final String WANTED = "wanted";
+    /**
+     * Whether the lid is off (1) or on (0). The cook takes it off and puts it back with a click on it ({@link #ACTION_LID}); only
+     * with the lid off does anything go in at the top, and the keg ferments only with it on, as a brew is kept shut.
+     */
+    public static final String LID = "lid";
+    /** A custom action: the lid is taken off or put back; data {@link #OPEN}. */
+    public static final String ACTION_LID = "lid";
+    public static final String OPEN = "open";
     public static final SlotRef SERVED_SLOT = SlotRef.of(SERVED, 0);
 
     /**
@@ -59,6 +67,10 @@ public final class KegStation {
     /** What the logic tells the clients in the station's data: the liquid's id and how long fermenting still takes, in ticks. */
     public static final String FLUID = "fluid";
     public static final String LEFT = "left";
+    /** In a poured or tapped effect, with {@link #FLUID}: how many millibuckets ran. */
+    public static final String AMOUNT = "amount";
+    /** In a poured or tapped effect: the container used, as it was before (a water bucket poured, a tankard filled). */
+    public static final String VESSEL = "vessel";
     /** Played for everybody who sees it: something poured in at the opening, a drink drawn at the tap. */
     public static final ResourceLocation EFFECT_POURED = HandsOnDelight.id("poured");
     public static final ResourceLocation EFFECT_TAPPED = HandsOnDelight.id("tapped");
@@ -73,6 +85,7 @@ public final class KegStation {
             .control(PROGRESS, ControlSpec.stepped(0.0F, 1.0F, 100, 0.0F).locked())
             .control(TEMPERATURE, ControlSpec.stepped(0.0F, 5.0F, 5, 3.0F).locked())
             .control(WANTED, ControlSpec.stepped(0.0F, 5.0F, 5, 0.0F).locked())
+            .control(LID, ControlSpec.stepped(0.0F, 1.0F, 1, 0.0F).locked())
             .build();
 
     public static final StationType TYPE = type(ID, false);

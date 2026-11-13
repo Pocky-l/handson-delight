@@ -43,9 +43,9 @@ public final class StoveCooking {
         return ((StoveTop) stove).handson$grill();
     }
 
-    /** Ticks one side of a piece takes, for a recipe Farmer's Delight's stove cooks in {@code ticks}. */
-    public static int sideTicks(int ticks) {
-        return Math.max(1, Math.round(ticks / PACE / 2.0F));
+    /** Ticks one side of a piece takes, for a recipe Farmer's Delight's stove cooks in {@code ticks}, {@code times} as long as usual. */
+    public static int sideTicks(int ticks, float times) {
+        return Math.max(1, Math.round(ticks * times / PACE / 2.0F));
     }
 
     public static boolean isLit(AbstractStoveBlockEntity stove) {
@@ -100,9 +100,9 @@ public final class StoveCooking {
                 continue;
             }
             if (SkilletCooking.isOneSided(stack)) {
-                grill.grillThrough(place, 0.5F / sideTicks(recipe.get().getCookingTime()));
+                grill.grillThrough(place, 0.5F / sideTicks(recipe.get().getCookingTime(), HandsOnConfig.stoveTime()));
             } else {
-                grill.grill(place, 1.0F / sideTicks(recipe.get().getCookingTime()));
+                grill.grill(place, 1.0F / sideTicks(recipe.get().getCookingTime(), HandsOnConfig.stoveTime()));
             }
             if (grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
                 // Done on both sides: Farmer's Delight's own code cooks it this very tick (see beforeFarmersDelightCooks).
@@ -130,9 +130,13 @@ public final class StoveCooking {
         send(stove, changed);
     }
 
-    /** The piece at {@code place} cooks Farmer's Delight's way from now on, in Farmer's Delight's time; a done one comes off at once. */
+    /**
+     * The piece at {@code place} cooks Farmer's Delight's way from now on, a done one comes off at once. It was laid at the station, so
+     * it keeps the station's cooking time; with the station turned off that is Farmer's Delight's.
+     */
     private static void handOver(AbstractStoveBlockEntity stove, int place) {
-        ((StoveTop) stove).handson$times()[place] = farmersDelightsTime(stove, place);
+        int time = farmersDelightsTime(stove, place);
+        ((StoveTop) stove).handson$times()[place] = time <= 1 ? time : HandsOnConfig.scaled(time, HandsOnConfig.stoveTime());
         grill(stove).farmersDelightsWay(place);
     }
 

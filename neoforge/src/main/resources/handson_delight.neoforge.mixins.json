@@ -1,0 +1,22 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.pockyl.handson_delight.neoforge.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.pockyl.handson_delight.compat.OptionalMixins",
+  "mixins": [
+    "CopperPotMixin",
+    "CopperPotBlockMixin",
+    "MonsterPotMixin",
+    "MonsterPotBlockMixin"
+  ],
+  "client": [
+    "CopperPotQuietMixin",
+    "CopperPotSteamMixin",
+    "MonsterPotQuietMixin",
+    "MonsterPotSteamMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

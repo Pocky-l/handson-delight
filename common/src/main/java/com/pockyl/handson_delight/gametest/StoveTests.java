@@ -29,6 +29,7 @@ import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.Grill;
 import com.pockyl.handson_delight.station.StoveCooking;
@@ -42,7 +43,7 @@ import java.util.List;
 /** The stove's rules against a real lit stove of Farmer's Delight, on every loader. */
 public final class StoveTests {
     /** A side of beef: Farmer's Delight's 600 ticks at the station's pace, halved. */
-    private static final int BEEF_SIDE = StoveCooking.sideTicks(600);
+    private static final int BEEF_SIDE = StoveCooking.sideTicks(600, 1.0F);
 
     private StoveTests() {
     }
@@ -126,6 +127,38 @@ public final class StoveTests {
                     "the other cooks, counting Farmer's Delight's time");
             helper.succeed();
         });
+    }
+
+    /**
+     * The stove's cooking time in the config: 1.0 grills a side in today's time, 2.0 in twice it, and a piece handed to Farmer's Delight
+     * keeps the station's time. All in this one tick: the config is the whole game's.
+     */
+    public static void theGrillingTimeFollowsTheConfig(GameTestHelper helper) {
+        Top top = stove(helper);
+        top.place(Items.BEEF, 2);
+        float pot = HandsOnConfig.cookingPotTime();
+        float skillet = HandsOnConfig.skilletTime();
+        float stove = HandsOnConfig.stoveTime();
+        float[] steps = new float[2];
+        int[] handed = new int[2];
+        try {
+            for (int i = 0; i < 2; i++) {
+                HandsOnConfig.setCookingTimes(pot, skillet, i + 1.0F);
+                float before = top.grill().down(i);
+                StoveCooking.tick(top.stove);
+                steps[i] = top.grill().down(i) - before;
+            }
+            HandsOnConfig.setCookingTimes(pot, skillet, 2.0F);
+            StoveCooking.handToFarmersDelight(top.stove);
+            handed[0] = ((StoveTop) top.stove).handson$times()[0];
+            handed[1] = ((StoveTop) top.stove).handson$times()[1];
+        } finally {
+            HandsOnConfig.setCookingTimes(pot, skillet, stove);
+        }
+        helper.assertTrue(Math.abs(steps[0] - 1.0F / BEEF_SIDE) < 1.0E-6F && BEEF_SIDE == 200, "1.0: a side in today's 200 ticks");
+        helper.assertTrue(Math.abs(steps[0] - 2.0F * steps[1]) < 1.0E-6F, "2.0: half as far a tick, " + steps[1]);
+        helper.assertTrue(handed[0] == 1200 && handed[1] == 1200, "handed over at 2.0: twice Farmer's Delight's 600, got " + handed[0]);
+        helper.succeed();
     }
 
     public static void farmersDelightsWayStaysItsOwn(GameTestHelper helper) {

@@ -9,6 +9,7 @@ import com.pockyl.diegesis.api.client.ParticleStyle;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
+import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.SkilletStation;
 import com.pockyl.handson_delight.station.StoveStation;
 
@@ -30,6 +31,11 @@ public final class HandsOnDelightClient {
 
     public static void init() {
         DiegesisClient.registerBehavior(CookingPotStation.ID, PotBehavior::new);
+        DiegesisClient.registerBehavior(CookingPotStation.COPPER_ID, view -> new PotBehavior(view, PotBehavior.Shape.COPPER_POT));
+        DiegesisClient.registerBehavior(CookingPotStation.MONSTER_ID, PotBehavior::new);
+        DiegesisClient.registerBehavior(KegStation.ID, KegBehavior::lying);
+        DiegesisClient.registerBehavior(KegStation.STANDING_ID, KegBehavior::standing);
+        DiegesisClient.registerLiquid(HandsOnDelight.id("drink"), LiquidLook.of(0xC0B08850));
         DiegesisClient.registerBehavior(CuttingBoardStation.ID, BoardBehavior::new);
         DiegesisClient.registerBehavior(SkilletStation.ID, SkilletBehavior::new);
         DiegesisClient.registerBehavior(StoveStation.ID, StoveBehavior::new);

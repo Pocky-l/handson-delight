@@ -5,7 +5,6 @@
   "compatibilityLevel": "JAVA_21",
   "plugin": "com.pockyl.handson_delight.compat.OptionalMixins",
   "mixins": [
-    "CookingPotBlockEntityAccessor",
     "CookingPotStirringMixin",
     "CookingPotServingMixin",
     "ItemUtilsMixin",
@@ -19,7 +18,8 @@
     "SkilletBlockEntityMixin",
     "StoveBlockEntityMixin",
     "StoveBlockMixin",
-    "PlayerListMixin"
+    "PlayerListMixin",
+    "KegMixin"
   ],
   "client": [
     "CookingPotBlockEntityMixin",

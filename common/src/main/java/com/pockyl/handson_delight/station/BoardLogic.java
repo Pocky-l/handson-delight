@@ -12,7 +12,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
-import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.state.SlotStorage;
@@ -21,8 +20,6 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
 import com.pockyl.handson_delight.assembly.Assembling;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
-import com.pockyl.handson_delight.mixin.CuttingBoardBlockEntityAccessor;
-import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +41,7 @@ public final class BoardLogic implements StationLogic {
     /** How far a mark may stray from its even place, as a share of the room between two marks: pieces of a size one can see. */
     private static final float SPOT_JITTER = 0.2F;
 
-    private final CuttingBoardBlockEntity board;
+    private final KitchenBoard board;
     /** How many of the marks the knife has come down on, in order. */
     private int marks;
     /** Where the marks of the item lying there are, see {@link CuttingBoardStation#SPOTS}. */
@@ -58,7 +55,7 @@ public final class BoardLogic implements StationLogic {
     private ResourceLocation picked;
 
     public BoardLogic(StationContext station) {
-        board = (CuttingBoardBlockEntity) station.blockEntity();
+        board = (KitchenBoard) station.blockEntity();
         station.state().bindSlots(CuttingBoardStation.BOARD, new SlotStorage() {
             @Override
             public int size() {
@@ -67,7 +64,7 @@ public final class BoardLogic implements StationLogic {
 
             @Override
             public ItemStack get(int index) {
-                return Platform.INSTANCE.getItem(board);
+                return board.handson$stored();
             }
 
             @Override
@@ -75,7 +72,7 @@ public final class BoardLogic implements StationLogic {
                 setOnBoard(stack);
             }
         });
-        BoardLayers layers = (BoardLayers) board;
+        BoardLayers layers = board;
         station.state().bindSlots(CuttingBoardStation.LAYERS, new SlotStorage() {
             @Override
             public int size() {
@@ -123,7 +120,7 @@ public final class BoardLogic implements StationLogic {
         if (station.level().isClientSide()) {
             return;
         }
-        ItemStack onBoard = Platform.INSTANCE.getItem(board);
+        ItemStack onBoard = board.handson$stored();
         if (!ItemStack.isSameItemSameComponents(onBoard, cutting)) {
             // Something else lies there now: a hopper took the item, or a deployer cut it.
             cutting = onBoard.copyWithCount(1);
@@ -187,7 +184,7 @@ public final class BoardLogic implements StationLogic {
         }
         StationState state = station.state();
         List<ItemStack> layers = layers(state);
-        ItemStack onBoard = Platform.INSTANCE.getItem(board);
+        ItemStack onBoard = board.handson$stored();
         // The knife cuts; it is never a layer of a dish, nor something to be cut.
         if (Cutting.isTool(station.level(), carried)) {
             return;
@@ -221,8 +218,8 @@ public final class BoardLogic implements StationLogic {
             finishIfWanted(station, player, next);
             return;
         }
-        boolean fits = onBoard.isEmpty() ? cuttable : ItemStack.isSameItemSameComponents(onBoard, carried) && !board.isItemCarvingBoard();
-        int room = Math.min(carried.getMaxStackSize(), board.getMaxStackSize()) - onBoard.getCount();
+        boolean fits = onBoard.isEmpty() ? cuttable : ItemStack.isSameItemSameComponents(onBoard, carried) && !board.handson$isCarving();
+        int room = Math.min(carried.getMaxStackSize(), board.handson$maxStack()) - onBoard.getCount();
         int moved = Math.min(one ? 1 : carried.getCount(), room);
         if (!fits || moved <= 0) {
             refuse(station, byUse ? ItemStack.EMPTY : carried, byUse);
@@ -244,13 +241,13 @@ public final class BoardLogic implements StationLogic {
      * cuts at the station (a dish made before, a block put down without the station). Food waiting to be cut stays.
      */
     private boolean isDone(Level level) {
-        ItemStack onBoard = Platform.INSTANCE.getItem(board);
-        return !onBoard.isEmpty() && (board.isItemCarvingBoard() || Cutting.recipesFor(level, onBoard).isEmpty());
+        ItemStack onBoard = board.handson$stored();
+        return !onBoard.isEmpty() && (board.handson$isCarving() || Cutting.recipesFor(level, onBoard).isEmpty());
     }
 
     /** What lay on the board goes to the cook, lifted off for everybody to see; a tool stuck in comes out of the board. */
     private void clear(StationContext station, Player player, ItemStack onBoard) {
-        boolean carved = board.isItemCarvingBoard();
+        boolean carved = board.handson$isCarving();
         setOnBoard(ItemStack.EMPTY);
         cutting = ItemStack.EMPTY;
         restart(station);
@@ -265,17 +262,17 @@ public final class BoardLogic implements StationLogic {
     private void carve(StationContext station, Player player) {
         ItemStack carried = player.inventoryMenu.getCarried();
         if (carried.isEmpty() || !Cutting.canStick(carried) || !layers(station.state()).isEmpty()
-                || !Platform.INSTANCE.getItem(board).isEmpty()) {
+                || !board.handson$stored().isEmpty()) {
             refuse(station, carried, false);
             return;
         }
-        if (!board.carveToolOnBoard(carried.copyWithCount(1))) {
+        if (!board.handson$carve(carried.copyWithCount(1))) {
             refuse(station, carried, false);
             return;
         }
         carried.shrink(1);
         player.inventoryMenu.setCarried(carried.isEmpty() ? ItemStack.EMPTY : carried);
-        cutting = Platform.INSTANCE.getItem(board).copyWithCount(1);
+        cutting = board.handson$stored().copyWithCount(1);
         restart(station);
         station.effect(CuttingBoardStation.EFFECT_CARVED, "surface", new CompoundTag());
     }
@@ -327,7 +324,7 @@ public final class BoardLogic implements StationLogic {
         List<ItemStack> layers = layers(state);
         // A dish made before is taken off for the new one (a pie too, which the knife could slice); what lies there to be cut keeps
         // the board.
-        ItemStack onBoard = Platform.INSTANCE.getItem(board);
+        ItemStack onBoard = board.handson$stored();
         boolean startsOnBoard = false;
         if (layers.isEmpty() && !onBoard.isEmpty()) {
             if (dish.ingredients().get(dish.base()).test(onBoard)) {
@@ -441,7 +438,7 @@ public final class BoardLogic implements StationLogic {
      */
     private void chop(StationContext station, Player player, int mark, float at) {
         Level level = station.level();
-        ItemStack onBoard = Platform.INSTANCE.getItem(board);
+        ItemStack onBoard = board.handson$stored();
         long now = level.getGameTime();
         // Only the next mark is shown, so only it can be cut. The cook's client drew the cut at once: it hears that there was none.
         if (onBoard.isEmpty() || mark != marks || now - lastChop < CHOP_GAP) {
@@ -475,8 +472,8 @@ public final class BoardLogic implements StationLogic {
         // The next item of the stack comes with marks of its own.
         restart(station);
         int done = 0;
-        while (done < CuttingBoardStation.BATCH && !Platform.INSTANCE.getItem(board).isEmpty() && !tool.isEmpty()) {
-            List<ItemStack> results = CaughtDrops.catching(done > 0, () -> board.processStoredItemUsingTool(knife, player));
+        while (done < CuttingBoardStation.BATCH && !board.handson$stored().isEmpty() && !tool.isEmpty()) {
+            List<ItemStack> results = CaughtDrops.catching(done > 0, () -> board.handson$cut(knife, player));
             if (results == null) {
                 break;
             }
@@ -509,7 +506,7 @@ public final class BoardLogic implements StationLogic {
             state.setItem(top, ItemStack.EMPTY);
             return;
         }
-        ItemStack onBoard = Platform.INSTANCE.getItem(board);
+        ItemStack onBoard = board.handson$stored();
         if (!onBoard.isEmpty()) {
             clear(station, player, onBoard);
         }
@@ -536,9 +533,9 @@ public final class BoardLogic implements StationLogic {
         made.leftovers().forEach(left -> give(player, left));
         for (ItemStack result : made.dishes()) {
             result.onCraftedBy(station.level(), player, result.getCount());
-            ItemStack onBoard = Platform.INSTANCE.getItem(board);
+            ItemStack onBoard = board.handson$stored();
             if (onBoard.isEmpty() || ItemStack.isSameItemSameComponents(onBoard, result)) {
-                int room = Math.min(result.getMaxStackSize(), board.getMaxStackSize()) - onBoard.getCount();
+                int room = Math.min(result.getMaxStackSize(), board.handson$maxStack()) - onBoard.getCount();
                 int there = Math.max(0, Math.min(room, result.getCount()));
                 if (there > 0) {
                     setOnBoard(result.copyWithCount(onBoard.getCount() + there));
@@ -597,7 +594,7 @@ public final class BoardLogic implements StationLogic {
      */
     private void restart(StationContext station) {
         marks = 0;
-        ItemStack onBoard = Platform.INSTANCE.getItem(board);
+        ItemStack onBoard = board.handson$stored();
         plan = onBoard.isEmpty() ? new Cutting.Plan(1, Cutting.Style.ACROSS) : Cutting.plan(station.level(), onBoard);
         RandomSource random = station.level().getRandom();
         int count = plan.marks();
@@ -702,10 +699,10 @@ public final class BoardLogic implements StationLogic {
      */
     private void setOnBoard(ItemStack stack) {
         // The clients learn it with the board's update, as they learn the carving.
-        if (board.getLevel() != null && !board.getLevel().isClientSide()) {
-            ((CuttingBoardBlockEntityAccessor) board).handson$setCarving(false);
+        if (board.handson$blockEntity().getLevel() != null && !board.handson$blockEntity().getLevel().isClientSide()) {
+            board.handson$setCarving(false);
         }
-        Platform.INSTANCE.setItem(board, stack);
+        board.handson$store(stack);
     }
 
     /** What is left of the stack goes back where it came from: the cursor, or its inventory slot. */
@@ -734,7 +731,7 @@ public final class BoardLogic implements StationLogic {
         if (marks > 0) {
             data.putInt(CuttingBoardStation.MARKS, marks);
         }
-        if (!Platform.INSTANCE.getItem(board).isEmpty() && layers(state).isEmpty()) {
+        if (!board.handson$stored().isEmpty() && layers(state).isEmpty()) {
             ListTag where = new ListTag();
             ListTag how = new ListTag();
             for (int mark = 0; mark < plan.marks(); mark++) {

@@ -27,6 +27,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CakeBlock;
 import vectorwing.farmersdelight.common.block.FeastBlock;
@@ -112,6 +113,8 @@ public final class AssemblyRecipes {
         BOTTLE("glass_bottle", Finish.PRESS),
         /** Bread, or a burger already made that gets more on top: its bread opens and closes again. */
         BREAD(Finish.PRESS, "bread", "burger"),
+        /** A tortilla or a flatbread: what lies on it is rolled up in it, before rice or anything else in the recipe counts as the base. */
+        TORTILLA(Finish.ROLL, "tortilla", "flatbread"),
         /** Toast, with what is spread on it. */
         TOAST("toast", Finish.PRESS),
         CRUST("pie_crust", Finish.PRESS),
@@ -148,7 +151,8 @@ public final class AssemblyRecipes {
             ItemStack result, JsonObject json) {
         /**
          * What the cook's hands do: a bowl of plants is tossed and anything else in a bowl arranged; a pie or a cake is pressed
-         * whatever goes down first; a stick with ice freezes, bread closes over the filling or is rolled round it, rice is shaped.
+         * whatever goes down first; a stick with ice freezes, bread closes over the filling or is rolled round it, rice is shaped, or
+         * topped where its dish is tagged arranged (bibimbap).
          */
         public Finish finish() {
             if (kind == Base.BOWL) {
@@ -163,10 +167,16 @@ public final class AssemblyRecipes {
             return switch (kind) {
                 case STICK -> result.is(KitchenTags.FROZEN) || ingredients.stream().anyMatch(in -> in.test(new ItemStack(Items.ICE)))
                         ? Finish.FREEZE : Finish.SKEWER;
-                case BREAD -> result.is(KitchenTags.WRAPPED) ? Finish.ROLL : Finish.SANDWICH;
-                case RICE -> Finish.SHAPE;
+                case BREAD -> isWrap() ? Finish.ROLL : Finish.SANDWICH;
+                case RICE -> result.is(KitchenTags.ARRANGED) ? Finish.ARRANGE : Finish.SHAPE;
                 default -> kind.finish();
             };
+        }
+
+        /** Bread rolled round its filling: tagged so, or named a wrap or a burrito, as addons name theirs. */
+        private boolean isWrap() {
+            String name = BuiltInRegistries.ITEM.getKey(result.getItem()).getPath();
+            return result.is(KitchenTags.WRAPPED) || name.contains("wrap") || name.contains("burrito");
         }
 
         /** A salad: tagged so, or, untagged, a bowl of nothing but plants. Meat, fish and eggs are laid in their places. */
@@ -387,7 +397,11 @@ public final class AssemblyRecipes {
         return plain(json);
     }
 
-    /** A recipe of the crafting table or Farmer's Delight's dough, as the board reads it, when the board could make it. */
+    /**
+     * A recipe of the crafting table or Farmer's Delight's dough, as the board reads it, when the board could make it. A crafting type
+     * of an addon's own is read like the crafting table's when it is written like one: whether it lays its items as the crafting table
+     * does is known once it is read ({@link #parse}).
+     */
     private static Optional<JsonObject> plain(JsonObject json) {
         String type = string(json, "type");
         JsonObject recipe = json;
@@ -401,8 +415,6 @@ public final class AssemblyRecipes {
             JsonObject result = new JsonObject();
             result.addProperty("id", FarmersDelightContent.id("wheat_dough").toString());
             recipe.add("result", result);
-        } else if (!SHAPELESS.equals(type) && !SHAPED.equals(type)) {
-            return Optional.empty();
         }
         List<JsonElement> named = named(recipe);
         if (named == null || named.size() < 2 || named.size() > GRID * GRID || named.stream().allMatch(named.get(0)::equals)) {
@@ -426,7 +438,7 @@ public final class AssemblyRecipes {
         DynamicOps<JsonElement> ops = registries.createSerializationContext(JsonOps.INSTANCE);
         Recipe<?> recipe = Recipe.CODEC.parse(ops, json).getOrThrow(JsonParseException::new);
         List<JsonElement> named = named(json);
-        if (!(recipe instanceof CraftingRecipe crafting) || named == null || named.isEmpty()) {
+        if (!(recipe instanceof CraftingRecipe crafting) || named == null || named.isEmpty() || !laysLikeACraftingTable(json, crafting)) {
             return Optional.empty();
         }
         List<Ingredient> ingredients = new ArrayList<>();
@@ -474,6 +486,18 @@ public final class AssemblyRecipes {
         }
         return Optional.of(new Assembly(id, crafting, List.copyOf(ingredients), slots.stream().mapToInt(Integer::intValue).toArray(),
                 base, kind, result.copy(), json));
+    }
+
+    /**
+     * Whether the board can make {@code crafting} by laying its ingredients in a grid: the crafting table's own types and Farmer's
+     * Delight's dough, or a type of an addon built on the crafting table's shaped or shapeless craft. Such a type only adds to what it
+     * makes, and its own code still does that on the board, which makes the dish through the recipe: Barbeque's Delight's kebabs and
+     * bibimbap carry the seasoning of their skewers. A type that matches in a way of its own stays in the crafting table.
+     */
+    private static boolean laysLikeACraftingTable(JsonObject json, CraftingRecipe crafting) {
+        String type = string(json, "type");
+        return SHAPELESS.equals(type) || SHAPED.equals(type) || DOUGH.equals(type) || crafting instanceof ShapedRecipe
+                || crafting instanceof ShapelessRecipe;
     }
 
     /** The ingredients of a shapeless or shaped recipe's JSON, a shaped one's row by row as the recipe lists them; null if broken. */

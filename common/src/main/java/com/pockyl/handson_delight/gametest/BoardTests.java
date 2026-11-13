@@ -1,8 +1,13 @@
 package com.pockyl.handson_delight.gametest;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -21,11 +26,14 @@ import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import vectorwing.farmersdelight.client.recipebook.CookingPotRecipeBookTab;
@@ -38,6 +46,7 @@ import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.assembly.Assembling;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
@@ -45,10 +54,12 @@ import com.pockyl.handson_delight.station.BoardLayers;
 import com.pockyl.handson_delight.station.BoardLogic;
 import com.pockyl.handson_delight.station.Cutting;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
+import com.pockyl.handson_delight.station.KitchenBoard;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -181,6 +192,15 @@ public final class BoardTests {
         return AssemblyRecipes.all().stream().filter(dish -> dish.id().equals(FarmersDelightContent.id(path))).findFirst();
     }
 
+    /**
+     * Whether an addon makes Farmer's Delight's {@code path} elsewhere than at the crafting table: Cultural Delights 0.19 on 1.21.1
+     * bakes its pies and stuffed potato in its oven. There is no craft to put together then, and the board rightly has no dish.
+     */
+    private static boolean madeElsewhere(GameTestHelper helper, String path) {
+        return helper.getLevel().getRecipeManager().byKey(FarmersDelightContent.id(path))
+                .filter(holder -> !(holder.value() instanceof CraftingRecipe)).isPresent();
+    }
+
     private static Map<Integer, ItemStack> netherSalad() {
         return Map.of(0, new ItemStack(Items.CRIMSON_FUNGUS), 1, new ItemStack(Items.WARPED_FUNGUS), 4, new ItemStack(Items.BOWL));
     }
@@ -201,8 +221,8 @@ public final class BoardTests {
                 Map.entry("honey_glazed_ham_block", AssemblyRecipes.Base.BOWL), Map.entry("shepherds_pie_block", AssemblyRecipes.Base.BOWL),
                 Map.entry("rice_roll_medley_block", AssemblyRecipes.Base.BOWL),
                 Map.entry("gleaming_salad_block", AssemblyRecipes.Base.BOWL));
-        kinds.forEach((dish, base) ->
-                helper.assertTrue(made(dish).filter(it -> it.kind() == base).isPresent(), dish + " goes down from its " + base));
+        kinds.forEach((dish, base) -> helper.assertTrue(madeElsewhere(helper, dish) || made(dish).filter(it -> it.kind() == base).isPresent(),
+                dish + " goes down from its " + base));
         Map<String, AssemblyRecipes.Finish> finishes = Map.ofEntries(
                 Map.entry("honey_glazed_ham_block", AssemblyRecipes.Finish.ARRANGE), Map.entry("bacon_and_eggs", AssemblyRecipes.Finish.ARRANGE),
                 Map.entry("steak_and_potatoes", AssemblyRecipes.Finish.ARRANGE), Map.entry("grilled_salmon", AssemblyRecipes.Finish.ARRANGE),
@@ -212,8 +232,8 @@ public final class BoardTests {
                 Map.entry("cod_roll", AssemblyRecipes.Finish.SHAPE), Map.entry("kelp_roll", AssemblyRecipes.Finish.ROLL),
                 Map.entry("barbecue_stick", AssemblyRecipes.Finish.SKEWER), Map.entry("melon_popsicle", AssemblyRecipes.Finish.FREEZE),
                 Map.entry("apple_pie", AssemblyRecipes.Finish.PRESS));
-        finishes.forEach((dish, finish) -> helper.assertTrue(made(dish).map(AssemblyRecipes.Assembly::finish).orElse(null) == finish,
-                dish + " is finished by " + finish));
+        finishes.forEach((dish, finish) -> helper.assertTrue(madeElsewhere(helper, dish)
+                || made(dish).map(AssemblyRecipes.Assembly::finish).orElse(null) == finish, dish + " is finished by " + finish));
         for (String crafted : List.of("cake_from_slices", "pumpkin_pie_from_slices", "pumpkin_from_slices", "milk_bucket_from_bottles",
                 "milk_bottle", "rice_panicle", "tomato_seeds")) {
             helper.assertTrue(made(crafted).isEmpty(), crafted + " stays in the crafting table");
@@ -237,6 +257,10 @@ public final class BoardTests {
 
     /** A shaped recipe: the crust first, then all the rest in any order; the pie is a block and lies on the board. */
     public static void aPieGoesIntoItsCrust(GameTestHelper helper) {
+        if (madeElsewhere(helper, "apple_pie")) {
+            helper.succeed();
+            return;
+        }
         Board setup = board(helper);
         setup.carry(new ItemStack(fd("pie_crust"), 2));
         setup.place();
@@ -251,6 +275,10 @@ public final class BoardTests {
 
     /** Milk from a bucket: the bucket comes back, and a bucket goes down only one at a time, so one potato is stuffed. */
     public static void milkGivesItsBucketBack(GameTestHelper helper) {
+        if (madeElsewhere(helper, "stuffed_potato")) {
+            helper.succeed();
+            return;
+        }
         Board setup = board(helper);
         // Cooked beef in Farmer's Delight's recipe; an addon may stuff it with something else (Delightful: a patty).
         Item filling = made("stuffed_potato").flatMap(dish -> dish.ingredients().stream()
@@ -1043,5 +1071,93 @@ public final class BoardTests {
         public void effect(ResourceLocation effect, String node, CompoundTag data) {
             effects.add(effect);
         }
+    }
+
+    /**
+     * Barbeque's Delight's kebab wrap, kebab sandwich and bibimbap are crafts of its own type that put the grilled skewers, seasoning
+     * and all, into the dish: made on the board they keep doing it, as the recipe's own code makes the dish. With -Paddons=wide.
+     */
+    public static void kebabsKeepTheSeasoningOfTheirSkewers(GameTestHelper helper) {
+        Item wrap = BuiltInRegistries.ITEM.get(ResourceLocation.parse("barbequesdelight:kebab_wrap"));
+        Item grilled = BuiltInRegistries.ITEM.get(ResourceLocation.parse("barbequesdelight:grilled_beef_skewer"));
+        DataComponentType<?> seasoning = BuiltInRegistries.DATA_COMPONENT_TYPE.get(ResourceLocation.parse("barbequesdelight:seasoning"));
+        if (wrap == Items.AIR || grilled == Items.AIR || seasoning == null) {
+            // Barbeque's Delight comes with -Paddons=wide.
+            helper.succeed();
+            return;
+        }
+        for (String dish : List.of("kebab_wrap", "kebab_sandwich", "bibimbap")) {
+            ResourceLocation id = ResourceLocation.parse("barbequesdelight:" + dish);
+            helper.assertTrue(AssemblyRecipes.all().stream().anyMatch(made -> made.id().equals(id)), dish + " is a dish of the board");
+        }
+        DynamicOps<JsonElement> ops = helper.getLevel().registryAccess().createSerializationContext(JsonOps.INSTANCE);
+        ItemStack skewer = new ItemStack(grilled);
+        helper.assertTrue(season(skewer, seasoning, ops, "CHILI") || season(skewer, seasoning, ops, "chili"), "the skewer takes chili");
+        Board setup = board(helper);
+        for (ItemStack layer : List.of(new ItemStack(Items.BREAD), skewer, new ItemStack(fd("cabbage")))) {
+            setup.carry(layer.copy());
+            setup.place();
+        }
+        setup.finishIfItWaits();
+        ItemStack made = setup.onBoard();
+        helper.assertTrue(made.is(wrap), "a kebab wrap, got " + made + " and layers " + BoardLogic.layers(setup.station.state()));
+        String saved = ItemStack.CODEC.encodeStart(ops, made).getOrThrow().toString();
+        helper.assertTrue(saved.contains("grilled_beef_skewer") && saved.toLowerCase(Locale.ROOT).contains("chili"),
+                "with its skewer's chili, got " + saved);
+        helper.succeed();
+    }
+
+    /** Gives {@code stack} the component {@code type} as {@code name} reads; false where it does not read so. */
+    private static <T> boolean season(ItemStack stack, DataComponentType<T> type, DynamicOps<JsonElement> ops, String name) {
+        Optional<T> value;
+        try {
+            value = type.codecOrThrow().parse(ops, new JsonPrimitive(name)).result();
+        } catch (RuntimeException unknown) {
+            // Barbeque's Delight's enum codec throws for a name it does not know.
+            return false;
+        }
+        value.ifPresent(read -> stack.set(type, read));
+        return value.isPresent();
+    }
+
+    /**
+     * Chopper's Delight's boards of every wood (-Paddons) are the board's station: what lies there is cut the same way, and a dish
+     * being put together is kept in the board. Its decorated board, drawn whole by its own renderer, keeps its own use.
+     */
+    public static void choppersDelightsBoardsAreStations(GameTestHelper helper) {
+        Block oak = BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse("choppersdelight:oak_cutting_board"));
+        if (oak == Blocks.AIR) {
+            // Chopper's Delight comes with -Paddons.
+            helper.succeed();
+            return;
+        }
+        Block decorated = BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse("choppersdelight:decorated_cutting_board"));
+        helper.assertTrue(CuttingBoardStation.TYPE.matches(oak.defaultBlockState()), "the oak board opens as the station");
+        helper.assertFalse(CuttingBoardStation.TYPE.matches(decorated.defaultBlockState()), "the decorated board keeps its own use");
+        BlockPos at = new BlockPos(1, 1, 1);
+        helper.setBlock(at, oak);
+        Station station = new Station(helper.getLevel(), helper.absolutePos(at));
+        BoardLogic logic = new BoardLogic(station);
+        KitchenBoard board = KitchenBoard.of(helper.getLevel().getBlockEntity(station.pos()));
+        helper.assertTrue(board != null, "its block entity is a kitchen board");
+        // Refabricated's board casts the cutting player to a server player.
+        ServerPlayer cook = TestPlayers.serverPlayer(helper, "cook");
+        cook.inventoryMenu.setCarried(new ItemStack(fd("cabbage"), 2));
+        logic.onCustomAction(station, cook, CuttingBoardStation.ACTION_PLACE, new CompoundTag());
+        helper.assertTrue(board.handson$stored().is(fd("cabbage")) && board.handson$stored().getCount() == 2, "both cabbages lie there");
+        cook.getInventory().setItem(7, new ItemStack(fd("iron_knife")));
+        CompoundTag chop = new CompoundTag();
+        chop.putInt(CuttingBoardStation.MARK, 0);
+        chop.putFloat(CuttingBoardStation.AT, 10.0F);
+        logic.onCustomAction(station, cook, CuttingBoardStation.ACTION_CHOP, chop);
+        helper.runAfterDelay(4, () -> {
+            helper.assertTrue(board.handson$stored().isEmpty() && cook.getInventory().countItem(fd("cabbage_leaf")) == 4,
+                    "one cut halves both, the leaves go to the cook");
+            board.handson$layers().set(0, new ItemStack(Items.BREAD));
+            CompoundTag saved = board.handson$blockEntity().saveWithoutMetadata(helper.getLevel().registryAccess());
+            helper.assertTrue(saved.contains(HandsOnDelight.MOD_ID + ":layers"), "a dish being put together is saved with the board");
+            board.handson$layers().clear();
+            helper.succeed();
+        });
     }
 }

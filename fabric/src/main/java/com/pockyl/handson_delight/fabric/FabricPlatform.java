@@ -88,6 +88,11 @@ public final class FabricPlatform implements Platform {
     }
 
     @Override
+    public boolean isLoaded(String modId) {
+        return FabricLoader.getInstance().isModLoaded(modId);
+    }
+
+    @Override
     public boolean isFarmersDelightAddon(String modId) {
         return FabricLoader.getInstance().getModContainer(modId)
                 .map(mod -> mod.getMetadata().getDependencies().stream()

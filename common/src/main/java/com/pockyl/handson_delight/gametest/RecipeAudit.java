@@ -12,6 +12,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
@@ -59,6 +61,7 @@ public final class RecipeAudit {
         ServerLevel level = helper.getLevel();
         List<String> report = new ArrayList<>();
         List<String> missed = new ArrayList<>();
+        List<String> ownCrafts = new ArrayList<>();
         Map<String, Integer> others = new TreeMap<>();
 
         List<AssemblyRecipes.Assembly> assembled = new ArrayList<>(AssemblyRecipes.all());
@@ -72,6 +75,15 @@ public final class RecipeAudit {
                     && isDish(crafting.getResultItem(level.registryAccess())) && kinds(crafting.getIngredients()) > 1
                     && !crafting.isSpecial() && !AssemblyRecipes.usesWorkshop(crafting.getIngredients())) {
                 ResourceLocation id = holder.id();
+                ResourceLocation serializer = BuiltInRegistries.RECIPE_SERIALIZER.getKey(recipe.getSerializer());
+                if (serializer != null && !serializer.getNamespace().equals("minecraft")
+                        && !serializer.getNamespace().equals(FarmersDelightContent.MOD_ID)
+                        && !(crafting instanceof ShapedRecipe) && !(crafting instanceof ShapelessRecipe)) {
+                    // A crafting type of the addon's own that matches in a way of its own: it stays in the crafting table. One built
+                    // on the shaped or shapeless craft is made on the board (Barbeque's Delight's kebabs, seasoning and all).
+                    ownCrafts.add(id + " -> " + name(crafting.getResultItem(level.registryAccess())) + " (" + serializer + ")");
+                    continue;
+                }
                 String why = AssemblyRecipes.candidates().stream().anyMatch(candidate -> candidate.id().equals(id))
                         ? "a candidate, not chosen" : "not a candidate";
                 missed.add(id + " -> " + name(crafting.getResultItem(level.registryAccess())) + " (" + why + ", "
@@ -165,6 +177,8 @@ public final class RecipeAudit {
 
         section(report, "CRAFTING DISHES NOT ON THE BOARD (" + missed.size() + ")", "id -> result");
         missed.stream().sorted().forEach(report::add);
+        section(report, "FOOD CRAFTS OF THEIR OWN TYPE, KEPT IN THE CRAFTING TABLE (" + ownCrafts.size() + ")", "id -> result (type)");
+        ownCrafts.stream().sorted().forEach(report::add);
         section(report, "RECIPE TYPES OF OTHER MODS (stations of their own)", "type: recipes");
         others.forEach((type, count) -> report.add(type + ": " + count));
 

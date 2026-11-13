@@ -27,6 +27,9 @@ dependencies {
         exclude group: 'net.fabricmc'
         exclude group: 'net.fabricmc.fabric-api'
     }
+    // Brewin' and Chewin's keg is a station: the common mixin into it compiles against its NeoForge jar, in Mojang names like this
+    // project. Its keg classes are the same in the Fabric jar, which Loom 1.14 cannot read (built with Loom 1.16, class tweaker v2).
+    compileOnly "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_version}"
 }
 
 loom {
@@ -60,6 +63,11 @@ dependencies {
     gameTestMods "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     // Not in the fabric-api jar: the module that runs the tests (the version fabric-api's POM names).
     gameTestMods 'net.fabricmc.fabric-api:fabric-gametest-api-v1:2.0.5+6fc22b9919'
+    // -Paddons: the addons whose stations open on Fabric too. Brewin' and Chewin' carries Greenhouse Config inside.
+    if (providers.gradleProperty('addons').isPresent()) {
+        gameTestMods "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_fabric_version}"
+        gameTestMods 'maven.modrinth:choppers-delight:aEhSntF1' // Chopper's Delight 1.2.3: cutting boards of every wood
+    }
 }
 
 // The game tests of common on a production Fabric server with the release jars: gradlew :fabric:runGameTest. Not a Loom dev

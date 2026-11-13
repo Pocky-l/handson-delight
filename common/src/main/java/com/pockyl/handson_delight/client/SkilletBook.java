@@ -10,6 +10,7 @@ import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.block.SkilletBlock;
 
 import com.pockyl.diegesis.api.client.StationView;
+import com.pockyl.handson_delight.CookingTimes;
 import com.pockyl.handson_delight.station.SkilletCooking;
 import com.pockyl.handson_delight.station.SkilletStation;
 
@@ -28,7 +29,8 @@ final class SkilletBook implements RecipeBook.Source {
             if (dish.isEmpty() || recipe.getIngredients().isEmpty()) {
                 continue;
             }
-            int ticks = 2 * SkilletCooking.sideTicks(SkilletBlock.getSkilletCookingTime(recipe.getCookingTime(), 0), 1);
+            int skillet = SkilletBlock.getSkilletCookingTime(recipe.getCookingTime(), 0);
+            int ticks = 2 * SkilletCooking.sideTicks(skillet, 1, CookingTimes.skillet());
             Component seconds = Component.translatable("handson_delight.book.seconds", Math.round(ticks / 20.0F));
             pages.add(new RecipeBook.Page(holder.id(), dish.copy(), List.of(recipe.getIngredients().get(0)),
                     List.of(new ItemStack(Items.CLOCK)), seconds, false));

@@ -42,4 +42,9 @@ public final class FabricStoveTests implements FabricGameTest {
     public void kitchenThingsOpenTheStove(GameTestHelper helper) {
         StoveTests.kitchenThingsOpenTheStove(helper);
     }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void theGrillingTimeFollowsTheConfig(GameTestHelper helper) {
+        StoveTests.theGrillingTimeFollowsTheConfig(helper);
+    }
 }

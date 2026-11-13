@@ -55,9 +55,12 @@ public final class SkilletCooking {
         return level.getRecipeManager().getRecipeFor(RecipeType.CAMPFIRE_COOKING, new SingleRecipeInput(stack.copyWithCount(1)), level);
     }
 
-    /** Ticks one side of {@code batch} takes, for a recipe Farmer's Delight's skillet cooks in {@code skilletTicks}. */
-    public static int sideTicks(int skilletTicks, int batch) {
-        return Math.max(1, Math.round(skilletTicks * (float) Math.sqrt(Math.max(1, batch)) / PACE / 2.0F));
+    /**
+     * Ticks one side of {@code batch} takes, for a recipe Farmer's Delight's skillet cooks in {@code skilletTicks}, with the skillet's
+     * cooking time {@code times} as long as usual.
+     */
+    public static int sideTicks(int skilletTicks, int batch, float times) {
+        return Math.max(1, Math.round(skilletTicks * times * (float) Math.sqrt(Math.max(1, batch)) / PACE / 2.0F));
     }
 
     /** What Farmer's Delight's skillet takes for one of {@code stack}, with the Fire Aspect it was placed with. */
@@ -92,9 +95,9 @@ public final class SkilletCooking {
             int ticks = SkilletBlock.getSkilletCookingTime(recipe.get().getCookingTime(), ((FryingPan) skillet).handson$fireAspect());
             if (isOneSided(stack)) {
                 // An egg fries sunny side up: through from below in the time both sides take, no toss asked for.
-                frying.fryThrough(0.5F / sideTicks(ticks, frying.batch()));
+                frying.fryThrough(0.5F / sideTicks(ticks, frying.batch(), HandsOnConfig.skilletTime()));
             } else {
-                frying.fry(1.0F / sideTicks(ticks, frying.batch()));
+                frying.fry(1.0F / sideTicks(ticks, frying.batch(), HandsOnConfig.skilletTime()));
             }
             if (frying.down() >= 1.0F && frying.up() >= 1.0F) {
                 finish(skillet, frying, stack, recipe.get());

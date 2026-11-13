@@ -28,6 +28,8 @@ dependencies {
     compileOnly "maven.modrinth:farmers-delight:${farmers_delight_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "dev.emi:emi-xplat-mojmap:${emi_version}:api"
+    // Brewin' and Chewin's keg is a station: compiled against it only. Its keg classes are the same on NeoForge and Fabric.
+    compileOnly "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_version}"
 }
 
 configurations {

@@ -1,0 +1,146 @@
+{
+  "textures": {
+    "particle": "minersdelight:block/copper_pot",
+    "copper_pot": "minersdelight:block/copper_pot"
+  },
+  "elements": [
+    {
+      "name": "ladle",
+      "from": [
+        7,
+        7,
+        7
+      ],
+      "to": [
+        9,
+        14,
+        9
+      ],
+      "rotation": {
+        "angle": -22.5,
+        "axis": "z",
+        "origin": [
+          8,
+          2,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            11,
+            1,
+            10,
+            4.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "east": {
+          "uv": [
+            10,
+            1,
+            11,
+            4.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "south": {
+          "uv": [
+            11,
+            1,
+            10,
+            4.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "west": {
+          "uv": [
+            10,
+            1,
+            11,
+            4.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "up": {
+          "uv": [
+            11,
+            0,
+            10,
+            1
+          ],
+          "texture": "#copper_pot"
+        }
+      }
+    },
+    {
+      "name": "ladle_under",
+      "from": [
+        7,
+        2,
+        7
+      ],
+      "to": [
+        9,
+        7,
+        9
+      ],
+      "rotation": {
+        "angle": -22.5,
+        "axis": "z",
+        "origin": [
+          8,
+          2,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            11,
+            2,
+            10,
+            4.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "east": {
+          "uv": [
+            10,
+            2,
+            11,
+            4.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "south": {
+          "uv": [
+            11,
+            2,
+            10,
+            4.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "west": {
+          "uv": [
+            10,
+            2,
+            11,
+            4.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "down": {
+          "uv": [
+            10,
+            0,
+            11,
+            1
+          ],
+          "texture": "#copper_pot"
+        }
+      }
+    }
+  ]
+}

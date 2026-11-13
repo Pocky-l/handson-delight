@@ -10,10 +10,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
-import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
 
 import com.pockyl.handson_delight.client.HandsOnDelightClient;
+import com.pockyl.handson_delight.station.KitchenBoard;
 
 /**
  * Where a scene shows the board, the skillet or the stove, it draws the food itself, so that a knife can cut it, it can fly and
@@ -31,7 +31,7 @@ abstract class StationRenderersMixin {
             CallbackInfo callback) {
         boolean drawnByScene = blockEntity instanceof AbstractStoveBlockEntity || blockEntity instanceof SkilletBlockEntity
                 || blockEntity instanceof CookingPotBlockEntity
-                || blockEntity instanceof CuttingBoardBlockEntity board && !board.isItemCarvingBoard();
+                || blockEntity instanceof KitchenBoard board && !board.handson$isCarving();
         if (drawnByScene && HandsOnDelightClient.isSceneDrawn(blockEntity.getBlockPos())) {
             callback.cancel();
         }

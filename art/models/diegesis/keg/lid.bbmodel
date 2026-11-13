@@ -1,0 +1,182 @@
+{
+	"meta": {
+		"format_version": "5.0",
+		"model_format": "java_block",
+		"box_uv": false
+	},
+	"name": "keg_lid",
+	"parent": "",
+	"java_block_version": "1.9.0",
+	"ambientocclusion": true,
+	"front_gui_light": false,
+	"visible_box": [
+		1,
+		1,
+		0
+	],
+	"variable_placeholders": "",
+	"multi_file_ruleset": "",
+	"variable_placeholder_buttons": [],
+	"unhandled_root_fields": {},
+	"resolution": {
+		"width": 16,
+		"height": 16
+	},
+	"elements": [
+		{
+			"name": "wood_lid",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade": true,
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				4,
+				15,
+				4
+			],
+			"to": [
+				12,
+				16,
+				12
+			],
+			"autouv": 0,
+			"color": 8,
+			"origin": [
+				0,
+				0,
+				0
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						4,
+						1,
+						12,
+						2
+					],
+					"texture": 1
+				},
+				"east": {
+					"uv": [
+						4,
+						1,
+						12,
+						2
+					],
+					"texture": 1
+				},
+				"south": {
+					"uv": [
+						4,
+						1,
+						12,
+						2
+					],
+					"texture": 1
+				},
+				"west": {
+					"uv": [
+						4,
+						1,
+						12,
+						2
+					],
+					"texture": 1
+				},
+				"up": {
+					"uv": [
+						4,
+						4,
+						12,
+						12
+					],
+					"texture": 0
+				},
+				"down": {
+					"uv": [
+						4,
+						4,
+						12,
+						12
+					],
+					"texture": 1
+				}
+			},
+			"type": "cube",
+			"uuid": "46dea1c8-cfe0-464d-5293-d0e14c387598"
+		}
+	],
+	"groups": [],
+	"outliner": [
+		"46dea1c8-cfe0-464d-5293-d0e14c387598"
+	],
+	"textures": [
+		{
+			"name": "keg_top.png",
+			"folder": "block",
+			"namespace": "brewinandchewin",
+			"id": "0",
+			"group": "",
+			"scope": 0,
+			"width": 16,
+			"height": 16,
+			"uv_width": 16,
+			"uv_height": 16,
+			"particle": false,
+			"use_as_default": false,
+			"layers_enabled": false,
+			"sync_to_project": "",
+			"file_format": "png",
+			"render_mode": "default",
+			"render_sides": "auto",
+			"wrap_mode": "limited",
+			"pbr_channel": "color",
+			"fps": 7,
+			"force_translucent": false,
+			"frame_time": 1,
+			"frame_order_type": "loop",
+			"frame_order": "",
+			"frame_interpolate": false,
+			"visible": true,
+			"internal": true,
+			"saved": true,
+			"uuid": "744c9d1e-5299-f17c-0718-516500892ed6"
+		},
+		{
+			"name": "keg_back.png",
+			"folder": "block",
+			"namespace": "brewinandchewin",
+			"id": "1",
+			"group": "",
+			"scope": 0,
+			"width": 16,
+			"height": 16,
+			"uv_width": 16,
+			"uv_height": 16,
+			"particle": false,
+			"use_as_default": false,
+			"layers_enabled": false,
+			"sync_to_project": "",
+			"file_format": "png",
+			"render_mode": "default",
+			"render_sides": "auto",
+			"wrap_mode": "limited",
+			"pbr_channel": "color",
+			"fps": 7,
+			"force_translucent": false,
+			"frame_time": 1,
+			"frame_order_type": "loop",
+			"frame_order": "",
+			"frame_interpolate": false,
+			"visible": true,
+			"internal": true,
+			"saved": true,
+			"uuid": "ca493fbb-9426-5dc0-6620-9f6d0a3d2d93"
+		}
+	]
+}

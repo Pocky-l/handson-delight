@@ -19,7 +19,7 @@ import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.TridentItem;
 import org.joml.Vector3f;
-import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
+
 
 import com.pockyl.diegesis.api.client.DiegesisParticles;
 import com.pockyl.diegesis.api.client.MeshShape;
@@ -34,6 +34,7 @@ import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.station.BoardLogic;
 import com.pockyl.handson_delight.station.Cutting;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
+import com.pockyl.handson_delight.station.KitchenBoard;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -579,7 +580,7 @@ public final class BoardBehavior implements StationBehavior {
 
     /** A knife carved into the board is Farmer's Delight's to draw. */
     private static boolean carved(StationView view) {
-        return view.level().getBlockEntity(view.pos()) instanceof CuttingBoardBlockEntity board && board.isItemCarvingBoard();
+        return view.level().getBlockEntity(view.pos()) instanceof KitchenBoard board && board.handson$isCarving();
     }
 
     private void drawItem(StationView view) {

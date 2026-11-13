@@ -12,5 +12,5 @@ import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
 @Mixin(value = CuttingBoardBlockEntity.class, remap = false)
 public interface CuttingBoardBlockEntityAccessor {
     @Accessor("isItemCarvingBoard")
-    void handson$setCarving(boolean carving);
+    void handson$writeCarving(boolean carving);
 }

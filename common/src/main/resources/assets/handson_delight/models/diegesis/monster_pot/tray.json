@@ -1,0 +1,8 @@
+{
+  "parent": "handson_delight:diegesis/pot/tray",
+  "textures": {
+    "particle": "dungeonsdelight:block/monster_tray_top",
+    "heating_tray_top": "dungeonsdelight:block/monster_tray_top",
+    "heating_tray_side": "dungeonsdelight:block/monster_tray_side"
+  }
+}

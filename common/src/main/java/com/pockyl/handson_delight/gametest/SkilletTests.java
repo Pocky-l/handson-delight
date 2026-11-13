@@ -33,7 +33,7 @@ import java.util.List;
 /** The skillet's rules against a real skillet of Farmer's Delight on a lit campfire, on every loader. */
 public final class SkilletTests {
     /** One beef fries a side in 40 ticks, two in 57: Farmer's Delight's 120 at the station's pace. */
-    private static final int TWO_BEEF_SIDE = SkilletCooking.sideTicks(120, 2);
+    private static final int TWO_BEEF_SIDE = SkilletCooking.sideTicks(120, 2, 1.0F);
 
     private SkilletTests() {
     }
@@ -140,6 +140,31 @@ public final class SkilletTests {
                     "cooked in its own time and out of the pan, never tossed");
             helper.succeed();
         });
+    }
+
+    /** The skillet's cooking time in the config: 1.0 fries a side in today's time, 2.0 in twice it. Both steps in this one tick. */
+    public static void theFryingTimeFollowsTheConfig(GameTestHelper helper) {
+        Pan pan = pan(helper);
+        pan.place(Items.BEEF, 1);
+        float pot = HandsOnConfig.cookingPotTime();
+        float skillet = HandsOnConfig.skilletTime();
+        float stove = HandsOnConfig.stoveTime();
+        float[] steps = new float[2];
+        try {
+            for (int i = 0; i < 2; i++) {
+                HandsOnConfig.setCookingTimes(pot, i + 1.0F, stove);
+                float before = pan.frying().down();
+                SkilletCooking.fry(pan.skillet, pan.skillet.getStoredStack());
+                steps[i] = pan.frying().down() - before;
+            }
+        } finally {
+            HandsOnConfig.setCookingTimes(pot, skillet, stove);
+        }
+        // Farmer's Delight's skillet takes 120 ticks for beef: a side is 40 at the station's pace.
+        int side = SkilletCooking.sideTicks(120, 1, 1.0F);
+        helper.assertTrue(side == 40 && Math.abs(steps[0] - 1.0F / side) < 1.0E-6F, "1.0: a side in today's 40 ticks, got " + steps[0]);
+        helper.assertTrue(Math.abs(steps[0] - 2.0F * steps[1]) < 1.0E-6F, "2.0: half as far a tick, " + steps[1]);
+        helper.succeed();
     }
 
     public static void farmersDelightsRightClickCooksItsWay(GameTestHelper helper) {

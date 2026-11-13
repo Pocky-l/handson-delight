@@ -58,6 +58,12 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
+    // Miner's Delight's copper pot is a station when that mod is there: mixins into it, compiled against it only.
+    compileOnly "maven.modrinth:miners-delight:${miners_delight_version}"
+    // Brewin' and Chewin's keg is a station too: compiled against it only.
+    compileOnly "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_version}"
+    // Dungeons Delight's monster pot is a station too: compiled against it only.
+    compileOnly "maven.modrinth:dungeons_delight:${dungeons_delight_version}"
 }
 
 // -Paddons runs the game and the game tests with the most downloaded Farmer's Delight addons that have a NeoForge 1.21.1 build
@@ -74,11 +80,26 @@ if (providers.gradleProperty('addons').isPresent()) {
                 'more-delight:DpW4EgJo',          // More Delight 26.05.20a-1.21-neoforge
                 'delight-lib:wCR4QGbG',           // Delight Lib 26.05.18-1.21-neoforge, needed by More Delight
                 'autochefs-delight:ENpbCFK1',     // Autochef's Delight 2.0.3+neoforge
-                'brewin-and-chewin:MbcR48Ou',     // Brewin' And Chewin' 4.5.0+1.21.1-neoforge
-                'miners-delight:YUHbwbgQ',        // Miner's Delight 1.4.5
+                "brewin-and-chewin:${brewin_and_chewin_version}", // Brewin' And Chewin' 4.5.0+1.21.1-neoforge
+                "miners-delight:${miners_delight_version}", // Miner's Delight 1.4.5
                 'lodestonelib:CohX6yP1',          // Lodestone 1.8.2, needed by Miner's Delight
                 'frights-delight:4BABsmeb',       // Fright's Delight 1.4.8: a bone cut into the skewers its kebabs are served on
+                "dungeons_delight:${dungeons_delight_version}", // Dungeons Delight 1.21.1-1.5.2
+                'runiclib:tk5EQpUG',              // RunicLib 5.0.7, needed by Dungeons Delight
+                'choppers-delight:oulg9zE4',      // Chopper's Delight 1.2.2: cutting boards of every wood, Farmer's Delight's own block
         ].each { localRuntime "maven.modrinth:${it}" }
+        // -Paddons=wide adds the next most downloaded addons that need no other mods: more food, own crafts and tags. Vintage
+        // Delight, in the 1.20.1 list, has no NeoForge 1.21.1 build.
+        if (providers.gradleProperty('addons').get() == 'wide') {
+            [
+                    'rustic-delight:sAaG4pSA',        // Rustic Delight 1.7.1
+                    'ubes-delight:hxl0dMZ3',          // Ube's Delight neoforge-1.21.1-0.4.15
+                    'crabbers-delight:j5Nzh8kh',      // Crabber's Delight 1.3.1
+                    'cultural-delights:LYCtSz7r',     // Cultural Delights 0.19.8-1.21.1
+                    'barbeques-delight-forge:rvUhMw6d', // Barbeque's Delight 1.3.0
+                    'festive-delight:FP8ZwEus',       // Festive Delight 2.0.0
+            ].each { localRuntime "maven.modrinth:${it}" }
+        }
     }
 }
 

@@ -198,4 +198,9 @@ public final class FabricBoardTests implements FabricGameTest {
     public void anotherCookKeepsTheMarks(GameTestHelper helper) {
         BoardTests.anotherCookKeepsTheMarks(helper);
     }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void choppersDelightsBoardsAreStations(GameTestHelper helper) {
+        BoardTests.choppersDelightsBoardsAreStations(helper);
+    }
 }

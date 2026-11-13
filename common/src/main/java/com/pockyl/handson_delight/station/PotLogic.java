@@ -13,8 +13,6 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
-import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
-import vectorwing.farmersdelight.common.block.entity.container.CookingPotMenu;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
 import com.pockyl.diegesis.api.state.SlotRef;
@@ -23,11 +21,8 @@ import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.state.TankContents;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
-import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.KitchenTags;
-import com.pockyl.handson_delight.mixin.CookingPotBlockEntityAccessor;
-import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,25 +54,29 @@ public final class PotLogic implements StationLogic {
     private static final int SECOND_STAR = 8;
     private static final int THIRD_STAR = 32;
 
-    private final CookingPotBlockEntity pot;
+    private final KitchenPot pot;
+    private final PotCooking cooking;
     private boolean unsorted;
     /** Who stirs the pot, or last opened it while nobody stirred: their stars are the ones that can fill. */
     private UUID cook;
     private long stirredAt = Long.MIN_VALUE / 2;
     /** The ingredients the result was last looked up for, and what they make: the lookup runs only when they change. */
-    private final ItemStack[] resultFor = new ItemStack[CookingPotBlockEntity.MEAL_DISPLAY_SLOT];
+    private final ItemStack[] resultFor;
     private ItemStack resultMade = ItemStack.EMPTY;
     private CookingPotRecipe recipeMade;
 
     public PotLogic(StationContext station) {
-        pot = (CookingPotBlockEntity) station.blockEntity();
+        pot = (KitchenPot) station.blockEntity();
+        cooking = pot.handson$cooking();
+        resultFor = new ItemStack[pot.handson$slots()];
         StationState state = station.state();
-        state.bindSlots(CookingPotStation.INGREDIENTS, storage(pot, 0, CookingPotBlockEntity.MEAL_DISPLAY_SLOT));
-        state.bindSlots(CookingPotStation.MEAL, storage(pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, 1));
-        state.bindSlots(CookingPotStation.SERVED, storage(pot, CookingPotBlockEntity.OUTPUT_SLOT, 1));
+        state.bindSlots(CookingPotStation.INGREDIENTS, storage(pot, 0, pot.handson$slots()));
+        state.bindSlots(CookingPotStation.MEAL, storage(pot, pot.handson$slots(), 1));
+        // After the meal lie the container and then the served dish.
+        state.bindSlots(CookingPotStation.SERVED, storage(pot, pot.handson$slots() + 2, 1));
     }
 
-    private static SlotStorage storage(CookingPotBlockEntity pot, int start, int count) {
+    private static SlotStorage storage(KitchenPot pot, int start, int count) {
         return new SlotStorage() {
             @Override
             public int size() {
@@ -86,39 +85,19 @@ public final class PotLogic implements StationLogic {
 
             @Override
             public ItemStack get(int index) {
-                return Platform.INSTANCE.getItem(pot, start + index);
+                return pot.handson$getItem(start + index);
             }
 
             @Override
             public void set(int index, ItemStack stack) {
-                Platform.INSTANCE.setItem(pot, start + index, stack);
+                pot.handson$setItem(start + index, stack);
             }
         };
     }
 
-    /**
-     * Whether the block entity is Farmer's Delight's own cooking pot, the one this mod opens. Other mods may build their pots on its
-     * class; those keep cooking as Farmer's Delight does, with no spoon to stir them.
-     */
-    public static boolean isOurs(CookingPotBlockEntity pot) {
-        return pot.getBlockState().is(FarmersDelightContent.COOKING_POT.get());
-    }
-
-    /** Whether a player works at the pot through Farmer's Delight's own menu: a client without this mod cannot stir. */
-    public static boolean isInMenu(CookingPotBlockEntity pot) {
-        if (pot.getLevel() != null) {
-            for (Player player : pot.getLevel().players()) {
-                if (player.containerMenu instanceof CookingPotMenu menu && menu.blockEntity == pot) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     @Override
     public void onOpen(StationContext station, Player player) {
-        ((PotStirring) pot).handson$attend(station.level().getGameTime());
+        cooking.attend(station.level().getGameTime());
         if (!isStirring(station)) {
             cook = player.getUUID();
         }
@@ -137,14 +116,14 @@ public final class PotLogic implements StationLogic {
     public void onSlotChanged(StationContext station, SlotRef slot) {
         unsorted = true;
         if (slot.group().equals(CookingPotStation.INGREDIENTS) && !station.level().isClientSide()) {
-            ((PotStirring) pot).handson$feedByHand();
+            cooking.feedByHand();
         }
     }
 
     @Override
     public void tick(StationContext station) {
         if (!station.level().isClientSide()) {
-            ((PotStirring) pot).handson$attend(station.level().getGameTime());
+            cooking.attend(station.level().getGameTime());
         }
         if (unsorted && !station.level().isClientSide()) {
             unsorted = false;
@@ -159,7 +138,7 @@ public final class PotLogic implements StationLogic {
 
     /** The containers emptied into the soup (a milk bucket's bucket) go back to the cook, or to anyone at the pot. */
     private void giveBackLeftovers(StationContext station) {
-        List<ItemStack> leftovers = ((PotStirring) pot).handson$takeLeftovers();
+        List<ItemStack> leftovers = cooking.takeLeftovers();
         if (leftovers.isEmpty()) {
             return;
         }
@@ -184,16 +163,16 @@ public final class PotLogic implements StationLogic {
      * not stay in the pot looking uncooked. With the cook gone they stay and cook next.
      */
     private void giveBackSaved(StationContext station) {
-        int saved = ((PotStirring) pot).handson$takeSaved();
+        int saved = cooking.takeSaved();
         Player cook = saved <= 0 ? null : station.users().stream().filter(user -> user.getUUID().equals(this.cook)).findFirst().orElse(null);
         if (cook == null) {
             return;
         }
-        for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
-            ItemStack stack = Platform.INSTANCE.getItem(pot, i);
+        for (int i = 0; i < pot.handson$slots(); i++) {
+            ItemStack stack = pot.handson$getItem(i);
             if (!stack.isEmpty()) {
                 ItemStack back = stack.copyWithCount(Math.min(saved, stack.getCount()));
-                Platform.INSTANCE.setItem(pot, i, stack.copyWithCount(stack.getCount() - back.getCount()));
+                pot.handson$setItem(i, stack.copyWithCount(stack.getCount() - back.getCount()));
                 if (!cook.getInventory().add(back)) {
                     cook.drop(back, false);
                 }
@@ -208,10 +187,10 @@ public final class PotLogic implements StationLogic {
     private void shareOut(StationContext station) {
         Level level = station.level();
         List<ItemStack> inPot = new ArrayList<>();
-        for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
-            inPot.add(Platform.INSTANCE.getItem(pot, i));
+        for (int i = 0; i < pot.handson$slots(); i++) {
+            inPot.add(pot.handson$getItem(i));
         }
-        if (Platform.INSTANCE.findRecipe(level, inPot).isPresent()) {
+        if (pot.handson$findRecipe(level, inPot).isPresent()) {
             return;
         }
         List<ItemStack> kinds = new ArrayList<>();
@@ -221,9 +200,9 @@ public final class PotLogic implements StationLogic {
                         .ifPresentOrElse(kind -> kind.grow(stack.getCount()), () -> kinds.add(stack.copy()));
             }
         }
-        List<CookingPotRecipe> recipes = Platform.INSTANCE.cookingRecipes(level).stream().map(RecipeHolder::value).toList();
+        List<CookingPotRecipe> recipes = pot.handson$recipes(level).stream().map(RecipeHolder::value).toList();
         for (CookingPotRecipe recipe : recipes) {
-            int[] parts = parts(recipe, kinds, false);
+            int[] parts = parts(recipe, kinds, pot.handson$slots(), false);
             if (parts != null) {
                 lay(pot, kinds, parts);
                 return;
@@ -237,7 +216,7 @@ public final class PotLogic implements StationLogic {
         int[] best = null;
         int bestKept = 0;
         for (CookingPotRecipe recipe : recipes) {
-            int[] parts = parts(recipe, kinds, true);
+            int[] parts = parts(recipe, kinds, pot.handson$slots(), true);
             int kept = parts == null ? 0 : kept(kinds, parts);
             if (kept > bestKept) {
                 best = parts;
@@ -281,7 +260,10 @@ public final class PotLogic implements StationLogic {
      * In how many slots every kind must lie for the recipe; null when what is there does not make it, all of it and nothing else. With
      * {@code overflow}, a kind may hold more than its slots take.
      */
-    private static int[] parts(CookingPotRecipe recipe, List<ItemStack> kinds, boolean overflow) {
+    private static int[] parts(CookingPotRecipe recipe, List<ItemStack> kinds, int slots, boolean overflow) {
+        if (recipe.getIngredients().size() > slots) {
+            return null;
+        }
         int[] parts = new int[kinds.size()];
         for (Ingredient ingredient : recipe.getIngredients()) {
             int fits = -1;
@@ -306,7 +288,7 @@ public final class PotLogic implements StationLogic {
     }
 
     /** Lays every kind over its slots, at most a full stack a slot; returns what did not fit. */
-    private static List<ItemStack> lay(CookingPotBlockEntity pot, List<ItemStack> kinds, int[] parts) {
+    private static List<ItemStack> lay(KitchenPot pot, List<ItemStack> kinds, int[] parts) {
         List<ItemStack> rest = new ArrayList<>();
         int slot = 0;
         for (int kind = 0; kind < parts.length; kind++) {
@@ -317,12 +299,12 @@ public final class PotLogic implements StationLogic {
             }
             for (int part = parts[kind]; part > 0; part--) {
                 int share = (left + part - 1) / part;
-                Platform.INSTANCE.setItem(pot, slot++, stack.copyWithCount(share));
+                pot.handson$setItem(slot++, stack.copyWithCount(share));
                 left -= share;
             }
         }
-        while (slot < CookingPotBlockEntity.MEAL_DISPLAY_SLOT) {
-            Platform.INSTANCE.setItem(pot, slot++, ItemStack.EMPTY);
+        while (slot < pot.handson$slots()) {
+            pot.handson$setItem(slot++, ItemStack.EMPTY);
         }
         return rest;
     }
@@ -335,8 +317,8 @@ public final class PotLogic implements StationLogic {
     /** What a soup is served in does not go into the water, unless some recipe cooks with it. */
     @Override
     public boolean mayPlace(StationContext station, Player player, SlotRef slot, ItemStack stack) {
-        boolean serves = false;
-        for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(station.level())) {
+        boolean serves = pot.handson$servesIn(stack);
+        for (RecipeHolder<CookingPotRecipe> holder : pot.handson$recipes(station.level())) {
             CookingPotRecipe recipe = holder.value();
             if (recipe.getIngredients().stream().anyMatch(ingredient -> ingredient.test(stack))) {
                 return true;
@@ -369,25 +351,17 @@ public final class PotLogic implements StationLogic {
         return anything;
     }
 
-    /** What {@code recipe} cooks of what lies in the pot now, as Farmer's Delight's pot makes it: see {@link Platform#cooked}. */
-    public static ItemStack cooked(CookingPotBlockEntity pot, CookingPotRecipe recipe) {
-        Level level = pot.getLevel();
-        if (level == null) {
-            return recipe.getResultItem(RegistryAccess.EMPTY);
-        }
-        List<ItemStack> inPot = new ArrayList<>();
-        for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
-            inPot.add(Platform.INSTANCE.getItem(pot, i));
-        }
-        return Platform.INSTANCE.cooked(level, recipe, inPot);
+    /** What {@code recipe} cooks of what lies in the pot now, as the pot's own step makes it: see {@link KitchenPot#handson$cooked}. */
+    public static ItemStack cooked(KitchenPot pot, CookingPotRecipe recipe) {
+        return pot.handson$cooked(recipe);
     }
 
     /** How many times the ingredients in the pot make the recipe: every slot gives one item to a serving. */
-    private static int servingsLeft(CookingPotBlockEntity pot, CookingPotRecipe recipe) {
+    private static int servingsLeft(KitchenPot pot, CookingPotRecipe recipe) {
         List<ItemStack> stacks = new ArrayList<>();
         int left = Integer.MAX_VALUE;
-        for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
-            ItemStack stack = Platform.INSTANCE.getItem(pot, i);
+        for (int i = 0; i < pot.handson$slots(); i++) {
+            ItemStack stack = pot.handson$getItem(i);
             if (!stack.isEmpty()) {
                 stacks.add(stack);
                 left = Math.min(left, stack.getCount());
@@ -454,13 +428,13 @@ public final class PotLogic implements StationLogic {
     }
 
     /** How many servings of {@code recipe} cook together: all that the ingredients make, as far as the meal's stack has room. */
-    public static int batch(CookingPotBlockEntity pot, CookingPotRecipe recipe) {
+    public static int batch(KitchenPot pot, CookingPotRecipe recipe) {
         return batch(pot, recipe, cooked(pot, recipe));
     }
 
-    /** {@link #batch(CookingPotBlockEntity, CookingPotRecipe)} with {@code result}, what the recipe cooks of what lies in the pot. */
-    public static int batch(CookingPotBlockEntity pot, CookingPotRecipe recipe, ItemStack result) {
-        ItemStack meal = pot.getMeal();
+    /** {@link #batch(KitchenPot, CookingPotRecipe)} with {@code result}, what the recipe cooks of what lies in the pot. */
+    public static int batch(KitchenPot pot, CookingPotRecipe recipe, ItemStack result) {
+        ItemStack meal = pot.handson$meal();
         if (result.isEmpty() || !meal.isEmpty() && !ItemStack.isSameItemSameComponents(meal, result)) {
             return 0;
         }
@@ -510,6 +484,16 @@ public final class PotLogic implements StationLogic {
         return Mth.floor(cooked * bonusRate(stars) + carried + 1.0e-4F);
     }
 
+    /** Whether anything lies in the pot: ingredients or a meal. */
+    public static boolean hasFood(KitchenPot pot) {
+        for (int slot = 0; slot <= pot.handson$slots(); slot++) {
+            if (!pot.handson$getItem(slot).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** What the menu's result slot does when a player takes a serving: experience, recipes unlocked. */
     @Override
     public void onTaken(StationContext station, Player player, SlotRef slot, ItemStack stack) {
@@ -520,7 +504,7 @@ public final class PotLogic implements StationLogic {
 
     private void served(StationContext station, Player player, ItemStack stack) {
         stack.onCraftedBy(station.level(), player, stack.getCount());
-        pot.awardUsedRecipes(player, pot.getDroppableInventory());
+        pot.handson$awardRecipes(player);
     }
 
     @Override
@@ -533,7 +517,7 @@ public final class PotLogic implements StationLogic {
             }
         } else if (CookingPotStation.ACTION_FILL.equals(action)) {
             ResourceLocation id = ResourceLocation.tryParse(data.getString(CookingPotStation.DISH));
-            Platform.INSTANCE.cookingRecipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).map(RecipeHolder::value).findFirst()
+            pot.handson$recipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).map(RecipeHolder::value).findFirst()
                     .ifPresent(recipe -> fill(player, recipe, data.getBoolean(CookingPotStation.SCOOP_ALL) ? CookingPotStation.FILL_MOST : 1));
         } else if (CookingPotStation.ACTION_TAKE_BACK.equals(action)) {
             takeBack(player);
@@ -543,14 +527,14 @@ public final class PotLogic implements StationLogic {
                 return;
             }
             stirredAt = now;
-            ((PotStirring) pot).handson$stir(now + STIR_TICKS);
+            cooking.stir(now + STIR_TICKS);
             float x = spoon(data.getFloat(CookingPotStation.STIR_X));
             float z = spoon(data.getFloat(CookingPotStation.STIR_Z));
             ItemStack dish = result(station);
             cook = player.getUUID();
             float at = data.contains(CookingPotStation.STIR_AT) && Float.isFinite(data.getFloat(CookingPotStation.STIR_AT))
                     ? data.getFloat(CookingPotStation.STIR_AT) : Float.NaN;
-            ((PotStirring) pot).handson$skill().move(now, at, x, z, pot.isHeated() && batch(station) > 0, openStars(player, dish));
+            cooking.skill().move(now, at, x, z, pot.handson$isHeated() && batch(station) > 0, openStars(player, dish));
             station.state().setControl(CookingPotStation.SPOON_X, x);
             station.state().setControl(CookingPotStation.SPOON_Z, z);
         }
@@ -562,10 +546,10 @@ public final class PotLogic implements StationLogic {
      * bucket.
      */
     private void takeBack(Player player) {
-        for (int i = CookingPotBlockEntity.MEAL_DISPLAY_SLOT - 1; i >= 0; i--) {
-            ItemStack stack = Platform.INSTANCE.getItem(pot, i);
+        for (int i = pot.handson$slots() - 1; i >= 0; i--) {
+            ItemStack stack = pot.handson$getItem(i);
             if (!stack.isEmpty() && sinks(stack)) {
-                Platform.INSTANCE.setItem(pot, i, ItemStack.EMPTY);
+                pot.handson$setItem(i, ItemStack.EMPTY);
                 for (int count = stack.getCount(); count > 0; count -= stack.getMaxStackSize()) {
                     ItemStack back = stack.copyWithCount(Math.min(count, stack.getMaxStackSize()));
                     if (!player.getInventory().add(back)) {
@@ -594,12 +578,12 @@ public final class PotLogic implements StationLogic {
      */
     private void fill(Player player, CookingPotRecipe recipe, int sets) {
         List<Ingredient> ingredients = recipe.getIngredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
-        if (ingredients.isEmpty() || ingredients.size() > CookingPotBlockEntity.MEAL_DISPLAY_SLOT) {
+        if (ingredients.isEmpty() || ingredients.size() > pot.handson$slots()) {
             return;
         }
-        ItemStack[] inPot = new ItemStack[CookingPotBlockEntity.MEAL_DISPLAY_SLOT];
+        ItemStack[] inPot = new ItemStack[pot.handson$slots()];
         for (int i = 0; i < inPot.length; i++) {
-            inPot[i] = Platform.INSTANCE.getItem(pot, i).copy();
+            inPot[i] = pot.handson$getItem(i).copy();
             boolean fits = i < ingredients.size() ? inPot[i].isEmpty() || ingredients.get(i).test(inPot[i]) : inPot[i].isEmpty();
             if (!fits) {
                 return;
@@ -632,9 +616,9 @@ public final class PotLogic implements StationLogic {
             return;
         }
         for (int i = 0; i < ingredients.size(); i++) {
-            Platform.INSTANCE.setItem(pot, i, inPot[i]);
+            pot.handson$setItem(i, inPot[i]);
         }
-        ((PotStirring) pot).handson$feedByHand();
+        cooking.feedByHand();
         unsorted = true;
     }
 
@@ -668,7 +652,7 @@ public final class PotLogic implements StationLogic {
         boolean filled;
         do {
             ItemStack carried = player.inventoryMenu.getCarried();
-            ItemStack serving = pot.useHeldItemOnMeal(carried);
+            ItemStack serving = pot.handson$serve(carried);
             filled = !serving.isEmpty();
             if (filled) {
                 scooped++;
@@ -697,7 +681,7 @@ public final class PotLogic implements StationLogic {
         int scooped = 0;
         int slot;
         while ((slot = containerSlot(pot, inventory)) >= 0) {
-            ItemStack serving = pot.useHeldItemOnMeal(inventory.getItem(slot));
+            ItemStack serving = pot.handson$serve(inventory.getItem(slot));
             if (serving.isEmpty()) {
                 break;
             }
@@ -717,15 +701,15 @@ public final class PotLogic implements StationLogic {
     }
 
     /** The inventory slot whose stack the soup is served in: the one in hand first, then the hotbar and the rest; -1 without one. */
-    public static int containerSlot(CookingPotBlockEntity pot, Inventory inventory) {
-        if (pot.getMeal().isEmpty()) {
+    public static int containerSlot(KitchenPot pot, Inventory inventory) {
+        if (pot.handson$meal().isEmpty()) {
             return -1;
         }
-        if (!inventory.getSelected().isEmpty() && pot.isContainerValid(inventory.getSelected())) {
+        if (!inventory.getSelected().isEmpty() && pot.handson$isContainerValid(inventory.getSelected())) {
             return inventory.selected;
         }
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
-            if (!inventory.getItem(slot).isEmpty() && pot.isContainerValid(inventory.getItem(slot))) {
+            if (!inventory.getItem(slot).isEmpty() && pot.handson$isContainerValid(inventory.getItem(slot))) {
                 return slot;
             }
         }
@@ -749,8 +733,8 @@ public final class PotLogic implements StationLogic {
             for (int i = 0; i < resultFor.length; i++) {
                 resultFor[i] = inPot[i].copy();
             }
-            recipeMade = Platform.INSTANCE.findRecipe(station.level(), List.of(inPot)).map(RecipeHolder::value).orElse(null);
-            resultMade = recipeMade == null ? ItemStack.EMPTY : Platform.INSTANCE.cooked(station.level(), recipeMade, List.of(inPot));
+            recipeMade = pot.handson$findRecipe(station.level(), List.of(inPot)).map(RecipeHolder::value).orElse(null);
+            resultMade = recipeMade == null ? ItemStack.EMPTY : pot.handson$cooked(recipeMade);
         }
         return recipeMade;
     }
@@ -763,7 +747,7 @@ public final class PotLogic implements StationLogic {
 
     private void refresh(StationContext station) {
         StationState state = station.state();
-        ContainerData data = ((CookingPotBlockEntityAccessor) pot).handson$data();
+        ContainerData data = pot.handson$data();
         int time = data.get(0);
         int total = data.get(1);
         // The whole batch cooks at once, and the dial shows how far it is.
@@ -772,12 +756,12 @@ public final class PotLogic implements StationLogic {
         float speed = speed(batch);
         float progress = batch > 0 && total > 0 ? Math.min(1.0F, (float) time / total) : 0.0F;
         state.setControl(CookingPotStation.PROGRESS, progress);
-        state.setControl(CookingPotStation.HEATED, pot.isHeated() ? 1.0F : 0.0F);
+        state.setControl(CookingPotStation.HEATED, pot.handson$isHeated() ? 1.0F : 0.0F);
         long now = station.level().getGameTime();
-        boolean stirred = ((PotStirring) pot).handson$isStirred(now);
+        boolean stirred = cooking.isStirred(now);
         state.setControl(CookingPotStation.STIRRING, stirred ? 1.0F : 0.0F);
         if (!station.level().isClientSide()) {
-            state.setControl(CookingPotStation.STARS, ((PotStirring) pot).handson$skill().stars(now));
+            state.setControl(CookingPotStation.STARS, cooking.skill().stars(now));
         }
         if (!stirred) {
             state.setControl(CookingPotStation.SPOON_X, 0.0F);
@@ -787,8 +771,8 @@ public final class PotLogic implements StationLogic {
         // In whole seconds, as the badge tells it: the clients hear of it once a second, not every tick.
         own.putInt(CookingPotStation.COOK_LEFT, Mth.ceil(total * (1.0F - progress) / speed / 20.0F) * 20);
         if (!station.level().isClientSide()) {
-            own.putInt(CookingPotStation.GRADE, ((PotStirring) pot).handson$grade());
-            own.putInt(CookingPotStation.BONUS, ((PotStirring) pot).handson$bonus());
+            own.putInt(CookingPotStation.GRADE, cooking.grade());
+            own.putInt(CookingPotStation.BONUS, cooking.bonus());
             if (!dish.isEmpty()) {
                 // A finished soup keeps the stars of the dish it was.
                 own.putInt(CookingPotStation.OPEN_STARS, openStars(cook(station), dish));
@@ -800,8 +784,8 @@ public final class PotLogic implements StationLogic {
             stacks += stack.isEmpty() ? 0 : 1;
         }
         int level = BROTH_BASE + BROTH_PER_STACK * stacks;
-        if (!pot.getMeal().isEmpty()) {
-            level = Math.max(level, Math.min(100, SOUP_BASE + SOUP_PER_SERVING * pot.getMeal().getCount()));
+        if (!pot.handson$meal().isEmpty()) {
+            level = Math.max(level, Math.min(100, SOUP_BASE + SOUP_PER_SERVING * pot.handson$meal().getCount()));
         }
         state.setTank(CookingPotStation.BROTH, TankContents.of(HandsOnDelight.id("broth"), level));
     }

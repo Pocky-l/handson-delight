@@ -25,7 +25,7 @@
     {
       "id": "stand",
       "pos": [8, 0, 8],
-      "visual": {"model": "handson_delight:diegesis/skillet/stand"},
+      "visual": {"model": "handson_delight:diegesis/skillet/stand", "lit_as_block": true},
       "pickable": false,
       "hidden": true
     },
@@ -35,13 +35,13 @@
       "children": [
         {
           "id": "pan_body",
-          "visual": {"model": "handson_delight:diegesis/skillet/pan"},
+          "visual": {"model": "handson_delight:diegesis/skillet/pan", "lit_as_block": true},
           "pickable": false,
           "hidden": true
         },
         {
           "id": "handle",
-          "visual": {"model": "handson_delight:diegesis/skillet/handle"},
+          "visual": {"model": "handson_delight:diegesis/skillet/handle", "lit_as_block": true},
           "strokes": true,
           "hidden": true,
           "collider": {"from": [-2, 0.5, 6.5], "to": [2, 4, 19.5]}

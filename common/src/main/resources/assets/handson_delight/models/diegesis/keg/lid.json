@@ -1,65 +1,65 @@
 {
   "textures": {
-    "particle": "brewinandchewin:block/keg_back",
+    "particle": "brewinandchewin:block/keg_top",
     "keg_top": "brewinandchewin:block/keg_top",
-    "keg_back": "brewinandchewin:block/keg_back"
+    "inside": "handson_delight:block/keg/lying"
   },
   "elements": [
     {
-      "name": "wood_lid",
+      "name": "lid",
       "from": [
-        4,
+        2,
         15,
-        4
+        1
       ],
       "to": [
-        12,
+        14,
         16,
-        12
+        15
       ],
       "faces": {
         "north": {
           "uv": [
-            4,
-            1,
-            12,
-            2
+            0,
+            8,
+            3,
+            8.25
           ],
-          "texture": "#keg_back"
+          "texture": "#inside"
         },
         "east": {
           "uv": [
-            4,
-            1,
-            12,
-            2
+            8,
+            8,
+            11.5,
+            8.25
           ],
-          "texture": "#keg_back"
+          "texture": "#inside"
         },
         "south": {
           "uv": [
             4,
-            1,
-            12,
-            2
+            8,
+            7,
+            8.25
           ],
-          "texture": "#keg_back"
+          "texture": "#inside"
         },
         "west": {
           "uv": [
-            4,
-            1,
             12,
-            2
+            8,
+            15.5,
+            8.25
           ],
-          "texture": "#keg_back"
+          "texture": "#inside"
         },
         "up": {
           "uv": [
-            4,
-            4,
-            12,
-            12
+            2,
+            1,
+            14,
+            15
           ],
           "texture": "#keg_top"
         },
@@ -67,10 +67,10 @@
           "uv": [
             4,
             4,
-            12,
-            12
+            7,
+            7.5
           ],
-          "texture": "#keg_back"
+          "texture": "#inside"
         }
       }
     }

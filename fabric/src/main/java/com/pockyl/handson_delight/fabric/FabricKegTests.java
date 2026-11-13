@@ -25,4 +25,29 @@ public final class FabricKegTests implements FabricGameTest {
     public void aStandingKegIsAStationOfItsOwn(GameTestHelper helper) {
         KegTests.aStandingKegIsAStationOfItsOwn(helper);
     }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void vodkaFermentsFromWaterAndPotatoes(GameTestHelper helper) {
+        KegTests.vodkaFermentsFromWaterAndPotatoes(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void meadFermentsFromHoneyBottles(GameTestHelper helper) {
+        KegTests.meadFermentsFromHoneyBottles(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void saltyFollyWantsACoolKeg(GameTestHelper helper) {
+        KegTests.saltyFollyWantsACoolKeg(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void jerkyDriesInAWarmKeg(GameTestHelper helper) {
+        KegTests.jerkyDriesInAWarmKeg(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 120)
+    public void theLidKeepsThingsOutAndTheBrewWaitsUnderIt(GameTestHelper helper) {
+        KegTests.theLidKeepsThingsOutAndTheBrewWaitsUnderIt(helper);
+    }
 }

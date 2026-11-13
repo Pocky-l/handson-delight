@@ -1,18 +1,18 @@
 {
   "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
-  "$comment": "Brewin' and Chewin's standing keg. The station hides the block while it is used and shows it here with the lid swung open: the opening x,z 3..13, floor y 2; the tap's hole low in the middle of the front. Nothing shows while nobody uses it.",
+  "$comment": "Brewin' and Chewin's standing keg. The station hides the block while it is used and shows it here with the lid off: staves 1 px thick, the whole head between them opens (x,z 2..14, taken off with a click and leant on the keg's right side, put back with another), floor y 1; the tap's hole low in the middle of the front. The liquid stands three quarters up the inside (y 11.5) when the keg is full. Nothing shows while nobody uses it.",
   "work_plane": 16,
   "idle_visible": true,
   "camera": {
     "position": [
-      8,
-      38,
-      -19
+      -7.67,
+      43.0,
+      -34.31
     ],
     "target": [
-      8,
-      8,
-      7
+      7,
+      7,
+      6
     ],
     "fov": 30
   },
@@ -39,24 +39,47 @@
       ],
       "pickable": false,
       "visual": {
-        "model": "handson_delight:diegesis/keg/vertical_body"
+        "model": "handson_delight:diegesis/keg/vertical_body",
+        "lit_as_block": true
       },
       "children": [
         {
           "id": "lid",
           "pos": [
             0,
-            16,
-            5
+            15.5,
+            0
           ],
-          "pickable": false,
           "visual": {
             "model": "handson_delight:diegesis/keg/vertical_lid",
             "anchor": [
               8,
-              16,
-              13
+              15.5,
+              8
+            ],
+            "lit_as_block": true
+          },
+          "collider": {
+            "from": [
+              -6,
+              -0.6,
+              -6
+            ],
+            "to": [
+              6,
+              1.1,
+              6
             ]
+          }
+        },
+        {
+          "$comment": "Slats across the top of a keg without liquid, which what is put in to dry lies on.",
+          "id": "rack",
+          "pickable": false,
+          "hidden": true,
+          "visual": {
+            "model": "handson_delight:diegesis/keg/rack",
+            "lit_as_block": true
           }
         },
         {
@@ -88,14 +111,14 @@
         "tank": "drink",
         "inner": {
           "from": [
-            3,
             2,
-            3
+            1,
+            2
           ],
           "to": [
-            13,
-            14.5,
-            13
+            14,
+            11.5,
+            14
           ]
         }
       }
@@ -105,14 +128,14 @@
       "drop_zone": "ingredients",
       "collider": {
         "from": [
-          3,
           2,
-          3
+          1,
+          2
         ],
         "to": [
-          13,
+          14,
           17,
-          13
+          14
         ]
       }
     },
@@ -125,7 +148,7 @@
       ],
       "slot": {
         "slot": "ingredients[0]",
-        "size": 3.2,
+        "size": 4.2,
         "counts": "hover",
         "highlight": false
       }
@@ -139,7 +162,7 @@
       ],
       "slot": {
         "slot": "ingredients[1]",
-        "size": 3.2,
+        "size": 4.2,
         "counts": "hover",
         "highlight": false
       }
@@ -153,7 +176,7 @@
       ],
       "slot": {
         "slot": "ingredients[2]",
-        "size": 3.2,
+        "size": 4.2,
         "counts": "hover",
         "highlight": false
       }
@@ -167,7 +190,7 @@
       ],
       "slot": {
         "slot": "ingredients[3]",
-        "size": 3.2,
+        "size": 4.2,
         "counts": "hover",
         "highlight": false
       }
@@ -181,7 +204,7 @@
       ],
       "slot": {
         "slot": "served",
-        "size": 3.2,
+        "size": 4.2,
         "highlight": false
       }
     },
@@ -202,85 +225,163 @@
       "pickable": false
     },
     {
-      "id": "badge",
+      "$comment": "The mug a drink is drawn into at the tap: Brewin' and Chewin's tankard, moved under the tap by the code, which also fills it; it stands lower than the floor there, so it is drawn over everything.",
+      "id": "mug",
       "pos": [
-        -1.5,
-        16,
-        5
+        8,
+        0,
+        8
       ],
-      "rotation": [
-        -50,
+      "scale": 0.75,
+      "hidden": true,
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/keg/tankard",
+        "anchor": [
+          8,
+          0,
+          8
+        ]
+      },
+      "tank": {
+        "tank": "drink",
+        "inner": {
+          "from": [
+            -1.45,
+            1.02,
+            -1.45
+          ],
+          "to": [
+            1.45,
+            7,
+            1.45
+          ]
+        }
+      }
+    },
+    {
+      "$comment": "The bucket or bottle a hand tips over the opening as it pours, moved by the code in scene pixels.",
+      "id": "pour_hand",
+      "pos": [
+        0,
         0,
         0
       ],
+      "hidden": true,
       "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -2.42,
+        16.87,
+        7.89
+      ],
+      "rotation": [
+        -40,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
     },
     {
       "id": "dial_track",
       "pos": [
-        -1.5,
-        16.02,
-        4.98
+        -2.43,
+        16.88,
+        7.86
       ],
       "rotation": [
-        -50,
-        0,
+        -40,
+        20,
         0
       ],
-      "pickable": false
+      "pickable": false,
+      "scale": 1.25
     },
     {
       "id": "dial",
       "pos": [
-        -1.5,
-        16.04,
-        4.96
+        -2.44,
+        16.9,
+        7.84
       ],
       "rotation": [
-        -50,
-        0,
+        -40,
+        20,
         0
       ],
-      "pickable": false
+      "pickable": false,
+      "scale": 1.25
     },
     {
       "id": "thermo",
       "pos": [
-        -1.5,
-        16.02,
-        4.98
+        -2.43,
+        16.88,
+        7.86
       ],
       "rotation": [
-        -50,
-        0,
+        -40,
+        20,
         0
       ],
-      "pickable": false
+      "pickable": false,
+      "scale": 1.25
     },
     {
       "id": "thermo_now",
       "pos": [
-        -1.5,
-        16.04,
-        4.96
+        -2.44,
+        16.9,
+        7.84
       ],
       "rotation": [
-        -50,
-        0,
+        -40,
+        20,
         0
       ],
-      "pickable": false
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -2.46,
+        16.93,
+        7.8
+      ],
+      "rotation": [
+        50,
+        20,
+        0
+      ],
+      "scale": 0.156,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
     },
     {
       "id": "book_open",
       "pos": [
-        16.33,
-        21.22,
-        -4
+        7.06,
+        26.47,
+        -18.2
       ],
       "rotation": [
-        -50,
-        0,
+        -40,
+        20,
         0
       ],
       "scale": 0.69,

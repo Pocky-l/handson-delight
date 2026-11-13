@@ -166,6 +166,16 @@ final class KitchenMotions {
             place(this.from, 0.0F);
         }
 
+        /**
+         * Holds the container so high that its lip is at least at {@code y} as it pours, scene pixels: over a deep vessel's rim rather
+         * than down by the liquid in it. The stream falls the rest of the way.
+         */
+        Pour lipAtLeast(float y) {
+            Vector3f lip = tipped(lipX, LIP_Y, size, tilt, yaw);
+            middle.y = Math.max(middle.y, y - lip.y);
+            return this;
+        }
+
         /** Runs once, when the liquid starts to come out. */
         Pour onFlow(Runnable run) {
             onFlow = run;

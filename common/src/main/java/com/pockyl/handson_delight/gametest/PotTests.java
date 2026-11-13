@@ -811,7 +811,7 @@ public final class PotTests {
         private final BlockPos pos;
         private final StationType type;
         private final StationState state;
-        private final List<Player> users = new ArrayList<>();
+        final List<Player> users = new ArrayList<>();
 
         TestStation(Level level, BlockPos pos) {
             this(level, pos, CookingPotStation.TYPE);

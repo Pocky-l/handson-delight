@@ -61,8 +61,6 @@ public final class SkilletBehavior implements StationBehavior {
     private static final float CLICK = 0.35F;
     private static final float FLICK = 30.0F;
     private static final float HARDEST = 110.0F;
-    /** The pan's copy outlives the station by this long: the block's own model needs a moment to be built again. Seconds. */
-    private static final float BLOCK_BACK = 0.3F;
     /** Putting in and taking out, as at the board. */
     private static final float LAND_TIME = 0.2F;
     private static final float LAND_FROM = 4.0F;
@@ -131,7 +129,6 @@ public final class SkilletBehavior implements StationBehavior {
     private float lookHeldUntil;
     private boolean quiet = true;
     private boolean inUse;
-    private float copyLeft;
     private float clock;
     private float tossedAt = -10.0F;
     private float pressedAt = Float.NaN;
@@ -181,7 +178,6 @@ public final class SkilletBehavior implements StationBehavior {
         steps.clear();
         quiet = true;
         inUse = false;
-        copyLeft = 0.0F;
         showCopy(view, false);
         view.node("book_open").ifPresent(node -> node.setPainter(book));
         view.node("oil").ifPresent(node -> node.setPainter(oil));
@@ -476,13 +472,8 @@ public final class SkilletBehavior implements StationBehavior {
             steps.removeAll(due);
             due.forEach(step -> step.run().run());
         }
-        boolean nowInUse = view.isInUse();
-        if (nowInUse) {
-            copyLeft = BLOCK_BACK;
-        } else {
-            copyLeft = Math.max(0.0F, copyLeft - dt);
-        }
-        boolean copy = nowInUse || copyLeft > 0.0F;
+        // Exactly while the block's own pan is left out of the world: the two swap in one frame.
+        boolean copy = view.isBlockHidden();
         if (copy != inUse) {
             inUse = copy;
             showCopy(view, copy);

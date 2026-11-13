@@ -66,14 +66,15 @@ final class RecipeBook implements NodePainter {
     private static final int UNITS_WIDE = 72;
     private static final int UNITS_HIGH = 96;
     private static final float UNIT = PAGE_WIDTH / UNITS_WIDE;
-    /** The pages' surface over the node's plane, in pixels. */
-    static final float SURFACE = 1.09F * SIZE;
     /** How far the model opens, in its own measure, and the angle that leaves between a page and flat. */
     private static final float OPEN = 1.17F;
     /** The paper over the model's own pages, in the model's pixels; a sheet being turned over the pages under it, in pixels. */
     private static final float PAGE_GAP = 0.09F;
     private static final float SHEET_LIFT = 0.13F;
-    private static final float OPEN_TIME = 0.4F;
+    /** Seconds the covers take to swing open or shut. */
+    private static final float OPEN_TIME = 0.55F;
+    /** How far the camera has come before the book starts to open: it arrives shut and opens before the player's eyes. */
+    private static final float OPEN_FROM = 0.98F;
     /** How far the camera has come when the book starts to grow, flying in (and is gone, flying back). */
     private static final float APPEAR_FROM = 0.25F;
     /** Smaller than this the book is a speck, not a book: it is not drawn. */
@@ -91,9 +92,15 @@ final class RecipeBook implements NodePainter {
     private static final int PITCH = 18;
     private static final int WELL_SIZE = 17;
     private static final int PER_PAGE = COLUMNS * ROWS;
-    private static final int GRID_X = 10;
-    private static final int GRID_Y = 4;
-    private static final int ARROW_Y = 79;
+    /**
+     * Each page is laid out about the middle of its open part, clear of the shade in the fold: the left page's fold is on its right,
+     * the right page's on its left. The list's grid sits in the middle of the left page, the arrows under its outer columns, and
+     * the foot of the right page on the same line as the arrows.
+     */
+    /** The grid, 53 units wide, about the middle of the left page's open part, (72 - 5) / 2. */
+    private static final int GRID_X = 7;
+    private static final int GRID_Y = 5;
+    private static final int ARROW_Y = 81;
     private static final int ARROW_WIDTH = 23;
     private static final int ARROW_HEIGHT = 13;
     private static final int INK = 0xFF4A3418;
@@ -122,7 +129,7 @@ final class RecipeBook implements NodePainter {
     private static final float CLOSED_TURN = Mth.HALF_PI;
     private static final float CLOSED_SHIFT = 3.0F / 16.0F;
     /** The tabs over the list: where the row starts, each one's width and spacing, height (the others lower), icon, edge. */
-    private static final float TABS_X = 10.0F;
+    private static final float TABS_X = GRID_X;
     private static final float TAB_WIDE = 16.0F;
     private static final float TAB_PITCH = 18.0F;
     private static final float TAB_HIGH = 14.0F;
@@ -138,8 +145,12 @@ final class RecipeBook implements NodePainter {
     /** The shade in the fold of the pages. */
     private static final int FOLD = 0x285A3C18;
     private static final int FOLD_WIDTH = 5;
-    /** Small things at the foot of a page stand this far apart. */
-    private static final float FOOT_PITCH = 17.0F;
+    /** The right page's middle, clear of the fold's shade on its left. */
+    private static final float RIGHT_MIDDLE = (UNITS_WIDE + FOLD_WIDTH) / 2.0F;
+    /** Small things at the foot of a page: how big, how far apart; the dish at the head of its page. */
+    private static final float FOOT_SIZE = 12.0F;
+    private static final float FOOT_PITCH = 15.0F;
+    private static final float DISH_SIZE = 20.0F;
     /** The least light the book is drawn in, block and sky: a torch-lit kitchen. */
     private static final int LIT = 12;
     /** How long a book handed over waits in the air for the next station to take it, seconds (the server lets the player in). */
@@ -293,7 +304,6 @@ final class RecipeBook implements NodePainter {
             read(view);
             picked = shown(view);
             page = picked == null ? 0 : entries.indexOf(picked) / PER_PAGE;
-            turnSound();
         } else {
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PUT, 1.0F, 0.5F));
         }
@@ -506,14 +516,15 @@ final class RecipeBook implements NodePainter {
             open = 0.0F;
         }
         time += dt;
-        open = Mth.clamp(open + (wanted ? dt : -dt) / OPEN_TIME, 0.0F, 1.0F);
-        if (wanted) {
-            // Coming in, it is open by the time the camera lands.
-            open = Math.max(open, appear);
+        // It comes in shut, growing with the camera, and opens once the camera is there: the covers swing out before the eyes.
+        boolean opening = wanted && appear >= OPEN_FROM;
+        if (opening && open <= 0.0F) {
+            turnSound();
         }
+        open = Mth.clamp(open + (opening ? dt : -dt) / OPEN_TIME, 0.0F, 1.0F);
         flip = Math.min(1.0F, flip + dt / FLIP_TIME);
         // Grows and opens where it hangs, breathing a little.
-        float eased = open * open * (3.0F - 2.0F * open);
+        float eased = eased();
         reach = Mth.lerp(Math.min(1.0F, dt * 12.0F), reach, node.isHovered() && !wanted ? 1.0F : 0.0F);
         node.scaleTo(Mth.lerp(eased, CLOSED_SIZE * (1.0F + 0.08F * reach), 1.0F) * appear, 0.0F);
         float bob = Mth.sin(time * 1.3F) * 0.14F;
@@ -534,19 +545,47 @@ final class RecipeBook implements NodePainter {
         follow(view, node);
     }
 
+    /** How far open the book is drawn: the covers lift slowly, swing over and settle flat, and close the same way back. */
+    private float eased() {
+        return open * open * (3.0F - 2.0F * open);
+    }
+
+    /** The angle between a lying page and flat at this opening: the pages rise a little towards their outer edges. */
+    private float pageTilt() {
+        return Mth.HALF_PI - 1.25F * OPEN * eased();
+    }
+
+    /** How high the fold of the pages stands over the node's plane, pixels. */
+    private float foldHeight() {
+        return (Mth.sin(1.25F * OPEN * eased()) + PAGE_GAP) * SIZE;
+    }
+
     private void follow(StationView view, NodeView node) {
-        Optional<Vector3f> cursor = view.pointerOn("book_open", SURFACE);
         cursorX = -1.0F;
         cursorY = -1.0F;
         hovered = null;
         hoveredTab = null;
-        if (cursor.isEmpty() || flip < 1.0F) {
+        if (flip < 1.0F || open < 1.0F) {
             return;
         }
-        Vector3f point = cursor.get();
+        // The pages rise from the fold towards their outer edges: the cursor's ray meets a page above the fold's plane, the higher
+        // the further out. A few steps find the height of the page where the ray comes down on it.
+        float tilt = pageTilt();
+        float fold = foldHeight();
+        float height = fold;
+        Vector3f point = null;
+        for (int step = 0; step < 4; step++) {
+            Optional<Vector3f> cursor = view.pointerOn("book_open", height);
+            if (cursor.isEmpty()) {
+                return;
+            }
+            point = cursor.get();
+            height = fold + Math.abs(point.x) * Mth.sin(tilt) / Mth.cos(tilt);
+        }
         float y = (PAGE_HEIGHT / 2.0F - point.z) / UNIT;
-        // The left page runs from its edge at +x to the fold at 0; the right one on from there.
-        float x = point.x > 0.0F ? (PAGE_WIDTH - point.x) / UNIT : UNITS_WIDE - point.x / UNIT;
+        // Along the page from the fold; the left page runs from its edge at +x to the fold at 0, the right one on from there.
+        float along = Math.abs(point.x) / Mth.cos(tilt);
+        float x = point.x > 0.0F ? (PAGE_WIDTH - along) / UNIT : UNITS_WIDE + along / UNIT;
         boolean overTabs = !tabs.isEmpty() && x >= 0.0F && x < UNITS_WIDE && y >= -TAB_HIGH && y < 0.0F;
         if (x >= 0.0F && x < UNITS_WIDE * 2 && (y >= 0.0F || overTabs) && y < UNITS_HIGH) {
             cursorX = x;
@@ -613,7 +652,8 @@ final class RecipeBook implements NodePainter {
         } else if (cursorY >= ARROW_Y && cursorY < ARROW_Y + ARROW_HEIGHT) {
             if (cursorX >= GRID_X && cursorX < GRID_X + ARROW_WIDTH) {
                 turn(-1);
-            } else if (cursorX >= GRID_X + COLUMNS * PITCH - ARROW_WIDTH && cursorX < GRID_X + COLUMNS * PITCH) {
+            } else if (cursorX >= GRID_X + COLUMNS * PITCH - (PITCH - WELL_SIZE) - ARROW_WIDTH
+                    && cursorX < GRID_X + COLUMNS * PITCH - (PITCH - WELL_SIZE)) {
                 turn(1);
             }
         }
@@ -641,7 +681,7 @@ final class RecipeBook implements NodePainter {
         if (model == null) {
             model = RecipeBookModel.bake();
         }
-        float eased = open * open * (3.0F - 2.0F * open);
+        float eased = eased();
         float closed = 1.0F - eased;
         // How far each cover has turned from shut, as the enchanting table's book turns them.
         float angle = 1.25F * OPEN * eased;
@@ -738,12 +778,13 @@ final class RecipeBook implements NodePainter {
         if (pages() > 1) {
             Font font = Minecraft.getInstance().font;
             String number = String.valueOf(listPage + 1);
-            canvas.text(number, GRID_X + (COLUMNS * PITCH - font.width(number)) / 2.0F, ARROW_Y + 3.0F);
+            canvas.text(number, GRID_X + (COLUMNS * PITCH - (PITCH - WELL_SIZE) - font.width(number)) / 2.0F,
+                    ARROW_Y + (ARROW_HEIGHT - font.lineHeight) / 2.0F + 1.0F);
             if (listPage > 0) {
                 canvas.arrow(GRID_X, ARROW_Y, 205);
             }
             if (listPage < pages() - 1) {
-                canvas.arrow(GRID_X + COLUMNS * PITCH - ARROW_WIDTH, ARROW_Y, 192);
+                canvas.arrow(GRID_X + COLUMNS * PITCH - (PITCH - WELL_SIZE) - ARROW_WIDTH, ARROW_Y, 192);
             }
         }
     }
@@ -751,14 +792,14 @@ final class RecipeBook implements NodePainter {
     /** The dish, its name, its stars, what goes in, how long it takes and what it is served in. */
     private void drawDish(Sheet canvas, Entry entry) {
         Font font = Minecraft.getInstance().font;
-        float middle = UNITS_WIDE / 2.0F;
+        float middle = RIGHT_MIDDLE;
         canvas.ribbon(onRibbon());
-        canvas.item(entry.dish(), middle - 11.0F, 2.0F, 22.0F);
+        canvas.item(entry.dish(), middle - DISH_SIZE / 2.0F, 3.0F, DISH_SIZE);
         float line = 25.0F;
         // Two lines at most: a long modded name must leave room for what goes in.
         if (nameFor != entry) {
             nameFor = entry;
-            nameLines = font.split(entry.dish().getHoverName(), UNITS_WIDE - 6);
+            nameLines = font.split(entry.dish().getHoverName(), Math.round(2.0F * (UNITS_WIDE - middle) - 6.0F));
         }
         List<FormattedCharSequence> name = nameLines;
         for (FormattedCharSequence text : name.subList(0, Math.min(2, name.size()))) {
@@ -769,13 +810,14 @@ final class RecipeBook implements NodePainter {
             drawStars(canvas, entry, middle, line);
             line += font.lineHeight;
         }
-        canvas.rect(10, line, UNITS_WIDE - 20, 0.6F, WELL_LIFT, RULE);
+        float rowWide = COLUMNS * PITCH - (PITCH - WELL_SIZE);
+        canvas.rect(middle - rowWide / 2.0F, line + 0.5F, rowWide, 0.6F, WELL_LIFT, RULE);
         int count = entry.ingredients().size();
         long second = Util.getMillis() / 1000L;
         float top = line + 3.0F;
         for (int i = 0; i < count; i++) {
             int inRow = Math.min(3, count - i / 3 * 3);
-            float x = middle - inRow * PITCH / 2.0F + i % 3 * PITCH;
+            float x = middle - (inRow * PITCH - (PITCH - WELL_SIZE)) / 2.0F + i % 3 * PITCH;
             float y = top + i / 3 * PITCH;
             ItemStack[] choices = entry.ingredients().get(i).getItems();
             if (choices.length > 0) {
@@ -783,16 +825,24 @@ final class RecipeBook implements NodePainter {
                 canvas.item(choices[(int) (second % choices.length)], x + 0.5F, y + 0.5F, 16.0F, !entry.found()[i]);
             }
         }
-        // The small print goes where there is room left.
-        float bottom = UNITS_HIGH - 13.0F;
-        if (top + (count + 2) / 3 * PITCH <= bottom) {
-            float x = 11.0F;
-            for (ItemStack small : entry.page().foot()) {
-                canvas.item(small, x, bottom, 12.0F);
+        // The small print goes where there is room left, in the middle, on the line of the list's arrows.
+        float footMiddle = ARROW_Y + ARROW_HEIGHT / 2.0F;
+        float bottom = footMiddle - FOOT_SIZE / 2.0F;
+        int rows = (count + 2) / 3;
+        if (top + rows * PITCH - (PITCH - WELL_SIZE) <= bottom) {
+            List<ItemStack> foot = entry.page().foot();
+            FormattedCharSequence note = entry.page().note() == null ? null : entry.page().note().getVisualOrderText();
+            // The note stands close after the last thing, as a time after its clock.
+            float noteWide = note == null ? 0.0F : font.width(note) + 1.0F;
+            float wide = foot.isEmpty() ? noteWide : (foot.size() - 1) * FOOT_PITCH + FOOT_SIZE + noteWide;
+            float x = middle - wide / 2.0F;
+            for (ItemStack small : foot) {
+                canvas.item(small, x, bottom, FOOT_SIZE);
                 x += FOOT_PITCH;
             }
-            if (entry.page().note() != null) {
-                canvas.text(entry.page().note().getVisualOrderText(), x - 4.0F, bottom + 2.0F);
+            if (note != null) {
+                float noteX = foot.isEmpty() ? x : x - FOOT_PITCH + FOOT_SIZE + 1.0F;
+                canvas.text(note, noteX, footMiddle - font.lineHeight / 2.0F + 1.0F);
             }
         }
     }

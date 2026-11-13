@@ -7,7 +7,7 @@ import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.handson_delight.HandsOnDelight;
 
-/** {@link PotTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests} and {@link RecipeAudit} on Forge. */
+/** {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link KegTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests} and {@link RecipeAudit} on Forge. */
 @GameTestHolder(HandsOnDelight.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ModGameTests {
@@ -409,6 +409,31 @@ public final class ModGameTests {
         StoveTests.everyStoveOfTheTagIsAStation(helper);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void choppersDelightsBoardsAreStations(GameTestHelper helper) {
+        BoardTests.choppersDelightsBoardsAreStations(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void kebabsKeepTheSeasoningOfTheirSkewers(GameTestHelper helper) {
+        BoardTests.kebabsKeepTheSeasoningOfTheirSkewers(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theCookingTimeFollowsTheConfig(GameTestHelper helper) {
+        PotTests.theCookingTimeFollowsTheConfig(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theFryingTimeFollowsTheConfig(GameTestHelper helper) {
+        SkilletTests.theFryingTimeFollowsTheConfig(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theGrillingTimeFollowsTheConfig(GameTestHelper helper) {
+        StoveTests.theGrillingTimeFollowsTheConfig(helper);
+    }
+
     @GameTest(template = "empty")
     public static void kitchenThingsOpenTheStove(GameTestHelper helper) {
         StoveTests.kitchenThingsOpenTheStove(helper);
@@ -417,5 +442,55 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void everyRecipeReachesItsStation(GameTestHelper helper) {
         RecipeAudit.everyRecipeReachesItsStation(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theCopperPotHoldsFourIngredients(GameTestHelper helper) {
+        CopperPotTests.theCopperPotHoldsFourIngredients(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aStirredCopperPotCooksTheBatchInCups(GameTestHelper helper) {
+        CopperPotTests.aStirredCopperPotCooksTheBatchInCups(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aHopperFedCopperPotCooksByItself(GameTestHelper helper) {
+        CopperPotTests.aHopperFedCopperPotCooksByItself(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aStandingKegIsAStationOfItsOwn(GameTestHelper helper) {
+        KegTests.aStandingKegIsAStationOfItsOwn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theMonsterPotIsAPotStation(GameTestHelper helper) {
+        MonsterPotTests.theMonsterPotIsAPotStation(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aStirredMonsterPotCooksTheBatch(GameTestHelper helper) {
+        MonsterPotTests.aStirredMonsterPotCooksTheBatch(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aHopperFedMonsterPotCooksByItself(GameTestHelper helper) {
+        MonsterPotTests.aHopperFedMonsterPotCooksByItself(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aDishOfMoreThanFourIsNotFilledIn(GameTestHelper helper) {
+        CopperPotTests.aDishOfMoreThanFourIsNotFilledIn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void waterPoursInAndTheBucketComesBack(GameTestHelper helper) {
+        KegTests.waterPoursInAndTheBucketComesBack(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void beerFermentsAndIsDrawnAtTheTap(GameTestHelper helper) {
+        KegTests.beerFermentsAndIsDrawnAtTheTap(helper);
     }
 }

@@ -34,9 +34,11 @@ import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
+import com.pockyl.handson_delight.station.KitchenPot;
 import com.pockyl.handson_delight.station.PotLogic;
 import com.pockyl.handson_delight.station.StirSkill;
 
@@ -616,15 +618,16 @@ public final class PotTests {
 
     /** A modded dish with no container goes straight out, as Farmer's Delight serves those, the whole batch. */
     public static void aDishWithoutAContainerComesOutWhole(GameTestHelper helper) {
-        addRecipe(helper, "loaf", new ItemStack(Items.BREAD), ItemStack.EMPTY, 40, Ingredient.of(Items.WHEAT), Ingredient.of(Items.EGG));
+        // Ingredients no addon cooks with: Cultural Delights makes raw pasta of wheat and an egg.
+        addRecipe(helper, "loaf", new ItemStack(Items.BREAD), ItemStack.EMPTY, 40, Ingredient.of(Items.STRING), Ingredient.of(Items.FEATHER));
         Setup setup = pot(helper);
-        Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(Items.WHEAT, 20));
-        Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.EGG, 16));
+        Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(Items.STRING, 20));
+        Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.FEATHER, 16));
         stirFor(helper, setup, 200);
         helper.runAfterDelay(200, () -> {
             ItemStack served = Platform.INSTANCE.getItem(setup.pot, CookingPotBlockEntity.OUTPUT_SLOT);
-            helper.assertTrue(served.is(Items.BREAD) && served.getCount() == 16, "sixteen loaves, as many as there are eggs, got " + served);
-            helper.assertTrue(Platform.INSTANCE.getItem(setup.pot, 0).getCount() == 4, "the wheat left over stays");
+            helper.assertTrue(served.is(Items.BREAD) && served.getCount() == 16, "sixteen loaves, as many as there are feathers, got " + served);
+            helper.assertTrue(Platform.INSTANCE.getItem(setup.pot, 0).getCount() == 4, "the string left over stays");
             helper.succeed();
         });
     }
@@ -684,6 +687,36 @@ public final class PotTests {
         });
     }
 
+    /**
+     * The pot's cooking time in the config: 1.0 keeps the recipe's own time, 2.0 doubles it. It is the total the pot's step counts to,
+     * so food left alone, a stirred batch (at its speed over that total), the badge and Farmer's Delight's own menu all follow it. Both
+     * steps run in this one tick: the config is the whole game's.
+     */
+    public static void theCookingTimeFollowsTheConfig(GameTestHelper helper) {
+        Setup setup = pot(helper);
+        Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(fd("rice"), 4));
+        CookingPotRecipe recipe = Platform.INSTANCE.findRecipe(helper.getLevel(), List.of(new ItemStack(fd("rice")))).orElseThrow();
+        BlockState state = helper.getLevel().getBlockState(setup.pot.getBlockPos());
+        float pot = HandsOnConfig.cookingPotTime();
+        float skillet = HandsOnConfig.skilletTime();
+        float stove = HandsOnConfig.stoveTime();
+        int[] totals = new int[2];
+        try {
+            HandsOnConfig.setCookingTimes(1.0F, skillet, stove);
+            CookingPotBlockEntity.cookingTick(helper.getLevel(), setup.pot.getBlockPos(), state, setup.pot);
+            totals[0] = ((KitchenPot) setup.pot).handson$cookTimeTotal();
+            HandsOnConfig.setCookingTimes(2.0F, skillet, stove);
+            CookingPotBlockEntity.cookingTick(helper.getLevel(), setup.pot.getBlockPos(), state, setup.pot);
+            totals[1] = ((KitchenPot) setup.pot).handson$cookTimeTotal();
+        } finally {
+            HandsOnConfig.setCookingTimes(pot, skillet, stove);
+        }
+        helper.assertTrue(totals[0] == recipe.getCookTime(), "1.0: the recipe's " + recipe.getCookTime() + " ticks, got " + totals[0]);
+        helper.assertTrue(totals[1] == 2 * recipe.getCookTime(), "2.0: twice the recipe's time, got " + totals[1]);
+        empty(setup.pot);
+        helper.succeed();
+    }
+
     private static boolean cooks(GameTestHelper helper, CookingPotBlockEntity pot) {
         List<ItemStack> inPot = new ArrayList<>();
         for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
@@ -707,20 +740,28 @@ public final class PotTests {
         }
     }
 
-    private static final class TestStation implements StationContext {
+    /** A station of {@code type} at a block, as the library would make it, with nobody at it. */
+    static final class TestStation implements StationContext {
         private final Level level;
         private final BlockPos pos;
-        private final StationState state = new StationState(CookingPotStation.SCHEMA);
+        private final StationType type;
+        private final StationState state;
         private final List<Player> users = new ArrayList<>();
 
         TestStation(Level level, BlockPos pos) {
+            this(level, pos, CookingPotStation.TYPE);
+        }
+
+        TestStation(Level level, BlockPos pos, StationType type) {
             this.level = level;
             this.pos = pos;
+            this.type = type;
+            this.state = new StationState(type.schema());
         }
 
         @Override
         public StationType type() {
-            return CookingPotStation.TYPE;
+            return type;
         }
 
         @Override

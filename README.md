@@ -59,6 +59,10 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 - **Stove.** Up to six pieces grill on its top. Each one smokes when its lower side is done: click it to turn it over.
   Once both sides are done it waits on the grill until you take it. Eggs would run through the grill: fry them in a
   skillet.
+- **Keg** of [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin). Its lid opens on the
+  liquid: pour a bucket or a bottle in at the opening, drop the ingredients in and they float while it ferments, the
+  colour turning to the drink's. A thermometer on its badge shows how warm the keg is and how warm the recipe wants it.
+  Hold a tankard or a bottle at the tap to draw a drink; with an empty hand one is offered from your inventory.
 - **A kitchen.** Rest the cursor at the edge of the screen beside another station and the camera moves over to it. A, D
   and the arrow keys do the same.
 - **For everyone.** Players nearby see the soup simmer, the spoon go round and the food land on the board.
@@ -67,7 +71,7 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 | Action | How |
 |---|---|
-| Open a station | Right-click the pot, board, skillet or stove |
+| Open a station | Right-click the pot, board, skillet, stove or keg |
 | Use the block as in Farmer's Delight | Sneak + right-click |
 | Stir | Click the spoon's handle, move the mouse, click again to put it down |
 | Serve | Click the soup with a bowl |
@@ -91,7 +95,12 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 Addons of Farmer's Delight work too: their dishes are made on the board, their pies and cakes are cut in wedges, and
 the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) and
-[My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) open as stations.
+[My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) open as stations. So do
+[Miner's Delight](https://modrinth.com/mod/miners-delight)'s copper pot,
+[Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot and the cutting boards of
+[Chopper's Delight](https://modrinth.com/mod/choppers-delight), each in its own look.
+[Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s kebabs and bibimbap are put together on the
+board and keep the seasoning of their skewers.
 
 Hoppers, pipes and drops use the blocks' own inventories. A pot fed by automation cooks by itself, as in Farmer's Delight.
 
@@ -103,9 +112,11 @@ which each player sets in their own file.
 | Key | Default | What it does |
 |---|---|---|
 | `cooking_pot`, `cutting_board`, `skillet`, `stove` | `true` | The station of that block. Off, the block works as in Farmer's Delight |
+| `keg` | `true` | Brewin' and Chewin's keg as a station. Off, the keg keeps its own menu |
 | `remove_crafting_recipes` | `true` | Farmer's Delight's food crafts are made on the board only |
 | `stirring_required` | `true` | Food you put into the pot waits for the spoon while you are at it |
 | `recipe_book` | `true` | The recipe book beside the stations |
+| `cooking_pot_time`, `skillet_time`, `stove_time` | `1.0` | How long food takes at that station: `2.0` twice as long, `0.5` half, from `0.1` to `10`. The pot's covers food left alone and fed by hoppers too |
 
 ## Installation
 

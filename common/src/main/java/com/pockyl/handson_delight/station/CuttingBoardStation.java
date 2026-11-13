@@ -1,10 +1,13 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
 
 import com.pockyl.diegesis.api.Diegesis;
 import com.pockyl.diegesis.api.state.SlotRef;
@@ -13,7 +16,6 @@ import com.pockyl.diegesis.api.state.StationSchema;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnDelight;
-import com.pockyl.handson_delight.platform.Platform;
 
 /**
  * The cutting board as a station: what lies on it is cut with chops of the knife, and food that Farmer's Delight makes in the crafting
@@ -118,8 +120,19 @@ public final class CuttingBoardStation {
             .slots(HAND, 1, SlotRules.DEFAULT)
             .build();
 
+    /**
+     * Boards of other mods that work as Farmer's Delight's (Chopper's Delight's of every wood): the same station, each in its own
+     * look, as the block stays the world's. Chopper's Delight's decorated board is not one: its own renderer draws the whole board and
+     * its banner, and the station hides a board's renderer.
+     */
+    public static final TagKey<Block> BOARDS = TagKey.create(Registries.BLOCK, HandsOnDelight.id("cutting_boards"));
+    @SuppressWarnings("removal")
+    private static final ResourceLocation DECORATED = new ResourceLocation("choppersdelight", "decorated_cutting_board");
+
     public static final StationType TYPE = Diegesis.station(ID)
             .block(FarmersDelightContent.CUTTING_BOARD)
+            .tag(BOARDS)
+            .when(state -> !DECORATED.equals(BuiltInRegistries.BLOCK.getKey(state.getBlock())))
             .schema(SCHEMA)
             .logic(BoardLogic::new)
             .orientation(StationType.Orientation.BLOCK)
@@ -143,7 +156,7 @@ public final class CuttingBoardStation {
         if (player.isSecondaryUseActive() || Cutting.isOthers(player.level(), player.getMainHandItem())) {
             return false;
         }
-        return !(player.level().getBlockEntity(pos) instanceof CuttingBoardBlockEntity board)
-                || board.isItemCarvingBoard() || !Cutting.isOthers(player.level(), Platform.INSTANCE.getItem(board));
+        return !(player.level().getBlockEntity(pos) instanceof KitchenBoard board)
+                || board.handson$isCarving() || !Cutting.isOthers(player.level(), board.handson$stored());
     }
 }

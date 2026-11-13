@@ -1,0 +1,7 @@
+{
+  "parent": "handson_delight:diegesis/pot/hoop",
+  "textures": {
+    "particle": "dungeonsdelight:block/monster_pot_handle",
+    "cooking_pot_handle": "dungeonsdelight:block/monster_pot_handle"
+  }
+}

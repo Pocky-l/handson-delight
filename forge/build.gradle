@@ -71,6 +71,14 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     modCompileOnly "mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"
     modCompileOnly "dev.emi:emi-forge:${emi_version}:api"
+    // Miner's Delight's copper pot is a station when that mod is there: mixins into it, compiled against it only.
+    modCompileOnly "maven.modrinth:miners-delight:${miners_delight_version}"
+    // Brewin' and Chewin's keg is a station too: compiled against it only.
+    modCompileOnly "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_version}"
+    // Dungeons Delight's monster pot is a station too: compiled against it only.
+    modCompileOnly "maven.modrinth:dungeons_delight:${dungeons_delight_version}"
+    // Chopper's Delight's boards are board stations too: compiled against it only.
+    modCompileOnly "maven.modrinth:choppers-delight:${choppers_delight_version}"
     devMods "com.pockyl.diegesis:forge:${diegesis_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
@@ -88,13 +96,28 @@ if (providers.gradleProperty('addons').isPresent()) {
                 'more-delight:GrLDJ8lO',          // More Delight 26.05.20-1.20-forge
                 'delight-lib:1lt5savO',           // Delight Lib 26.05.18-1.20-forge, needed by More Delight
                 'autochefs-delight:uqjoo6xs',     // Autochef's Delight 1.0.7+forge
-                'brewin-and-chewin:9myDFPCD',     // Brewin' And Chewin' 1.20.1-3.2.1
-                'miners-delight:p0INUam7',        // Miner's Delight 1.20.1-1.4.5-backport
+                "brewin-and-chewin:${brewin_and_chewin_version}", // Brewin' And Chewin' 1.20.1-3.2.1
+                "miners-delight:${miners_delight_version}", // Miner's Delight 1.20.1-1.4.5-backport
+                "dungeons_delight:${dungeons_delight_version}", // Dungeons Delight 1.20.1-1.3.2
+                'runiclib:DyyjKTPx',              // RunicLib 4.3.11, needed by Dungeons Delight
+                "choppers-delight:${choppers_delight_version}", // Chopper's Delight 1.2.3: cutting boards of every wood
                 'delightful:HbEQIqIu',            // Delightful 3.8.1-1.20.1
                 'nethers-delight:MTDQhZd2',       // Nether's Delight 1.20.1-4.0
                 'farmers-respite:kucmCxP0',       // Farmer's Respite 1.20.1-2.1
                 'frights-delight:r31i2Fd1',       // Fright's Delight 1.4.8: a bone cut into the skewers its kebabs are served on
         ].each { modRuntimeOnly "maven.modrinth:${it}" }
+        // -Paddons=wide adds the next most downloaded addons that need no other mods: more food, own crafts and tags.
+        if (providers.gradleProperty('addons').get() == 'wide') {
+            [
+                    'rustic-delight:z29Gd3ec',        // Rustic Delight 1.7.0
+                    'ubes-delight:FOEkFTgl',          // Ube's Delight forge-1.20.1-0.4.15
+                    'crabbers-delight:9NT9IkSs',      // Crabber's Delight 1.2.3
+                    'cultural-delights:mO8IB07o',     // Cultural Delights 0.16.7
+                    'vintage-delight:q8Ght7Bo',       // Vintage Delight 0.1.6
+                    'barbeques-delight-forge:LsvcmS2n', // Barbeque's Delight 1.0.6
+                    'festive-delight:4rjkNzGf',       // Festive Delight 2.0.0
+            ].each { modRuntimeOnly "maven.modrinth:${it}" }
+        }
     }
 }
 
@@ -154,6 +177,7 @@ tasks.named('runGameTestServer') { dependsOn syncDevMods, prepareGameTestServer 
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
     config "${mod_id}.mixins.json"
+    config "${mod_id}.forge.mixins.json"
 }
 
 var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
@@ -182,7 +206,7 @@ legacyForge.ideSyncTask generateModMetadata
 
 tasks.named('jar', Jar) {
     // Forge 47 reads mixin configs from the manifest, not from mods.toml.
-    manifest.attributes('MixinConfigs': "${mod_id}.mixins.json")
+    manifest.attributes('MixinConfigs': "${mod_id}.mixins.json,${mod_id}.forge.mixins.json")
 }
 
 idea {

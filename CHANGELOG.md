@@ -3,6 +3,25 @@
 ## [1.4.0+1.20.1] - Unreleased
 
 ### New
+- [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg opens as a station, lying or standing: its
+  lid swings open on the liquid, a bucket or bottle pours in at the opening, the ingredients float while it ferments and
+  the liquid takes the drink's colour. Its badge shows how warm the keg is and how warm the recipe wants it. Draw drinks
+  at the tap, one or, with Shift, as many as there are. Its recipes are in the book, with their liquid, warmth and time.
+- [Miner's Delight](https://modrinth.com/mod/miners-delight)'s copper pot opens as a cooking pot station: four
+  ingredients, stirred as one batch, its soups served two copper cups a serving.
+- Cooking times in the config: `cooking_pot_time`, `skillet_time` and `stove_time` in
+  `config/handson_delight.properties` make food take longer (`2.0` twice as long) or shorter (`0.5` half) at the pot,
+  the skillet and the stove. The pot follows it whether you stir or leave it alone, and the recipe books show the new
+  times.
+- [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s kebab wrap, kebab sandwich
+  and bibimbap are put together on the cutting board, with pages in its book. They keep the seasoning of the skewers
+  that went into them.
+- [Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot opens as a cooking pot station, in its
+  own look: stir its monster food as one batch, with stars, its own recipes in the book. A spawner or its own fires
+  heat it, as in Dungeons Delight.
+- [Chopper's Delight](https://modrinth.com/mod/choppers-delight)'s cutting boards of every wood open as the board
+  station, each in its own wood: cut, put dishes together and stick tools in as on Farmer's Delight's board. Its
+  decorated board keeps its own use.
 - Stick a tool into the cutting board at the station: hold a knife, a sword or an axe on the cursor and Shift + click the
   bare board. A click takes it out again, and food you put on the board takes it out into your inventory.
 - A knife in your off hand cuts at the board, as a knife in your inventory does.

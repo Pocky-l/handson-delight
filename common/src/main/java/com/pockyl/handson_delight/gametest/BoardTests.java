@@ -25,6 +25,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import vectorwing.farmersdelight.client.recipebook.CookingPotRecipeBookTab;
@@ -37,6 +39,7 @@ import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.assembly.Assembling;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
@@ -44,6 +47,7 @@ import com.pockyl.handson_delight.station.BoardLayers;
 import com.pockyl.handson_delight.station.BoardLogic;
 import com.pockyl.handson_delight.station.Cutting;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
+import com.pockyl.handson_delight.station.KitchenBoard;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1085,4 +1089,76 @@ public final class BoardTests {
             effects.add(effect);
         }
     }
+
+    /**
+     * Barbeque's Delight's kebab wrap, kebab sandwich and bibimbap are crafts of its own type that put the grilled skewers, seasoning
+     * and all, into the dish: made on the board they keep doing it, as the recipe's own code makes the dish. With -Paddons=wide.
+     */
+    public static void kebabsKeepTheSeasoningOfTheirSkewers(GameTestHelper helper) {
+        Item wrap = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse("barbequesdelight:kebab_wrap"));
+        Item grilled = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse("barbequesdelight:grilled_beef_skewer"));
+        if (wrap == Items.AIR || grilled == Items.AIR) {
+            // Barbeque's Delight comes with -Paddons=wide.
+            helper.succeed();
+            return;
+        }
+        for (String dish : List.of("kebab_wrap", "kebab_sandwich", "bibimbap")) {
+            ResourceLocation id = ResourceLocation.tryParse("barbequesdelight:" + dish);
+            helper.assertTrue(AssemblyRecipes.all().stream().anyMatch(made -> made.id().equals(id)), dish + " is a dish of the board");
+        }
+        Board setup = board(helper);
+        ItemStack skewer = new ItemStack(grilled);
+        skewer.getOrCreateTag().putString("seasoning", "CHILI");
+        for (ItemStack layer : List.of(new ItemStack(Items.BREAD), skewer, new ItemStack(fd("cabbage")))) {
+            setup.carry(layer.copy());
+            setup.place();
+        }
+        setup.finishIfItWaits();
+        ItemStack made = setup.onBoard();
+        helper.assertTrue(made.is(wrap), "a kebab wrap, got " + made + " and layers " + BoardLogic.layers(setup.station.state()));
+        CompoundTag kept = made.hasTag() ? made.getTag().getList("Skewers", 10).getCompound(0) : new CompoundTag();
+        helper.assertTrue("CHILI".equals(kept.getCompound("tag").getString("seasoning")), "with its skewer's chili, got " + made.getTag());
+        helper.succeed();
+    }
+
+    /**
+     * Chopper's Delight's boards of every wood (-Paddons) are the board's station: what lies there is cut the same way, and a dish
+     * being put together is kept in the board. Its decorated board, drawn whole by its own renderer, keeps its own use.
+     */
+    public static void choppersDelightsBoardsAreStations(GameTestHelper helper) {
+        Block oak = BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse("choppersdelight:oak_cutting_board"));
+        if (oak == Blocks.AIR) {
+            // Chopper's Delight comes with -Paddons.
+            helper.succeed();
+            return;
+        }
+        Block decorated = BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse("choppersdelight:decorated_cutting_board"));
+        helper.assertTrue(CuttingBoardStation.TYPE.matches(oak.defaultBlockState()), "the oak board opens as the station");
+        helper.assertFalse(CuttingBoardStation.TYPE.matches(decorated.defaultBlockState()), "the decorated board keeps its own use");
+        BlockPos at = new BlockPos(1, 1, 1);
+        helper.setBlock(at, oak);
+        Station station = new Station(helper.getLevel(), helper.absolutePos(at));
+        BoardLogic logic = new BoardLogic(station);
+        KitchenBoard board = KitchenBoard.of(helper.getLevel().getBlockEntity(station.pos()));
+        helper.assertTrue(board != null, "its block entity is a kitchen board");
+        Player cook = helper.makeMockPlayer();
+        cook.inventoryMenu.setCarried(new ItemStack(fd("cabbage"), 2));
+        logic.onCustomAction(station, cook, CuttingBoardStation.ACTION_PLACE, new CompoundTag());
+        helper.assertTrue(board.handson$stored().is(fd("cabbage")) && board.handson$stored().getCount() == 2, "both cabbages lie there");
+        cook.getInventory().setItem(7, new ItemStack(fd("iron_knife")));
+        CompoundTag chop = new CompoundTag();
+        chop.putInt(CuttingBoardStation.MARK, 0);
+        chop.putFloat(CuttingBoardStation.AT, 10.0F);
+        logic.onCustomAction(station, cook, CuttingBoardStation.ACTION_CHOP, chop);
+        helper.runAfterDelay(4, () -> {
+            helper.assertTrue(board.handson$stored().isEmpty() && cook.getInventory().countItem(fd("cabbage_leaf")) == 4,
+                    "one cut halves both, the leaves go to the cook");
+            board.handson$layers().set(0, new ItemStack(Items.BREAD));
+            CompoundTag saved = board.handson$blockEntity().saveWithoutMetadata();
+            helper.assertTrue(saved.contains(HandsOnDelight.MOD_ID + ":layers"), "a dish being put together is saved with the board");
+            board.handson$layers().clear();
+            helper.succeed();
+        });
+    }
+
 }

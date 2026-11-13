@@ -1,0 +1,302 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Brewin' and Chewin's lying keg. The station hides the block while it is used and shows it here with the lid swung open: the opening x,z 4..12, floor y 3; the tap's hole low in the middle of the front. Nothing shows while nobody uses it.",
+  "work_plane": 16,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      8,
+      38,
+      -19
+    ],
+    "target": [
+      8,
+      8,
+      7
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "keg",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/keg/body"
+      },
+      "children": [
+        {
+          "id": "lid",
+          "pos": [
+            0,
+            16,
+            4
+          ],
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/keg/lid",
+            "anchor": [
+              8,
+              16,
+              12
+            ]
+          }
+        },
+        {
+          "id": "tap",
+          "pos": [
+            0,
+            5.5,
+            -8
+          ],
+          "collider": {
+            "from": [
+              -2,
+              -2.5,
+              -2
+            ],
+            "to": [
+              2,
+              2.5,
+              1.5
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "drink",
+      "pickable": false,
+      "tank": {
+        "tank": "drink",
+        "inner": {
+          "from": [
+            4,
+            3,
+            4
+          ],
+          "to": [
+            12,
+            14.5,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "id": "mouth",
+      "drop_zone": "ingredients",
+      "collider": {
+        "from": [
+          4,
+          3,
+          4
+        ],
+        "to": [
+          12,
+          17,
+          12
+        ]
+      }
+    },
+    {
+      "id": "item_0",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[0]",
+        "size": 3.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_1",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[1]",
+        "size": 3.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_2",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[2]",
+        "size": 3.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_3",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[3]",
+        "size": 3.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "served",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "served",
+        "size": 3.2,
+        "highlight": false
+      }
+    },
+    {
+      "id": "offer",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": 0.35,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -1.5,
+        16,
+        5
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -1.5,
+        16.02,
+        4.98
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -1.5,
+        16.04,
+        4.96
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "thermo",
+      "pos": [
+        -1.5,
+        16.02,
+        4.98
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "thermo_now",
+      "pos": [
+        -1.5,
+        16.04,
+        4.96
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        16.33,
+        21.22,
+        -4
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -4.4,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          4.4,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

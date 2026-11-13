@@ -32,4 +32,9 @@ public final class FabricSkilletTests implements FabricGameTest {
     public void moreFoodTakesLongerButKeepsWhatWasDone(GameTestHelper helper) {
         SkilletTests.moreFoodTakesLongerButKeepsWhatWasDone(helper);
     }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void theFryingTimeFollowsTheConfig(GameTestHelper helper) {
+        SkilletTests.theFryingTimeFollowsTheConfig(helper);
+    }
 }

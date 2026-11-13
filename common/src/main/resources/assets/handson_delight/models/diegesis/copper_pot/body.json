@@ -1,0 +1,410 @@
+{
+  "textures": {
+    "particle": "miners_delight:block/copper_pot",
+    "copper_pot": "miners_delight:block/copper_pot"
+  },
+  "elements": [
+    {
+      "name": "wall_north",
+      "from": [
+        3,
+        0,
+        3
+      ],
+      "to": [
+        13,
+        8,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            5,
+            3.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "east": {
+          "uv": [
+            9.5,
+            0,
+            10,
+            3.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "south": {
+          "uv": [
+            0,
+            4,
+            5,
+            8
+          ],
+          "texture": "#copper_pot"
+        },
+        "west": {
+          "uv": [
+            5,
+            0,
+            5.5,
+            3.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "up": {
+          "uv": [
+            0,
+            3.5,
+            5,
+            4
+          ],
+          "texture": "#copper_pot"
+        },
+        "down": {
+          "uv": [
+            5,
+            8,
+            10,
+            8.5
+          ],
+          "texture": "#copper_pot",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "wall_south",
+      "from": [
+        3,
+        0,
+        12
+      ],
+      "to": [
+        13,
+        8,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            4,
+            5,
+            8
+          ],
+          "texture": "#copper_pot"
+        },
+        "east": {
+          "uv": [
+            5,
+            0,
+            5.5,
+            3.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            5,
+            3.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "west": {
+          "uv": [
+            9.5,
+            0,
+            10,
+            3.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "up": {
+          "uv": [
+            0,
+            8,
+            5,
+            8.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "down": {
+          "uv": [
+            5,
+            3.5,
+            10,
+            4
+          ],
+          "texture": "#copper_pot",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "wall_west",
+      "from": [
+        3,
+        0,
+        4
+      ],
+      "to": [
+        4,
+        8,
+        12
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0.5,
+            4,
+            4.5,
+            8
+          ],
+          "texture": "#copper_pot"
+        },
+        "west": {
+          "uv": [
+            5.5,
+            0,
+            9.5,
+            3.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "up": {
+          "uv": [
+            0,
+            4,
+            0.5,
+            8
+          ],
+          "texture": "#copper_pot"
+        },
+        "down": {
+          "uv": [
+            5,
+            4,
+            5.5,
+            8
+          ],
+          "texture": "#copper_pot",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "wall_east",
+      "from": [
+        12,
+        0,
+        4
+      ],
+      "to": [
+        13,
+        8,
+        12
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            5.5,
+            0,
+            9.5,
+            3.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            4,
+            4.5,
+            8
+          ],
+          "texture": "#copper_pot"
+        },
+        "up": {
+          "uv": [
+            4.5,
+            4,
+            5,
+            8
+          ],
+          "texture": "#copper_pot"
+        },
+        "down": {
+          "uv": [
+            9.5,
+            4,
+            10,
+            8
+          ],
+          "texture": "#copper_pot",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "floor",
+      "from": [
+        4,
+        0,
+        4
+      ],
+      "to": [
+        12,
+        1,
+        12
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0.5,
+            4,
+            4.5,
+            8
+          ],
+          "texture": "#copper_pot"
+        },
+        "down": {
+          "uv": [
+            5.5,
+            4,
+            9.5,
+            8
+          ],
+          "texture": "#copper_pot",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "right handle",
+      "from": [
+        13,
+        5,
+        5
+      ],
+      "to": [
+        15,
+        7,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            8.5,
+            5,
+            9.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "east": {
+          "uv": [
+            1,
+            9.5,
+            4,
+            10.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "south": {
+          "uv": [
+            0,
+            8.5,
+            1,
+            9.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "up": {
+          "uv": [
+            1,
+            8.5,
+            4,
+            9.5
+          ],
+          "rotation": 90,
+          "texture": "#copper_pot"
+        },
+        "down": {
+          "uv": [
+            1,
+            10.5,
+            4,
+            9.5
+          ],
+          "rotation": 90,
+          "texture": "#copper_pot"
+        }
+      }
+    },
+    {
+      "name": "left handle",
+      "from": [
+        1,
+        5,
+        5
+      ],
+      "to": [
+        3,
+        7,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            8.5,
+            1,
+            9.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "south": {
+          "uv": [
+            4,
+            8.5,
+            5,
+            9.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "west": {
+          "uv": [
+            1,
+            9.5,
+            4,
+            10.5
+          ],
+          "texture": "#copper_pot"
+        },
+        "up": {
+          "uv": [
+            1,
+            8.5,
+            4,
+            9.5
+          ],
+          "rotation": 270,
+          "texture": "#copper_pot"
+        },
+        "down": {
+          "uv": [
+            1,
+            10.5,
+            4,
+            9.5
+          ],
+          "rotation": 270,
+          "texture": "#copper_pot"
+        }
+      }
+    }
+  ]
+}

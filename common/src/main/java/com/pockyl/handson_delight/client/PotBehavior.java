@@ -18,7 +18,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
 import com.pockyl.diegesis.api.client.DiegesisParticles;
@@ -31,8 +30,8 @@ import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
-import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
+import com.pockyl.handson_delight.station.KitchenPot;
 import com.pockyl.handson_delight.station.PotLogic;
 
 import java.util.ArrayList;
@@ -45,20 +44,28 @@ import java.util.Optional;
  * reading it: the water, what swims in it, how it colours and simmers, the spoon going round. The pot itself is the block.
  */
 public final class PotBehavior implements StationBehavior {
-    private static final int SLOTS = CookingPotBlockEntity.MEAL_DISPLAY_SLOT;
+    /**
+     * The inside of a pot, in pixels: how many ingredients it holds, where the liquid starts, how deep a full pot is, and the height of
+     * the spoon's end, where it pivots in its model. A full pot stays 1.5 px under the rim: higher, what floats, the foam at the walls
+     * and the waves showed as a thin line over the rim from the side at a low camera angle. The scene's {@code broth} tank ends at the
+     * same height.
+     */
+    public record Shape(int slots, float floor, float depth, float spoonEnd) {
+        /** Farmer's Delight's pot: walls 2 px, floor 2 px, rim at 10. */
+        public static final Shape COOKING_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.5F, 3.0F);
+        /** Miner's Delight's copper pot: as wide inside, walls and floor 1 px, rim at 8. */
+        public static final Shape COPPER_POT = new Shape(CookingPotStation.COPPER_SLOTS, 1.0F, 5.5F, 2.0F);
+    }
+
+    /** Arrays are as long as the biggest pot needs; a pot uses its own {@link Shape#slots} of them. */
+    private static final int SLOTS = CookingPotStation.SLOTS;
     private static final String[] ITEM_NODES = nodes("item_");
     private static final String[] MELT_NODES = nodes("melt_");
     /** A press on the spoon shorter than this is a click: the spoon stays in the hand, stirring as the mouse goes, until the next click. */
     private static final float SPOON_CLICK = 0.3F;
     @SuppressWarnings("removal")
     private static final ResourceLocation BADGE_TEXTURE = new ResourceLocation("minecraft", "block/white_concrete");
-    /**
-     * Where the liquid starts and how deep a full pot is, in pixels; slots stand at {@link #ITEM_REST}. A full pot stays 1.5 px under
-     * the rim (10): at 9.5 what floats, the foam at the walls and the waves showed as a thin line over the rim from the side
-     * at a low camera angle. The scene's {@code broth} tank ends at the same height.
-     */
-    private static final float BROTH_FLOOR = 2.0F;
-    private static final float BROTH_DEPTH = 6.5F;
+    /** The height of the item nodes in the scene, less the part of an item that stays under the surface. */
     private static final float ITEM_REST = 8.0F - 0.25F;
     /** How far the ingredients drift from the middle of the pot, in pixels. */
     private static final float DRIFT_RADIUS = 2.2F;
@@ -124,8 +131,6 @@ public final class PotBehavior implements StationBehavior {
 
     /** How far the spoon's end goes from the pot's middle, in pixels. */
     private static final float SPOON_REACH = 2.3F;
-    /** The height of the spoon's end, where it pivots in the model. */
-    private static final float SPOON_END = 3.0F;
     /** How much the spoon leans at rest (Farmer's Delight's own angle) and in the hand, degrees. */
     private static final float REST_LEAN = 22.5F;
     private static final float STIR_LEAN = 7.0F;
@@ -202,7 +207,11 @@ public final class PotBehavior implements StationBehavior {
     /** The badge over the pot: its plate, the dial, the dish. */
     private static final List<String> BADGE_PARTS = List.of("badge", "dial_track", "dial", "preview");
 
-    private final RecipeBook book = new RecipeBook(new PotBook());
+    private final int slots;
+    private final float brothFloor;
+    private final float brothDepth;
+    private final float spoonEnd;
+    private final RecipeBook book;
     /** Whether an item goes into some dish or serves one: only those show in the inventory at the pot. */
     private final UsableCache usable = new UsableCache();
     private final ItemStack[] shown = new ItemStack[SLOTS];
@@ -328,7 +337,7 @@ public final class PotBehavior implements StationBehavior {
     private final Vector3f restAxis = new Vector3f();
     private final Vector3f leanAxis = new Vector3f();
     private final Vector3f poseAngles = new Vector3f();
-    private final Vector3f spoonEnd = new Vector3f();
+    private final Vector3f spoonTip = new Vector3f();
     private final Vector3f spoonThrough = new Vector3f();
     private final float[][] obstacles = new float[SLOTS + 1][];
     /** The ingredients the dish was last looked up for, and the dish. */
@@ -344,6 +353,15 @@ public final class PotBehavior implements StationBehavior {
     private int piecesShown;
 
     public PotBehavior(StationView view) {
+        this(view, Shape.COOKING_POT);
+    }
+
+    public PotBehavior(StationView view, Shape shape) {
+        slots = shape.slots();
+        brothFloor = shape.floor();
+        brothDepth = shape.depth();
+        spoonEnd = shape.spoonEnd();
+        book = new RecipeBook(new PotBook(slots));
         java.util.Arrays.fill(shown, ItemStack.EMPTY);
         java.util.Arrays.fill(meltAge, Float.NaN);
         java.util.Arrays.fill(arriveAge, Float.NaN);
@@ -455,7 +473,7 @@ public final class PotBehavior implements StationBehavior {
         how.putBoolean(CookingPotStation.SCOOP_ALL, shift);
         view.sendAction(CookingPotStation.ACTION_SCOOP, how);
         // The bowl in the hand goes in where the hand is: the soup rings there.
-        float surface = BROTH_FLOOR + BROTH_DEPTH * level;
+        float surface = brothFloor + brothDepth * level;
         view.cursorOn(surface).ifPresent(point -> {
             scoopedHere = time;
             view.node("broth").ifPresent(broth -> broth.ripple(point.x, point.z, 0.45F));
@@ -471,14 +489,18 @@ public final class PotBehavior implements StationBehavior {
         if (node == null || !node.isVisible()) {
             return;
         }
-        float surface = BROTH_FLOOR + BROTH_DEPTH * level;
+        float surface = brothFloor + brothDepth * level;
         Vector3f away = FromPlayer.point(view, surface + 6.0F, 0, 1).orElse(new Vector3f(scoopAt.x, surface + 8.0F, scoopAt.z));
-        dip = new KitchenMotions.Dip(node, filled, scoopAt, SCOOP_ORIGIN, away, () -> BROTH_FLOOR + BROTH_DEPTH * level,
+        dip = new KitchenMotions.Dip(node, filled, scoopAt, SCOOP_ORIGIN, away, () -> brothFloor + brothDepth * level,
                 view.node("broth").orElse(null), scoopScale, 8.0F * SCOOP_BASE * scoopScale, 0xFF000000 | brothColor, onDipped);
     }
 
     private static boolean usable(StationView view, ItemStack stack) {
-        for (CookingPotRecipe recipe : Platform.INSTANCE.cookingRecipes(view.level())) {
+        KitchenPot pot = KitchenPot.of(view.level().getBlockEntity(view.pos()));
+        if (pot != null && pot.handson$servesIn(stack)) {
+            return true;
+        }
+        for (CookingPotRecipe recipe : KitchenPot.recipes(view.level().getBlockEntity(view.pos()), view.level())) {
             if (ItemStack.isSameItem(recipe.getOutputContainer(), stack) || recipe.getIngredients().stream().anyMatch(ingredient -> ingredient.test(stack))) {
                 return true;
             }
@@ -487,7 +509,8 @@ public final class PotBehavior implements StationBehavior {
     }
 
     private static boolean canScoop(StationView view, ItemStack stack) {
-        return view.level().getBlockEntity(view.pos()) instanceof CookingPotBlockEntity pot && !pot.getMeal().isEmpty() && pot.isContainerValid(stack);
+        KitchenPot pot = KitchenPot.of(view.level().getBlockEntity(view.pos()));
+        return pot != null && !pot.handson$meal().isEmpty() && pot.handson$isContainerValid(stack);
     }
 
     /**
@@ -505,7 +528,7 @@ public final class PotBehavior implements StationBehavior {
         NodeView node = view.node("scoop").orElse(null);
         boolean spoon = stroking || heldByClick || view.node("ladle").map(NodeView::isHovered).orElse(false);
         if (node == null || player == null || !view.isFocused() || spoon || !player.inventoryMenu.getCarried().isEmpty()
-                || time - scoopedAt < OFFER_AWAY || !(view.level().getBlockEntity(view.pos()) instanceof CookingPotBlockEntity pot)) {
+                || time - scoopedAt < OFFER_AWAY || !(view.level().getBlockEntity(view.pos()) instanceof KitchenPot pot)) {
             if (node != null) {
                 node.setVisible(false);
             }
@@ -513,7 +536,7 @@ public final class PotBehavior implements StationBehavior {
             return;
         }
         int slot = PotLogic.containerSlot(pot, player.getInventory());
-        float surface = BROTH_FLOOR + BROTH_DEPTH * level;
+        float surface = brothFloor + brothDepth * level;
         Optional<Vector3f> over = slot < 0 ? Optional.empty() : view.cursorOn(surface + OFFER_LIFT)
                 .filter(point -> Math.abs(point.x - 8.0F) < POT_HALF && Math.abs(point.z - 8.0F) < POT_HALF);
         node.setVisible(over.isPresent());
@@ -545,7 +568,7 @@ public final class PotBehavior implements StationBehavior {
         NodeView sunkNode = view.node("sunk").orElse(null);
         LocalPlayer player = Minecraft.getInstance().player;
         int last = -1;
-        for (int i = 0; i < SLOTS; i++) {
+        for (int i = 0; i < slots; i++) {
             if (sunk[i] && !shown[i].isEmpty()) {
                 last = i;
             }
@@ -553,7 +576,7 @@ public final class PotBehavior implements StationBehavior {
         boolean spoon = stroking || heldByClick || view.node("ladle").map(NodeView::isHovered).orElse(false);
         boolean on = sunkNode != null && player != null && view.isFocused() && !spoon && offered.isEmpty() && last >= 0
                 && player.inventoryMenu.getCarried().isEmpty() && dip == null && time - scoopedAt >= OFFER_AWAY;
-        float surface = BROTH_FLOOR + BROTH_DEPTH * level;
+        float surface = brothFloor + brothDepth * level;
         if (sunkNode != null) {
             // The whole surface of the soup takes the click; what floats lies higher and keeps its own.
             sunkNode.setEnabled(on);
@@ -594,7 +617,7 @@ public final class PotBehavior implements StationBehavior {
         if (player == null || !view.isFocused() || !canScoop(view, player.inventoryMenu.getCarried())) {
             return false;
         }
-        return view.cursorOn(BROTH_FLOOR + BROTH_DEPTH * level)
+        return view.cursorOn(brothFloor + brothDepth * level)
                 .filter(point -> Math.abs(point.x - 8.0F) < POT_HALF && Math.abs(point.z - 8.0F) < POT_HALF).isPresent();
     }
 
@@ -610,7 +633,7 @@ public final class PotBehavior implements StationBehavior {
             if (isFilledNotDipped(offered)) {
                 // Ladled up into the pumpkin over the rim.
                 view.node("scoop").map(NodeView::scenePosition).ifPresent(into -> view.spawnParticles(DiegesisParticles.DROPLET,
-                        new Vector3f(8.0F, BROTH_FLOOR + BROTH_DEPTH * level, 8.0F), new Vector3f(into).sub(8.0F, BROTH_FLOOR + BROTH_DEPTH * level, 8.0F),
+                        new Vector3f(8.0F, brothFloor + brothDepth * level, 8.0F), new Vector3f(into).sub(8.0F, brothFloor + brothDepth * level, 8.0F),
                         0.3F, 8, 0xFF000000 | brothColor));
             }
             view.playSound(PotSounds.SCOOP, "broth", 0.55F, 1.0F);
@@ -629,7 +652,7 @@ public final class PotBehavior implements StationBehavior {
         servings = meal.getCount();
         List<Integer> arrivals = new ArrayList<>();
         List<Integer> more = new ArrayList<>();
-        for (int i = 0; i < SLOTS; i++) {
+        for (int i = 0; i < slots; i++) {
             ItemStack now = items[i];
             if (!now.isEmpty() && shown[i].isEmpty() && !quiet) {
                 arrivals.add(i);
@@ -654,7 +677,7 @@ public final class PotBehavior implements StationBehavior {
             shown[i] = now.copy();
         }
         if (arrivals.size() > 1) {
-            float height = BROTH_FLOOR + BROTH_DEPTH * level + ARRIVE_FROM;
+            float height = brothFloor + brothDepth * level + ARRIVE_FROM;
             for (int k = 0; k < arrivals.size(); k++) {
                 int index = arrivals.get(k);
                 Vector3f from = FromPlayer.point(view, height, k, arrivals.size()).orElse(new Vector3f(8.0F, height, 8.0F));
@@ -676,7 +699,7 @@ public final class PotBehavior implements StationBehavior {
                 splashIn(view, index);
             }
         }
-        for (int i = 0; i < SLOTS; i++) {
+        for (int i = 0; i < slots; i++) {
             boolean there = !shown[i].isEmpty() && !(arriveAge[i] < 0.0F) && !sunk[i];
             view.node(ITEM_NODES[i]).ifPresent(node -> node.setEnabled(there));
         }
@@ -700,7 +723,7 @@ public final class PotBehavior implements StationBehavior {
     /** An item comes into the soup: rings, drops, a plop, and a hiss on a hot pot. */
     private void splashIn(StationView view, int index) {
         if (sinks(shown[index])) {
-            float height = BROTH_FLOOR + BROTH_DEPTH * level + ARRIVE_FROM;
+            float height = brothFloor + brothDepth * level + ARRIVE_FROM;
             goesIn(view, index, view.cursorOn(height).orElse(new Vector3f(8.0F, height, 8.0F)));
             return;
         }
@@ -733,7 +756,7 @@ public final class PotBehavior implements StationBehavior {
             sunk[index] = true;
             return;
         }
-        java.util.function.DoubleSupplier surface = () -> BROTH_FLOOR + BROTH_DEPTH * level;
+        java.util.function.DoubleSupplier surface = () -> brothFloor + brothDepth * level;
         // Poured on the right of the pot, where the spoon is not, tipped towards the middle; things that go in together come
         // down one behind the other, so that they do not stand in each other.
         Vector3f onto = new Vector3f(POUR_X, 0.0F, POUR_Z + POUR_SPREAD * (index % 3 - 1));
@@ -763,7 +786,7 @@ public final class PotBehavior implements StationBehavior {
 
     /** Items waiting for their turn come out one by one; what lands splashes. */
     private void arrivals(StationView view, float dt) {
-        for (int i = 0; i < SLOTS; i++) {
+        for (int i = 0; i < slots; i++) {
             if (Float.isNaN(arriveAge[i])) {
                 continue;
             }
@@ -771,7 +794,7 @@ public final class PotBehavior implements StationBehavior {
             arriveAge[i] += dt;
             if (before < 0.0F && arriveAge[i] >= 0.0F && sinks(shown[i])) {
                 arriveAge[i] = Float.NaN;
-                goesIn(view, i, new Vector3f(arriveX[i] + 8.0F, BROTH_FLOOR + BROTH_DEPTH * level + ARRIVE_FROM, arriveZ[i] + 8.0F));
+                goesIn(view, i, new Vector3f(arriveX[i] + 8.0F, brothFloor + brothDepth * level + ARRIVE_FROM, arriveZ[i] + 8.0F));
                 continue;
             }
             if (before < 0.0F && arriveAge[i] >= 0.0F) {
@@ -867,9 +890,9 @@ public final class PotBehavior implements StationBehavior {
      * Farmer's Delight has taken the items by now, so what bursts are copies where they floated; a stack with more left goes on floating.
      */
     private void cookedThrough(StationView view, ItemStack[] items) {
-        float surface = BROTH_FLOOR + BROTH_DEPTH * level - ITEM_REST;
+        float surface = brothFloor + brothDepth * level - ITEM_REST;
         int melting = 0;
-        for (int i = 0; i < SLOTS; i++) {
+        for (int i = 0; i < slots; i++) {
             int index = i;
             if (shown[i].isEmpty() || !floats(i)) {
                 continue;
@@ -897,7 +920,7 @@ public final class PotBehavior implements StationBehavior {
 
     /** Swells, shrinks away and is gone with a puff. */
     private void melt(StationView view, float dt) {
-        for (int i = 0; i < SLOTS; i++) {
+        for (int i = 0; i < slots; i++) {
             if (Float.isNaN(meltAge[i])) {
                 continue;
             }
@@ -1041,15 +1064,16 @@ public final class PotBehavior implements StationBehavior {
     /** What the ingredients make; recipes are on the client too, so the player sees it before anything cooks. */
     private ItemStack cooked(StationView view, ItemStack[] items) {
         boolean same = true;
-        for (int i = 0; i < SLOTS && same; i++) {
+        for (int i = 0; i < slots && same; i++) {
             same = cookedFor[i] != null && ItemStack.matches(cookedFor[i], items[i]);
         }
         if (!same) {
-            for (int i = 0; i < SLOTS; i++) {
+            for (int i = 0; i < slots; i++) {
                 cookedFor[i] = items[i].copy();
             }
-            cookedMade = Platform.INSTANCE.findRecipe(view.level(), Arrays.asList(items))
-                    .map(found -> found.getResultItem(view.level().registryAccess())).orElse(ItemStack.EMPTY);
+            cookedMade = KitchenPot.findRecipe(view.level().getBlockEntity(view.pos()), view.level(), Arrays.asList(items))
+                    .map(found -> KitchenPot.resultOf(view.level().getBlockEntity(view.pos()), found, view.level().registryAccess()))
+                    .orElse(ItemStack.EMPTY);
         }
         return cookedMade;
     }
@@ -1191,7 +1215,7 @@ public final class PotBehavior implements StationBehavior {
         float wantZ = 0.0F;
         boolean hand = stroking && view.isFocused();
         if (hand) {
-            Optional<Vector3f> cursor = view.cursorOn(BROTH_FLOOR + BROTH_DEPTH * level);
+            Optional<Vector3f> cursor = view.cursorOn(brothFloor + brothDepth * level);
             if (cursor.isPresent()) {
                 Vector3f inPot = potInverse.set(pot.sceneMatrix()).invert().transformPosition(cursor.get());
                 float distance = (float) Math.hypot(inPot.x, inPot.z);
@@ -1273,11 +1297,11 @@ public final class PotBehavior implements StationBehavior {
         // The shortest way from how the model leans by itself: the handle tips, it never twists about itself.
         Quaternionf turn = lean.rotationTo(restAxis.set(rest, 1.0F, 0.0F).normalize(), leanAxis.set(leanX, 1.0F, leanZ).normalize());
         Vector3f angles = turn.getEulerAnglesYXZ(poseAngles).mul(Mth.RAD_TO_DEG);
-        Vector3f end = turn.transform(spoonEnd.set(0.0F, SPOON_END, 0.0F));
-        spoon.moveTo(tipX - end.x, SPOON_END - end.y, tipZ - end.z, 0.0F);
+        Vector3f end = turn.transform(spoonTip.set(0.0F, spoonEnd, 0.0F));
+        spoon.moveTo(tipX - end.x, spoonEnd - end.y, tipZ - end.z, 0.0F);
         spoon.rotateTo(angles.x, angles.y, angles.z, 0.0F);
         // Where the handle goes through the surface, for what floats there to go round it.
-        float height = BROTH_FLOOR + BROTH_DEPTH * level - SPOON_END;
+        float height = brothFloor + brothDepth * level - spoonEnd;
         Vector3f through = pot.sceneMatrix().transformPosition(spoonThrough.set(tipX + leanX * height, 0.0F, tipZ + leanZ * height));
         spoonX = through.x - 8.0F;
         spoonZ = through.z - 8.0F;
@@ -1289,10 +1313,10 @@ public final class PotBehavior implements StationBehavior {
         turned += dt * current;
         view.node("broth").ifPresent(broth -> broth.setCurrent(current));
         int present = 0;
-        for (int i = 0; i < SLOTS; i++) {
+        for (int i = 0; i < slots; i++) {
             present += floats(i) ? 1 : 0;
         }
-        float surface = BROTH_FLOOR + BROTH_DEPTH * level - ITEM_REST;
+        float surface = brothFloor + brothDepth * level - ITEM_REST;
         if (grip < 0.05F && spoonX * spoonX + spoonZ * spoonZ > 0.01F) {
             float wanted = (float) Mth.atan2(spoonZ, spoonX) + Mth.PI / Math.max(present, 1);
             circleStart = Float.isNaN(circleStart) ? wanted
@@ -1300,7 +1324,7 @@ public final class PotBehavior implements StationBehavior {
         }
         float start = Float.isNaN(circleStart) ? 0.0F : circleStart;
         int rank = 0;
-        for (int i = 0; i < SLOTS; i++) {
+        for (int i = 0; i < slots; i++) {
             // What floats shares the circle evenly, and makes room when something new drops in.
             if (floats(i)) {
                 places[i] = Mth.lerp(Math.min(1.0F, dt * 2.5F), places[i], rank++ * Mth.TWO_PI / Math.max(present, 1));
@@ -1310,7 +1334,7 @@ public final class PotBehavior implements StationBehavior {
         }
         shoulder();
         itemWakes(view, dt);
-        for (int i = 0; i < SLOTS; i++) {
+        for (int i = 0; i < slots; i++) {
             int index = i;
             if (going[i] != null) {
                 if (!going[i].frame(view, dt)) {
@@ -1359,7 +1383,7 @@ public final class PotBehavior implements StationBehavior {
         standing[1] = spoonZ + 8.0F;
         standing[2] = SPOON_RADIUS;
         int at = 3;
-        for (int i = 0; i < SLOTS; i++) {
+        for (int i = 0; i < slots; i++) {
             if (floats(i)) {
                 standing[at++] = itemX[i] + 8.0F;
                 standing[at++] = itemZ[i] + 8.0F;
@@ -1373,7 +1397,7 @@ public final class PotBehavior implements StationBehavior {
     /** Whole items draw a trail through the soup, the faster the clearer; on calm water they leave none. */
     private void itemWakes(StationView view, float dt) {
         view.node("broth").ifPresent(broth -> {
-            for (int i = 0; i < SLOTS; i++) {
+            for (int i = 0; i < slots; i++) {
                 if (!floats(i) || !Float.isNaN(arriveAge[i])) {
                     itemFloating[i] = false;
                     continue;
@@ -1400,8 +1424,8 @@ public final class PotBehavior implements StationBehavior {
     /** Items in the pot do not lie on each other: they push apart, and neither the spoon nor a wall lets them through. */
     private void shoulder() {
         for (int pass = 0; pass < 2; pass++) {
-            for (int i = 0; i < SLOTS; i++) {
-                for (int j = i + 1; j < SLOTS; j++) {
+            for (int i = 0; i < slots; i++) {
+                for (int j = i + 1; j < slots; j++) {
                     if (!floats(i) || !floats(j)) {
                         continue;
                     }
@@ -1552,7 +1576,7 @@ public final class PotBehavior implements StationBehavior {
     }
 
     /** A flat rectangle of the badge, in pixels of the icon: x to the right and z down as the player sees it, the node's own axes the other way. */
-    private static void pixels(MeshShape.Builder shape, float x, float z, float width, float height) {
+    static void pixels(MeshShape.Builder shape, float x, float z, float width, float height) {
         float left = -(x + width) * PIXEL;
         float right = -x * PIXEL;
         float top = -z * PIXEL;

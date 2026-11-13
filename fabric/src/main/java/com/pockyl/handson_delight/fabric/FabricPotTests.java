@@ -147,4 +147,9 @@ public final class FabricPotTests implements FabricGameTest {
     public void riceAddedWhileCookingKeepsTheProgress(GameTestHelper helper) {
         PotTests.riceAddedWhileCookingKeepsTheProgress(helper);
     }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void theCookingTimeFollowsTheConfig(GameTestHelper helper) {
+        PotTests.theCookingTimeFollowsTheConfig(helper);
+    }
 }

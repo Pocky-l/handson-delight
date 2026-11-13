@@ -5,8 +5,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 
 import com.pockyl.diegesis.api.Diegesis;
 import com.pockyl.diegesis.api.state.ControlSpec;
@@ -17,13 +17,20 @@ import com.pockyl.diegesis.api.state.TankSpec;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.platform.Platform;
+
+import java.util.function.Supplier;
 
 /**
  * The cooking pot as a station. Its slots are windows on the pot's own inventory: hoppers reach it and it keeps its items whoever is
  * at it. The block is the pot, open in the world too (the mod's blockstate): the scene only adds what is in it, for everybody around.
+ * Miner's Delight's copper pot is the same station, smaller: four ingredients instead of six. Dungeons Delight's monster pot is the same
+ * station in its own textures, cooking its own recipes of monster food.
  */
 public final class CookingPotStation {
     public static final ResourceLocation ID = HandsOnDelight.id("cooking_pot");
+    public static final ResourceLocation COPPER_ID = HandsOnDelight.id("copper_pot");
+    public static final ResourceLocation MONSTER_ID = HandsOnDelight.id("monster_pot");
 
     public static final String INGREDIENTS = "ingredients";
     public static final String MEAL = "meal";
@@ -78,33 +85,53 @@ public final class CookingPotStation {
     /** Played when a serving leaves the pot, for everybody who sees it. */
     public static final ResourceLocation EFFECT_SCOOPED = HandsOnDelight.id("scooped");
 
-    public static final StationSchema SCHEMA = StationSchema.builder()
-            .slots(INGREDIENTS, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, SlotRules.DEFAULT.kept().accepts(stack -> !isDish(stack)))
-            .slots(MEAL, 1, SlotRules.DEFAULT.kept().accepts(stack -> false))
-            .slots(SERVED, 1, SlotRules.DEFAULT.kept().accepts(stack -> false))
-            .tank(BROTH, TankSpec.of(100))
-            .control(PROGRESS, ControlSpec.stepped(0.0F, 1.0F, 100, 0.0F).locked())
-            .control(HEATED, ControlSpec.toggle(false).locked())
-            .control(STIRRING, ControlSpec.toggle(false).locked())
-            .control(SPOON_X, ControlSpec.stepped(-1.0F, 1.0F, 64, 0.0F).locked())
-            .control(SPOON_Z, ControlSpec.stepped(-1.0F, 1.0F, 64, 0.0F).locked())
-            .control(STARS, ControlSpec.stepped(0.0F, StirSkill.MOST, 60, 0.0F).locked())
-            .build();
+    /** Farmer's Delight's pot holds six ingredients, the copper pot four. */
+    public static final int SLOTS = 6;
+    public static final int COPPER_SLOTS = 4;
 
-    public static final StationType TYPE = Diegesis.station(ID)
-            .block(FarmersDelightContent.COOKING_POT)
-            .schema(SCHEMA)
-            .logic(PotLogic::new)
-            .orientation(StationType.Orientation.PLAYER)
-            .openWhen(CookingPotStation::opens)
-            .idleLogic()
-            .build();
+    public static final StationSchema SCHEMA = schema(SLOTS);
+
+    public static final StationType TYPE = type(ID, FarmersDelightContent.COOKING_POT, SCHEMA);
+    public static final StationType COPPER_TYPE = type(COPPER_ID, FarmersDelightContent.COPPER_POT, schema(COPPER_SLOTS));
+    public static final StationType MONSTER_TYPE = type(MONSTER_ID, FarmersDelightContent.MONSTER_POT, SCHEMA);
 
     private CookingPotStation() {
     }
 
+    private static StationSchema schema(int slots) {
+        return StationSchema.builder()
+                .slots(INGREDIENTS, slots, SlotRules.DEFAULT.kept().accepts(stack -> !isDish(stack)))
+                .slots(MEAL, 1, SlotRules.DEFAULT.kept().accepts(stack -> false))
+                .slots(SERVED, 1, SlotRules.DEFAULT.kept().accepts(stack -> false))
+                .tank(BROTH, TankSpec.of(100))
+                .control(PROGRESS, ControlSpec.stepped(0.0F, 1.0F, 100, 0.0F).locked())
+                .control(HEATED, ControlSpec.toggle(false).locked())
+                .control(STIRRING, ControlSpec.toggle(false).locked())
+                .control(SPOON_X, ControlSpec.stepped(-1.0F, 1.0F, 64, 0.0F).locked())
+                .control(SPOON_Z, ControlSpec.stepped(-1.0F, 1.0F, 64, 0.0F).locked())
+                .control(STARS, ControlSpec.stepped(0.0F, StirSkill.MOST, 60, 0.0F).locked())
+                .build();
+    }
+
+    private static StationType type(ResourceLocation id, Supplier<Block> block, StationSchema schema) {
+        return Diegesis.station(id)
+                .block(block)
+                .schema(schema)
+                .logic(PotLogic::new)
+                .orientation(StationType.Orientation.PLAYER)
+                .openWhen(CookingPotStation::opens)
+                .idleLogic()
+                .build();
+    }
+
     public static void register() {
         Diegesis.register(TYPE);
+        if (Platform.INSTANCE.isLoaded(FarmersDelightContent.MINERS_DELIGHT)) {
+            Diegesis.register(COPPER_TYPE);
+        }
+        if (Platform.INSTANCE.isLoaded(FarmersDelightContent.DUNGEONS_DELIGHT)) {
+            Diegesis.register(MONSTER_TYPE);
+        }
     }
 
     /** Dishes are for scooping, they do not go into the water. Modded ones are found in the recipes, by {@code PotLogic.mayPlace}. */
@@ -118,6 +145,7 @@ public final class CookingPotStation {
             return false;
         }
         ItemStack held = player.getMainHandItem();
-        return !(player.level().getBlockEntity(pos) instanceof CookingPotBlockEntity pot) || pot.getMeal().isEmpty() || !pot.isContainerValid(held);
+        KitchenPot pot = KitchenPot.of(player.level().getBlockEntity(pos));
+        return pot == null || pot.handson$meal().isEmpty() || !pot.handson$isContainerValid(held);
     }
 }

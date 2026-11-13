@@ -6,7 +6,6 @@
   "refmap": "handson_delight.refmap.json",
   "plugin": "com.pockyl.handson_delight.compat.OptionalMixins",
   "mixins": [
-    "CookingPotBlockEntityAccessor",
     "CookingPotStirringMixin",
     "CookingPotServingMixin",
     "ItemUtilsMixin",

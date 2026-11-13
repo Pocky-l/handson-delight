@@ -2,6 +2,7 @@
   "textures": {
     "particle": "farmersdelight:block/cooking_pot_side",
     "cooking_pot_side": "farmersdelight:block/cooking_pot_side",
+    "cooking_pot_end": "#cooking_pot_side",
     "cooking_pot_top": "farmersdelight:block/cooking_pot_top",
     "cooking_pot_bottom": "farmersdelight:block/cooking_pot_bottom",
     "cooking_pot_parts": "farmersdelight:block/cooking_pot_parts"
@@ -36,7 +37,7 @@
             14,
             16
           ],
-          "texture": "#cooking_pot_side"
+          "texture": "#cooking_pot_end"
         },
         "south": {
           "uv": [
@@ -54,7 +55,7 @@
             4,
             16
           ],
-          "texture": "#cooking_pot_side"
+          "texture": "#cooking_pot_end"
         },
         "up": {
           "uv": [
@@ -105,7 +106,7 @@
             4,
             16
           ],
-          "texture": "#cooking_pot_side"
+          "texture": "#cooking_pot_end"
         },
         "south": {
           "uv": [
@@ -123,7 +124,7 @@
             14,
             16
           ],
-          "texture": "#cooking_pot_side"
+          "texture": "#cooking_pot_end"
         },
         "up": {
           "uv": [
@@ -174,7 +175,7 @@
             12,
             16
           ],
-          "texture": "#cooking_pot_side"
+          "texture": "#cooking_pot_end"
         },
         "up": {
           "uv": [
@@ -216,7 +217,7 @@
             12,
             16
           ],
-          "texture": "#cooking_pot_side"
+          "texture": "#cooking_pot_end"
         },
         "west": {
           "uv": [

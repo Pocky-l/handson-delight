@@ -76,6 +76,11 @@ public final class ForgePlatform implements Platform {
     }
 
     @Override
+    public boolean isLoaded(String modId) {
+        return ModList.get().isLoaded(modId);
+    }
+
+    @Override
     public boolean isFarmersDelightAddon(String modId) {
         return ModList.get().getModContainerById(modId)
                 .map(mod -> mod.getModInfo().getDependencies().stream()

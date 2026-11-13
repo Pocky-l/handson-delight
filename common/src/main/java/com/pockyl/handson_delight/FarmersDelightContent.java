@@ -19,6 +19,14 @@ public final class FarmersDelightContent {
     public static final Supplier<Block> CUTTING_BOARD = () -> BuiltInRegistries.BLOCK.get(id("cutting_board"));
     public static final Supplier<Block> SKILLET = () -> BuiltInRegistries.BLOCK.get(id("skillet"));
     public static final Supplier<Block> STOVE = () -> BuiltInRegistries.BLOCK.get(id("stove"));
+    /** Miner's Delight's copper pot: Farmer's Delight's pot made smaller, a station too when that mod is there. */
+    public static final String MINERS_DELIGHT = "miners_delight";
+    @SuppressWarnings("removal")
+    public static final Supplier<Block> COPPER_POT = () -> BuiltInRegistries.BLOCK.get(new ResourceLocation(MINERS_DELIGHT, "copper_pot"));
+    public static final String DUNGEONS_DELIGHT = "dungeonsdelight";
+    /** Dungeons Delight's monster pot: Farmer's Delight's pot in its own textures, cooking its own recipes of monster food. */
+    @SuppressWarnings("removal")
+    public static final Supplier<Block> MONSTER_POT = () -> BuiltInRegistries.BLOCK.get(new ResourceLocation(DUNGEONS_DELIGHT, "monster_pot"));
     public static final Supplier<RecipeType<?>> CUTTING = () -> BuiltInRegistries.RECIPE_TYPE.get(id("cutting"));
 
     public static final SoundEvent BOIL_SOUP = sound("block.cooking_pot.boil_soup");

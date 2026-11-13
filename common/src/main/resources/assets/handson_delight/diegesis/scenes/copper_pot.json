@@ -1,0 +1,364 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Miner's Delight's copper pot, the cooking pot's scene two pixels lower: the block itself (open in the world through the mod's blockstate), hollow: walls 1 px, inside x,z 4..12 as in Farmer's Delight's pot, floor y 1, rim y 8. Four ingredients.",
+  "work_plane": 8,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      8,
+      39,
+      -21
+    ],
+    "target": [
+      8,
+      4.5,
+      8
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "pot",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/copper_pot/body",
+        "tint": "#00FFFFFF"
+      },
+      "children": [
+        {
+          "id": "ladle",
+          "strokes": true,
+          "visual": {
+            "model": "handson_delight:diegesis/copper_pot/ladle"
+          },
+          "collider": {
+            "from": [
+              2.6,
+              10.5,
+              -1.5
+            ],
+            "to": [
+              6.6,
+              15,
+              1.5
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "broth",
+      "pickable": false,
+      "tank": {
+        "tank": "broth",
+        "inner": {
+          "from": [
+            4,
+            1,
+            4
+          ],
+          "to": [
+            12,
+            6.5,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "id": "mouth",
+      "drop_zone": "ingredients",
+      "collider": {
+        "from": [
+          3,
+          4,
+          3
+        ],
+        "to": [
+          13,
+          12,
+          13
+        ]
+      }
+    },
+    {
+      "id": "item_0",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[0]",
+        "size": 3.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_1",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[1]",
+        "size": 3.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_2",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[2]",
+        "size": 3.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_3",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[3]",
+        "size": 3.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "served",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "slot": {
+        "slot": "served",
+        "size": 3.2,
+        "highlight": false
+      }
+    },
+    {
+      "id": "scoop",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "rotation": [
+        -60,
+        180,
+        0
+      ],
+      "scale": 0.3,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "soup",
+      "$comment": "Takes the click of an empty hand over a finished soup while a bowl from the inventory is offered; off otherwise.",
+      "collider": {
+        "from": [
+          4,
+          1,
+          4
+        ],
+        "to": [
+          12,
+          7,
+          12
+        ]
+      }
+    },
+    {
+      "id": "melt_0",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "rotation": [
+        -90,
+        180,
+        0
+      ],
+      "scale": 0.2,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "melt_1",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "rotation": [
+        -90,
+        180,
+        0
+      ],
+      "scale": 0.2,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "melt_2",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "rotation": [
+        -90,
+        180,
+        0
+      ],
+      "scale": 0.2,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "melt_3",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "rotation": [
+        -90,
+        180,
+        0
+      ],
+      "scale": 0.2,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -0.6,
+        12.5,
+        4.6
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -0.6,
+        12.52,
+        4.58
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -0.6,
+        12.54,
+        4.56
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -0.6,
+        12.58,
+        4.52
+      ],
+      "rotation": [
+        40,
+        0,
+        0
+      ],
+      "scale": 0.125,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        16.33,
+        19.22,
+        -4
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -4.4,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          4.4,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "parent": "handson_delight:diegesis/pot/body",
+  "textures": {
+    "particle": "dungeonsdelight:block/monster_pot_face",
+    "cooking_pot_side": "dungeonsdelight:block/monster_pot_face",
+    "cooking_pot_end": "dungeonsdelight:block/monster_pot",
+    "cooking_pot_top": "dungeonsdelight:block/monster_pot_top",
+    "cooking_pot_bottom": "dungeonsdelight:block/monster_pot_bottom",
+    "cooking_pot_parts": "dungeonsdelight:block/monster_pot_parts"
+  }
+}

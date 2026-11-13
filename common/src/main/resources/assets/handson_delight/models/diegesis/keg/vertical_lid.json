@@ -1,0 +1,78 @@
+{
+  "textures": {
+    "particle": "brewinandchewin:block/keg_back",
+    "vertical_keg_top": "brewinandchewin:block/vertical_keg_top",
+    "keg_back": "brewinandchewin:block/keg_back"
+  },
+  "elements": [
+    {
+      "name": "wood_lid",
+      "from": [
+        3,
+        15,
+        3
+      ],
+      "to": [
+        13,
+        16,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            1,
+            13,
+            2
+          ],
+          "texture": "#keg_back"
+        },
+        "east": {
+          "uv": [
+            3,
+            1,
+            13,
+            2
+          ],
+          "texture": "#keg_back"
+        },
+        "south": {
+          "uv": [
+            3,
+            1,
+            13,
+            2
+          ],
+          "texture": "#keg_back"
+        },
+        "west": {
+          "uv": [
+            3,
+            1,
+            13,
+            2
+          ],
+          "texture": "#keg_back"
+        },
+        "up": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#vertical_keg_top"
+        },
+        "down": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#keg_back"
+        }
+      }
+    }
+  ]
+}

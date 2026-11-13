@@ -12,11 +12,13 @@ import java.util.Set;
 /**
  * Applies the mixins into other mods' classes only where that mod is installed. Mixin looks a target class up before it skips a
  * missing one, and logs an error for each it cannot find; this asks first, quietly, so a game without KubeJS or the addon stoves
- * starts with a clean log. Every other mixin applies as always.
+ * starts with a clean log, and one without an addon whose station is opened. Every other mixin applies as always.
  */
 public final class OptionalMixins implements IMixinConfigPlugin {
     private static final String PACKAGE = "com.pockyl.handson_delight.mixin.";
     private static final Set<String> OPTIONAL = Set.of(PACKAGE + "KubeJsRecipesMixin", PACKAGE + "AddonStoveSmokeMixin");
+    /** The Forge mixins into addons' own stations (Miner's Delight's copper pot, Dungeons Delight's monster pot, the keg). */
+    private static final String ADDON_STATIONS = "com.pockyl.handson_delight.forge.mixin.";
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -29,7 +31,7 @@ public final class OptionalMixins implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return !OPTIONAL.contains(mixinClassName) || isPresent(targetClassName);
+        return !OPTIONAL.contains(mixinClassName) && !mixinClassName.startsWith(ADDON_STATIONS) || isPresent(targetClassName);
     }
 
     private static boolean isPresent(String className) {

@@ -57,6 +57,9 @@ public interface Platform {
      */
     boolean hasThisMod(ServerPlayer player);
 
+    /** Whether the mod {@code modId} is loaded. */
+    boolean isLoaded(String modId);
+
     /** The game's config folder. */
     Path configDir();
 

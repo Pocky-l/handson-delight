@@ -30,7 +30,7 @@ neoForge {
             type = 'gameTestServer'
             // Own directory: in run/ it would share the folder with the dev client.
             gameDirectory = project.file('run/gametest')
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'neoforge.enabledGameTestNamespaces', providers.gradleProperty('meals').isPresent() ? 'handson_meals' : project.mod_id
         }
 
         configureEach {
@@ -64,6 +64,21 @@ dependencies {
     compileOnly "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_version}"
     // Dungeons Delight's monster pot is a station too: compiled against it only.
     compileOnly "maven.modrinth:dungeons_delight:${dungeons_delight_version}"
+}
+
+// -Pmeals runs only the game tests of Modest Meals' meals at the board, with Modest Meals: it makes Farmer's Delight's burgers,
+// salads, pies and soups as its meals, so the other tests that make those would fail by design. Its tests and their template
+// are in src/meals, under a game test namespace of their own.
+var meals = providers.gradleProperty('meals').isPresent()
+if (meals) {
+    dependencies {
+        [
+                'modest-meals:j08xLlyV',          // Modest Meals 3.0.0+1.21.1
+                'yacl:7TVdVtxF',                  // YetAnotherConfigLib, needed by Modest Meals
+        ].each { localRuntime "maven.modrinth:${it}" }
+    }
+    sourceSets.main.java.srcDir 'src/meals/java'
+    sourceSets.main.resources.srcDir 'src/meals/resources'
 }
 
 // -Paddons runs the game and the game tests with the most downloaded Farmer's Delight addons that have a NeoForge 1.21.1 build

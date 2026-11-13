@@ -16,6 +16,10 @@
     {
       "id": "farmersdelight:gleaming_salad_block",
       "required": false
+    },
+    {
+      "id": "modest_meals:salad",
+      "required": false
     }
   ]
 }

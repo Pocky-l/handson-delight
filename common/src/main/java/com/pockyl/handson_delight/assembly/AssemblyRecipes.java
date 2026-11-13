@@ -15,6 +15,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
@@ -41,6 +42,7 @@ import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -167,10 +169,25 @@ public final class AssemblyRecipes {
             return switch (kind) {
                 case STICK -> result.is(KitchenTags.FROZEN) || ingredients.stream().anyMatch(in -> in.test(new ItemStack(Items.ICE)))
                         ? Finish.FREEZE : Finish.SKEWER;
-                case BREAD -> isWrap() ? Finish.ROLL : Finish.SANDWICH;
+                case BREAD -> isWrap() ? Finish.ROLL : isClosed() ? Finish.PRESS : Finish.SANDWICH;
                 case RICE -> result.is(KitchenTags.ARRANGED) ? Finish.ARRANGE : Finish.SHAPE;
                 default -> kind.finish();
             };
+        }
+
+        /** Bread laid above the filling too, as Modest Meals' sandwiches have it: there is no loaf to split, the top is pressed on. */
+        private boolean isClosed() {
+            for (int i = 0; i < ingredients.size(); i++) {
+                if (i != base && ingredients.get(i).equals(ingredients.get(base))) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /** Whether the dish has a page in the book and in recipe viewers: Modest Meals' meals of free fillings have none. */
+        public boolean inBook() {
+            return !json.has(ModestMeals.HIDDEN);
         }
 
         /** Bread rolled round its filling: tagged so, or named a wrap or a burrito, as addons name theirs. */
@@ -260,20 +277,37 @@ public final class AssemblyRecipes {
     private static Chosen choose(List<Assembly> from) {
         List<Assembly> all = new ArrayList<>();
         ListTag book = new ListTag();
+        Set<ResourceLocation> ids = new HashSet<>();
+        // Modest Meals makes its meals of whatever it is given: the board writes them itself, and the crafting grid no longer makes them.
+        List<ResourceLocation> mealIngredients = ModestMeals.ingredients();
+        List<Assembly> meals = ModestMeals.dishes(mealIngredients);
+        if (!meals.isEmpty()) {
+            book.add(ModestMeals.entry(mealIngredients));
+            ModestMeals.recipeId().ifPresent(ids::add);
+        }
+        for (Assembly meal : meals) {
+            if (!meal.result().is(NOT_ASSEMBLED)) {
+                keep(meal, all, book);
+            }
+        }
         for (Assembly assembly : from) {
             ItemStack result = assembly.result();
             boolean taken = result.is(ASSEMBLED) || !result.is(NOT_ASSEMBLED) && !usesWorkshop(assembly.ingredients())
                     && (isDishResult(result) || isCutIntoFood(result) || isDrinkOfFood(assembly));
-            if (!taken) {
-                continue;
+            if (taken) {
+                keep(assembly, all, book);
             }
-            all.add(assembly);
-            CompoundTag entry = new CompoundTag();
-            entry.putString("id", assembly.id().toString());
-            entry.putString("json", assembly.json().toString());
-            book.add(entry);
         }
-        return new Chosen(List.copyOf(all), Set.copyOf(all.stream().map(Assembly::id).toList()), book);
+        all.forEach(assembly -> ids.add(assembly.id()));
+        return new Chosen(List.copyOf(all), Set.copyOf(ids), book);
+    }
+
+    private static void keep(Assembly assembly, List<Assembly> all, ListTag book) {
+        all.add(assembly);
+        CompoundTag entry = new CompoundTag();
+        entry.putString("id", assembly.id().toString());
+        entry.putString("json", assembly.json().toString());
+        book.add(entry);
     }
 
     /**
@@ -337,13 +371,21 @@ public final class AssemblyRecipes {
     public static List<Assembly> read(ListTag list) {
         HolderLookup.Provider registries = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
         List<Assembly> read = new ArrayList<>();
+        JsonArray any = null;
+        for (int i = 0; i < list.size() && any == null; i++) {
+            List<ResourceLocation> items = ModestMeals.read(list.getCompound(i));
+            any = items == null ? null : ModestMeals.choices(items);
+        }
         for (int i = 0; i < list.size(); i++) {
             CompoundTag entry = list.getCompound(i);
+            if (ModestMeals.read(entry) != null) {
+                continue;
+            }
             ResourceLocation id = ResourceLocation.tryParse(entry.getString("id"));
             try {
                 JsonObject json = JsonParser.parseString(entry.getString("json")).getAsJsonObject();
                 if (id != null) {
-                    parse(id, json, registries).ifPresent(read::add);
+                    parse(id, json, any, registries).ifPresent(read::add);
                 }
             } catch (RuntimeException broken) {
                 HandsOnDelight.LOGGER.warn("Could not read the board's recipe {}", id, broken);
@@ -371,7 +413,7 @@ public final class AssemblyRecipes {
 
     /** Reads the recipes {@link #collect} found, after the recipe manager has read its own: only those it {@code loaded}. */
     public static void load(Map<ResourceLocation, JsonObject> taken, Map<ResourceLocation, RecipeHolder<?>> loaded,
-            HolderLookup.Provider registries) {
+            HolderLookup.Provider registries, ResourceManager resources) {
         List<Assembly> read = new ArrayList<>();
         cutting = loaded.values().stream().map(RecipeHolder::value).filter(CuttingBoardRecipe.class::isInstance).map(CuttingBoardRecipe.class::cast).toList();
         taken.forEach((id, json) -> {
@@ -379,12 +421,13 @@ public final class AssemblyRecipes {
                 return;
             }
             try {
-                parse(id, json, registries).ifPresent(read::add);
+                parse(id, json, null, registries).ifPresent(read::add);
             } catch (RuntimeException broken) {
                 HandsOnDelight.LOGGER.error("Could not read the recipe {} for the cutting board", id, broken);
             }
         });
         candidates = List.copyOf(read);
+        ModestMeals.load(resources, loaded);
         chosen = null;
         HandsOnDelight.LOGGER.info("{} crafting recipes of Farmer's Delight may be put together on the cutting board", read.size());
     }
@@ -433,12 +476,18 @@ public final class AssemblyRecipes {
         return id != null ? id : string(result, "item");
     }
 
-    /** What {@code RecipeManager.fromJson} does, which is not public, and what the board needs of the recipe. */
-    private static Optional<Assembly> parse(ResourceLocation id, JsonObject json, HolderLookup.Provider registries) {
+    /**
+     * What {@code RecipeManager.fromJson} does, which is not public, and what the board needs of the recipe. Where {@code json} marks a
+     * place for any of Modest Meals' ingredients ({@link ModestMeals#ANY}), {@code any} lists them; such a place is never the base.
+     */
+    static Optional<Assembly> parse(ResourceLocation id, JsonObject json, JsonArray any, HolderLookup.Provider registries) {
         DynamicOps<JsonElement> ops = registries.createSerializationContext(JsonOps.INSTANCE);
-        Recipe<?> recipe = Recipe.CODEC.parse(ops, json).getOrThrow(JsonParseException::new);
-        List<JsonElement> named = named(json);
-        if (!(recipe instanceof CraftingRecipe crafting) || named == null || named.isEmpty() || !laysLikeACraftingTable(json, crafting)) {
+        JsonObject full = any == null ? json : ModestMeals.expand(json, any).getAsJsonObject();
+        Recipe<?> recipe = Recipe.CODEC.parse(ops, full).getOrThrow(JsonParseException::new);
+        List<JsonElement> named = named(full);
+        List<JsonElement> written = named(json);
+        if (!(recipe instanceof CraftingRecipe crafting) || named == null || written == null || named.isEmpty()
+                || !laysLikeACraftingTable(full, crafting)) {
             return Optional.empty();
         }
         List<Ingredient> ingredients = new ArrayList<>();
@@ -475,8 +524,8 @@ public final class AssemblyRecipes {
         search:
         for (Base candidate : Base.values()) {
             for (String word : candidate.words) {
-                for (int i = 0; i < named.size(); i++) {
-                    if (names(named.get(i), word)) {
+                for (int i = 0; i < written.size(); i++) {
+                    if (names(written.get(i), word)) {
                         base = i;
                         kind = candidate;
                         break search;

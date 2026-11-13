@@ -39,6 +39,8 @@ final class BoardBook implements RecipeBook.Source {
     private static final String TOOLS = "tools";
     private ListTag readFrom;
     private List<RecipeBook.Page> dishes = List.of();
+    /** What goes into the dishes without a page: Modest Meals' meals of free fillings. */
+    private List<Ingredient> unlisted = List.of();
     /** Goes up each time the dishes are read anew: what the drawer shows depends on them. */
     private int version;
 
@@ -113,7 +115,12 @@ final class BoardBook implements RecipeBook.Source {
         if (book != readFrom) {
             readFrom = book;
             List<RecipeBook.Page> read = new ArrayList<>();
+            List<Ingredient> others = new ArrayList<>();
             for (AssemblyRecipes.Assembly dish : AssemblyRecipes.read(book)) {
+                if (!dish.inBook()) {
+                    others.addAll(dish.ingredients());
+                    continue;
+                }
                 List<Ingredient> ingredients = new ArrayList<>(dish.ingredients());
                 // What goes down first is listed first.
                 ingredients.add(0, ingredients.remove(dish.base()));
@@ -121,6 +128,7 @@ final class BoardBook implements RecipeBook.Source {
                 read.add(new RecipeBook.Page(dish.id(), result, ingredients, List.of(), null, false, DISHES));
             }
             dishes = read;
+            unlisted = List.copyOf(others);
             version++;
         }
         return dishes;
@@ -134,7 +142,8 @@ final class BoardBook implements RecipeBook.Source {
 
     /** Whether {@code stack} goes into one of the dishes put together on the board. */
     boolean goesIntoADish(StationView view, ItemStack stack) {
-        return dishes(view).stream().anyMatch(page -> page.ingredients().stream().anyMatch(ingredient -> ingredient.test(stack)));
+        return dishes(view).stream().anyMatch(page -> page.ingredients().stream().anyMatch(ingredient -> ingredient.test(stack)))
+                || unlisted.stream().anyMatch(ingredient -> ingredient.test(stack));
     }
 
     /**

@@ -25,6 +25,10 @@
 - Stick a tool into the cutting board at the station: hold a knife, a sword or an axe on the cursor and Shift + click the
   bare board. A click takes it out again, and food you put on the board takes it out into your inventory.
 - A knife in your off hand cuts at the board, as a knife in your inventory does.
+- With [Modest Meals](https://www.curseforge.com/minecraft/mc-mods/modest-meals) its sandwiches, salads, wraps, rolls,
+  pies, cakes, pizzas and milkshakes are put together on the cutting board, as Farmer's Delight's burgers are: lay the
+  bread, bowl or crust first, then the fillings, and the bread on top of a sandwich. Its hamburger, apple pie and the
+  other dishes it makes of set fillings have pages in the board's book. The crafting table no longer makes its meals.
 
 ### Changed
 - Going to a station and back is quicker and smoother: the camera sets off at once and lands softly, the recipe book

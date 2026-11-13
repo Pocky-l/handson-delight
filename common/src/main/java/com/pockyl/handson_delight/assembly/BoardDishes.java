@@ -76,7 +76,8 @@ public final class BoardDishes {
     public static synchronized List<AssemblyRecipes.Assembly> all() {
         ListTag book = received;
         if (book != readFrom) {
-            dishes = AssemblyRecipes.read(book);
+            // Meals of free fillings have no page: the viewers show Modest Meals' own.
+            dishes = AssemblyRecipes.read(book).stream().filter(AssemblyRecipes.Assembly::inBook).toList();
             readFrom = book;
         }
         return dishes;

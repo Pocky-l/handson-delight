@@ -385,6 +385,126 @@ public final class BoardTests {
         helper.succeed();
     }
 
+    private static Item meal(String path) {
+        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("modest_meals", path));
+    }
+
+    /** The board's dish {@code path} of Modest Meals' meals (its folder in this mod's ids). */
+    private static Optional<AssemblyRecipes.Assembly> mealDish(String path) {
+        ResourceLocation id = HandsOnDelight.id("modest_meals/" + path);
+        return AssemblyRecipes.all().stream().filter(dish -> dish.id().equals(id)).findFirst();
+    }
+
+    /** Lays {@code layers} one by one, gives the word if the stack waits for it, and says what lies on the board. */
+    private static ItemStack lay(Board setup, List<ItemStack> layers) {
+        for (ItemStack layer : layers) {
+            setup.carry(layer.copy());
+            setup.place();
+        }
+        setup.finishIfItWaits();
+        return setup.onBoard();
+    }
+
+    /** What Modest Meals wrote into {@code stack}, as saved: the meal's contents. */
+    private static String saved(GameTestHelper helper, ItemStack stack) {
+        DynamicOps<JsonElement> ops = helper.getLevel().registryAccess().createSerializationContext(JsonOps.INSTANCE);
+        return ItemStack.CODEC.encodeStart(ops, stack).getOrThrow().toString();
+    }
+
+    /**
+     * With Modest Meals its meals of the crafting table are put together on the board: a player's crafting grid no longer makes them,
+     * the hamburger it makes of a patty, a leaf and a tomato has a page in the book and is pressed shut under its top bread, a
+     * sandwich of free fillings has no page.
+     */
+    public static void modestMealsComeToTheBoard(GameTestHelper helper) {
+        if (meal("sandwich") == Items.AIR) {
+            // Modest Meals comes with -Pmeals.
+            helper.succeed();
+            return;
+        }
+        AssemblyRecipes.Assembly hamburger = mealDish("farmersdelight/hamburger").orElse(null);
+        helper.assertTrue(hamburger != null && hamburger.inBook() && hamburger.result().is(fd("hamburger")),
+                "the hamburger is a dish of the board with its page");
+        helper.assertTrue(hamburger.kind() == AssemblyRecipes.Base.BREAD && hamburger.finish() == AssemblyRecipes.Finish.PRESS,
+                "laid on bread and pressed shut, got " + hamburger.kind() + " " + hamburger.finish());
+        helper.assertTrue(mealDish("sandwich/3").filter(dish -> !dish.inBook() && dish.result().is(meal("sandwich"))).isPresent(),
+                "a sandwich of any three fillings is one too, without a page");
+        helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.fromNamespaceAndPath("modest_meals", "meal_crafting")),
+                "Modest Meals' recipe is made on the board");
+        Map<Integer, ItemStack> grid = Map.of(1, new ItemStack(Items.BREAD), 3, new ItemStack(fd("beef_patty")),
+                4, new ItemStack(fd("cabbage_leaf")), 5, new ItemStack(fd("tomato")), 7, new ItemStack(Items.BREAD));
+        helper.assertTrue(tableMakes(helper, grid).isEmpty(), "a player's crafting table makes no hamburger");
+        TransientCraftingContainer machine = new TransientCraftingContainer(new MachineMenu(), 3, 3);
+        grid.forEach(machine::setItem);
+        Level level = helper.getLevel();
+        helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, machine.asCraftInput(), level).isPresent(),
+                "an autocrafter still does");
+        helper.succeed();
+    }
+
+    /** Modest Meals' hamburger is put together from the bread up and closed with bread: Farmer's Delight's hamburger, as its table made. */
+    public static void aModestHamburgerIsPutTogether(GameTestHelper helper) {
+        if (meal("sandwich") == Items.AIR) {
+            helper.succeed();
+            return;
+        }
+        Board setup = board(helper);
+        ItemStack made = lay(setup, List.of(new ItemStack(Items.BREAD), new ItemStack(fd("beef_patty")), new ItemStack(fd("cabbage_leaf")),
+                new ItemStack(fd("tomato")), new ItemStack(Items.BREAD)));
+        helper.assertTrue(made.is(fd("hamburger")), "a hamburger, got " + made + " and layers " + BoardLogic.layers(setup.station.state()));
+        helper.assertTrue(setup.layers() == 0, "both breads went into it");
+        helper.succeed();
+    }
+
+    /** Bread, any three fillings Modest Meals takes, bread: its sandwich of them. */
+    public static void aSandwichOfFreeFillings(GameTestHelper helper) {
+        if (meal("sandwich") == Items.AIR) {
+            helper.succeed();
+            return;
+        }
+        Board setup = board(helper);
+        ItemStack made = lay(setup, List.of(new ItemStack(Items.BREAD, 2), new ItemStack(Items.COOKED_BEEF, 2), new ItemStack(Items.CARROT, 2),
+                new ItemStack(Items.BAKED_POTATO, 2), new ItemStack(Items.BREAD, 2)));
+        helper.assertTrue(made.is(meal("sandwich")) && made.getCount() == 2,
+                "two sandwiches, got " + made + " and layers " + BoardLogic.layers(setup.station.state()));
+        helper.assertTrue(saved(helper, made).contains("cooked_beef"), "of beef, got " + saved(helper, made));
+        helper.succeed();
+    }
+
+    /** A pie of free fillings: the crust first, its sugar, three fruits. */
+    public static void aPieOfFreeFillingsGoesIntoItsCrust(GameTestHelper helper) {
+        if (meal("pie") == Items.AIR) {
+            helper.succeed();
+            return;
+        }
+        Board setup = board(helper);
+        ItemStack made = lay(setup, List.of(new ItemStack(fd("pie_crust")), new ItemStack(Items.SUGAR), new ItemStack(Items.SUGAR),
+                new ItemStack(Items.APPLE), new ItemStack(Items.SWEET_BERRIES), new ItemStack(Items.GLOW_BERRIES)));
+        helper.assertTrue(made.is(meal("pie")), "a pie, got " + made + " and layers " + BoardLogic.layers(setup.station.state()));
+        helper.succeed();
+    }
+
+    /** A salad takes up to three fillings: with two it waits for the cook's word, as any dish that could still grow. */
+    public static void aSaladOfTwoWaitsForAThird(GameTestHelper helper) {
+        if (meal("salad") == Items.AIR) {
+            helper.succeed();
+            return;
+        }
+        Board setup = board(helper);
+        for (ItemStack layer : List.of(new ItemStack(Items.BOWL), new ItemStack(fd("cabbage_leaf")), new ItemStack(Items.CARROT),
+                new ItemStack(Items.BEETROOT))) {
+            setup.carry(layer);
+            setup.place();
+        }
+        helper.assertTrue(setup.layers() == 4, "bowl, leaf, carrot and beetroot wait, got " + BoardLogic.layers(setup.station.state()));
+        setup.finishIfItWaits();
+        ItemStack made = setup.onBoard();
+        helper.assertTrue(made.is(meal("salad")), "a salad at the cook's word, got " + made);
+        helper.assertTrue(mealDish("salad/2").map(AssemblyRecipes.Assembly::finish).orElse(null) == AssemblyRecipes.Finish.TOSS,
+                "tossed in its bowl");
+        helper.succeed();
+    }
+
     private static List<ItemStack> burger() {
         return List.of(new ItemStack(Items.BREAD), new ItemStack(fd("beef_patty")), new ItemStack(fd("cabbage_leaf")),
                 new ItemStack(fd("tomato")), new ItemStack(fd("onion")));

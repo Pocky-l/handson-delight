@@ -1,5 +1,51 @@
 # Changelog
 
+## [1.4.1+1.20.1] - Unreleased
+
+### New
+- Modpacks can put any craft together on the cutting board: add its result to the item tag
+  `handson_delight:assembled`, and every shaped or shapeless craft of it, from any mod, datapack or
+  [KubeJS](https://www.curseforge.com/minecraft/mc-mods/kubejs) script, is made on the board. Before, the tag only
+  worked for the recipes of Farmer's Delight and its addons. How to do it, and how to add recipes for the other
+  stations, is in the README, under "Modpacks".
+
+- Everything Farmer's Delight cuts on its board is worked at the cutting board now, not only food: logs and wood,
+  flowers, stone and bricks, clay and gravel, doors, boats and carts with a chest, leather armour and saddles. Each tool
+  has its own stroke: the axe strips a log down its side and splits wood with a swing, the pickaxe cracks stone with a
+  few blows, the shovel digs a lump of clay smaller with each shovelful, the hoe hooks the chest off a boat and pries it
+  away, the shears snip along their line. The book lists them after the kitchen's cuts.
+
+### Changed
+- Blocks lying on the cutting board (a pumpkin, a melon, a log) are drawn smaller, so the tool over them stays in sight.
+- Drawing a drink at [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg is a small pleasure
+  now: the tankard comes under the tap the moment you click, tipped in, the drink runs into it and rises as it is set
+  upright, a beer's head of foam builds up to the rim, the last drops fall, and the full tankard goes back to your hand
+  or your inventory. With Shift the tankards come one after the other.
+- Each of the keg's drinks looks like itself: beer golden under a head of foam with bubbles rising, stout nearly black,
+  vodka clear, egg grog thick and creamy, grenadine glittering. While a beer brews, a yeast head grows on it and
+  settles brown before it is done.
+- The keg comes shut, as it stands: click its lid to lift it off and lean it against the keg's side, click it again
+  to put it back. Things go in at the top only with the lid off, and a brew ferments only under its lid, as a real one
+  is kept shut; the last one to leave puts the lid back. A recipe picked in the book takes the lid off by itself.
+- A working brew lets off its gas now and then, at the station and to whoever passes by: the lid knocks up, foam fizzes
+  out along its seam with a soft blub, foam beads at the tap; a quiet keg is one that is too cold or too warm to work.
+  Meat and fish curing in a dry keg breathe a thin warm wisp instead, and lie on slats across its top.
+- The keg's badge shows what it makes, how warm the keg is against what the recipe takes, how far it has fermented and
+  the minutes and seconds left; with a drink in the keg, how many servings there are. When something is done it swells
+  with a chime and glints.
+- A bucket or bottle is tipped over the keg's rim and pours in; things dropped in splash in the drink's own colour and
+  send rings across it. Its walls are one pixel thick with an inside of their own, and a full keg is filled three
+  quarters up, so the drink no longer brims at the lid. Water looks dark and clear as in wood, honey deep amber. The
+  camera looks at the keg from three quarters, with the tankard under the tap in view.
+- The recipe book comes in shut and opens before your eyes, and its pages are laid out evenly: the list in the middle
+  of its page, what a dish is served in and how long it takes centred at the foot, on one line with the page arrows.
+
+### Fixed
+- The keg and the skillet look the same at the station as in the world: they no longer light up as you come, nor
+  blink or show twice as you come and go.
+- A click on the recipe book picks what is under the cursor also near the outer edges of its pages, which rise a
+  little, instead of the dish above or below it.
+
 ## [1.4.0+1.20.1] - Unreleased
 
 ### New

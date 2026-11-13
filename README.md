@@ -45,7 +45,10 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   go into the pot from your inventory; Shift + click puts in up to sixteen sets.
 - **Cutting board.** Right-click it with food to lay the food down. The knife stays in your hand or inventory and shows
   over the food: chop on the dashed marks; each cut goes through sixteen items of the stack. Food is cut across its own length, a kelp roll in
-  even slices and a pie in wedges, with one cut for each piece it gives, three at most.
+  even slices and a pie in wedges, with one cut for each piece it gives, three at most. Everything else Farmer's Delight
+  cuts on its board is worked there too, each with its own tool and stroke: an axe strips a log down its side and splits
+  a door, a pickaxe cracks stone and bricks, a shovel digs into clay and gravel, a hoe pries the chest off a boat or a
+  cart, shears snip leather armour and saddles.
 - **Dishes on the board.** Farmer's Delight's food crafts move from the crafting table to the cutting board: lay what
   goes down first (bread, a bowl, a stick, kelp, wheat, a pie crust), put the rest on it, and the dish is made. Salads
   are tossed in their bowl and plated meals laid in it, sandwiches closed with their bread, skewers threaded from the
@@ -62,7 +65,8 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 - **Keg** of [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin). Its lid opens on the
   liquid: pour a bucket or a bottle in at the opening, drop the ingredients in and they float while it ferments, the
   colour turning to the drink's. A thermometer on its badge shows how warm the keg is and how warm the recipe wants it.
-  Hold a tankard or a bottle at the tap to draw a drink; with an empty hand one is offered from your inventory.
+  Click the tap with a tankard or a bottle to draw a drink and watch it run in and rise under its head of foam; with an
+  empty hand one is offered from your inventory, and Shift draws as many as there are.
 - **A kitchen.** Rest the cursor at the edge of the screen beside another station and the camera moves over to it. A, D
   and the arrow keys do the same.
 - **For everyone.** Players nearby see the soup simmer, the spoon go round and the food land on the board.
@@ -76,7 +80,7 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 | Stir | Click the spoon's handle, move the mouse, click again to put it down |
 | Serve | Click the soup with a bowl |
 | Put a whole stack in | Shift + click it in the inventory |
-| Cut | Left-click the food on the board: the knife comes from your inventory |
+| Cut | Left-click what lies on the board: the knife, or the tool the cut takes, comes from your inventory |
 | Turn a piece on the stove | Click it |
 | Take food back | Right-click it |
 | Put the knife away | Right-click with it |
@@ -117,6 +121,65 @@ which each player sets in their own file.
 | `stirring_required` | `true` | Food you put into the pot waits for the spoon while you are at it |
 | `recipe_book` | `true` | The recipe book beside the stations |
 | `cooking_pot_time`, `skillet_time`, `stove_time` | `1.0` | How long food takes at that station: `2.0` twice as long, `0.5` half, from `0.1` to `10`. The pot's covers food left alone and fed by hoppers too |
+
+## Modpacks
+
+Recipes from datapacks and [KubeJS](https://www.curseforge.com/minecraft/mc-mods/kubejs) scripts work at every
+station, whatever mod or datapack adds them: the pot cooks every `farmersdelight:cooking` recipe, the board cuts every
+`farmersdelight:cutting` recipe, the skillet and the stove cook every campfire recipe. A soup, in
+`data/mypack/recipes/carrot_soup.json`:
+
+```json
+{
+  "type": "farmersdelight:cooking",
+  "ingredients": [
+    { "tag": "forge:crops/carrot" },
+    { "item": "minecraft:brown_mushroom" }
+  ],
+  "result": { "item": "mypack:carrot_soup" },
+  "container": { "item": "minecraft:bowl" },
+  "cookingtime": 200,
+  "experience": 1.0,
+  "recipe_book_tab": "meals"
+}
+```
+
+Dishes put together on the board are crafting recipes. The board takes those of Farmer's Delight and its addons by
+itself; for any other shaped or shapeless craft, add its result to the item tag `handson_delight:assembled`. A sandwich,
+in `data/mypack/recipes/club_sandwich.json`:
+
+```json
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:bread" },
+    { "item": "farmersdelight:cooked_bacon" },
+    { "item": "farmersdelight:tomato" }
+  ],
+  "result": { "item": "mypack:club_sandwich" }
+}
+```
+
+and in `data/handson_delight/tags/items/assembled.json`:
+
+```json
+{ "replace": false, "values": ["mypack:club_sandwich"] }
+```
+
+The same with KubeJS:
+
+```js
+ServerEvents.recipes(event => {
+  event.shapeless('mypack:club_sandwich', ['minecraft:bread', 'farmersdelight:cooked_bacon', 'farmersdelight:tomato'])
+})
+ServerEvents.tags('item', event => event.add('handson_delight:assembled', 'mypack:club_sandwich'))
+```
+
+A dish takes two to nine ingredients, of more than one kind. The board chooses what goes down first and how the dish is
+finished from its ingredients; to choose it yourself, tag the result `handson_delight:tossed` (a salad),
+`handson_delight:arranged` (a plated meal), `handson_delight:wrapped` (rolled in bread) or `handson_delight:frozen` (a
+popsicle). `handson_delight:not_assembled` keeps a dish in the crafting table. Autocrafters still make the board's
+dishes.
 
 ## Installation
 

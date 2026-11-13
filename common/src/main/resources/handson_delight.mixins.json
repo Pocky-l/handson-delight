@@ -3,6 +3,7 @@
   "minVersion": "0.8",
   "package": "com.pockyl.handson_delight.mixin",
   "compatibilityLevel": "JAVA_21",
+  "plugin": "com.pockyl.handson_delight.compat.OptionalMixins",
   "mixins": [
     "CookingPotBlockEntityAccessor",
     "CookingPotStirringMixin",
@@ -13,9 +14,11 @@
     "CraftingMenuMixin",
     "ServerRecipeBookMixin",
     "CuttingBoardBlockEntityMixin",
+    "CuttingBoardBlockEntityAccessor",
     "CuttingBoardBlockMixin",
     "SkilletBlockEntityMixin",
     "StoveBlockEntityMixin",
+    "StoveBlockMixin",
     "PlayerListMixin"
   ],
   "client": [
@@ -24,6 +27,7 @@
     "SpriteContentsAccessor",
     "StationRenderersMixin",
     "StoveSmokeMixin",
+    "AddonStoveSmokeMixin",
     "CampfireSmokeMixin"
   ],
   "injectors": {

@@ -134,6 +134,11 @@ public final class ModGameTests {
         PotTests.aHopperFedPotCooksByItself(helper);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void aHopperFeedsThePotByItselfBesideACook(GameTestHelper helper) {
+        PotTests.aHopperFeedsThePotByItselfBesideACook(helper);
+    }
+
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void oneSpoonOneHand(GameTestHelper helper) {
         PotTests.oneSpoonOneHand(helper);
@@ -147,6 +152,21 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void aCarvedKnifeStaysFarmersDelights(GameTestHelper helper) {
         BoardTests.aCarvedKnifeStaysFarmersDelights(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void takingACarvedKnifeLeavesTheBoardBare(GameTestHelper helper) {
+        BoardTests.takingACarvedKnifeLeavesTheBoardBare(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aBookPickLeavesTheFoodUntilTheRestIsThere(GameTestHelper helper) {
+        BoardTests.aBookPickLeavesTheFoodUntilTheRestIsThere(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aStackItsRecipeRefusesComesBackOff(GameTestHelper helper) {
+        BoardTests.aStackItsRecipeRefusesComesBackOff(helper);
     }
 
     @GameTest(template = "empty")
@@ -294,6 +314,11 @@ public final class ModGameTests {
         BoardTests.woodStaysWithFarmersDelight(helper);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void whatThePotServesOnIsCutAtTheStation(GameTestHelper helper) {
+        BoardTests.whatThePotServesOnIsCutAtTheStation(helper);
+    }
+
     @GameTest(template = "empty")
     public static void sixteenBurgersAtOnce(GameTestHelper helper) {
         BoardTests.sixteenBurgersAtOnce(helper);
@@ -307,6 +332,11 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 160)
     public static void farmersDelightsRightClickCooksItsWay(GameTestHelper helper) {
         SkilletTests.farmersDelightsRightClickCooksItsWay(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 160, batch = "skilletOff")
+    public static void aStationTurnedOffHandsThePanToFarmersDelight(GameTestHelper helper) {
+        SkilletTests.aStationTurnedOffHandsThePanToFarmersDelight(helper);
     }
 
     @GameTest(template = "empty")
@@ -327,6 +357,11 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void farmersDelightsWayStaysItsOwn(GameTestHelper helper) {
         StoveTests.farmersDelightsWayStaysItsOwn(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 500)
+    public static void piecesLaidByHandGoFarmersDelightsWay(GameTestHelper helper) {
+        StoveTests.piecesLaidByHandGoFarmersDelightsWay(helper);
     }
 
     @GameTest(template = "empty")

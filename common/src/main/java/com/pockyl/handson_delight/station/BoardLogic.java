@@ -21,6 +21,7 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
 import com.pockyl.handson_delight.assembly.Assembling;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
+import com.pockyl.handson_delight.mixin.CuttingBoardBlockEntityAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public final class BoardLogic implements StationLogic {
 
             @Override
             public void set(int index, ItemStack stack) {
-                Platform.INSTANCE.setItem(board, stack);
+                setOnBoard(stack);
             }
         });
         BoardLayers layers = (BoardLayers) board;
@@ -222,7 +223,7 @@ public final class BoardLogic implements StationLogic {
         ItemStack put = onBoard.isEmpty() ? carried.copyWithCount(moved) : onBoard.copyWithCount(onBoard.getCount() + moved);
         carried.shrink(moved);
         putBack(player, from, carried);
-        Platform.INSTANCE.setItem(board, put);
+        setOnBoard(put);
         if (onBoard.isEmpty()) {
             cutting = put.copyWithCount(1);
             restart(station);
@@ -237,7 +238,7 @@ public final class BoardLogic implements StationLogic {
     private List<ItemStack> startDish(StationContext station, Player player, ItemStack onBoard) {
         ItemStack base = onBoard.copyWithCount(Math.min(onBoard.getCount(), CuttingBoardStation.BATCH));
         ItemStack rest = onBoard.copyWithCount(onBoard.getCount() - base.getCount());
-        Platform.INSTANCE.setItem(board, ItemStack.EMPTY);
+        setOnBoard(ItemStack.EMPTY);
         cutting = ItemStack.EMPTY;
         restart(station);
         station.state().setItem(SlotRef.of(CuttingBoardStation.LAYERS, 0), base);
@@ -252,7 +253,7 @@ public final class BoardLogic implements StationLogic {
      * also the start of a bigger one waits for a click on the stack or a layer more: nothing is made that the cook did not mean.
      */
     private void finishIfWanted(StationContext station, Player player, List<ItemStack> layers) {
-        Optional<AssemblyRecipes.Assembly> dish = AssemblyRecipes.complete(layers);
+        Optional<AssemblyRecipes.Assembly> dish = Assembling.dishOf(layers, station.level());
         if (dish.isPresent() && (dish.get().id().equals(picked) || !AssemblyRecipes.canGrow(layers))) {
             assemble(station, player);
         }
@@ -278,12 +279,13 @@ public final class BoardLogic implements StationLogic {
         // A dish made before is taken off for the new one (a pie too, which the knife could slice); what lies there to be cut keeps
         // the board.
         ItemStack onBoard = Platform.INSTANCE.getItem(board);
+        boolean startsOnBoard = false;
         if (layers.isEmpty() && !onBoard.isEmpty()) {
             if (dish.ingredients().get(dish.base()).test(onBoard)) {
                 // Where the picked dish starts is its first layer: food to be cut, or a dish that grows into it (a hamburger into a
-                // cheeseburger).
-                layers = startDish(station, player, onBoard);
-                onBoard = ItemStack.EMPTY;
+                // cheeseburger). It becomes one only when the inventory has the rest: else it stays there, to be cut or taken.
+                startsOnBoard = true;
+                layers = List.of(onBoard.copyWithCount(Math.min(onBoard.getCount(), CuttingBoardStation.BATCH)));
             } else if (!AssemblyRecipes.isDish(onBoard.getItem()) && !Cutting.recipesFor(station.level(), onBoard).isEmpty()) {
                 return;
             }
@@ -301,7 +303,14 @@ public final class BoardLogic implements StationLogic {
             }
         }
         missing.sort(Comparator.comparing(ingredient -> ingredient != dish.base()));
-        if (missing.isEmpty() || layers.size() + missing.size() > CuttingBoardStation.MOST_LAYERS) {
+        if (layers.size() + missing.size() > CuttingBoardStation.MOST_LAYERS) {
+            return;
+        }
+        if (missing.isEmpty()) {
+            // What lies there is the whole dish already.
+            if (startsOnBoard) {
+                startDish(station, player, onBoard);
+            }
             return;
         }
         int want = layers.isEmpty() ? all ? CuttingBoardStation.BATCH : 1 : layers.get(0).getCount();
@@ -350,13 +359,15 @@ public final class BoardLogic implements StationLogic {
         if (sets == 0) {
             return;
         }
-        if (layers.isEmpty() && !onBoard.isEmpty()) {
-            Platform.INSTANCE.setItem(board, ItemStack.EMPTY);
-            taken(station, onBoard, -1);
-            give(player, onBoard);
-        }
         for (int[] removal : removals) {
             inventory.removeItem(removal[0], 1);
+        }
+        if (startsOnBoard) {
+            startDish(station, player, onBoard);
+        } else if (layers.isEmpty() && !onBoard.isEmpty()) {
+            setOnBoard(ItemStack.EMPTY);
+            taken(station, onBoard, -1);
+            give(player, onBoard);
         }
         for (int m = 0; m < missing.size(); m++) {
             state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, layers.size() + m), kinds[m].copyWithCount(counts[m]));
@@ -453,7 +464,7 @@ public final class BoardLogic implements StationLogic {
         }
         ItemStack onBoard = Platform.INSTANCE.getItem(board);
         if (!onBoard.isEmpty()) {
-            Platform.INSTANCE.setItem(board, ItemStack.EMPTY);
+            setOnBoard(ItemStack.EMPTY);
             restart(station);
             taken(station, onBoard, -1);
             give(player, onBoard);
@@ -468,7 +479,7 @@ public final class BoardLogic implements StationLogic {
     private void assemble(StationContext station, Player player) {
         StationState state = station.state();
         List<ItemStack> layers = layers(state);
-        Optional<AssemblyRecipes.Assembly> dish = AssemblyRecipes.complete(layers);
+        Optional<AssemblyRecipes.Assembly> dish = Assembling.dishOf(layers, station.level());
         Assembling.Made made = dish.map(it -> Assembling.make(it, layers, station.level(), CuttingBoardStation.BATCH)).orElse(null);
         if (made == null || made.rounds() == 0) {
             refuse(station);
@@ -486,7 +497,7 @@ public final class BoardLogic implements StationLogic {
                 int room = Math.min(result.getMaxStackSize(), board.getMaxStackSize()) - onBoard.getCount();
                 int there = Math.max(0, Math.min(room, result.getCount()));
                 if (there > 0) {
-                    Platform.INSTANCE.setItem(board, result.copyWithCount(onBoard.getCount() + there));
+                    setOnBoard(result.copyWithCount(onBoard.getCount() + there));
                     result.shrink(there);
                 }
             }
@@ -629,6 +640,18 @@ public final class BoardLogic implements StationLogic {
         return angles.clone();
     }
 
+    /**
+     * What lies on the board from now on. Nothing the station puts there or takes off is a tool carved into the board: Farmer's Delight
+     * forgets the carving only when its own use takes the item, and food put down after it would stand there as a carved knife.
+     */
+    private void setOnBoard(ItemStack stack) {
+        // The clients learn it with the board's update, as they learn the carving.
+        if (board.getLevel() != null && !board.getLevel().isClientSide()) {
+            ((CuttingBoardBlockEntityAccessor) board).handson$setCarving(false);
+        }
+        Platform.INSTANCE.setItem(board, stack);
+    }
+
     /** What is left of the stack goes back where it came from: the cursor, or its inventory slot. */
     private static void putBack(Player player, int from, ItemStack stack) {
         if (from >= 0) {
@@ -665,7 +688,8 @@ public final class BoardLogic implements StationLogic {
             data.put(CuttingBoardStation.SPOTS, where);
             data.put(CuttingBoardStation.ANGLES, how);
         }
-        AssemblyRecipes.complete(layers(state)).ifPresent(dish -> data.putString(CuttingBoardStation.DISH,
+        // Only a dish the layers really make: the cook's click finishes it, and takes the top layer off when there is none.
+        Assembling.dishOf(layers(state), station.level()).ifPresent(dish -> data.putString(CuttingBoardStation.DISH,
                 BuiltInRegistries.ITEM.getKey(dish.result().getItem()).toString()));
         if (!data.equals(state.data())) {
             state.setData(data);

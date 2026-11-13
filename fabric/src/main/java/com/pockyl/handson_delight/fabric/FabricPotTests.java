@@ -118,6 +118,11 @@ public final class FabricPotTests implements FabricGameTest {
         PotTests.aHopperFedPotCooksByItself(helper);
     }
 
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 300)
+    public void aHopperFeedsThePotByItselfBesideACook(GameTestHelper helper) {
+        PotTests.aHopperFeedsThePotByItselfBesideACook(helper);
+    }
+
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 60)
     public void oneSpoonOneHand(GameTestHelper helper) {
         PotTests.oneSpoonOneHand(helper);

@@ -124,6 +124,11 @@ public final class FabricBoardTests implements FabricGameTest {
         BoardTests.woodStaysWithFarmersDelight(helper);
     }
 
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void whatThePotServesOnIsCutAtTheStation(GameTestHelper helper) {
+        BoardTests.whatThePotServesOnIsCutAtTheStation(helper);
+    }
+
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void sixteenBurgersAtOnce(GameTestHelper helper) {
         BoardTests.sixteenBurgersAtOnce(helper);
@@ -147,6 +152,21 @@ public final class FabricBoardTests implements FabricGameTest {
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void aCarvedKnifeStaysFarmersDelights(GameTestHelper helper) {
         BoardTests.aCarvedKnifeStaysFarmersDelights(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void takingACarvedKnifeLeavesTheBoardBare(GameTestHelper helper) {
+        BoardTests.takingACarvedKnifeLeavesTheBoardBare(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aBookPickLeavesTheFoodUntilTheRestIsThere(GameTestHelper helper) {
+        BoardTests.aBookPickLeavesTheFoodUntilTheRestIsThere(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aStackItsRecipeRefusesComesBackOff(GameTestHelper helper) {
+        BoardTests.aStackItsRecipeRefusesComesBackOff(helper);
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)

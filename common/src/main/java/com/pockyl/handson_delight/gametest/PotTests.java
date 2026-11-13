@@ -184,6 +184,13 @@ public final class PotTests {
         helper.succeed();
     }
 
+    /** Puts {@code stack} into the pot as a cook at the station does. */
+    private static void putIn(Setup setup, int slot, ItemStack stack) {
+        SlotRef ref = SlotRef.of(CookingPotStation.INGREDIENTS, slot);
+        setup.station.state().setItem(ref, stack);
+        setup.logic.onSlotChanged(setup.station, ref);
+    }
+
     private static void fill(CookingPotBlockEntity pot, int servings) {
         Platform.INSTANCE.setItem(pot, 0, new ItemStack(Items.BEEF, servings));
         Platform.INSTANCE.setItem(pot, 1, new ItemStack(Items.CARROT, servings));
@@ -245,6 +252,28 @@ public final class PotTests {
         helper.runAfterDelay(270, () -> {
             helper.assertTrue(setup.pot.getMeal().is(fd("beef_stew")) && setup.pot.getMeal().getCount() == 1,
                     "one stew with nobody stirring, at Farmer's Delight's pace, got " + setup.pot.getMeal());
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A hopper feeding the pot while a cook stands at it still feeds it by itself: its food cooks Farmer's Delight's way and does not
+     * wait for the spoon.
+     */
+    public static void aHopperFeedsThePotByItselfBesideACook(GameTestHelper helper) {
+        Setup setup = pot(helper);
+        BlockPos above = new BlockPos(1, 3, 1);
+        helper.setBlock(above, Blocks.HOPPER);
+        HopperBlockEntity hopper = (HopperBlockEntity) helper.getBlockEntity(above);
+        hopper.setItem(0, new ItemStack(Items.BEEF, 2));
+        hopper.setItem(1, new ItemStack(Items.CARROT, 2));
+        hopper.setItem(2, new ItemStack(Items.POTATO, 2));
+        // The cook is at the station all along.
+        helper.onEachTick(() -> setup.logic.tick(setup.station));
+        helper.runAfterDelay(270, () -> {
+            helper.assertTrue(setup.pot.getMeal().is(fd("beef_stew")) && setup.pot.getMeal().getCount() == 1,
+                    "one stew with the cook beside it and nobody stirring, got " + setup.pot.getMeal());
+            empty(setup.pot);
             helper.succeed();
         });
     }
@@ -428,9 +457,9 @@ public final class PotTests {
     /** Food a cook put in waits for the spoon while they are at the pot; once they walked away it cooks Farmer's Delight's way. */
     public static void aPotLeftByItsCookCooksOn(GameTestHelper helper) {
         Setup setup = pot(helper);
-        Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(Items.BEEF, 2));
-        Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.CARROT, 2));
-        Platform.INSTANCE.setItem(setup.pot, 2, new ItemStack(Items.POTATO, 2));
+        putIn(setup, 0, new ItemStack(Items.BEEF, 2));
+        putIn(setup, 1, new ItemStack(Items.CARROT, 2));
+        putIn(setup, 2, new ItemStack(Items.POTATO, 2));
         setup.logic.tick(setup.station);
         helper.runAfterDelay(20, () -> setup.logic.tick(setup.station));
         helper.runAfterDelay(40, () -> {
@@ -496,9 +525,9 @@ public final class PotTests {
     public static void nothingCooksWithoutStirring(GameTestHelper helper) {
         Setup setup = pot(helper);
         Player player = helper.makeMockPlayer(GameType.CREATIVE);
-        Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(Items.BEEF));
-        Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.CARROT));
-        Platform.INSTANCE.setItem(setup.pot, 2, new ItemStack(Items.POTATO));
+        putIn(setup, 0, new ItemStack(Items.BEEF));
+        putIn(setup, 1, new ItemStack(Items.CARROT));
+        putIn(setup, 2, new ItemStack(Items.POTATO));
         // A cook at the station put it in: it waits for the spoon.
         setup.logic.tick(setup.station);
         helper.runAfterDelay(30, () -> {

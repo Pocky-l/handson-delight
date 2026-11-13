@@ -19,6 +19,7 @@ import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
 
 import com.pockyl.diegesis.api.Diegesis;
 import com.pockyl.diegesis.api.station.StationContext;
+import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.platform.Platform;
 
@@ -76,6 +77,13 @@ public final class SkilletCooking {
         Frying frying = frying(skillet);
         Level level = skillet.getLevel();
         if (!frying.byHand() || level == null) {
+            return false;
+        }
+        if (!HandsOnConfig.skillet()) {
+            // The station was turned off: nobody can toss this any more, Farmer's Delight cooks it its way.
+            ((FryingPan) skillet).handson$farmersDelightsTime(skilletTicks(level, stack, ((FryingPan) skillet).handson$fireAspect()));
+            frying.farmersDelightsWay();
+            send(skillet, true);
             return false;
         }
         Optional<CampfireCookingRecipe> recipe = recipe(level, stack);

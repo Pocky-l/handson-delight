@@ -851,7 +851,9 @@ public final class BoardBehavior implements StationBehavior {
         }
         StationState state = view.state();
         if (!BoardLogic.layers(state).isEmpty()) {
-            boolean ready = !state.data().getString(CuttingBoardStation.DISH).isEmpty();
+            // A left click finishes the dish the layers make; a right click, or a click on layers that make none yet, takes the top
+            // one back, as a right click takes back food.
+            boolean ready = !state.data().getString(CuttingBoardStation.DISH).isEmpty() && click.button() == 0;
             view.sendAction(ready ? CuttingBoardStation.ACTION_ASSEMBLE : CuttingBoardStation.ACTION_TAKE, new CompoundTag());
             return;
         }

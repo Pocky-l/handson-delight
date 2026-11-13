@@ -6,6 +6,7 @@ import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A dish made of the layers on the board by its own recipe, round after round as the crafting table would make it: each round takes
@@ -18,6 +19,20 @@ public final class Assembling {
 
     /** What the rounds made: the dishes, what is left of every layer, and what the recipe left that is no layer's. */
     public record Made(List<ItemStack> dishes, List<ItemStack> layers, List<ItemStack> leftovers, int rounds) {
+    }
+
+    /**
+     * The dish {@code layers} make here: they are all of it, and its own recipe makes it of them. A recipe may ask more than its
+     * ingredients show (an addon's own check, a tag inside an item): layers it refuses make no dish, so a click takes them off again
+     * instead of trying in vain.
+     */
+    public static Optional<AssemblyRecipes.Assembly> dishOf(List<ItemStack> layers, Level level) {
+        for (AssemblyRecipes.Assembly dish : AssemblyRecipes.all()) {
+            if (AssemblyRecipes.assign(dish, layers, true) != null && make(dish, layers, level, 1).rounds() > 0) {
+                return Optional.of(dish);
+            }
+        }
+        return Optional.empty();
     }
 
     /** Up to {@code most} rounds of {@code dish} from {@code layers} (bottom first, not changed). */

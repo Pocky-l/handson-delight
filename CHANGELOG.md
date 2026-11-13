@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.3.1+1.21.1] - Unreleased
+### Fixed
+- Things that are cut with a knife into what meals are served on are cut at the board, with their marks and a page in
+  its book: [Fright's Delight](https://www.curseforge.com/minecraft/mc-mods/frights-delight)'s bone becomes the shards
+  for its kebabs.
+- Picking a dish in the board's book no longer takes the food lying there to be cut when the rest of the dish is not
+  in your inventory.
+- A right click on a dish being put together takes its top layer back, also when the dish is complete. A stack whose
+  recipe does not take what lies there is no longer shown as ready, so a click gives its layers back.
+- A knife carved into the board and taken off at the station no longer leaves the board stuck: the station opens on it
+  again and food put there can be cut.
+- [Real Camera](https://www.curseforge.com/minecraft/mc-mods/real-camera) and
+  [Leawind's Third Person](https://www.curseforge.com/minecraft/mc-mods/leawind-third-person) no longer turn the
+  stations' camera away: you see the pot, the board, the skillet and the stove as without them.
+- Food a hopper or a pipe brings into the cooking pot while you stand at it cooks by itself, as it does when you are
+  away. Only what you put in at the station waits for the spoon.
+- Players whose game has no Hands-On Delight can get the food laid on a stove at the station: when they use the stove,
+  Farmer's Delight takes it over, cooks it and throws it off the grill as usual.
+- With the skillet station turned off in the config, food put into a skillet at the station before cooks the Farmer's
+  Delight way instead of waiting for a toss.
+- The stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) and
+  [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) no longer puff dark smoke
+  over the food while you grill at them.
+
+Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.8.
+
 ## [1.3.0+1.21.1] - 2026-11-11
 ### New
 - The stations work on the flying ships of [Create Aeronautics](https://modrinth.com/mod/create-aeronautics): the pot, the board, the skillet

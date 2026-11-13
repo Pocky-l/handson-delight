@@ -136,6 +136,9 @@ public final class PotLogic implements StationLogic {
     @Override
     public void onSlotChanged(StationContext station, SlotRef slot) {
         unsorted = true;
+        if (slot.group().equals(CookingPotStation.INGREDIENTS) && !station.level().isClientSide()) {
+            ((PotStirring) pot).handson$feedByHand();
+        }
     }
 
     @Override
@@ -591,6 +594,7 @@ public final class PotLogic implements StationLogic {
         for (int i = 0; i < ingredients.size(); i++) {
             Platform.INSTANCE.setItem(pot, i, inPot[i]);
         }
+        ((PotStirring) pot).handson$feedByHand();
         unsorted = true;
     }
 

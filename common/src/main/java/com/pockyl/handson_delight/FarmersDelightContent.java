@@ -27,6 +27,7 @@ public final class FarmersDelightContent {
     public static final SoundEvent KNIFE_CUT = sound("block.cutting_board.knife_cut");
     public static final SoundEvent BOARD_PLACE = sound("block.cutting_board.place_item");
     public static final SoundEvent BOARD_REMOVE = sound("block.cutting_board.remove_item");
+    public static final SoundEvent BOARD_CARVE = sound("block.cutting_board.carve_tool");
 
     private FarmersDelightContent() {
     }

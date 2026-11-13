@@ -11,10 +11,13 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.item.ShovelItem;
+import net.minecraft.world.item.TridentItem;
 import org.joml.Vector3f;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
 
@@ -162,6 +165,15 @@ public final class BoardBehavior implements StationBehavior {
     private static final float LIFT_TIME = 0.1F;
     private static final float LIFT_HEIGHT = 2.5F;
     private static final float AWAY_TIME = 0.2F;
+    /**
+     * Where Farmer's Delight draws a tool stuck into the board: the middle of the block, 0.23 of a block up (here from the lift
+     * ghosts' place), at 0.6 of its size; pulled up this far, this fast.
+     */
+    private static final float CARVED_X = 8.0F;
+    private static final float CARVED_Y = 0.23F * 16.0F - 1.01F;
+    private static final float CARVED_SCALE = 0.6F;
+    private static final float PULL_HEIGHT = 5.0F;
+    private static final float PULL_TIME = 0.18F;
     private static final float BOUNCE_DOWN = 0.09F;
     private static final float BOUNCE_UP = 0.22F;
     /** Ghosts of what comes off or bounces back: the scene's {@code lift_N}. */
@@ -259,24 +271,20 @@ public final class BoardBehavior implements StationBehavior {
     }
 
     /**
-     * What the cook came with is what they meant to do: a right click with food lays it on an empty board, as Farmer's Delight's own
-     * board takes it, and a knife comes in hand, ready to cut. Never slower than the board without the station.
+     * What the cook came with is what they meant to do: a right click with food lays it on the board as a click with it would, as
+     * Farmer's Delight's own board takes it, and never slower. A knife stays in its slot: in the hand it is the one offered over the
+     * food, so the first click cuts. What the board cannot take stays in the hand without a word (the server decides, it knows the
+     * dishes before the book arrives).
      */
     private void useHeld(StationView view, LocalPlayer player) {
         ItemStack held = player.getMainHandItem();
-        int slot = player.getInventory().selected;
-        if (held.isEmpty() || !player.inventoryMenu.getCarried().isEmpty()) {
+        if (held.isEmpty() || !player.inventoryMenu.getCarried().isEmpty() || Cutting.isTool(view.level(), held)) {
             return;
         }
-        if (Cutting.all(view.level()).stream().anyMatch(recipe -> recipe.getTool().test(held))) {
-            view.takeFromInventory(slot);
-            return;
-        }
-        ItemStack onBoard = view.state().getItem(CuttingBoardStation.BOARD_SLOT);
-        boolean free = onBoard.isEmpty() && BoardLogic.layers(view.state()).isEmpty();
-        if (free || ItemStack.isSameItemSameComponents(onBoard, held)) {
-            onInventoryShiftClick(view, slot, held);
-        }
+        CompoundTag how = new CompoundTag();
+        how.putInt(CuttingBoardStation.FROM, player.getInventory().selected);
+        how.putBoolean(CuttingBoardStation.BY_USE, true);
+        view.sendAction(CuttingBoardStation.ACTION_PLACE, how);
     }
 
     @Override
@@ -510,6 +518,38 @@ public final class BoardBehavior implements StationBehavior {
             after(LIFT_TIME + AWAY_TIME, () -> node.setVisible(false));
         });
         view.playSound(SoundEvents.ITEM_PICKUP, "surface", 0.3F, 1.5F);
+    }
+
+    /**
+     * A tool stuck into the board comes out: drawn where Farmer's Delight's renderer stood it (upright through the middle of the
+     * block, edge down, at its size), it is drawn up out of the wood and melts away as what is taken does.
+     */
+    private void pulledOut(StationView view, ItemStack tool) {
+        ghost = (ghost + 1) % GHOSTS;
+        view.node("lift_" + ghost).ifPresent(node -> {
+            node.setShape(null, null);
+            node.setVisual(Visual.ofItem(tool.getItem()).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));
+            // The scene faces the cook, half a turn from how Farmer's Delight's renderer stands to the block.
+            node.rotateTo(0.0F, 180.0F, carvedTurn(tool), 0.0F);
+            node.scaleTo(CARVED_SCALE, 0.0F);
+            float x = CARVED_X - MIDDLE_X;
+            node.moveTo(x, CARVED_Y, 0.0F, 0.0F);
+            node.setVisible(true);
+            node.moveTo(x, CARVED_Y + PULL_HEIGHT, 0.0F, PULL_TIME);
+            after(PULL_TIME, () -> {
+                node.moveTo(x, CARVED_Y + PULL_HEIGHT + 1.0F, 0.0F, AWAY_TIME);
+                node.scaleTo(0.0F, AWAY_TIME);
+            });
+            after(PULL_TIME + AWAY_TIME, () -> node.setVisible(false));
+        });
+        view.playSound(FarmersDelightContent.BOARD_REMOVE, "surface", 0.6F, 0.9F);
+        view.playSound(SoundEvents.ITEM_PICKUP, "surface", 0.3F, 1.5F);
+    }
+
+    /** How Farmer's Delight turns a tool stuck into the board about the board's front, degrees: picks and hoes askew, tridents the other way. */
+    private static float carvedTurn(ItemStack tool) {
+        return tool.getItem() instanceof PickaxeItem || tool.getItem() instanceof HoeItem ? 225.0F
+                : tool.getItem() instanceof TridentItem ? 135.0F : 180.0F;
     }
 
     /** The board will not have {@code stack}: it comes down on the top of what lies there and bounces back up to the hand. */
@@ -850,6 +890,11 @@ public final class BoardBehavior implements StationBehavior {
             return;
         }
         StationState state = view.state();
+        if (carved(view)) {
+            // A tool stuck into the board comes out into the inventory with either button, as Farmer's Delight's empty hand takes it.
+            view.sendAction(CuttingBoardStation.ACTION_TAKE, new CompoundTag());
+            return;
+        }
         if (!BoardLogic.layers(state).isEmpty()) {
             // A left click finishes the dish the layers make; a right click, or a click on layers that make none yet, takes the top
             // one back, as a right click takes back food.
@@ -894,12 +939,17 @@ public final class BoardBehavior implements StationBehavior {
     /**
      * The knife on the cursor chops, and the right button puts it away, as a right click puts away whatever
      * the cursor holds; any other stack let go on the board goes where the board says: onto the dish or to be cut, all
-     * of it or, with the right button, one.
+     * of it or, with the right button, one. Shift with a tool over the bare board sticks it in, as sneaking does with Farmer's
+     * Delight's own board.
      */
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
             book.click(view);
+            return true;
+        }
+        if (shift && Cutting.canStick(stack) && shownItem.isEmpty() && !carved(view) && BoardLogic.layers(view.state()).isEmpty()) {
+            view.sendAction(CuttingBoardStation.ACTION_CARVE, new CompoundTag());
             return true;
         }
         if (button == 1 && Cutting.all(view.level()).stream().anyMatch(recipe -> recipe.getTool().test(stack))) {
@@ -954,9 +1004,13 @@ public final class BoardBehavior implements StationBehavior {
             view.playSound(SoundEvents.WOOD_HIT, "surface", 0.4F, 1.4F);
         } else if (CuttingBoardStation.EFFECT_TAKEN.equals(effect)) {
             ItemStack taken = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(CuttingBoardStation.STACK));
-            if (!taken.isEmpty()) {
+            if (!taken.isEmpty() && data.getBoolean(CuttingBoardStation.CARVED)) {
+                pulledOut(view, taken);
+            } else if (!taken.isEmpty()) {
                 taken(view, taken, data.getInt(CuttingBoardStation.AT));
             }
+        } else if (CuttingBoardStation.EFFECT_CARVED.equals(effect)) {
+            view.playSound(FarmersDelightContent.BOARD_CARVE, "surface", 1.0F, 0.8F);
         } else if (CuttingBoardStation.EFFECT_ASSEMBLED.equals(effect)) {
             List<ItemStack> made = new ArrayList<>();
             ListTag layers = data.getList(CuttingBoardStation.LAYERS, Tag.TAG_COMPOUND);

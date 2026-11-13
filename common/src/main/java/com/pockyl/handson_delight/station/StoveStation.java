@@ -1,11 +1,20 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.FireChargeItem;
+import net.minecraft.world.item.FlintAndSteelItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ShovelItem;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
@@ -93,15 +102,30 @@ public final class StoveStation {
     }
 
     /**
-     * With food or an empty hand: the grill. Sneaking keeps the stove's own use, and so does anything else in the hand: a flint and
-     * steel lights it, a shovel puts it out. A pot or skillet standing on it covers the grill: it is theirs to open.
+     * With food, an empty hand or a kitchen thing the stove has no use for: the grill. Sneaking keeps the stove's own use, and so
+     * does what it has a use for: a flint and steel lights it, a shovel or a water bucket puts it out, a block (a pot, a skillet) is
+     * set on it. A pot or skillet standing on it covers the grill: it is theirs to open.
      */
-    private static boolean opens(Player player, BlockPos pos, BlockState state) {
+    public static boolean opens(Player player, BlockPos pos, BlockState state) {
         if (player.isSecondaryUseActive() || !(player.level().getBlockEntity(pos) instanceof AbstractStoveBlockEntity stove)
                 || StoveCooking.isCovered(stove)) {
             return false;
         }
         ItemStack held = player.getMainHandItem();
-        return held.isEmpty() || SkilletCooking.recipe(player.level(), held).isPresent();
+        return held.isEmpty() || SkilletCooking.recipe(player.level(), held).isPresent() || isKitchenThing(player.level(), held);
+    }
+
+    /**
+     * Whether {@code held} is what a cook carries from station to station and the stove has no use of its own for: a knife from
+     * the board, food that is not grilled, a bowl or a bottle. It opens the grill as an empty hand does; before, nothing happened
+     * at all, and a cook with the knife in hand could not go over to the stove.
+     */
+    static boolean isKitchenThing(Level level, ItemStack held) {
+        Item item = held.getItem();
+        if (item instanceof BlockItem || item instanceof FlintAndSteelItem || item instanceof FireChargeItem || item instanceof ShovelItem
+                || item instanceof BucketItem) {
+            return false;
+        }
+        return held.has(DataComponents.FOOD) || Cutting.isTool(level, held) || held.is(Items.BOWL) || held.is(Items.GLASS_BOTTLE);
     }
 }

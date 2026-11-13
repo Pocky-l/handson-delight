@@ -1,7 +1,20 @@
 # Changelog
 
 ## [1.4.0+1.21.1] - Unreleased
+
+### New
+- Stick a tool into the cutting board at the station: hold a knife, a sword or an axe on the cursor and Shift + click the
+  bare board. A click takes it out again, and food you put on the board takes it out into your inventory.
+- A knife in your off hand cuts at the board, as a knife in your inventory does.
+
 ### Fixed
+- A right click on the cutting board with a knife no longer puts the knife on your cursor: it stays in your hand and
+  shows over the food, so the first click cuts.
+- A right click on the board with food lays it where a click at the station would: as the next layer of a dish being
+  put together, or in place of a finished dish or a tool stuck in the board, which go to your inventory. Anything the
+  board cannot use stays in your hand.
+- A right click on the stove with a knife, a bowl or food that is not grilled opens the station instead of doing
+  nothing, so you can go over from the board to the stove with the knife in hand.
 - On Fabric the stations open on structures that [Sable](https://modrinth.com/mod/sable) moves, such as builds of
   [Sable Beyond](https://modrinth.com/mod/sable_beyond), instead of Farmer's Delight's menus.
 - Things that are cut with a knife into what meals are served on are cut at the board, with their marks and a page in

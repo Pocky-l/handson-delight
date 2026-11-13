@@ -106,7 +106,10 @@ public final class BoardTests {
     }
 
     private static Board board(GameTestHelper helper) {
-        BlockPos at = new BlockPos(1, 1, 1);
+        return board(helper, new BlockPos(1, 1, 1));
+    }
+
+    private static Board board(GameTestHelper helper, BlockPos at) {
         helper.setBlock(at, FarmersDelightContent.CUTTING_BOARD.get());
         BlockPos pos = helper.absolutePos(at);
         Station station = new Station(helper.getLevel(), pos);
@@ -707,15 +710,125 @@ public final class BoardTests {
         });
     }
 
-    /** A knife carved into the board is Farmer's Delight's: its own use gives it back, the station does not open on it. */
-    public static void aCarvedKnifeStaysFarmersDelights(GameTestHelper helper) {
+    /**
+     * A tool stuck into the board opens the station like a bare board; sneaking keeps Farmer's Delight's own use. Food put down takes
+     * its place: the tool comes out into the inventory, from where it cuts that food.
+     */
+    public static void aToolStuckInTheBoardOpensTheStation(GameTestHelper helper) {
         Board setup = board(helper);
         BlockPos pos = setup.station.pos();
         BlockState state = helper.getLevel().getBlockState(pos);
-        helper.assertTrue(CuttingBoardStation.opens(setup.cook, pos, state), "a bare board opens");
         setup.board.carveToolOnBoard(new ItemStack(fd("iron_knife")));
-        helper.assertFalse(CuttingBoardStation.opens(setup.cook, pos, state), "a board with a knife carved in does not");
+        helper.assertTrue(CuttingBoardStation.opens(setup.cook, pos, state), "a board with a knife stuck in opens");
+        setup.cook.setShiftKeyDown(true);
+        helper.assertFalse(CuttingBoardStation.opens(setup.cook, pos, state), "sneaking keeps Farmer's Delight's own use");
+        setup.cook.setShiftKeyDown(false);
+        setup.carry(new ItemStack(fd("cabbage"), 3));
+        setup.place();
+        helper.assertTrue(setup.onBoard().is(fd("cabbage")) && setup.onBoard().getCount() == 3 && !setup.board.isItemCarvingBoard(),
+                "the cabbages lie there to be cut, nothing stuck in");
+        helper.assertTrue(setup.cook.getInventory().countItem(fd("iron_knife")) == 1, "the knife came out into the inventory");
+        helper.assertTrue(Cutting.toolSlot(helper.getLevel(), setup.onBoard(), setup.cook.getInventory()) >= 0, "and cuts from there");
         helper.succeed();
+    }
+
+    /**
+     * A tool on the cursor is stuck into the bare board from the station, as Farmer's Delight's sneaking use sticks it in, and a click
+     * takes it out again into the inventory. Food is no tool, and nothing is stuck into food lying there.
+     */
+    public static void aToolIsStuckIntoTheBoardFromTheStation(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.carry(new ItemStack(fd("cabbage")));
+        setup.act(CuttingBoardStation.ACTION_CARVE, new CompoundTag());
+        helper.assertTrue(setup.onBoard().isEmpty() && setup.cook.inventoryMenu.getCarried().is(fd("cabbage")), "food is no tool to stick in");
+        setup.carry(setup.knife.copy());
+        setup.act(CuttingBoardStation.ACTION_CARVE, new CompoundTag());
+        helper.assertTrue(setup.board.isItemCarvingBoard() && setup.onBoard().is(fd("iron_knife")), "the knife stands in the board");
+        helper.assertTrue(setup.cook.inventoryMenu.getCarried().isEmpty(), "and left the hand");
+        helper.assertTrue(setup.station.effects.contains(CuttingBoardStation.EFFECT_CARVED), "everybody hears it go in");
+        setup.act(CuttingBoardStation.ACTION_TAKE, new CompoundTag());
+        helper.assertTrue(!setup.board.isItemCarvingBoard() && setup.onBoard().isEmpty(), "a click takes it out");
+        helper.assertTrue(setup.cook.getInventory().countItem(fd("iron_knife")) == 1, "into the inventory");
+        setup.carry(new ItemStack(fd("cabbage")));
+        setup.place();
+        setup.carry(new ItemStack(Items.IRON_SWORD));
+        setup.act(CuttingBoardStation.ACTION_CARVE, new CompoundTag());
+        helper.assertTrue(!setup.board.isItemCarvingBoard() && setup.onBoard().is(fd("cabbage")), "nothing is stuck into food");
+        helper.assertTrue(setup.cook.inventoryMenu.getCarried().is(Items.IRON_SWORD), "the sword stays in the hand");
+        helper.succeed();
+    }
+
+    /**
+     * Food put down where something lies that is no work in hand, a dish made before or a block put there without the station, sends
+     * that to the cook and takes its place. Food waiting to be cut stays, and other food bounces back from it.
+     */
+    public static void foodMovesAFinishedDishAside(GameTestHelper helper) {
+        Board setup = board(helper);
+        Platform.INSTANCE.setItem(setup.board, new ItemStack(fd("hamburger"), 2));
+        setup.carry(new ItemStack(Items.BEEF, 3));
+        setup.place();
+        helper.assertTrue(setup.onBoard().is(Items.BEEF) && setup.onBoard().getCount() == 3, "the beef lies there to be cut");
+        helper.assertTrue(setup.cook.getInventory().countItem(fd("hamburger")) == 2, "the burgers went to the cook");
+        setup.carry(new ItemStack(fd("cabbage")));
+        setup.place();
+        helper.assertTrue(setup.onBoard().is(Items.BEEF) && setup.cook.inventoryMenu.getCarried().is(fd("cabbage")),
+                "beef waiting to be cut stays, the cabbage stays in the hand");
+        helper.assertTrue(setup.station.effects.contains(CuttingBoardStation.EFFECT_REFUSED), "it bounced back");
+        Board other = board(helper, new BlockPos(3, 1, 1));
+        Platform.INSTANCE.setItem(other.board, new ItemStack(Items.COBBLESTONE));
+        other.carry(new ItemStack(fd("cabbage")));
+        other.place();
+        helper.assertTrue(other.onBoard().is(fd("cabbage")) && other.cook.getInventory().countItem(Items.COBBLESTONE) == 1,
+                "a block put there before goes to the cook too");
+        helper.succeed();
+    }
+
+    /**
+     * The stack in hand as the cook opens the board by its use goes down as a click would lay it; what the board cannot take stays in
+     * its slot without a word: no bounce, no sound.
+     */
+    public static void whatTheHandHeldStaysWhenTheBoardCannotTakeIt(GameTestHelper helper) {
+        Board setup = board(helper);
+        Inventory inventory = setup.cook.getInventory();
+        inventory.setItem(0, new ItemStack(Items.COBBLESTONE, 5));
+        setup.act(CuttingBoardStation.ACTION_PLACE, byUse(0));
+        helper.assertTrue(inventory.getItem(0).getCount() == 5 && setup.onBoard().isEmpty(), "a block stays in the hand");
+        inventory.setItem(1, new ItemStack(fd("cabbage"), 4));
+        setup.act(CuttingBoardStation.ACTION_PLACE, byUse(1));
+        helper.assertTrue(setup.onBoard().is(fd("cabbage")) && setup.onBoard().getCount() == 4 && inventory.getItem(1).isEmpty(),
+                "food goes down whole");
+        inventory.setItem(2, new ItemStack(Items.BEEF, 2));
+        setup.act(CuttingBoardStation.ACTION_PLACE, byUse(2));
+        helper.assertTrue(inventory.getItem(2).getCount() == 2 && setup.onBoard().is(fd("cabbage")), "other food stays in the hand");
+        helper.assertFalse(setup.station.effects.contains(CuttingBoardStation.EFFECT_REFUSED), "without a word");
+        helper.succeed();
+    }
+
+    private static CompoundTag byUse(int slot) {
+        CompoundTag data = new CompoundTag();
+        data.putInt(CuttingBoardStation.FROM, slot);
+        data.putBoolean(CuttingBoardStation.BY_USE, true);
+        return data;
+    }
+
+    /** A knife in the off hand is the one offered over the food when the main hand holds none: the first chop cuts with it. */
+    public static void aKnifeInTheOffHandCuts(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.carry(new ItemStack(fd("cabbage"), 2));
+        setup.place();
+        Inventory inventory = setup.cook.getInventory();
+        inventory.setItem(Inventory.SLOT_OFFHAND, setup.knife.copy());
+        helper.assertTrue(Cutting.toolSlot(helper.getLevel(), setup.onBoard(), inventory) == Inventory.SLOT_OFFHAND,
+                "the off hand's knife is found");
+        CompoundTag first = new CompoundTag();
+        first.putInt(CuttingBoardStation.MARK, 0);
+        first.putFloat(CuttingBoardStation.AT, 10.0F);
+        setup.act(CuttingBoardStation.ACTION_CHOP, first);
+        helper.runAfterDelay(4, () -> {
+            helper.assertTrue(setup.onBoard().isEmpty() && inventory.countItem(fd("cabbage_leaf")) == 4, "one cut halves both cabbages");
+            helper.assertTrue(inventory.getItem(Inventory.SLOT_OFFHAND).is(fd("iron_knife")), "the knife stays in the off hand");
+            helper.succeed();
+        });
     }
 
     /** A carved knife the station takes off leaves the board bare, as Farmer's Delight's own take does: food laid next lies flat. */

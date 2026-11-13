@@ -150,8 +150,28 @@ public final class FabricBoardTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
-    public void aCarvedKnifeStaysFarmersDelights(GameTestHelper helper) {
-        BoardTests.aCarvedKnifeStaysFarmersDelights(helper);
+    public void aToolStuckInTheBoardOpensTheStation(GameTestHelper helper) {
+        BoardTests.aToolStuckInTheBoardOpensTheStation(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aToolIsStuckIntoTheBoardFromTheStation(GameTestHelper helper) {
+        BoardTests.aToolIsStuckIntoTheBoardFromTheStation(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void foodMovesAFinishedDishAside(GameTestHelper helper) {
+        BoardTests.foodMovesAFinishedDishAside(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void whatTheHandHeldStaysWhenTheBoardCannotTakeIt(GameTestHelper helper) {
+        BoardTests.whatTheHandHeldStaysWhenTheBoardCannotTakeIt(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void aKnifeInTheOffHandCuts(GameTestHelper helper) {
+        BoardTests.aKnifeInTheOffHandCuts(helper);
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)

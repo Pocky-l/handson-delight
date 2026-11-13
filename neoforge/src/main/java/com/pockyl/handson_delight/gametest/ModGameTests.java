@@ -162,8 +162,28 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
-    public static void aCarvedKnifeStaysFarmersDelights(GameTestHelper helper) {
-        BoardTests.aCarvedKnifeStaysFarmersDelights(helper);
+    public static void aToolStuckInTheBoardOpensTheStation(GameTestHelper helper) {
+        BoardTests.aToolStuckInTheBoardOpensTheStation(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aToolIsStuckIntoTheBoardFromTheStation(GameTestHelper helper) {
+        BoardTests.aToolIsStuckIntoTheBoardFromTheStation(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void foodMovesAFinishedDishAside(GameTestHelper helper) {
+        BoardTests.foodMovesAFinishedDishAside(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void whatTheHandHeldStaysWhenTheBoardCannotTakeIt(GameTestHelper helper) {
+        BoardTests.whatTheHandHeldStaysWhenTheBoardCannotTakeIt(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void aKnifeInTheOffHandCuts(GameTestHelper helper) {
+        BoardTests.aKnifeInTheOffHandCuts(helper);
     }
 
     @GameTest(template = "empty")
@@ -399,6 +419,11 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void everyStoveOfTheTagIsAStation(GameTestHelper helper) {
         StoveTests.everyStoveOfTheTagIsAStation(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void kitchenThingsOpenTheStove(GameTestHelper helper) {
+        StoveTests.kitchenThingsOpenTheStove(helper);
     }
 
     @GameTest(template = "empty")

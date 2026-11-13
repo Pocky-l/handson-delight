@@ -122,10 +122,12 @@ public final class StoveStation {
      */
     static boolean isKitchenThing(Level level, ItemStack held) {
         Item item = held.getItem();
-        if (item instanceof BlockItem || item instanceof FlintAndSteelItem || item instanceof FireChargeItem || item instanceof ShovelItem
-                || item instanceof BucketItem) {
+        // Food that is also a block (a carrot, sweet berries) is planted, never set on a stove: it opens the grill like other food.
+        boolean food = held.has(DataComponents.FOOD);
+        if (item instanceof BlockItem && !food || item instanceof FlintAndSteelItem || item instanceof FireChargeItem
+                || item instanceof ShovelItem || item instanceof BucketItem) {
             return false;
         }
-        return held.has(DataComponents.FOOD) || Cutting.isTool(level, held) || held.is(Items.BOWL) || held.is(Items.GLASS_BOTTLE);
+        return food || Cutting.isTool(level, held) || held.is(Items.BOWL) || held.is(Items.GLASS_BOTTLE);
     }
 }

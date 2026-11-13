@@ -199,11 +199,16 @@ public final class PotBehavior implements StationBehavior {
     private static final float OFFER_LIFT = 1.5F;
     private static final float OFFER_AWAY = 0.35F;
 
+    /** The badge over the pot: its plate, the dial, the dish. */
+    private static final List<String> BADGE_PARTS = List.of("badge", "dial_track", "dial", "preview");
+
     private final RecipeBook book = new RecipeBook(new PotBook());
     /** Whether an item goes into some dish or serves one: only those show in the inventory at the pot. */
     private final UsableCache usable = new UsableCache();
     private final ItemStack[] shown = new ItemStack[SLOTS];
     private ItemStack preview = ItemStack.EMPTY;
+    /** Whether the cook is here: the camera at the pot, flying in or flying back. The badge shows for them then. */
+    private boolean here;
     private float shownProgress;
     private float shownStars;
     /** How long the stars the last batch got have been shown. */
@@ -362,7 +367,7 @@ public final class PotBehavior implements StationBehavior {
             plate.setShape(shape.build(), BADGE_TEXTURE, true);
         });
         // The badge stays in sight over the pot's own walls and whatever stands beside it, as the book does.
-        for (String part : List.of("badge", "dial_track", "dial", "preview")) {
+        for (String part : BADGE_PARTS) {
             view.node(part).ifPresent(node -> node.setOnTop(true));
         }
         view.node("book_open").ifPresent(node -> node.setPainter(book));
@@ -672,9 +677,8 @@ public final class PotBehavior implements StationBehavior {
         }
         view.node("served").ifPresent(node -> node.setEnabled(!state.getItem(CookingPotStation.SERVED_SLOT).isEmpty()));
         preview = meal.isEmpty() ? cooked(view, items) : meal;
-        boolean focused = view.isFocused();
         view.node("preview").ifPresent(node -> {
-            node.setVisible(focused && !preview.isEmpty());
+            node.setVisible(here && !preview.isEmpty());
             if (!preview.isEmpty()) {
                 node.setVisual(Visual.ofItem(preview.getItem()).withAnchor(ITEM_MIDDLE));
             }
@@ -777,11 +781,25 @@ public final class PotBehavior implements StationBehavior {
 
     /** The badge shows while there is a dish to cook or serve; its stars and bar while it cooks, or while a batch shows its stars. */
     private void badge(StationView view) {
-        boolean shown = view.isFocused() && !preview.isEmpty();
+        boolean shown = here && !preview.isEmpty();
         boolean running = shown && (view.state().getItem(CookingPotStation.MEAL_SLOT).isEmpty() || hasIngredients(view) || !Float.isNaN(gradeAge));
         view.node("badge").ifPresent(plate -> plate.setVisible(shown));
         view.node("dial_track").ifPresent(track -> track.setVisible(running));
         view.node("dial").ifPresent(dial -> dial.setVisible(running));
+    }
+
+    /** The badge comes with the camera as the book does, growing as it flies in and going as it flies back. */
+    private void badgeFrame(StationView view) {
+        float appear = RecipeBook.appear(view);
+        boolean nowHere = RecipeBook.isWorkedAt(view) && appear > RecipeBook.SPECK;
+        if (nowHere != here) {
+            here = nowHere;
+            view.node("preview").ifPresent(node -> node.setVisible(here && !preview.isEmpty()));
+            badge(view);
+        }
+        for (String part : BADGE_PARTS) {
+            view.node(part).ifPresent(node -> node.scaleTo(appear, 0.0F));
+        }
     }
 
     /** A batch is done: the stars it got light up one after the other and stay lit for a moment. The server's word may come a tick later. */
@@ -1059,6 +1077,7 @@ public final class PotBehavior implements StationBehavior {
         drift(view, dt);
         melt(view, dt);
         book.frame(view, dt);
+        badgeFrame(view);
         if (dip != null && !dip.frame(view, dt)) {
             dip = null;
             // The offer is drawn anew, as whatever is offered next.

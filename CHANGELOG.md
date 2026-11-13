@@ -7,7 +7,13 @@
   bare board. A click takes it out again, and food you put on the board takes it out into your inventory.
 - A knife in your off hand cuts at the board, as a knife in your inventory does.
 
+### Changed
+- Going to a station and back is quicker and smoother: the camera sets off at once and lands softly, the recipe book
+  and the pot's badge grow in as it arrives and go as you leave, instead of popping up and vanishing.
+
 ### Fixed
+- Recipe viewers such as [EMI](https://modrinth.com/mod/emi) show names for this mod's item tags, such as "Foods Cracked
+  Open", instead of raw ids like `#handson_delight:cracked`.
 - A right click on the cutting board with a knife no longer puts the knife on your cursor: it stays in your hand and
   shows over the food, so the first click cuts.
 - A right click on the board with food lays it where a click at the station would: as the next layer of a dish being
@@ -37,8 +43,7 @@
   again and food put there can be cut.
 - [Real Camera](https://www.curseforge.com/minecraft/mc-mods/real-camera) and
   [Leawind's Third Person](https://www.curseforge.com/minecraft/mc-mods/leawind-third-person) no longer turn the
-  stations' camera away or zoom it out with your field of view: you see the pot, the board, the skillet and the stove as
-  without them.
+  stations' camera away: you see the pot, the board, the skillet and the stove as without them.
 - Food a hopper or a pipe brings into the cooking pot while you stand at it cooks by itself, as it does when you are
   away. Only what you put in at the station waits for the spoon.
 - Players whose game has no Hands-On Delight can get the food laid on a stove at the station: when they use the stove,

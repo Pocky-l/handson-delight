@@ -4,5 +4,22 @@
   "handson_delight.book.seconds": "%s с",
   "handson_delight.book.bonus": "+%s%%",
   "handson_delight.assembly": "Сборка на разделочной доске",
-  "handson_delight.assembly.first": "Кладётся на доску первым"
+  "handson_delight.assembly.first": "Кладётся на доску первым",
+  "tag.item.handson_delight.sliced_straight": "Еда, нарезаемая ломтиками",
+  "tag.item.handson_delight.cut_in_wedges": "Еда, нарезаемая дольками",
+  "tag.item.handson_delight.cut_in_strips": "Еда, нарезаемая полосками",
+  "tag.item.handson_delight.poured": "Наливаемые жидкости",
+  "tag.item.handson_delight.cracked": "Еда, которую разбивают",
+  "tag.item.handson_delight.dissolves": "Еда, растворяемая в супе",
+  "tag.item.handson_delight.strained": "Еда, вынимаемая из супа",
+  "tag.item.handson_delight.grains": "Крупы",
+  "tag.item.handson_delight.not_on_grill": "Еда не для гриля",
+  "tag.item.handson_delight.one_sided": "Еда, жаренная с одной стороны",
+  "tag.item.handson_delight.frozen": "Замороженные блюда",
+  "tag.item.handson_delight.wrapped": "Завёрнутые блюда",
+  "tag.item.handson_delight.tossed": "Перемешиваемые блюда",
+  "tag.item.handson_delight.arranged": "Выкладываемые блюда",
+  "tag.item.handson_delight.assembled": "Блюда с доски",
+  "tag.item.handson_delight.not_assembled": "Блюда не с доски",
+  "tag.item.handson_delight.workshop": "Материалы мастерской"
 }

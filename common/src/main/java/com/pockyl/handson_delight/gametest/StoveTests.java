@@ -179,8 +179,9 @@ public final class StoveTests {
     }
 
     /**
-     * What a cook carries from station to station and the stove has no use for (a knife, a bowl, bread) opens the grill as an empty
-     * hand does; what the stove uses (a flint and steel, a shovel, a water bucket) and blocks (a pot set on it) keep its own use.
+     * What a cook carries from station to station and the stove has no use for (a knife, a bowl, bread, a carrot, which is a block
+     * item too) opens the grill as an empty hand does; what the stove uses (a flint and steel, a shovel, a water bucket) and blocks
+     * (a pot set on it) keep its own use.
      */
     public static void kitchenThingsOpenTheStove(GameTestHelper helper) {
         Top top = stove(helper);
@@ -189,7 +190,7 @@ public final class StoveTests {
         Item knife = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife"));
         Item pot = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("cooking_pot"));
         for (ItemStack held : List.of(ItemStack.EMPTY, new ItemStack(Items.BEEF), new ItemStack(knife), new ItemStack(Items.BOWL),
-                new ItemStack(Items.BREAD))) {
+                new ItemStack(Items.BREAD), new ItemStack(Items.CARROT), new ItemStack(Items.SWEET_BERRIES))) {
             top.cook.setItemInHand(InteractionHand.MAIN_HAND, held);
             helper.assertTrue(StoveStation.opens(top.cook, pos, state), held + " opens the grill");
         }

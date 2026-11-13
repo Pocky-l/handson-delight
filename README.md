@@ -40,7 +40,10 @@ open as stations, and its recipes, and those of its addons, work in them.
   go into the pot from your inventory; Shift + click puts in up to sixteen sets.
 - **Cutting board.** Right-click it with food to lay the food down. The knife stays in your hand or inventory and shows
   over the food: chop on the dashed marks; each cut goes through sixteen items of the stack. Food is cut across its own
-  length, a kelp roll in even slices and a pie in wedges, with one cut for each piece it gives, three at most.
+  length, a kelp roll in even slices and a pie in wedges, with one cut for each piece it gives, three at most. Everything
+  else Farmer's Delight cuts on its board is worked there too, each with its own tool and stroke: an axe strips a log down
+  its side and splits a door, a pickaxe cracks stone and bricks, a shovel digs into clay and gravel, a hoe pries the chest
+  off a boat or a cart, shears snip leather armour and saddles.
 - **Dishes on the board.** Farmer's Delight's food crafts move from the crafting table to the cutting board: lay what
   goes down first (bread, a bowl, a stick, kelp, wheat, a pie crust), put the rest on it, and the dish is made. Salads
   are tossed in their bowl and plated meals laid in it, sandwiches closed with their bread, skewers threaded from the
@@ -57,7 +60,8 @@ open as stations, and its recipes, and those of its addons, work in them.
 - **Keg** of [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin). Its lid opens on the
   liquid: pour a bucket or a bottle in at the opening, drop the ingredients in and they float while it ferments, the
   colour turning to the drink's. A thermometer on its badge shows how warm the keg is and how warm the recipe wants it.
-  Hold a tankard or a bottle at the tap to draw a drink; with an empty hand one is offered from your inventory.
+  Click the tap with a tankard or a bottle to draw a drink and watch it run in and rise under its head of foam; with an
+  empty hand one is offered from your inventory, and Shift draws as many as there are.
 - **A kitchen.** Rest the cursor at the edge of the screen beside another station and the camera moves over to it. A, D
   and the arrow keys do the same.
 - **For everyone.** Players nearby see the soup simmer, the spoon go round and the food land on the board.
@@ -71,7 +75,7 @@ open as stations, and its recipes, and those of its addons, work in them.
 | Stir | Click the spoon's handle, move the mouse, click again to put it down |
 | Serve | Click the soup with a bowl |
 | Put a whole stack in | Shift + click it in the inventory |
-| Cut | Left-click the food on the board: the knife comes from your inventory |
+| Cut | Left-click what lies on the board: the knife, or the tool the cut takes, comes from your inventory |
 | Turn a piece on the stove | Click it |
 | Take food back | Right-click it |
 | Put the knife away | Right-click with it |

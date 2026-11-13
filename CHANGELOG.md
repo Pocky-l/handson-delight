@@ -1,7 +1,6 @@
 # Changelog
 
-## [1.4.0+1.21.1] - Unreleased
-
+## [1.4.0+1.21.1] - 2026-11-13
 ### New
 - [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg opens as a station, lying or standing: its
   lid swings open on the liquid, a bucket or bottle pours in at the opening, the ingredients float while it ferments and

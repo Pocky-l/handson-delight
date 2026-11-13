@@ -165,7 +165,12 @@ var prepareGameTestServer = tasks.register('prepareGameTestServer') {
         var script = new File(dir, 'kubejs/server_scripts/handson_delight_test.js')
         if (kubejs) {
             script.parentFile.mkdirs()
-            script.text = 'ServerEvents.recipes(event => {})' + System.lineSeparator()
+            // A modpack's own dish: a script's recipe, brought to the board by tagging its result.
+            script.text = [
+                    "ServerEvents.recipes(event => event.shapeless('minecraft:mushroom_stew', "
+                            + "['minecraft:bowl', 'minecraft:crimson_fungus', 'minecraft:red_mushroom']).id('kubejs:fungus_stew'))",
+                    "ServerEvents.tags('item', event => event.add('handson_delight:assembled', 'minecraft:mushroom_stew'))"
+            ].join(System.lineSeparator()) + System.lineSeparator()
         } else {
             script.delete()
         }

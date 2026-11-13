@@ -29,6 +29,7 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.block.Block;
@@ -64,10 +65,14 @@ import java.util.stream.Collectors;
  * <p>The rule: a crafting recipe of Farmer's Delight or of a mod that needs it, made of more than one kind of thing, whose result is
  * food, a drink made of food, a feast, a pie or a cake. Slices back into a whole pie, crates opened and leaves pressed back into a
  * cabbage are one kind of thing and stay in the crafting table. Item tags {@link #ASSEMBLED} and {@link #NOT_ASSEMBLED} on the
- * result correct the rule.
+ * result correct the rule. {@link #ASSEMBLED} also brings the crafts of any other mod, datapack or script to the board: a modpack
+ * tags the result and needs nothing else.
  */
 public final class AssemblyRecipes {
-    /** Results whose recipes are put together on the board although the rule would leave them in the crafting table. */
+    /**
+     * Results whose recipes are put together on the board although the rule would leave them in the crafting table: also the plain
+     * shaped and shapeless crafts of other mods, datapacks and scripts, whatever their namespace.
+     */
     public static final TagKey<Item> ASSEMBLED = TagKey.create(Registries.ITEM, HandsOnDelight.id("assembled"));
     /** Results whose recipes stay in the crafting table although the rule would take them. */
     public static final TagKey<Item> NOT_ASSEMBLED = TagKey.create(Registries.ITEM, HandsOnDelight.id("not_assembled"));
@@ -101,6 +106,12 @@ public final class AssemblyRecipes {
     private static volatile List<Assembly> candidates = List.of();
     /** The dishes cut together, read from the recipe manager after it loaded: see {@link #CUT_TOGETHER}. */
     private static volatile List<Assembly> cutTogether = List.of();
+    /**
+     * The plain shaped and shapeless crafts the rule does not look at, as the recipe manager loaded them: those whose result is tagged
+     * {@link #ASSEMBLED} are put together too, once the tags are bound. Only the recipes are kept; the few that are taken get their
+     * JSON written anew ({@link #written}).
+     */
+    private static volatile List<CraftingRecipe> others = List.of();
     private static volatile Chosen chosen;
 
     private AssemblyRecipes() {
@@ -291,6 +302,7 @@ public final class AssemblyRecipes {
                 if (now == null) {
                     List<Assembly> from = new ArrayList<>(candidates);
                     from.addAll(cutTogether);
+                    from.addAll(tagged());
                     now = choose(from);
                     chosen = now;
                 }
@@ -432,6 +444,10 @@ public final class AssemblyRecipes {
             }
         });
         candidates = List.copyOf(read);
+        others = loaded.values().stream()
+                .filter(recipe -> !taken.containsKey(recipe.getId()) && (recipe.getSerializer() == RecipeSerializer.SHAPED_RECIPE
+                        || recipe.getSerializer() == RecipeSerializer.SHAPELESS_RECIPE))
+                .map(CraftingRecipe.class::cast).toList();
         // Culinary Compat adds its cuts again when the reloaded recipes go out to the players.
         cutTogether = List.of();
         chosen = null;
@@ -461,6 +477,71 @@ public final class AssemblyRecipes {
         cutTogether = List.copyOf(found);
         chosen = null;
         HandsOnDelight.LOGGER.info("{} dishes of Culinary Compat are cut together on the cutting board", found.size());
+    }
+
+    /** The crafts of {@link #others} whose result is tagged {@link #ASSEMBLED}, read as the board reads a recipe of its own. */
+    private static List<Assembly> tagged() {
+        List<Assembly> found = new ArrayList<>();
+        for (CraftingRecipe recipe : others) {
+            if (!recipe.getResultItem(RegistryAccess.EMPTY).is(ASSEMBLED)) {
+                continue;
+            }
+            try {
+                fromCraft(recipe).ifPresentOrElse(found::add, () -> HandsOnDelight.LOGGER.warn(
+                        "The recipe {} is tagged for the cutting board, but the board cannot lay it: it needs two to nine "
+                                + "ingredients of more than one kind and a result without NBT", recipe.getId()));
+            } catch (RuntimeException broken) {
+                HandsOnDelight.LOGGER.warn("Could not read the recipe {} for the cutting board", recipe.getId(), broken);
+            }
+        }
+        return found;
+    }
+
+    /**
+     * A plain shaped or shapeless craft as the board reads it, from the recipe the manager loaded: its JSON is written anew, so a
+     * recipe made by a script (KubeJS) reads as one from a datapack. Empty when the board could not lay it.
+     */
+    public static Optional<Assembly> fromCraft(CraftingRecipe recipe) {
+        return written(recipe).flatMap(AssemblyRecipes::plain).flatMap(json -> parse(recipe.getId(), json));
+    }
+
+    /** The JSON of a plain shaped or shapeless craft, with the same ingredients, shape and result; empty for a result with NBT. */
+    private static Optional<JsonObject> written(CraftingRecipe recipe) {
+        ItemStack result = recipe.getResultItem(RegistryAccess.EMPTY);
+        if (result.isEmpty() || result.hasTag()) {
+            return Optional.empty();
+        }
+        JsonObject json = new JsonObject();
+        if (recipe instanceof ShapedRecipe shaped) {
+            json.addProperty("type", SHAPED);
+            JsonArray pattern = new JsonArray();
+            JsonObject key = new JsonObject();
+            char symbol = 'A';
+            for (int row = 0; row < shaped.getHeight(); row++) {
+                StringBuilder line = new StringBuilder();
+                for (int column = 0; column < shaped.getWidth(); column++) {
+                    Ingredient ingredient = shaped.getIngredients().get(row * shaped.getWidth() + column);
+                    if (ingredient.isEmpty()) {
+                        line.append(' ');
+                        continue;
+                    }
+                    key.add(String.valueOf(symbol), ingredient.toJson());
+                    line.append(symbol++);
+                }
+                pattern.add(line.toString());
+            }
+            json.add("pattern", pattern);
+            json.add("key", key);
+        } else {
+            json.addProperty("type", SHAPELESS);
+            JsonArray named = new JsonArray();
+            recipe.getIngredients().forEach(ingredient -> named.add(ingredient.toJson()));
+            json.add("ingredients", named);
+        }
+        JsonObject made = item(BuiltInRegistries.ITEM.getKey(result.getItem()).toString());
+        made.addProperty("count", result.getCount());
+        json.add("result", made);
+        return Optional.of(json);
     }
 
     /** A cut of several things as a shapeless craft of the same ingredients and result, which the board lays and makes as its own. */

@@ -1,11 +1,18 @@
 package com.pockyl.handson_delight.fabric;
 
+import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 
 import com.pockyl.handson_delight.gametest.BoardTests;
 import com.pockyl.handson_delight.gametest.RecipeAudit;
+
+import java.util.Arrays;
 
 /** {@link BoardTests} on Fabric: they run when the game starts with {@code -Dfabric-api.gametest}. */
 public final class FabricBoardTests implements FabricGameTest {
@@ -197,5 +204,31 @@ public final class FabricBoardTests implements FabricGameTest {
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void anotherCookKeepsTheMarks(GameTestHelper helper) {
         BoardTests.anotherCookKeepsTheMarks(helper);
+    }
+
+    /**
+     * An addon's axe cut written as {@code fabric:any} round Refabricated's tool action, or deeper inside Fabric's other
+     * ingredients, tests and lists its axes: in a released game the tool action wrapped by Fabric throws on every test.
+     */
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void anAxeCutInsideFabricIngredientsKnowsItsAxes(GameTestHelper helper) {
+        String axe = "{\"fabric:type\": \"farmersdelight:tool_action\", \"action\": \"axe_dig\"}";
+        Ingredient any = FabricIngredients.unwrap(Ingredient.fromJson(JsonParser.parseString(
+                "{\"fabric:type\": \"fabric:any\", \"ingredients\": [" + axe + ", {\"item\": \"minecraft:shears\"}]}")));
+        helper.assertTrue(any.test(new ItemStack(Items.IRON_AXE)) && any.test(new ItemStack(Items.SHEARS)), "an axe and shears cut");
+        helper.assertFalse(any.test(new ItemStack(Items.CARROT)), "a carrot does not");
+        helper.assertTrue(lists(any, Items.IRON_AXE) && lists(any, Items.SHEARS), "the book shows the axes and the shears");
+
+        Ingredient difference = FabricIngredients.unwrap(Ingredient.fromJson(JsonParser.parseString(
+                "{\"fabric:type\": \"fabric:difference\", \"base\": {\"fabric:type\": \"fabric:any\", \"ingredients\": [" + axe
+                        + "]}, \"subtracted\": {\"item\": \"minecraft:wooden_axe\"}}")));
+        helper.assertTrue(difference.test(new ItemStack(Items.IRON_AXE)), "an iron axe cuts deeper inside");
+        helper.assertFalse(difference.test(new ItemStack(Items.WOODEN_AXE)), "the subtracted axe does not");
+        helper.assertTrue(lists(difference, Items.IRON_AXE) && !lists(difference, Items.WOODEN_AXE), "and the book shows it so");
+        helper.succeed();
+    }
+
+    private static boolean lists(Ingredient ingredient, Item item) {
+        return Arrays.stream(ingredient.getItems()).anyMatch(stack -> stack.is(item));
     }
 }

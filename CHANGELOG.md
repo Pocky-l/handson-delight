@@ -45,6 +45,11 @@
 - On Fabric, putting food on the board no longer crashes the game when a mod such as
   [Expanded Delight](https://www.curseforge.com/minecraft/mc-mods/expanded-delight) adds cuts made with an axe or
   shears.
+- On Fabric, opening the cutting board no longer crashes the game when another mod lets a cut be made with one of
+  several tools, an axe among them.
+- With [Sodium](https://modrinth.com/mod/sodium) 0.5.11 or older on Fabric, or
+  [Rubidium](https://modrinth.com/mod/rubidium) on Forge, using a station next to a lit stove or a campfire no longer
+  crashes the game with "does not implement interface VertexBufferWriter".
 - With [Vanilla Delights](https://modrinth.com/mod/vanilla-delights) the soup shows in the pot at the station again, in
   plain and dyed pots.
 - With [Shadow Drop](https://modrinth.com/mod/shadow-drop) the pictures in the stations' recipe books stay in their

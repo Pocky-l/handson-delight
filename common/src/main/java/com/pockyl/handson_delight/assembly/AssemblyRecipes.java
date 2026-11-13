@@ -58,10 +58,14 @@ import java.util.stream.Collectors;
  * <p>The rule: a crafting recipe of Farmer's Delight or of a mod that needs it, made of more than one kind of thing, whose result is
  * food, a drink made of food, a feast, a pie or a cake. Slices back into a whole pie, crates opened and leaves pressed back into a
  * cabbage are one kind of thing and stay in the crafting table. Item tags {@link #ASSEMBLED} and {@link #NOT_ASSEMBLED} on the
- * result correct the rule.
+ * result correct the rule. {@link #ASSEMBLED} also brings the crafts of any other mod, datapack or script to the board: a modpack
+ * tags the result and needs nothing else.
  */
 public final class AssemblyRecipes {
-    /** Results whose recipes are put together on the board although the rule would leave them in the crafting table. */
+    /**
+     * Results whose recipes are put together on the board although the rule would leave them in the crafting table: also the plain
+     * shaped and shapeless crafts of other mods, datapacks and scripts, whatever their namespace.
+     */
     public static final TagKey<Item> ASSEMBLED = TagKey.create(Registries.ITEM, HandsOnDelight.id("assembled"));
     /** Results whose recipes stay in the crafting table although the rule would take them. */
     public static final TagKey<Item> NOT_ASSEMBLED = TagKey.create(Registries.ITEM, HandsOnDelight.id("not_assembled"));
@@ -79,6 +83,14 @@ public final class AssemblyRecipes {
 
     /** Every recipe that may be put together, as the recipe manager loaded it; the tags choose among them once they are bound. */
     private static volatile List<Assembly> candidates = List.of();
+    /**
+     * The shaped and shapeless crafts the rule does not look at, also those of a type built on them (KubeJS writes its own), as the recipe manager loaded them: those whose result is tagged
+     * {@link #ASSEMBLED} are put together too, once the tags are bound. Only the recipes are kept; the few that are taken get their
+     * JSON written anew ({@link #fromCraft}).
+     */
+    private static volatile List<RecipeHolder<?>> others = List.of();
+    /** The registries the recipes were loaded with, to read {@link #others}. */
+    private static volatile HolderLookup.Provider othersRegistries;
     private static volatile Chosen chosen;
 
     private AssemblyRecipes() {
@@ -261,7 +273,9 @@ public final class AssemblyRecipes {
             synchronized (AssemblyRecipes.class) {
                 now = chosen;
                 if (now == null) {
-                    now = choose(candidates);
+                    List<Assembly> from = new ArrayList<>(candidates);
+                    from.addAll(tagged());
+                    now = choose(from);
                     chosen = now;
                 }
             }
@@ -427,9 +441,48 @@ public final class AssemblyRecipes {
             }
         });
         candidates = List.copyOf(read);
+        others = loaded.values().stream()
+                .filter(holder -> !taken.containsKey(holder.id())
+                        && (holder.value() instanceof ShapedRecipe || holder.value() instanceof ShapelessRecipe))
+                .toList();
+        othersRegistries = registries;
         ModestMeals.load(resources, loaded);
         chosen = null;
         HandsOnDelight.LOGGER.info("{} crafting recipes of Farmer's Delight may be put together on the cutting board", read.size());
+    }
+
+    /** The crafts of {@link #others} whose result is tagged {@link #ASSEMBLED}, read as the board reads a recipe of its own. */
+    private static List<Assembly> tagged() {
+        List<Assembly> found = new ArrayList<>();
+        HolderLookup.Provider registries = othersRegistries;
+        for (RecipeHolder<?> holder : others) {
+            if (!holder.value().getResultItem(registries).is(ASSEMBLED)) {
+                continue;
+            }
+            try {
+                fromCraft(holder, registries).ifPresentOrElse(found::add, () -> HandsOnDelight.LOGGER.warn(
+                        "The recipe {} is tagged for the cutting board, but the board cannot lay it: it needs two to nine "
+                                + "ingredients of more than one kind and a result without components of its own", holder.id()));
+            } catch (RuntimeException broken) {
+                HandsOnDelight.LOGGER.warn("Could not read the recipe {} for the cutting board", holder.id(), broken);
+            }
+        }
+        return found;
+    }
+
+    /**
+     * A shaped or shapeless craft as the board reads it, from the recipe the manager loaded: its JSON is written anew by the recipe's
+     * own codec, so a recipe made by a script (KubeJS, which has crafting types of its own) reads as one from a datapack, and the
+     * board makes the dish through the recipe as its type does. Empty when the board could not lay it.
+     */
+    public static Optional<Assembly> fromCraft(RecipeHolder<?> holder, HolderLookup.Provider registries) {
+        if (!holder.value().getResultItem(registries).getComponentsPatch().isEmpty()) {
+            return Optional.empty();
+        }
+        JsonElement json = Recipe.CODEC.encodeStart(registries.createSerializationContext(JsonOps.INSTANCE), holder.value())
+                .getOrThrow(JsonParseException::new);
+        return json.isJsonObject() ? plain(json.getAsJsonObject()).flatMap(recipe -> parse(holder.id(), recipe, null, registries))
+                : Optional.empty();
     }
 
     /** The recipe as the board reads it, when it is one the board could make: else empty. */

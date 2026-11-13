@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.4.1+1.21.1] - Unreleased
+
+### New
+- Modpacks can put any craft together on the cutting board: add its result to the item tag
+  `handson_delight:assembled`, and every shaped or shapeless craft of it, from any mod, datapack or
+  [KubeJS](https://www.curseforge.com/minecraft/mc-mods/kubejs) script, is made on the board. Before, the tag only
+  worked for the recipes of Farmer's Delight and its addons. How to do it, and how to add recipes for the other
+  stations, is in the README, under "Modpacks".
+
 ## [1.4.0+1.21.1] - 2026-11-13
 ### New
 - [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg opens as a station, lying or standing: its

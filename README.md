@@ -115,6 +115,65 @@ which each player sets in their own file.
 | `recipe_book` | `true` | The recipe book beside the stations |
 | `cooking_pot_time`, `skillet_time`, `stove_time` | `1.0` | How long food takes at that station: `2.0` twice as long, `0.5` half, from `0.1` to `10`. The pot's covers food left alone and fed by hoppers too |
 
+## Modpacks
+
+Recipes from datapacks and [KubeJS](https://www.curseforge.com/minecraft/mc-mods/kubejs) scripts work at every
+station, whatever mod or datapack adds them: the pot cooks every `farmersdelight:cooking` recipe, the board cuts every
+`farmersdelight:cutting` recipe, the skillet and the stove cook every campfire recipe. A soup, in
+`data/mypack/recipe/carrot_soup.json`:
+
+```json
+{
+  "type": "farmersdelight:cooking",
+  "ingredients": [
+    { "tag": "c:crops/carrot" },
+    { "item": "minecraft:brown_mushroom" }
+  ],
+  "result": { "id": "mypack:carrot_soup" },
+  "container": { "id": "minecraft:bowl" },
+  "cookingtime": 200,
+  "experience": 1.0,
+  "recipe_book_tab": "meals"
+}
+```
+
+Dishes put together on the board are crafting recipes. The board takes those of Farmer's Delight and its addons by
+itself; for any other shaped or shapeless craft, add its result to the item tag `handson_delight:assembled`. A sandwich,
+in `data/mypack/recipe/club_sandwich.json`:
+
+```json
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:bread" },
+    { "item": "farmersdelight:cooked_bacon" },
+    { "item": "farmersdelight:tomato" }
+  ],
+  "result": { "id": "mypack:club_sandwich" }
+}
+```
+
+and in `data/handson_delight/tags/item/assembled.json`:
+
+```json
+{ "replace": false, "values": ["mypack:club_sandwich"] }
+```
+
+The same with KubeJS:
+
+```js
+ServerEvents.recipes(event => {
+  event.shapeless('mypack:club_sandwich', ['minecraft:bread', 'farmersdelight:cooked_bacon', 'farmersdelight:tomato'])
+})
+ServerEvents.tags('item', event => event.add('handson_delight:assembled', 'mypack:club_sandwich'))
+```
+
+A dish takes two to nine ingredients, of more than one kind. The board chooses what goes down first and how the dish is
+finished from its ingredients; to choose it yourself, tag the result `handson_delight:tossed` (a salad),
+`handson_delight:arranged` (a plated meal), `handson_delight:wrapped` (rolled in bread) or `handson_delight:frozen` (a
+popsicle). `handson_delight:not_assembled` keeps a dish in the crafting table. Autocrafters still make the board's
+dishes.
+
 ## Installation
 
 1. Minecraft 1.21.1 with [NeoForge](https://neoforged.net) or [Fabric](https://fabricmc.net).

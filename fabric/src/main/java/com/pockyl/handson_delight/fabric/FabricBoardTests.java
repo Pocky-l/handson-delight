@@ -20,6 +20,11 @@ public final class FabricBoardTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aTaggedCraftOfAnyModComesToTheBoard(GameTestHelper helper) {
+        BoardTests.aTaggedCraftOfAnyModComesToTheBoard(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void everyFoodCraftComesToTheBoard(GameTestHelper helper) {
         BoardTests.everyFoodCraftComesToTheBoard(helper);
     }

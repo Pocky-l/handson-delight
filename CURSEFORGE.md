@@ -29,7 +29,7 @@
 <p style="text-align:center">Hoppers and autocrafters keep working with Farmer's Delight's blocks.</p>
 
 <h3 style="text-align:center">Getting started</h3>
-<p style="text-align:center">Install it with <a href="https://www.curseforge.com/minecraft/mc-mods/diegesis">Diegesis</a> on the client and the server, then right-click a station. Each station can be turned off in <code>config/handson_delight.properties</code>.</p>
+<p style="text-align:center">Install it with <a href="https://www.curseforge.com/minecraft/mc-mods/diegesis">Diegesis</a> on the client and the server, then right-click a station. Each station can be turned off in <code>config/handson_delight.properties</code>.<br>Modpacks put any craft together on the cutting board with the item tag <code>handson_delight:assembled</code>: see <a href="https://github.com/Pocky-l/handson-delight/tree/1.21.1#modpacks">Modpacks</a> in the README.</p>
 
 <hr>
 

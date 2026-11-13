@@ -6,6 +6,7 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
@@ -29,6 +30,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -203,6 +205,36 @@ public final class BoardTests {
 
     private static Map<Integer, ItemStack> netherSalad() {
         return Map.of(0, new ItemStack(Items.CRIMSON_FUNGUS), 1, new ItemStack(Items.WARPED_FUNGUS), 4, new ItemStack(Items.BOWL));
+    }
+
+    /**
+     * A modpack brings a craft of any mod, datapack or script to the board by tagging its result {@code handson_delight:assembled}.
+     * The board reads such a craft as the recipe manager loaded it, shaped ones keeping their shape; untagged, a vanilla food craft
+     * stays in the crafting table. With KubeJS ({@code -Pkubejs}) the test script adds such a recipe and the tag, as a modpack does.
+     */
+    public static void aTaggedCraftOfAnyModComesToTheBoard(GameTestHelper helper) {
+        RecipeManager recipes = helper.getLevel().getRecipeManager();
+        HolderLookup.Provider registries = helper.getLevel().registryAccess();
+        AssemblyRecipes.Assembly stew = AssemblyRecipes.fromCraft(recipes.byKey(ResourceLocation.parse("minecraft:mushroom_stew"))
+                .orElseThrow(), registries).orElseThrow();
+        helper.assertTrue(stew.kind() == AssemblyRecipes.Base.BOWL && stew.result().is(Items.MUSHROOM_STEW)
+                && stew.ingredients().size() == 3, "a shapeless craft is read with its ingredients and result");
+        AssemblyRecipes.Assembly cake = AssemblyRecipes.fromCraft(recipes.byKey(ResourceLocation.parse("minecraft:cake")).orElseThrow(),
+                registries).orElseThrow();
+        helper.assertTrue(cake.result().is(Items.CAKE) && cake.ingredients().size() == 9 && cake.kind() == AssemblyRecipes.Base.WHEAT,
+                "a shaped craft keeps its shape");
+        helper.assertTrue(AssemblyRecipes.fromCraft(recipes.byKey(ResourceLocation.parse("minecraft:bread")).orElseThrow(), registries)
+                .isEmpty(), "one kind of thing is no dish");
+        if (Platform.INSTANCE.isLoaded("kubejs")) {
+            helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.parse("kubejs:fungus_stew")),
+                    "a script's recipe with a tagged result is made on the board");
+            helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.parse("minecraft:mushroom_stew")),
+                    "and so is every craft of that result");
+        } else {
+            helper.assertTrue(!AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.parse("minecraft:mushroom_stew")),
+                    "an untagged vanilla dish stays in the crafting table");
+        }
+        helper.succeed();
     }
 
     /** Every other kind of FD food craft goes onto the board too, each starting from what goes down first. */

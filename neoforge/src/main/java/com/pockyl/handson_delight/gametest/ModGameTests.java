@@ -250,6 +250,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void aTaggedCraftOfAnyModComesToTheBoard(GameTestHelper helper) {
+        BoardTests.aTaggedCraftOfAnyModComesToTheBoard(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void everyFoodCraftComesToTheBoard(GameTestHelper helper) {
         BoardTests.everyFoodCraftComesToTheBoard(helper);
     }

@@ -1,5 +1,8 @@
 package com.pockyl.handson_delight.gametest;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -9,7 +12,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -45,6 +50,7 @@ import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.assembly.Assembling;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
+import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.BoardLayers;
 import com.pockyl.handson_delight.station.BoardLogic;
@@ -52,8 +58,11 @@ import com.pockyl.handson_delight.station.Cutting;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 import com.pockyl.handson_delight.station.KitchenBoard;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -142,6 +151,58 @@ public final class BoardTests {
                 "and the recipe book does not learn it");
         helper.assertTrue(AssemblyRecipes.all().stream().anyMatch(dish -> dish.id().getPath().equals("hamburger")), "the board does");
         helper.assertTrue(level.getRecipeManager().byKey(FarmersDelightContent.id("cooking_pot")).isPresent(), "blocks are still crafted");
+        helper.succeed();
+    }
+
+    /**
+     * ModernFix empties every collection the KubeJS recipe event still holds when its {@code post} returns. The recipes the board
+     * found in the same JSON must not be among them: the board keeps them where that clearing does not reach.
+     */
+    public static void modernFixesClearingLeavesTheBoardsRecipes(GameTestHelper helper) {
+        Class<?> event;
+        try {
+            event = Class.forName("dev.latvian.mods.kubejs.recipe.RecipesEventJS");
+        } catch (ClassNotFoundException noKubeJs) {
+            helper.succeed();
+            return;
+        }
+        try {
+            Object instance = event.getConstructor().newInstance();
+            Field taken = event.getDeclaredField("handson$taken");
+            taken.setAccessible(true);
+            if (!(taken.get(instance) instanceof Map<?, ?> found)) {
+                helper.fail("the board keeps its recipes somewhere else");
+                return;
+            }
+            @SuppressWarnings("unchecked")
+            Map<ResourceLocation, JsonObject> staging = (Map<ResourceLocation, JsonObject>) found;
+            ServerLevel level = helper.getLevel();
+            Map<ResourceLocation, JsonElement> json = new HashMap<>();
+            SimpleJsonResourceReloadListener.scanDirectory(level.getServer().getResourceManager(), "recipes", new Gson(), json);
+            AssemblyRecipes.collect(json, staging);
+            Map<ResourceLocation, JsonObject> untouched = new HashMap<>(staging);
+            // What ModernFix does at the end of post: every collection the event still holds is emptied.
+            for (Field field : event.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers()) || !Map.class.isAssignableFrom(field.getType())
+                        && !Collection.class.isAssignableFrom(field.getType())) {
+                    continue;
+                }
+                field.setAccessible(true);
+                Object held = field.get(instance);
+                if (held instanceof Map<?, ?> map) {
+                    map.clear();
+                } else if (held instanceof Collection<?> collection) {
+                    collection.clear();
+                }
+            }
+            AssemblyRecipes.load(staging, ((RecipeManagerAccessor) level.getRecipeManager()).handson$byName());
+            boolean kept = AssemblyRecipes.all().stream().anyMatch(dish -> dish.id().getPath().equals("hamburger"));
+            AssemblyRecipes.load(untouched, ((RecipeManagerAccessor) level.getRecipeManager()).handson$byName());
+            helper.assertTrue(kept, "the board keeps its recipes when ModernFix clears the event's lists");
+        } catch (ReflectiveOperationException broken) {
+            helper.fail("could not read the board's staging for the KubeJS event: " + broken);
+            return;
+        }
         helper.succeed();
     }
 

@@ -230,6 +230,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 100)
+    public static void modernFixesClearingLeavesTheBoardsRecipes(GameTestHelper helper) {
+        BoardTests.modernFixesClearingLeavesTheBoardsRecipes(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
     public static void bowlDishesLeaveTheCraftingTable(GameTestHelper helper) {
         BoardTests.bowlDishesLeaveTheCraftingTable(helper);
     }

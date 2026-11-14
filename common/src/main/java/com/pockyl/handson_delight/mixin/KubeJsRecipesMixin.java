@@ -25,8 +25,9 @@ import java.util.Map;
 @Pseudo
 @Mixin(targets = "dev.latvian.mods.kubejs.recipe.RecipesEventJS", remap = false)
 abstract class KubeJsRecipesMixin {
+    /** ModernFix clears every collection instance of the event at the end of {@code post}: this state must not live there. */
     @Unique
-    private final Map<ResourceLocation, JsonObject> handson$taken = new HashMap<>();
+    private static final Map<ResourceLocation, JsonObject> handson$taken = new HashMap<>();
 
     @Inject(method = "post", at = @At("HEAD"), require = 0)
     private void handson$findAssembled(RecipeManager manager, Map<ResourceLocation, JsonElement> recipes, CallbackInfo callback) {

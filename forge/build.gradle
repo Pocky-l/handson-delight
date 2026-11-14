@@ -140,6 +140,7 @@ var kubejs = providers.gradleProperty('kubejs').isPresent()
 if (kubejs) {
     dependencies {
         [
+                'modernfix:OvpPdk44',            // ModernFix 5.27.8+mc1.20.1: clears RecipesEventJS instance maps at post RETURN
                 'kubejs:hVR2xUSr',                // KubeJS 2001.6.5-build.26
                 'rhino:uNALdylI',                 // Rhino 2001.2.3-build.10, needed by KubeJS
                 'architectury-api:1MKTLiiG',      // Architectury 9.2.14, needed by KubeJS

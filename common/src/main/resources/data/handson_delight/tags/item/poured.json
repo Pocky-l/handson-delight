@@ -57,6 +57,14 @@
     {
       "id": "mynethersdelight:hot_cream",
       "required": false
+    },
+    {
+      "id": "#c:drinks/alcohol",
+      "required": false
+    },
+    {
+      "id": "culturaldelights:vinegar",
+      "required": false
     }
   ]
 }

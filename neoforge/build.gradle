@@ -64,6 +64,8 @@ dependencies {
     compileOnly "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_version}"
     // Chopper's Delight's decorated board is a board station too: compiled against it only.
     compileOnly "maven.modrinth:choppers-delight:${choppers_delight_version}"
+    // Cultural Delights' oven is a station too: compiled against it only.
+    compileOnly "maven.modrinth:cultural-delights:${cultural_delights_version}"
     // Dungeons Delight's monster pot is a station too: compiled against it only.
     compileOnly "maven.modrinth:dungeons_delight:${dungeons_delight_version}"
 }
@@ -112,7 +114,7 @@ if (providers.gradleProperty('addons').isPresent()) {
                     'rustic-delight:sAaG4pSA',        // Rustic Delight 1.7.1
                     'ubes-delight:hxl0dMZ3',          // Ube's Delight neoforge-1.21.1-0.4.15
                     'crabbers-delight:j5Nzh8kh',      // Crabber's Delight 1.3.1
-                    'cultural-delights:LYCtSz7r',     // Cultural Delights 0.19.8-1.21.1
+                    "cultural-delights:${cultural_delights_version}", // Cultural Delights 0.19.8-1.21.1
                     'barbeques-delight-forge:rvUhMw6d', // Barbeque's Delight 1.3.0
                     'festive-delight:FP8ZwEus',       // Festive Delight 2.0.0
             ].each { localRuntime "maven.modrinth:${it}" }

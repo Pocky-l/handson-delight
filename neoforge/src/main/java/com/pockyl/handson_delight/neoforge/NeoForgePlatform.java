@@ -78,6 +78,16 @@ public final class NeoForgePlatform implements Platform {
     }
 
     @Override
+    public ItemStack handlerItem(Object handler, int slot) {
+        return ((IItemHandlerModifiable) handler).getStackInSlot(slot);
+    }
+
+    @Override
+    public void setHandlerItem(Object handler, int slot, ItemStack stack) {
+        ((IItemHandlerModifiable) handler).setStackInSlot(slot, stack);
+    }
+
+    @Override
     public ItemStack getItem(AbstractStoveBlockEntity stove, int slot) {
         return stove.getItems().getStackInSlot(slot);
     }

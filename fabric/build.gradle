@@ -32,6 +32,8 @@ dependencies {
     compileOnly "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_version}"
     // Chopper's Delight's decorated board, the same way: its NeoForge jar in Mojang names, the same classes as the Fabric one.
     compileOnly "maven.modrinth:choppers-delight:${choppers_delight_version}"
+    // Cultural Delights' oven, the same way: its NeoForge jar in Mojang names, the oven's classes the same as in its Fabric build.
+    compileOnly "maven.modrinth:cultural-delights:${cultural_delights_version}"
 }
 
 loom {
@@ -62,13 +64,15 @@ configurations {
 
 dependencies {
     gameTestMods "maven.modrinth:farmers-delight-refabricated:${farmers_delight_refabricated_version}"
-    gameTestMods "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    // Cultural Delights (in -Paddons) needs Fabric API 0.116.18 or newer: the test server plays that one with the addons.
+    gameTestMods "net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty('addons').isPresent() ? '0.116.18+1.21.1' : fabric_api_version}"
     // Not in the fabric-api jar: the module that runs the tests (the version fabric-api's POM names).
     gameTestMods 'net.fabricmc.fabric-api:fabric-gametest-api-v1:2.0.5+6fc22b9919'
     // -Paddons: the addons whose stations open on Fabric too. Brewin' and Chewin' carries Greenhouse Config inside.
     if (providers.gradleProperty('addons').isPresent()) {
         gameTestMods "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_fabric_version}"
         gameTestMods 'maven.modrinth:choppers-delight:aEhSntF1' // Chopper's Delight 1.2.3: cutting boards of every wood
+        gameTestMods 'maven.modrinth:cultural-delights:gXrTmFt0' // Cultural Delights 0.19.8 (Refabricated build): its oven
     }
 }
 

@@ -11,6 +11,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.station.OvenStation;
+import com.pockyl.handson_delight.station.VatStation;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -27,48 +29,58 @@ import java.util.Optional;
  */
 final class PotModels {
     private static final String FILE = "assets/farmersdelight/blockstates/cooking_pot.json";
+    /** Cultural Delights' oven, the same way: a brick oven with a real door and a hearth inside instead of a painted front. */
+    private static final String OVEN_FILE = "assets/culturaldelights/blockstates/oven.json";
+    /** And its vat: hollow under a lid that lifts, when it stands on its bottom. */
+    private static final String VAT_FILE = "assets/culturaldelights/blockstates/vat.json";
 
     private PotModels() {
     }
 
     static void register() {
         ModelLoadingPlugin.register(context -> {
-            Block pot = FarmersDelightContent.COOKING_POT.get();
-            if (pot == Blocks.AIR) {
-                return;
-            }
-            try {
-                context.registerBlockStateResolver(pot, resolver -> {
-                    UnbakedModel model = read(pot).orElseGet(() -> resolver.getOrLoadModel(ModelBakery.MISSING_MODEL_LOCATION));
-                    for (BlockState state : pot.getStateDefinition().getPossibleStates()) {
-                        resolver.setModel(state, model);
-                    }
-                });
-            } catch (IllegalArgumentException e) {
-                // Another mod already decides how the pot looks: its choice stands.
-                HandsOnDelight.LOGGER.warn("The cooking pot's models are resolved by another mod; this mod's pot body is not used", e);
-            }
+            resolve(context, FarmersDelightContent.COOKING_POT.get(), FILE);
+            resolve(context, OvenStation.OVEN.get(), OVEN_FILE);
+            resolve(context, VatStation.VAT.get(), VAT_FILE);
         });
     }
 
-    /** The multipart of this mod's block state file, bound to the pot's properties. */
-    private static Optional<UnbakedModel> read(Block pot) {
-        Optional<Path> file = FabricLoader.getInstance().getModContainer(HandsOnDelight.MOD_ID).flatMap(mod -> mod.findPath(FILE));
+    /** Every state of {@code block} gets the multipart of this mod's {@code file}; nothing for a block that is not there. */
+    private static void resolve(ModelLoadingPlugin.Context context, Block block, String file) {
+        if (block == Blocks.AIR) {
+            return;
+        }
+        try {
+            context.registerBlockStateResolver(block, resolver -> {
+                UnbakedModel model = read(block, file).orElseGet(() -> resolver.getOrLoadModel(ModelBakery.MISSING_MODEL_LOCATION));
+                for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+                    resolver.setModel(state, model);
+                }
+            });
+        } catch (IllegalArgumentException e) {
+            // Another mod already decides how the block looks: its choice stands.
+            HandsOnDelight.LOGGER.warn("The models of {} are resolved by another mod; this mod's are not used", block, e);
+        }
+    }
+
+    /** The multipart of this mod's block state file, bound to the block's properties. */
+    private static Optional<UnbakedModel> read(Block block, String name) {
+        Optional<Path> file = FabricLoader.getInstance().getModContainer(HandsOnDelight.MOD_ID).flatMap(mod -> mod.findPath(name));
         if (file.isEmpty()) {
-            HandsOnDelight.LOGGER.error("{} is missing from the mod", FILE);
+            HandsOnDelight.LOGGER.error("{} is missing from the mod", name);
             return Optional.empty();
         }
         try (Reader reader = Files.newBufferedReader(file.get())) {
             BlockModelDefinition.Context context = new BlockModelDefinition.Context();
-            context.setDefinition(pot.getStateDefinition());
+            context.setDefinition(block.getStateDefinition());
             BlockModelDefinition definition = BlockModelDefinition.fromStream(context, reader);
             if (!definition.isMultiPart()) {
-                HandsOnDelight.LOGGER.error("{} is no multipart", FILE);
+                HandsOnDelight.LOGGER.error("{} is no multipart", name);
                 return Optional.empty();
             }
             return Optional.of(definition.getMultiPart());
         } catch (IOException | RuntimeException e) {
-            HandsOnDelight.LOGGER.error("Cannot read {}", FILE, e);
+            HandsOnDelight.LOGGER.error("Cannot read {}", name, e);
             return Optional.empty();
         }
     }

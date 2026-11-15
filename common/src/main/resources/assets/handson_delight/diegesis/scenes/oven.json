@@ -1,0 +1,550 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Cultural Delights' oven, turned as the block faces. The station hides the block while it is used and shows it here: brick walls round a cavity x 3..13, y 1..12, z 1..13 with a hearth of nether bricks, the grated door in two leaves hinged at its sides (x 3 and x 13, z 0) and swung open like gates, the baking tray (x 4..12, z 2..12, its top at y 2) sliding out between them. What bakes lies on the tray, drawn by the code: like things piled on each other, a pie's filling on its crust; the slots are the grid's places to click (row 0 at the back, column 0 on the cook's left) and move with the piles. The glow of the heat under the oven lights the inside while it is heated. While nobody uses it the block is the oven (the same models, the tray in it) and the scene draws only what lies on the tray.",
+  "work_plane": 2,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      -5.63,
+      26.5,
+      -35.93
+    ],
+    "target": [
+      8.0,
+      3.5,
+      1.5
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "oven",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "children": [
+        {
+          "$comment": "The oven's body, as the block's: shown only while the station hides the block.",
+          "id": "body",
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/oven/body",
+            "lit_as_block": true
+          }
+        },
+        {
+          "$comment": "The heat under the oven seen inside it, the hearth and the back wall glowing and flickering while it is heated. The block's own model has no glow: the scene draws it always, at the station and in the world.",
+          "id": "glow",
+          "pickable": false,
+          "hidden": true,
+          "visual": {
+            "model": "handson_delight:diegesis/oven/glow",
+            "emissive": true,
+            "translucent": true,
+            "tint": "#C0FFFFFF"
+          }
+        },
+        {
+          "$comment": "The left leaf of the grated door as the cook faces it, hinged at x 3: it swings open like a gate.",
+          "id": "door_left",
+          "pos": [
+            -5,
+            0,
+            -8
+          ],
+          "visual": {
+            "model": "handson_delight:diegesis/oven/door_left",
+            "anchor": [
+              3,
+              0,
+              0
+            ],
+            "lit_as_block": true
+          },
+          "collider": {
+            "from": [
+              0,
+              0,
+              -0.4
+            ],
+            "to": [
+              5,
+              12,
+              1.2
+            ]
+          }
+        },
+        {
+          "$comment": "The right leaf, hinged at x 13.",
+          "id": "door_right",
+          "pos": [
+            5,
+            0,
+            -8
+          ],
+          "visual": {
+            "model": "handson_delight:diegesis/oven/door_right",
+            "anchor": [
+              13,
+              0,
+              0
+            ],
+            "lit_as_block": true
+          },
+          "collider": {
+            "from": [
+              -5,
+              0,
+              -0.4
+            ],
+            "to": [
+              0,
+              12,
+              1.2
+            ]
+          }
+        },
+        {
+          "id": "tray",
+          "pickable": false,
+          "children": [
+            {
+              "id": "tray_model",
+              "pickable": false,
+              "visual": {
+                "model": "handson_delight:diegesis/oven/tray",
+                "lit_as_block": true
+              }
+            },
+            {
+              "id": "item_0",
+              "pos": [
+                2.67,
+                2.0,
+                1.67
+              ],
+              "slot": {
+                "slot": "ingredients[0]",
+                "display": "hidden",
+                "size": 2.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_0",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.36
+                }
+              ]
+            },
+            {
+              "id": "item_1",
+              "pos": [
+                0.0,
+                2.0,
+                1.67
+              ],
+              "slot": {
+                "slot": "ingredients[1]",
+                "display": "hidden",
+                "size": 2.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_1",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.36
+                }
+              ]
+            },
+            {
+              "id": "item_2",
+              "pos": [
+                -2.67,
+                2.0,
+                1.67
+              ],
+              "slot": {
+                "slot": "ingredients[2]",
+                "display": "hidden",
+                "size": 2.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_2",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.36
+                }
+              ]
+            },
+            {
+              "id": "item_3",
+              "pos": [
+                2.67,
+                2.0,
+                -1.0
+              ],
+              "slot": {
+                "slot": "ingredients[3]",
+                "display": "hidden",
+                "size": 2.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_3",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.36
+                }
+              ]
+            },
+            {
+              "id": "item_4",
+              "pos": [
+                0.0,
+                2.0,
+                -1.0
+              ],
+              "slot": {
+                "slot": "ingredients[4]",
+                "display": "hidden",
+                "size": 2.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_4",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.36
+                }
+              ]
+            },
+            {
+              "id": "item_5",
+              "pos": [
+                -2.67,
+                2.0,
+                -1.0
+              ],
+              "slot": {
+                "slot": "ingredients[5]",
+                "display": "hidden",
+                "size": 2.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_5",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.36
+                }
+              ]
+            },
+            {
+              "id": "item_6",
+              "pos": [
+                2.67,
+                2.0,
+                -3.67
+              ],
+              "slot": {
+                "slot": "ingredients[6]",
+                "display": "hidden",
+                "size": 2.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_6",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.36
+                }
+              ]
+            },
+            {
+              "id": "item_7",
+              "pos": [
+                0.0,
+                2.0,
+                -3.67
+              ],
+              "slot": {
+                "slot": "ingredients[7]",
+                "display": "hidden",
+                "size": 2.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_7",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.36
+                }
+              ]
+            },
+            {
+              "id": "item_8",
+              "pos": [
+                -2.67,
+                2.0,
+                -3.67
+              ],
+              "slot": {
+                "slot": "ingredients[8]",
+                "display": "hidden",
+                "size": 2.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_8",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.36
+                }
+              ]
+            },
+            {
+              "id": "served",
+              "pos": [
+                0,
+                2.0,
+                -1.0
+              ],
+              "slot": {
+                "slot": "served",
+                "display": "hidden",
+                "size": 4.2,
+                "highlight": false
+              },
+              "children": [
+                {
+                  "$comment": "What was baked: the dish's own block model when it is a block (a pie, a cake), else the item lying on the tray.",
+                  "id": "dish",
+                  "pickable": false
+                }
+              ]
+            },
+            {
+              "id": "mouth",
+              "drop_zone": "ingredients",
+              "collider": {
+                "from": [
+                  -4,
+                  1,
+                  -6
+                ],
+                "to": [
+                  4,
+                  6,
+                  4
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "$comment": "Where the steam leaves the open door when something is done, moved by nothing.",
+      "id": "vent",
+      "pos": [
+        8,
+        10,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        0.96,
+        7.97,
+        9.94
+      ],
+      "rotation": [
+        -30,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        0.95,
+        7.97,
+        9.91
+      ],
+      "rotation": [
+        -30,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial",
+      "pos": [
+        0.94,
+        7.99,
+        9.88
+      ],
+      "rotation": [
+        -30,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "flame",
+      "pos": [
+        0.95,
+        7.97,
+        9.91
+      ],
+      "rotation": [
+        -30,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "flame_lit",
+      "pos": [
+        0.94,
+        7.99,
+        9.88
+      ],
+      "rotation": [
+        -30,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "preview",
+      "pos": [
+        0.92,
+        8.01,
+        9.84
+      ],
+      "rotation": [
+        60,
+        20,
+        0
+      ],
+      "scale": 0.156,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        9.98,
+        13.73,
+        -17.42
+      ],
+      "rotation": [
+        -30,
+        20,
+        0
+      ],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -4.4,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          4.4,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

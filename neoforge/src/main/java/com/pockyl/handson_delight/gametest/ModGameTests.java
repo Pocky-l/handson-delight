@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link KegTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
+ * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link KegTests}, {@link OvenTests}, {@link VatTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
  * and {@link RecipeAudit} on NeoForge.
  */
 @GameTestHolder(HandsOnDelight.MOD_ID)
@@ -537,6 +537,61 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 120)
     public static void theLidKeepsThingsOutAndTheBrewWaitsUnderIt(GameTestHelper helper) {
         KegTests.theLidKeepsThingsOutAndTheBrewWaitsUnderIt(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theOvenReadsItsRecipes(GameTestHelper helper) {
+        OvenTests.theOvenReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theDoorKeepsTheTrayShut(GameTestHelper helper) {
+        OvenTests.theDoorKeepsTheTrayShut(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void breadBakesWithTheDoorShut(GameTestHelper helper) {
+        OvenTests.breadBakesWithTheDoorShut(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aPieIsLaidOutFromTheBook(GameTestHelper helper) {
+        OvenTests.aPieIsLaidOutFromTheBook(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aStackIsSharedOutForItsRecipe(GameTestHelper helper) {
+        OvenTests.aStackIsSharedOutForItsRecipe(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theVatReadsItsRecipes(GameTestHelper helper) {
+        VatTests.theVatReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theLidKeepsTheVatShut(GameTestHelper helper) {
+        VatTests.theLidKeepsTheVatShut(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aNewVatStandsUpright(GameTestHelper helper) {
+        VatTests.aNewVatStandsUpright(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void beerAgesWithTheLidShutAndIsDrawnIntoABottle(GameTestHelper helper) {
+        VatTests.beerAgesWithTheLidShutAndIsDrawnIntoABottle(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aBottleInItsSlotWorksAsBefore(GameTestHelper helper) {
+        VatTests.aBottleInItsSlotWorksAsBefore(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aStackIsSharedOutAndBottlesStayOut(GameTestHelper helper) {
+        VatTests.aStackIsSharedOutAndBottlesStayOut(helper);
     }
 
     /** {@link PotTests.MealMaker}'s meal of what lies in the pot on NeoForge. */

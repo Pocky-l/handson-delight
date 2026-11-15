@@ -1,0 +1,198 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "culturaldelights:block/oven_front",
+    "tray": "minecraft:block/anvil"
+  },
+  "elements": [
+    {
+      "name": "plate",
+      "from": [
+        4,
+        1,
+        2
+      ],
+      "to": [
+        12,
+        2,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            14,
+            12,
+            15
+          ],
+          "texture": "#tray"
+        },
+        "east": {
+          "uv": [
+            4,
+            14,
+            14,
+            15
+          ],
+          "texture": "#tray"
+        },
+        "south": {
+          "uv": [
+            4,
+            14,
+            12,
+            15
+          ],
+          "texture": "#tray"
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            12,
+            15
+          ],
+          "texture": "#tray"
+        },
+        "up": {
+          "uv": [
+            4,
+            2,
+            12,
+            12
+          ],
+          "texture": "#tray"
+        },
+        "down": {
+          "uv": [
+            4,
+            4,
+            12,
+            14
+          ],
+          "texture": "#tray"
+        }
+      }
+    },
+    {
+      "name": "lip_front",
+      "from": [
+        4,
+        2,
+        2
+      ],
+      "to": [
+        12,
+        3,
+        3
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            13,
+            12,
+            14
+          ],
+          "texture": "#tray"
+        },
+        "east": {
+          "uv": [
+            13,
+            13,
+            14,
+            14
+          ],
+          "texture": "#tray"
+        },
+        "south": {
+          "uv": [
+            4,
+            13,
+            12,
+            14
+          ],
+          "texture": "#tray"
+        },
+        "west": {
+          "uv": [
+            2,
+            13,
+            3,
+            14
+          ],
+          "texture": "#tray"
+        },
+        "up": {
+          "uv": [
+            4,
+            2,
+            12,
+            3
+          ],
+          "texture": "#tray"
+        }
+      }
+    },
+    {
+      "name": "lip_back",
+      "from": [
+        4,
+        2,
+        11
+      ],
+      "to": [
+        12,
+        3,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            13,
+            12,
+            14
+          ],
+          "texture": "#tray"
+        },
+        "east": {
+          "uv": [
+            4,
+            13,
+            5,
+            14
+          ],
+          "texture": "#tray"
+        },
+        "south": {
+          "uv": [
+            4,
+            13,
+            12,
+            14
+          ],
+          "texture": "#tray"
+        },
+        "west": {
+          "uv": [
+            11,
+            13,
+            12,
+            14
+          ],
+          "texture": "#tray"
+        },
+        "up": {
+          "uv": [
+            4,
+            11,
+            12,
+            12
+          ],
+          "texture": "#tray"
+        }
+      }
+    }
+  ]
+}

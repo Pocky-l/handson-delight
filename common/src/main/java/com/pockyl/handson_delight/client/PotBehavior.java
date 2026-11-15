@@ -98,7 +98,7 @@ public final class PotBehavior implements StationBehavior {
             {"###", "#.#", "###", "..#", "###"}};
     private static final int COUNT_RIGHT = 9;
     /** A pot with no fire under it shows an unlit flame where the bar would run, as Farmer's Delight's menu does: nothing cooks yet. */
-    private static final String[] FLAME = {"..#..", ".##.#", "#####", "#####", ".###."};
+    static final String[] FLAME = {"..#..", ".##.#", "#####", "#####", ".###."};
     private static final int FLAME_LEFT = -2;
     private static final int FLAME_TOP = 8;
     private static final int COUNT_TOP = 4;

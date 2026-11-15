@@ -1,0 +1,191 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/body"
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/body",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/body",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/body",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/tray"
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/tray",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/tray",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/tray",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "open": "false"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_left"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "open": "false"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_right"
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "open": "false"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_left",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "open": "false"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_right",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "open": "false"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_left",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "open": "false"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_right",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "open": "false"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_left",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "open": "false"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_right",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "open": "true"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_open"
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "open": "true"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_open",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "open": "true"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_open",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "open": "true"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/oven/door_open",
+        "y": 270
+      }
+    }
+  ]
+}

@@ -1,0 +1,550 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Cultural Delights' vat standing on its bottom, worked from the side the cook comes from. The station hides the block while it is used and shows it here: stone walls 2 px round an inside x,z 2..14 from the floor at y 4 (the vat is solid under it), the lid (x,z 2..14, y 14..16) hinged at the far top edge, swung up and leant back on the far rim. What is poured in is the brew (a bucket stands 5.4 px deep, never above y 11.2: well under the rim); what is dropped in floats round on it or lies on the floor, drawn by the code (the slots are click places that move with what they hold). A drink stays in the vat as its liquid until it is drawn into a bottle. Over ice the vat frosts over. While nobody uses it the block is the vat with its lid shut, the same models; the scene draws its frost and lets out its steam.",
+  "work_plane": 12,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      8,
+      67.6,
+      -35.0
+    ],
+    "target": [
+      8,
+      14,
+      10
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "vat",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "children": [
+        {
+          "$comment": "The vat's body, as the block's: shown only while the station hides the block.",
+          "id": "body",
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/vat/body",
+            "lit_as_block": true
+          }
+        },
+        {
+          "$comment": "Rime from the ice under a cold vat, up its outside: thick at its foot, a few crystals higher up, growing over a few seconds; in the world as at the station.",
+          "id": "frost",
+          "pickable": false,
+          "hidden": true,
+          "visual": {
+            "model": "handson_delight:diegesis/vat/frost",
+            "translucent": true,
+            "lit_as_block": true,
+            "tint": "#00FFFFFF"
+          }
+        },
+        {
+          "$comment": "The lid's hinge on the far side of the opening, at its top edge: the lid swings up about it and leans back on the far rim.",
+          "id": "hinge",
+          "pos": [
+            0,
+            16,
+            6
+          ],
+          "pickable": false,
+          "children": [
+            {
+              "$comment": "The lid, turned by the code so that it lies as the block's lid lies in the world whichever side the cook comes from.",
+              "id": "lid",
+              "pos": [
+                0,
+                0,
+                -6
+              ],
+              "visual": {
+                "model": "handson_delight:diegesis/vat/lid",
+                "anchor": [
+                  8,
+                  16,
+                  8
+                ],
+                "lit_as_block": true
+              },
+              "collider": {
+                "from": [
+                  -6,
+                  -2.4,
+                  -6
+                ],
+                "to": [
+                  6,
+                  0.6,
+                  6
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "$comment": "What the vat holds poured in: water, milk, the drinks it is made from; its colour moves to the drink's as it ages.",
+      "id": "brew",
+      "pickable": false,
+      "tank": {
+        "tank": "brew",
+        "inner": {
+          "from": [
+            2.05,
+            4,
+            2.05
+          ],
+          "to": [
+            13.95,
+            16,
+            13.95
+          ]
+        }
+      }
+    },
+    {
+      "$comment": "A ring of rime on the inside walls at the edge of the cold liquid, moved with its level by the code.",
+      "id": "frost_ring",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "hidden": true,
+      "visual": {
+        "model": "handson_delight:diegesis/vat/frost_ring",
+        "translucent": true,
+        "lit_as_block": true,
+        "tint": "#00FFFFFF"
+      }
+    },
+    {
+      "id": "mouth",
+      "drop_zone": "ingredients",
+      "collider": {
+        "from": [
+          2,
+          4,
+          2
+        ],
+        "to": [
+          14,
+          16,
+          14
+        ]
+      }
+    },
+    {
+      "id": "item_0",
+      "pos": [
+        8,
+        4,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[0]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_0",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_1",
+      "pos": [
+        8,
+        4,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[1]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_1",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_2",
+      "pos": [
+        8,
+        4,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[2]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_2",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_3",
+      "pos": [
+        8,
+        4,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[3]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_3",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_4",
+      "pos": [
+        8,
+        4,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[4]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_4",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_5",
+      "pos": [
+        8,
+        4,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[5]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_5",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "$comment": "What was aged: a drink waits as the vat's liquid and is drawn by a click on it (one, shift all) into a bottle from the inventory; what has no container (pickles, cheese) lies in the vat and is taken the same way.",
+      "id": "served",
+      "pos": [
+        8,
+        4,
+        8
+      ],
+      "hidden": true,
+      "collider": {
+        "from": [
+          -5.8,
+          0,
+          -5.8
+        ],
+        "to": [
+          5.8,
+          8,
+          5.8
+        ]
+      }
+    },
+    {
+      "id": "dish",
+      "pos": [
+        8,
+        4,
+        8
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "$comment": "A container from the inventory brought over the vat, dipped into the drink and taken away full; moved by the code in scene pixels.",
+      "id": "dipper",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "$comment": "What a hand brings over the vat and pours or shakes out, moved by the code in scene pixels.",
+      "id": "hand_0",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_1",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_2",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_3",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_4",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_5",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -4.84,
+        27.94,
+        3.3
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -4.83,
+        27.96,
+        3.28
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -4.82,
+        27.98,
+        3.26
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "thermo",
+      "pos": [
+        -4.83,
+        27.96,
+        3.28
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "thermo_now",
+      "pos": [
+        -4.82,
+        27.98,
+        3.26
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -4.81,
+        28.01,
+        3.23
+      ],
+      "rotation": [
+        46.0,
+        -13.1,
+        -0.9
+      ],
+      "scale": 0.187,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        22.36,
+        33.45,
+        -5.7
+      ],
+      "rotation": [
+        -40.6,
+        -0.2,
+        17.7
+      ],
+      "scale": 1.19,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -4.4,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          4.4,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

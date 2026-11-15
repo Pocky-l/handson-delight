@@ -20,6 +20,9 @@
     "StoveBlockMixin",
     "PlayerListMixin",
     "KegMixin",
+    "OvenMixin",
+    "VatMixin",
+    "VatUprightMixin",
     "DecoratedBoardMixin"
   ],
   "client": [
@@ -31,7 +34,8 @@
     "StoveSmokeMixin",
     "AddonStoveSmokeMixin",
     "CampfireSmokeMixin",
-    "DecoratedBoardContentMixin"
+    "DecoratedBoardContentMixin",
+    "VatSparksMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -32,6 +32,9 @@ dependencies {
     compileOnly "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_version}"
     // Chopper's Delight's decorated board is a board station: compiled against it only, its classes the same on both loaders.
     compileOnly "maven.modrinth:choppers-delight:${choppers_delight_version}"
+    // Cultural Delights' oven is a station: its block entity sends its content to clients through a mixin compiled against its
+    // NeoForge jar; the classes it touches are the same in its Refabricated build.
+    compileOnly "maven.modrinth:cultural-delights:${cultural_delights_version}"
 }
 
 configurations {

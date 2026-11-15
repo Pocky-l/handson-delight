@@ -2,6 +2,20 @@
 
 ## [1.4.2+1.21.1] - Unreleased
 ### New
+- [Cultural Delights](https://modrinth.com/mod/cultural-delights)'s oven is a station. In the world it is a brick oven
+  with a hearth inside and a grated door, and its fire glows through the grate while the block under it heats it.
+  Right-click it: the door opens like a pair of gates and the baking tray slides out. Lay what you bake on it (a pie's
+  filling goes on its crust in layers, the rest in neat piles), or pick a recipe in its book. Shut the door with a click
+  and it bakes; through the grate you see it brown, and the badge counts down. Open it and the tray brings the dish out,
+  a pie or a cake as the real thing. Leave and the door shuts behind you. Three of a kind laid as one stack are spread
+  over the tray as the oven needs them. Sneak to use its own menu.
+- Cultural Delights' vat is a station too. A new vat is always placed standing on its bottom (one already lying on its
+  side keeps its own menu). It is a stone tub now, open inside under a lid
+  that swings up on its hinge. Pour water or milk in, drop the rest in and it floats round on it, close the lid and it
+  ages at the warmth under it: over a fire it boils and steams, over ice it frosts over and cold mist spills down its
+  sides, and the badge shows its warmth against the recipe's. No bottle is needed to start: the drink waits in the vat,
+  beer golden under its head, until you click it with a bottle (or a wafer for ice cream) and draw it. Sneak to use its
+  own menu; a bottle in its menu or from a hopper works as before.
 - [Chopper's Delight](https://www.curseforge.com/minecraft/mc-mods/choppers-delight)'s decorated cutting board, the one
   with a banner pattern, works like every other board now: click it to cut, put dishes together and stick a knife in.
   Its banner pattern stays on it while you work.

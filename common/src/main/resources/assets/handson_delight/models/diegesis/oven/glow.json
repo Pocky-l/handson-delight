@@ -1,0 +1,57 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "culturaldelights:block/oven_front",
+    "glow": "culturaldelights:block/oven_front_open_lit"
+  },
+  "elements": [
+    {
+      "name": "glow_back",
+      "from": [
+        2.95,
+        0.95,
+        12.95
+      ],
+      "to": [
+        13.05,
+        9.05,
+        13.05
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            8,
+            13,
+            16
+          ],
+          "texture": "#glow"
+        }
+      }
+    },
+    {
+      "name": "glow_hearth",
+      "from": [
+        2.95,
+        0.95,
+        2.95
+      ],
+      "to": [
+        13.05,
+        1.05,
+        13.05
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            3,
+            6,
+            13,
+            16
+          ],
+          "texture": "#glow"
+        }
+      }
+    }
+  ]
+}

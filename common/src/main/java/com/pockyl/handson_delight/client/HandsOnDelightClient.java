@@ -10,8 +10,11 @@ import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 import com.pockyl.handson_delight.station.KegStation;
+import com.pockyl.handson_delight.station.OvenStation;
 import com.pockyl.handson_delight.station.SkilletStation;
 import com.pockyl.handson_delight.station.StoveStation;
+import com.pockyl.handson_delight.station.VatLogic;
+import com.pockyl.handson_delight.station.VatStation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +40,12 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(KegStation.STANDING_ID, KegBehavior::standing);
         DiegesisClient.registerLiquid(HandsOnDelight.id("drink"), LiquidLook.of(0xC0B08850));
         KegLiquids.register();
+        DiegesisClient.registerBehavior(OvenStation.ID, OvenBehavior::new);
+        DiegesisClient.registerBehavior(VatStation.ID, VatBehavior::new);
+        DiegesisClient.registerLiquid(VatLogic.BREW_LIQUID, LiquidLook.of(0xD0B8D8F0));
+        // Ice cream in the vat: opaque, grainy as snow, so thick that it hardly moves.
+        DiegesisClient.registerLiquid(VatLogic.CREAM_LIQUID,
+                new LiquidLook(0xFFF6EEDC, ResourceLocation.withDefaultNamespace("block/snow"), false, 0.95F));
         DiegesisClient.registerBehavior(CuttingBoardStation.ID, BoardBehavior::new);
         DiegesisClient.registerBehavior(SkilletStation.ID, SkilletBehavior::new);
         DiegesisClient.registerBehavior(StoveStation.ID, StoveBehavior::new);

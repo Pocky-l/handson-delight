@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "culturaldelights:block/vat_side",
+    "lid": "culturaldelights:block/vat_top"
+  },
+  "elements": [
+    {
+      "name": "lid",
+      "from": [
+        2,
+        16,
+        2
+      ],
+      "to": [
+        14,
+        28,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "rotation": 180,
+          "texture": "#lid"
+        },
+        "east": {
+          "uv": [
+            2,
+            2,
+            4,
+            14
+          ],
+          "texture": "#lid"
+        },
+        "south": {
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "texture": "#lid"
+        },
+        "west": {
+          "uv": [
+            2,
+            2,
+            4,
+            14
+          ],
+          "texture": "#lid"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            14,
+            4
+          ],
+          "texture": "#lid"
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            14,
+            4
+          ],
+          "texture": "#lid"
+        }
+      }
+    }
+  ]
+}

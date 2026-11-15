@@ -53,6 +53,14 @@ public interface Platform {
     void setItem(AbstractStoveBlockEntity stove, int slot, ItemStack stack);
 
     /**
+     * A slot of an addon's own inventory, which is the loader's {@code ItemStackHandler} (NeoForge's, or Refabricated's on Fabric):
+     * Cultural Delights' oven keeps one of each, so the station reaches it without a class of that mod.
+     */
+    ItemStack handlerItem(Object handler, int slot);
+
+    void setHandlerItem(Object handler, int slot, ItemStack stack);
+
+    /**
      * Whether the mod {@code modId} needs Farmer's Delight: an addon, whose food recipes the stations take over too. A mod that only
      * works with it when it is there keeps its crafts.
      */

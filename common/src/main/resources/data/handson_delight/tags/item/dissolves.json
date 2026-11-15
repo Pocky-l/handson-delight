@@ -12,6 +12,14 @@
     {
       "id": "mynethersdelight:pepper_powder",
       "required": false
+    },
+    {
+      "id": "#c:dusts/salt",
+      "required": false
+    },
+    {
+      "id": "#c:gunpowders",
+      "required": false
     }
   ]
 }

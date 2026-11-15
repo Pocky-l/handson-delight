@@ -1,0 +1,105 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "handson_delight:block/vat/frost",
+    "frost": "handson_delight:block/vat/frost"
+  },
+  "elements": [
+    {
+      "name": "ring_west",
+      "from": [
+        2.05,
+        0,
+        2
+      ],
+      "to": [
+        2.05,
+        3,
+        14
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#frost"
+        }
+      }
+    },
+    {
+      "name": "ring_east",
+      "from": [
+        13.95,
+        0,
+        2
+      ],
+      "to": [
+        13.95,
+        3,
+        14
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#frost"
+        }
+      }
+    },
+    {
+      "name": "ring_north",
+      "from": [
+        2,
+        0,
+        2.05
+      ],
+      "to": [
+        14,
+        3,
+        2.05
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#frost"
+        }
+      }
+    },
+    {
+      "name": "ring_south",
+      "from": [
+        2,
+        0,
+        13.95
+      ],
+      "to": [
+        14,
+        3,
+        13.95
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#frost"
+        }
+      }
+    }
+  ]
+}

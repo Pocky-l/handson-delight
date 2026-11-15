@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.5.0+1.21.1] - Unreleased
+## [1.5.0+1.21.1] - 2026-11-15
 ### New
 - [Cultural Delights](https://modrinth.com/mod/cultural-delights)'s oven is a station. In the world it is a brick oven
   with a hearth inside and a grated door, and its fire glows through the grate while the block under it heats it.

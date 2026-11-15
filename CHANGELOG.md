@@ -103,6 +103,9 @@
 
 ### Changed
 - The recipe book opens almost twice as fast.
+- A recipe clicked in a station's book is only picked now: its page opens on the right so you can read what it needs.
+  Click it again to lay it out from your inventory (with Shift as many as you have for). Before, the first click already
+  took the food out of your inventory.
 - The mouse wheel over a recipe book's list turns its pages.
 - Every station's recipe book names the dish or the ingredient under the cursor, as a slot does.
 - The book opens again at the recipe you picked last, at that station or at one like it, as long as what lies in the

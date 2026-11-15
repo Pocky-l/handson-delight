@@ -223,6 +223,8 @@ final class RecipeBook implements NodePainter {
     private int flipWay = 1;
     private int page;
     private Entry picked;
+    /** The key of the dish the player picked by a click since the book opened; a click on it again makes it. */
+    private Object clicked;
     private Entry hovered;
     /** The tabs over the list (none for a book of one kind), the kind shown (null: all), the tab under the cursor. */
     private List<Tab> tabs = List.of();
@@ -440,6 +442,7 @@ final class RecipeBook implements NodePainter {
             keepOrder = false;
             read(view);
             picked = shown(view);
+            clicked = null;
             page = picked == null ? 0 : entries.indexOf(picked) / PER_PAGE;
         } else {
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PUT, 1.0F, 0.5F));
@@ -505,6 +508,7 @@ final class RecipeBook implements NodePainter {
             keepOrder = false;
             read(view);
             picked = shown(view);
+            clicked = null;
             page = picked == null ? 0 : entries.indexOf(picked) / PER_PAGE;
             turnSound();
         }
@@ -1223,10 +1227,17 @@ final class RecipeBook implements NodePainter {
                 turnSound();
             }
         } else if (hovered != null) {
+            // The first click picks the dish, to read it; a click on the dish picked so goes on to make it from the inventory.
+            boolean again = hovered.page().key().equals(clicked);
             picked = hovered;
+            clicked = picked.page().key();
             PICKED.put(placeMemory(view), picked.page().key());
             PICKED.put(kindMemory(), picked.page().key());
-            source.picked(view, picked.page());
+            if (again) {
+                source.picked(view, picked.page());
+            } else {
+                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.4F, 0.3F));
+            }
         } else if (cursorY >= ARROW_Y && cursorY < ARROW_Y + ARROW_HEIGHT) {
             if (cursorX >= GRID_X && cursorX < GRID_X + ARROW_WIDTH) {
                 turn(-1);

@@ -1,0 +1,262 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Youkai's Feasts' short iron pot with water in it, the block itself: walls round x,z 4..12, floor 2, rim 6. Its own renderer draws what floats in the soup, as before; the soup is the scene's (broth). The scene adds the moves: what goes in comes down from the cook (fly_N) or is poured (hand_0), mouth catches stacks let go over the pot (the slot hand stays empty), soup takes the clicks of an empty hand; the badge tells what cooks, whether it is heated and the time left. Camera, badge and book stand as at the cooking pot, moved with the rim.",
+  "work_plane": 5,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      8,
+      37.0,
+      -21.0
+    ],
+    "target": [
+      8,
+      2.5,
+      8
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "$comment": "The soup, ours: the scene's liquid shown by code in the soup's colour, the box its own renderer fills (from 2 px up to the soup's level, wall to wall); that renderer leaves its own out while the scene is drawn and goes on drawing what floats.",
+      "id": "broth",
+      "pickable": false,
+      "tank": {
+        "tank": "soup",
+        "inner": {
+          "from": [
+            4,
+            2,
+            4
+          ],
+          "to": [
+            12,
+            5,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "id": "mouth",
+      "drop_zone": "hand",
+      "collider": {
+        "from": [
+          2,
+          0,
+          2
+        ],
+        "to": [
+          14,
+          11,
+          14
+        ]
+      }
+    },
+    {
+      "$comment": "The soup's surface, which takes the clicks of an empty hand: a right click takes the last thing back out.",
+      "id": "soup",
+      "collider": {
+        "from": [
+          4,
+          0,
+          4
+        ],
+        "to": [
+          12,
+          6,
+          12
+        ]
+      }
+    },
+    {
+      "id": "fly_0",
+      "pos": [
+        8,
+        6,
+        8
+      ],
+      "pickable": false,
+      "hidden": true,
+      "$comment": "What goes in, coming down from the cook into the soup; what comes back out, and the bowl going to the cook."
+    },
+    {
+      "id": "fly_1",
+      "pos": [
+        8,
+        6,
+        8
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "fly_2",
+      "pos": [
+        8,
+        6,
+        8
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "fly_3",
+      "pos": [
+        8,
+        6,
+        8
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "$comment": "What a hand brings over the soup and pours out (soy sauce, cream), moved by the code in scene pixels.",
+      "id": "hand_0",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -0.6,
+        10.5,
+        4.6
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -0.6,
+        10.52,
+        4.58
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -0.6,
+        10.54,
+        4.56
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "flame",
+      "pos": [
+        -0.6,
+        10.54,
+        4.56
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "flame_lit",
+      "pos": [
+        -0.6,
+        10.55,
+        4.55
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -0.6,
+        10.58,
+        4.52
+      ],
+      "rotation": [
+        40,
+        0,
+        0
+      ],
+      "scale": 0.125,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        16.33,
+        17.22,
+        -4
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -4.4,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          4.4,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

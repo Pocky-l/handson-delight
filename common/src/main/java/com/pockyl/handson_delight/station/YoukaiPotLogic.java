@@ -1,0 +1,281 @@
+package com.pockyl.handson_delight.station;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+
+import com.pockyl.diegesis.api.state.SlotRef;
+import com.pockyl.diegesis.api.station.StationContext;
+import com.pockyl.diegesis.api.station.StationLogic;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * A Youkai's Feasts pot's actions at the station: food in, the last thing back out, a dish from the book. Each goes through the
+ * pot's own code ({@link KitchenYoukaiPot}); this only says what happened, for everybody to see. While somebody works at the pot it
+ * knows them: a dish done is told, and one that is no block goes to them.
+ */
+public final class YoukaiPotLogic implements StationLogic {
+    /** The most one click with shift puts in: the pot holds twelve things. */
+    private static final int MOST = 12;
+    /** A stir is seen for this long after the hand last moved the ladle, ticks, as at the cooking pot. */
+    private static final int STIR_TICKS = 40;
+
+    private final KitchenYoukaiPot pot;
+    private long stirredAt = -STIR_TICKS;
+    private UUID stirrer;
+
+    public YoukaiPotLogic(StationContext station) {
+        pot = KitchenYoukaiPot.of(station.blockEntity());
+    }
+
+    /** Nothing goes in by the library's own moves: every stack comes through {@code put}, the hand's slot stays empty. */
+    @Override
+    public boolean mayPlace(StationContext station, Player player, SlotRef slot, ItemStack stack) {
+        return false;
+    }
+
+    @Override
+    public boolean mayTake(StationContext station, Player player, SlotRef slot) {
+        return false;
+    }
+
+    @Override
+    public void onOpen(StationContext station, Player player) {
+        if (pot != null && !station.isClientSide()) {
+            pot.handson$setCook(cook(station, player));
+        }
+    }
+
+    /** The one who left was the cook: whoever still works there becomes it, or nobody. */
+    @Override
+    public void onClose(StationContext station, Player player) {
+        if (pot == null || station.isClientSide()) {
+            return;
+        }
+        KitchenYoukaiPot.Cook now = pot.handson$cook();
+        if (now != null && now.player() != player) {
+            return;
+        }
+        Player next = station.users().stream().filter(user -> user != player).findFirst().orElse(null);
+        pot.handson$setCook(next == null ? null : cook(station, next));
+    }
+
+    private static KitchenYoukaiPot.Cook cook(StationContext station, Player player) {
+        return new KitchenYoukaiPot.Cook() {
+            @Override
+            public Player player() {
+                return player;
+            }
+
+            @Override
+            public void done(ItemStack dish) {
+                CompoundTag data = new CompoundTag();
+                data.put(YoukaiPotStation.STACK, dish.saveOptional(station.level().registryAccess()));
+                station.effect(YoukaiPotStation.EFFECT_DONE, "pot", data);
+            }
+
+            @Override
+            public void served(ItemStack dish) {
+                CompoundTag data = new CompoundTag();
+                data.put(YoukaiPotStation.STACK, dish.saveOptional(station.level().registryAccess()));
+                data.putBoolean(YoukaiPotStation.SERVED, true);
+                station.effect(YoukaiPotStation.EFFECT_DONE, "pot", data);
+            }
+        };
+    }
+
+    @Override
+    public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
+        if (pot == null) {
+            return;
+        }
+        if (pot.handson$cook() == null || !station.users().contains(pot.handson$cook().player())) {
+            pot.handson$setCook(cook(station, player));
+        }
+        int from = data.contains(YoukaiPotStation.FROM) ? data.getInt(YoukaiPotStation.FROM) : -1;
+        switch (action) {
+            case YoukaiPotStation.ACTION_PUT -> put(station, player, from, data.getBoolean(YoukaiPotStation.ALL));
+            case YoukaiPotStation.ACTION_BACK -> back(station, player);
+            case YoukaiPotStation.ACTION_FILL -> fill(station, player, data.getString(YoukaiPotStation.DISH));
+            case YoukaiPotStation.ACTION_STIR -> stir(station, player, data);
+            default -> {
+            }
+        }
+    }
+
+    /** The ladle moved in a cook's hand: everybody near sees it where it is. One cook stirs at a time. */
+    private void stir(StationContext station, Player player, CompoundTag data) {
+        long now = station.level().getGameTime();
+        if (isStirring(now) && stirrer != null && !player.getUUID().equals(stirrer)) {
+            return;
+        }
+        stirredAt = now;
+        stirrer = player.getUUID();
+        station.state().setControl(YoukaiPotStation.STIRRING, 1.0F);
+        station.state().setControl(YoukaiPotStation.SPOON_X, spoon(data.getFloat(YoukaiPotStation.STIR_X)));
+        station.state().setControl(YoukaiPotStation.SPOON_Z, spoon(data.getFloat(YoukaiPotStation.STIR_Z)));
+    }
+
+    private boolean isStirring(long now) {
+        return now - stirredAt < STIR_TICKS;
+    }
+
+    private static float spoon(float at) {
+        return Float.isFinite(at) ? Math.max(-1.0F, Math.min(1.0F, at)) : 0.0F;
+    }
+
+    /** Left alone, the ladle goes back to its rest for everybody. */
+    @Override
+    public void tick(StationContext station) {
+        if (station.isClientSide() || isStirring(station.level().getGameTime())
+                || station.state().getControl(YoukaiPotStation.STIRRING) <= 0.5F) {
+            return;
+        }
+        station.state().setControl(YoukaiPotStation.STIRRING, 0.0F);
+        station.state().setControl(YoukaiPotStation.SPOON_X, 0.0F);
+        station.state().setControl(YoukaiPotStation.SPOON_Z, 0.0F);
+    }
+
+    /** One of the stack on the cursor, or in inventory slot {@code from}; with {@code all} as many as the pot takes of it. */
+    private void put(StationContext station, Player player, int from, boolean all) {
+        ItemStack held = held(player, from);
+        if (held.isEmpty()) {
+            return;
+        }
+        ListTag went = new ListTag();
+        for (int i = 0; i < (all ? MOST : 1) && !held.isEmpty(); i++) {
+            ItemStack one = held.copyWithCount(1);
+            if (!pot.handson$put(player, held)) {
+                break;
+            }
+            went.add(one.saveOptional(station.level().registryAccess()));
+        }
+        putBack(player, from, held);
+        if (went.isEmpty()) {
+            refused(station, held);
+            return;
+        }
+        in(station, went, false);
+    }
+
+    /** The last thing in comes back out to the cook. */
+    private void back(StationContext station, Player player) {
+        List<ItemStack> in = pot.handson$contents();
+        ItemStack back = pot.handson$takeBack(player);
+        if (back == null) {
+            if (!in.isEmpty()) {
+                refused(station, in.get(in.size() - 1));
+            }
+            return;
+        }
+        if (!player.getInventory().add(back.copy())) {
+            player.drop(back.copy(), false);
+        }
+        CompoundTag data = new CompoundTag();
+        data.put(YoukaiPotStation.STACK, back.saveOptional(station.level().registryAccess()));
+        station.effect(YoukaiPotStation.EFFECT_BACK, "pot", data);
+    }
+
+    /**
+     * A dish picked in the book goes in from the inventory: what is in the pot already counts when it is part of that dish, the rest
+     * comes from the first stacks that fit. Something else in the pot, or nothing of the dish in the inventory: refused. Without
+     * everything it puts in what there is, and the pot waits for the rest.
+     */
+    private void fill(StationContext station, Player player, String id) {
+        ResourceLocation key = ResourceLocation.tryParse(id);
+        KitchenYoukaiPot.Dish dish = YoukaiPotStation.dishes(pot).stream().filter(it -> it.id().equals(key)).findFirst().orElse(null);
+        if (dish == null) {
+            return;
+        }
+        List<Ingredient> missing = missing(dish, pot.handson$contents());
+        if (missing == null) {
+            List<ItemStack> in = pot.handson$contents();
+            refused(station, in.isEmpty() ? dish.result() : in.get(in.size() - 1));
+            return;
+        }
+        Inventory inventory = player.getInventory();
+        ListTag went = new ListTag();
+        for (Ingredient ingredient : missing) {
+            int slot = slotFor(inventory, ingredient);
+            if (slot < 0) {
+                continue;
+            }
+            ItemStack stack = inventory.getItem(slot);
+            ItemStack one = stack.copyWithCount(1);
+            if (pot.handson$put(player, stack)) {
+                inventory.setChanged();
+                went.add(one.saveOptional(station.level().registryAccess()));
+            }
+        }
+        if (went.isEmpty()) {
+            if (!missing.isEmpty()) {
+                refused(station, missing.get(0).getItems().length > 0 ? missing.get(0).getItems()[0] : dish.result());
+            }
+            return;
+        }
+        in(station, went, true);
+    }
+
+    private int slotFor(Inventory inventory, Ingredient ingredient) {
+        for (int slot = 0; slot < inventory.items.size(); slot++) {
+            ItemStack stack = inventory.items.get(slot);
+            if (!stack.isEmpty() && ingredient.test(stack) && pot.handson$takes(stack)) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * What of {@code dish} is not in the pot yet, when everything in it is part of that dish (each thing matched to an ingredient of
+     * its own, as the pot's recipes match them); null when something in it is not.
+     */
+    public static List<Ingredient> missing(KitchenYoukaiPot.Dish dish, List<ItemStack> in) {
+        List<Ingredient> left = new ArrayList<>(dish.ingredients());
+        for (ItemStack stack : in) {
+            Ingredient matched = left.stream().filter(ingredient -> ingredient.test(stack)).findFirst().orElse(null);
+            if (matched == null) {
+                return null;
+            }
+            left.remove(matched);
+        }
+        return left;
+    }
+
+    private void in(StationContext station, ListTag went, boolean fromBook) {
+        CompoundTag data = new CompoundTag();
+        data.put(YoukaiPotStation.STACKS, went);
+        data.putBoolean(YoukaiPotStation.BOOK, fromBook);
+        station.effect(YoukaiPotStation.EFFECT_IN, "pot", data);
+    }
+
+    private static void refused(StationContext station, ItemStack stack) {
+        CompoundTag data = new CompoundTag();
+        data.put(YoukaiPotStation.STACK, stack.copyWithCount(1).saveOptional(station.level().registryAccess()));
+        station.effect(YoukaiPotStation.EFFECT_REFUSED, "pot", data);
+    }
+
+    /** What the cook works with: the stack on the cursor, or the one in inventory slot {@code from}. */
+    private static ItemStack held(Player player, int from) {
+        if (from >= Inventory.INVENTORY_SIZE) {
+            return ItemStack.EMPTY;
+        }
+        return from >= 0 ? player.getInventory().getItem(from) : player.inventoryMenu.getCarried();
+    }
+
+    private static void putBack(Player player, int from, ItemStack left) {
+        ItemStack kept = left.isEmpty() ? ItemStack.EMPTY : left;
+        if (from >= 0) {
+            player.getInventory().setItem(from, kept);
+        } else {
+            player.inventoryMenu.setCarried(kept);
+        }
+    }
+}

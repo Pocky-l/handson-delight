@@ -17,6 +17,8 @@ import com.pockyl.handson_delight.station.KitchenCuisine;
 import com.pockyl.handson_delight.station.KitchenBoard;
 import com.pockyl.handson_delight.station.KitchenBasin;
 import com.pockyl.handson_delight.station.KitchenGrill;
+import com.pockyl.handson_delight.station.KitchenSteamer;
+import com.pockyl.handson_delight.station.SteamerTower;
 
 /**
  * Where a scene shows the board, the skillet or the stove, it draws the food itself, so that a knife can cut it, it can fly and
@@ -26,7 +28,8 @@ import com.pockyl.handson_delight.station.KitchenGrill;
  * leaves it alone. A board whose renderer draws the board itself (Chopper's Delight's decorated one) keeps it: only what lies on
  * it is stopped, in that renderer. Farmer's Delight gives the cooking pot no renderer; a mod that draws the pot's body from one (Vanilla
  * Delights' dyed pots) is stopped too, and the pot's scene calls that renderer itself before its soup ({@code PotBody}). Youkai's
- * Feasts' cuisine board's renderer is stopped as well: the scene draws the same models of what lies on it. Only while the scene is
+ * Feasts' cuisine board's renderer is stopped as well: the scene draws the same models of what lies on it, and so is its steamer's,
+ * whose racks the scene lifts apart. Only while the scene is
  * drawn: a station is kept a little farther away than its scene is drawn.
  */
 @Mixin(BlockEntityRenderDispatcher.class)
@@ -39,6 +42,12 @@ abstract class StationRenderersMixin {
                 || KitchenBasin.isBasin(blockEntity) || blockEntity instanceof KitchenCuisine
                 || blockEntity instanceof KitchenBoard board && !board.handson$isCarving() && !board.handson$rendersBoard();
         if (drawnByScene && HandsOnDelightClient.isSceneDrawn(blockEntity.getBlockPos())) {
+            callback.cancel();
+            return;
+        }
+        // Youkai's Feasts' steamer: every block of the tower is drawn by the scene of the pot under it while somebody works there.
+        if (blockEntity instanceof KitchenSteamer && blockEntity.getLevel() != null && HandsOnDelightClient.isSceneDrawn(
+                SteamerTower.potUnder(blockEntity.getLevel(), blockEntity.getBlockPos(), blockEntity.getBlockState()))) {
             callback.cancel();
         }
     }

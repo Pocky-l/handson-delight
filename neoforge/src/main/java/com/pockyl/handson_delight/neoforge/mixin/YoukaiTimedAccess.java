@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.neoforge.mixin;
 
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -19,4 +20,8 @@ public interface YoukaiTimedAccess {
 
     @Accessor("totalTime")
     int handson$totalTime();
+
+    /** The recipe it works on now, null while none. */
+    @Accessor("recipeId")
+    ResourceLocation handson$recipeId();
 }

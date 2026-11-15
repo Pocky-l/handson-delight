@@ -1,0 +1,447 @@
+{
+  "__comment": "Cut out as Youkai's Feasts has its pot: its texture is not in this mod, so the linter cannot read its alpha.",
+  "__lint_allow": [
+    "T009"
+  ],
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "youkaisfeasts:block/bowl/iron/iron_bowl",
+    "bowl": "youkaisfeasts:block/bowl/iron/iron_bowl"
+  },
+  "render_type": "minecraft:cutout",
+  "elements": [
+    {
+      "name": "floor",
+      "from": [
+        5,
+        0,
+        5
+      ],
+      "to": [
+        11,
+        1,
+        11
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            1,
+            5,
+            7,
+            11
+          ],
+          "texture": "#bowl"
+        },
+        "down": {
+          "uv": [
+            9,
+            5,
+            15,
+            11
+          ],
+          "texture": "#bowl"
+        }
+      }
+    },
+    {
+      "name": "wall_north",
+      "from": [
+        5,
+        0,
+        4
+      ],
+      "to": [
+        12,
+        4,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            12,
+            7,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "east": {
+          "uv": [
+            7,
+            12,
+            8,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "south": {
+          "uv": [
+            9,
+            12,
+            16,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            1,
+            4
+          ],
+          "texture": "#bowl"
+        },
+        "up": {
+          "uv": [
+            1,
+            11,
+            8,
+            12
+          ],
+          "texture": "#bowl"
+        },
+        "down": {
+          "uv": [
+            9,
+            11,
+            16,
+            12
+          ],
+          "texture": "#bowl"
+        }
+      }
+    },
+    {
+      "name": "wall_south",
+      "from": [
+        4,
+        0,
+        11
+      ],
+      "to": [
+        11,
+        4,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            9,
+            12,
+            16,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            1,
+            4
+          ],
+          "texture": "#bowl"
+        },
+        "south": {
+          "uv": [
+            0,
+            12,
+            7,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "west": {
+          "uv": [
+            7,
+            12,
+            8,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "up": {
+          "uv": [
+            1,
+            11,
+            8,
+            12
+          ],
+          "texture": "#bowl"
+        },
+        "down": {
+          "uv": [
+            8,
+            11,
+            15,
+            12
+          ],
+          "texture": "#bowl"
+        }
+      }
+    },
+    {
+      "name": "wall_west",
+      "from": [
+        4,
+        0,
+        4
+      ],
+      "to": [
+        5,
+        4,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7,
+            12,
+            8,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "east": {
+          "uv": [
+            9,
+            12,
+            16,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            1,
+            4
+          ],
+          "texture": "#bowl"
+        },
+        "west": {
+          "uv": [
+            0,
+            12,
+            7,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "up": {
+          "uv": [
+            0,
+            11,
+            7,
+            12
+          ],
+          "rotation": 90,
+          "texture": "#bowl"
+        },
+        "down": {
+          "uv": [
+            8,
+            11,
+            15,
+            12
+          ],
+          "rotation": 270,
+          "texture": "#bowl"
+        }
+      }
+    },
+    {
+      "name": "wall_east",
+      "from": [
+        11,
+        0,
+        5
+      ],
+      "to": [
+        12,
+        4,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1,
+            4
+          ],
+          "texture": "#bowl"
+        },
+        "east": {
+          "uv": [
+            0,
+            12,
+            7,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "south": {
+          "uv": [
+            7,
+            12,
+            8,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "west": {
+          "uv": [
+            9,
+            12,
+            16,
+            16
+          ],
+          "texture": "#bowl"
+        },
+        "up": {
+          "uv": [
+            1,
+            11,
+            8,
+            12
+          ],
+          "rotation": 90,
+          "texture": "#bowl"
+        },
+        "down": {
+          "uv": [
+            9,
+            11,
+            16,
+            12
+          ],
+          "rotation": 270,
+          "texture": "#bowl"
+        }
+      }
+    },
+    {
+      "name": "handle_right",
+      "from": [
+        12,
+        3,
+        6
+      ],
+      "to": [
+        13,
+        4,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "texture": "#bowl"
+        },
+        "east": {
+          "uv": [
+            1,
+            0,
+            5,
+            1
+          ],
+          "texture": "#bowl"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "texture": "#bowl"
+        },
+        "up": {
+          "uv": [
+            0,
+            1,
+            1,
+            5
+          ],
+          "texture": "#bowl"
+        },
+        "down": {
+          "uv": [
+            0,
+            1,
+            1,
+            5
+          ],
+          "texture": "#bowl"
+        }
+      }
+    },
+    {
+      "name": "handle_left",
+      "from": [
+        3,
+        3,
+        6
+      ],
+      "to": [
+        4,
+        4,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "texture": "#bowl"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "texture": "#bowl"
+        },
+        "west": {
+          "uv": [
+            5,
+            0,
+            1,
+            1
+          ],
+          "texture": "#bowl"
+        },
+        "up": {
+          "uv": [
+            0,
+            1,
+            1,
+            5
+          ],
+          "texture": "#bowl"
+        },
+        "down": {
+          "uv": [
+            0,
+            1,
+            1,
+            5
+          ],
+          "texture": "#bowl"
+        }
+      }
+    }
+  ]
+}

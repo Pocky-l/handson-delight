@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
+ * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
  * and {@link RecipeAudit} on NeoForge.
  */
 @GameTestHolder(HandsOnDelight.MOD_ID)
@@ -747,6 +747,36 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void youkaiBookMakesSeveralDishes(GameTestHelper helper) {
         YoukaiBoardTests.youkaiBookMakesSeveralDishes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void youkaiPotsReadTheirRecipes(GameTestHelper helper) {
+        YoukaiPotTests.youkaiPotsReadTheirRecipes(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void youkaiShortPotCooksAFeast(GameTestHelper helper) {
+        YoukaiPotTests.youkaiShortPotCooksAFeast(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void youkaiSmallPotCooksFromTheBook(GameTestHelper helper) {
+        YoukaiPotTests.youkaiSmallPotCooksFromTheBook(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void youkaiSteamerSteamsAPotato(GameTestHelper helper) {
+        YoukaiSteamerTests.youkaiSteamerSteamsAPotato(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void youkaiSteamerLaysTheTower(GameTestHelper helper) {
+        YoukaiSteamerTests.youkaiSteamerLaysTheTower(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void youkaiSteamerIsOneTower(GameTestHelper helper) {
+        YoukaiSteamerTests.youkaiSteamerIsOneTower(helper);
     }
 
     @GameTest(template = "empty")

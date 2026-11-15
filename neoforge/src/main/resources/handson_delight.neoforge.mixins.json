@@ -15,7 +15,9 @@
     "YoukaiKettleMixin",
     "YoukaiTimedAccess",
     "YoukaiKettleRecipeAccess",
-    "YoukaiCuisineBoardMixin"
+    "YoukaiCuisineBoardMixin",
+    "YoukaiPotMixin",
+    "YoukaiSteamerMixin"
   ],
   "client": [
     "CopperPotQuietMixin",
@@ -24,7 +26,8 @@
     "MonsterPotSteamMixin",
     "KettleQuietMixin",
     "AlchemistPotQuietMixin",
-    "AlchemistPotSteamMixin"
+    "AlchemistPotSteamMixin",
+    "YoukaiPotSoupMixin"
   ],
   "injectors": {
     "defaultRequire": 1

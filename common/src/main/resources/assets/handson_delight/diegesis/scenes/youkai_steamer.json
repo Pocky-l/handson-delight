@@ -1,0 +1,2589 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Youkai's Feasts' steamer: the pot (8 px, its water at 2..7) and up to eighteen racks over it, 4 px each (rack k from 8 + 4k), the lid on the top one. The station hides the tower's blocks while somebody works at it and draws them here; the code shows the racks the tower has, turns pot and lid as the blocks face, sets the four places of each rack where the steamer has them (its quarters of the block) and lifts the racks over the open one aside. place_K_P are the places, open_wall_N the open rack's walls (they stop the cursor), feast_K a feast block filling rack K, lift_N things going to the cook. Camera, badge and book as at the stockpot for an open rack with its top at 16 px; the code moves the camera and desk with the open rack.",
+  "work_plane": 16,
+  "idle_visible": false,
+  "camera": {
+    "position": [
+      8,
+      52.17,
+      -25.35
+    ],
+    "target": [
+      8,
+      12.5,
+      8
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "hover_outline": true,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "pot",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/pot",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -6,
+          0,
+          -6
+        ],
+        "to": [
+          6,
+          8,
+          6
+        ]
+      }
+    },
+    {
+      "$comment": "Water in the pot, the scene's liquid shown by code where the steamer's own renderer draws its water box.",
+      "id": "water",
+      "pickable": false,
+      "tank": {
+        "tank": "water",
+        "inner": {
+          "from": [
+            4,
+            2,
+            4
+          ],
+          "to": [
+            12,
+            7,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "id": "rack_0",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_0_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_0_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_0_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_0_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_0",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_1",
+      "pos": [
+        8,
+        12,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_1_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_1_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_1_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_1_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_1",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_2",
+      "pos": [
+        8,
+        16,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_2_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_2_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_2_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_2_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_2",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_3",
+      "pos": [
+        8,
+        20,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_3_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_3_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_3_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_3_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_3",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_4",
+      "pos": [
+        8,
+        24,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_4_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_4_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_4_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_4_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_4",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_5",
+      "pos": [
+        8,
+        28,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_5_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_5_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_5_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_5_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_5",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_6",
+      "pos": [
+        8,
+        32,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_6_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_6_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_6_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_6_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_6",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_7",
+      "pos": [
+        8,
+        36,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_7_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_7_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_7_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_7_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_7",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_8",
+      "pos": [
+        8,
+        40,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_8_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_8_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_8_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_8_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_8",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_9",
+      "pos": [
+        8,
+        44,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_9_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_9_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_9_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_9_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_9",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_10",
+      "pos": [
+        8,
+        48,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_10_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_10_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_10_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_10_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_10",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_11",
+      "pos": [
+        8,
+        52,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_11_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_11_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_11_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_11_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_11",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_12",
+      "pos": [
+        8,
+        56,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_12_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_12_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_12_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_12_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_12",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_13",
+      "pos": [
+        8,
+        60,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_13_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_13_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_13_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_13_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_13",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_14",
+      "pos": [
+        8,
+        64,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_14_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_14_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_14_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_14_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_14",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_15",
+      "pos": [
+        8,
+        68,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_15_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_15_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_15_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_15_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_15",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_16",
+      "pos": [
+        8,
+        72,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_16_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_16_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_16_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_16_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_16",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "rack_17",
+      "pos": [
+        8,
+        76,
+        8
+      ],
+      "hidden": true,
+      "takes_items": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/rack",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      },
+      "children": [
+        {
+          "id": "place_17_0",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_17_1",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_17_2",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "place_17_3",
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -2.6,
+              -0.4,
+              -2.6
+            ],
+            "to": [
+              2.6,
+              1.6,
+              2.6
+            ]
+          }
+        },
+        {
+          "id": "feast_17",
+          "pos": [
+            0,
+            1,
+            0
+          ],
+          "hidden": true,
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "open_wall_0",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "takes_items": true,
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -5.5
+        ],
+        "to": [
+          5.5,
+          4,
+          -4.5
+        ]
+      }
+    },
+    {
+      "id": "open_wall_1",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "takes_items": true,
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          4.5
+        ],
+        "to": [
+          5.5,
+          4,
+          5.5
+        ]
+      }
+    },
+    {
+      "id": "open_wall_2",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "takes_items": true,
+      "collider": {
+        "from": [
+          -5.5,
+          0,
+          -4.5
+        ],
+        "to": [
+          -4.5,
+          4,
+          4.5
+        ]
+      }
+    },
+    {
+      "id": "open_wall_3",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "takes_items": true,
+      "collider": {
+        "from": [
+          4.5,
+          0,
+          -4.5
+        ],
+        "to": [
+          5.5,
+          4,
+          4.5
+        ]
+      }
+    },
+    {
+      "id": "lid",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "hidden": true,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_steamer/lid",
+        "lit_as_block": true
+      },
+      "collider": {
+        "from": [
+          -6.5,
+          0,
+          -6.5
+        ],
+        "to": [
+          6.5,
+          2,
+          6.5
+        ]
+      }
+    },
+    {
+      "id": "lift_0",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "lift_1",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "lift_2",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "lift_3",
+      "pos": [
+        8,
+        8,
+        8
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "$comment": "Badge and book, moved up and down with the open rack by the code.",
+      "id": "desk",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "pickable": false,
+      "children": [
+        {
+          "id": "badge",
+          "pos": [
+            -0.6,
+            20.5,
+            4.6
+          ],
+          "rotation": [
+            -50,
+            0,
+            0
+          ],
+          "pickable": false
+        },
+        {
+          "id": "dial_track",
+          "pos": [
+            -0.6,
+            20.52,
+            4.58
+          ],
+          "rotation": [
+            -50,
+            0,
+            0
+          ],
+          "pickable": false
+        },
+        {
+          "id": "dial",
+          "pos": [
+            -0.6,
+            20.54,
+            4.56
+          ],
+          "rotation": [
+            -50,
+            0,
+            0
+          ],
+          "pickable": false
+        },
+        {
+          "id": "flame",
+          "pos": [
+            -0.6,
+            20.54,
+            4.56
+          ],
+          "rotation": [
+            -50,
+            0,
+            0
+          ],
+          "pickable": false
+        },
+        {
+          "id": "flame_lit",
+          "pos": [
+            -0.6,
+            20.55,
+            4.55
+          ],
+          "rotation": [
+            -50,
+            0,
+            0
+          ],
+          "pickable": false
+        },
+        {
+          "id": "drop",
+          "pos": [
+            -0.6,
+            20.54,
+            4.56
+          ],
+          "rotation": [
+            -50,
+            0,
+            0
+          ],
+          "pickable": false
+        },
+        {
+          "id": "drop_lit",
+          "pos": [
+            -0.6,
+            20.55,
+            4.55
+          ],
+          "rotation": [
+            -50,
+            0,
+            0
+          ],
+          "pickable": false
+        },
+        {
+          "id": "preview",
+          "pos": [
+            -0.6,
+            20.58,
+            4.52
+          ],
+          "rotation": [
+            40,
+            0,
+            0
+          ],
+          "scale": 0.125,
+          "hidden": true,
+          "collider": {
+            "from": [
+              -12,
+              -12,
+              -12
+            ],
+            "to": [
+              12,
+              12,
+              12
+            ]
+          }
+        },
+        {
+          "id": "book_open",
+          "pos": [
+            16.33,
+            27.22,
+            -4
+          ],
+          "rotation": [
+            -50,
+            0,
+            0
+          ],
+          "scale": 0.69,
+          "hidden": true,
+          "collider": {
+            "from": [
+              -4.4,
+              -0.4,
+              -3.9
+            ],
+            "to": [
+              4.4,
+              1.4,
+              3.9
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

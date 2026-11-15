@@ -1,0 +1,251 @@
+{
+	"meta": {
+		"format_version": "5.0",
+		"model_format": "java_block",
+		"box_uv": false
+	},
+	"name": "spoon",
+	"parent": "minecraft:block/block",
+	"java_block_version": "1.9.0",
+	"ambientocclusion": true,
+	"front_gui_light": false,
+	"visible_box": [
+		1,
+		1,
+		0
+	],
+	"variable_placeholders": "",
+	"multi_file_ruleset": "",
+	"variable_placeholder_buttons": [],
+	"unhandled_root_fields": {
+		"render_type": "minecraft:cutout"
+	},
+	"resolution": {
+		"width": 16,
+		"height": 16
+	},
+	"elements": [
+		{
+			"name": "spoon_handle",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade": true,
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				5.75,
+				6.75,
+				7
+			],
+			"to": [
+				7.75,
+				18.75,
+				9
+			],
+			"autouv": 0,
+			"color": 6,
+			"rotation": [
+				0,
+				0,
+				-22.5
+			],
+			"origin": [
+				5.7,
+				2.75,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						2,
+						0,
+						0,
+						13
+					],
+					"texture": 0
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						2,
+						13
+					],
+					"texture": 0
+				},
+				"south": {
+					"uv": [
+						2,
+						0,
+						0,
+						13
+					],
+					"texture": 0
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						2,
+						13
+					],
+					"texture": 0
+				},
+				"up": {
+					"uv": [
+						4,
+						0,
+						2,
+						2
+					],
+					"texture": 0
+				},
+				"down": {
+					"uv": [
+						2,
+						0,
+						4,
+						2
+					],
+					"texture": 0
+				}
+			},
+			"type": "cube",
+			"uuid": "47378ec5-f321-6899-de51-869185caedc3"
+		},
+		{
+			"name": "spoon_bowl",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade": true,
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				5.75,
+				2.75,
+				6
+			],
+			"to": [
+				7.75,
+				6.75,
+				10
+			],
+			"autouv": 0,
+			"color": 1,
+			"rotation": [
+				0,
+				0,
+				-22.5
+			],
+			"origin": [
+				5.7,
+				2.75,
+				7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						8,
+						12,
+						6,
+						16
+					],
+					"texture": 0
+				},
+				"east": {
+					"uv": [
+						8,
+						12,
+						12,
+						16
+					],
+					"texture": 0
+				},
+				"south": {
+					"uv": [
+						6,
+						12,
+						8,
+						16
+					],
+					"texture": 0
+				},
+				"west": {
+					"uv": [
+						2,
+						12,
+						6,
+						16
+					],
+					"texture": 0
+				},
+				"up": {
+					"uv": [
+						2,
+						8,
+						4,
+						12
+					],
+					"texture": 0
+				},
+				"down": {
+					"uv": [
+						2,
+						8,
+						4,
+						12
+					],
+					"texture": 0
+				}
+			},
+			"type": "cube",
+			"uuid": "4cba7aec-8928-0cba-2f66-89ca36fc9fe0"
+		}
+	],
+	"groups": [],
+	"outliner": [
+		"47378ec5-f321-6899-de51-869185caedc3",
+		"4cba7aec-8928-0cba-2f66-89ca36fc9fe0"
+	],
+	"textures": [
+		{
+			"name": "stockpot_parts.png",
+			"folder": "block/bowl/stock",
+			"namespace": "youkaisfeasts",
+			"id": "parts",
+			"group": "",
+			"scope": 0,
+			"width": 16,
+			"height": 16,
+			"uv_width": 16,
+			"uv_height": 16,
+			"particle": true,
+			"use_as_default": false,
+			"layers_enabled": false,
+			"sync_to_project": "",
+			"file_format": "png",
+			"render_mode": "default",
+			"render_sides": "auto",
+			"wrap_mode": "limited",
+			"pbr_channel": "color",
+			"fps": 7,
+			"force_translucent": false,
+			"frame_time": 1,
+			"frame_order_type": "loop",
+			"frame_order": "",
+			"frame_interpolate": false,
+			"visible": true,
+			"internal": true,
+			"saved": true,
+			"uuid": "624b534c-bcb6-586d-606d-b85616e8fff6"
+		}
+	]
+}

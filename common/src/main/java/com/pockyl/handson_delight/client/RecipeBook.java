@@ -1060,11 +1060,14 @@ final class RecipeBook implements NodePainter {
             poseStack.translate(x + size / 2.0F, y + size / 2.0F, ITEM_LIFT);
             ItemRenderer renderer = Minecraft.getInstance().getItemRenderer();
             BakedModel model = renderer.getModel(stack, station.level(), null, 0);
+            Matrix3f facing = new Matrix3f(poseStack.last().normal());
             poseStack.scale(size, -size, model.isGui3d() ? BLOCK_DEPTH : ITEM_DEPTH);
+            // As in the GUI, the flip and the depth leave the normals alone: IconLight lights the faces as the GUI does.
+            poseStack.last().normal().set(facing);
             // The icon looks as in a GUI, but is drawn as no GUI item: mods that decorate every GUI item (Shadow Drop's shadows and
             // its shift) take its world pose for a screen's and move or cover the icon.
             BakedModel shown = ClientPlatform.INSTANCE.guiModel(model, poseStack);
-            MultiBufferSource lit = FlatLit.of(buffers);
+            MultiBufferSource lit = IconLight.of(buffers, facing, model.usesBlockLight());
             renderer.render(stack, ItemDisplayContext.NONE, false, poseStack, faded ? DiegesisClient.tinted(lit, FADED) : lit, shade,
                     OverlayTexture.NO_OVERLAY, shown);
             poseStack.popPose();

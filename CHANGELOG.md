@@ -43,6 +43,25 @@
   laid up from your inventory and rolled, and Shift makes as many as you have for. What is left on your cursor after a
   step goes back into your inventory when the next step has no use for it (the rest of the rice once a nigiri is to be
   shaped), and stays when it does. Sneak to use the board as before.
+- Youkai's Feasts' small iron pot, short iron pot and stockpot are stations once there is water in them. Click with food on
+  your cursor and it comes down into the soup with a splash and floats there; soy sauce and cream are poured from their
+  bottle and bowl. Take the stockpot's ladle by its handle and stir: what floats goes round after it. The soup is drawn
+  as in Farmer's Delight's pot, in its own colour, and simmers over the fire. Your inventory shows lit only what the
+  pot still takes, and Shift puts in as many as it takes. A right click on the soup takes the last thing back out. The
+  recipe book lists the dishes of that pot with their time, and a dish picked there goes in from your inventory. While it
+  cooks, the badge shows the dish, whether the fire under it is lit and the seconds left; when it is done you hear a chime,
+  and the pot of the dish stands there as before. Sneak to use the pot as before.
+- Youkai's Feasts' steamer is a station, opened from its pot, any of its racks or its lid. The lid comes off with a puff
+  of steam and is set down beside the steamer, and the top rack is open. Food on your cursor goes onto the place you let
+  it go over, which shows it see-through first; Shift lays it on every free place of the open rack. Any other rack is
+  outlined under your cursor, and a click opens that rack: the racks over it are lifted off together and set down on the
+  lid, and you look into it. Click a rack on that stack to go back up, or turn the mouse wheel to go a rack at a time. A
+  rack from your inventory goes on top, the lid goes back on, a water bucket is poured into the pot. Click a thing to
+  take it, Shift to take everything that is done on the open rack, and the right button takes back what you laid
+  last. Steam rises through the open rack, a thing that is done glints, and the badge shows what steams there, whether
+  the pot has heat and water and the seconds left. When the last thing on the steamer is done you hear a chime, also when
+  you are only passing by. The recipe book has its recipes, and one picked there is laid from your inventory. When you
+  leave, the racks and the lid go back on. Sneak to use the steamer as before.
 - [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s grill is a station. Two skewers lie over its
   fire: lay them from your hand, the stack you let go over the grill or a recipe in its book. When a skewer's lower side
   is done it smokes round its edge; click it and it turns over, once, as Barbeque's Delight allows. Clicked earlier it
@@ -74,6 +93,8 @@
   dishes keep their places in the list: a dish you were making no longer jumped to another page.
 
 ### Fixed
+- The items drawn in the recipe books no longer turn darker as you look round or stand at the station from
+  another side: they are lit as in your inventory.
 - Food thrown into [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg ferments when its recipe wants
   two or three of the same thing: three beef for jerky, two fish for kippers, two sea pickles, two cocoa beans. They
   lay together in one stack, and the keg found no recipe in them. Food thrown in before the liquid is laid out again

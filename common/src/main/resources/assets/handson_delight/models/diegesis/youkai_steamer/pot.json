@@ -1,0 +1,5 @@
+{
+  "__comment": "Youkai's Feasts' own steamer_pot model, by id: the steamer scene draws the tower from it while its blocks are hidden.",
+  "parent": "youkaisfeasts:block/steamer_pot",
+  "render_type": "minecraft:cutout"
+}

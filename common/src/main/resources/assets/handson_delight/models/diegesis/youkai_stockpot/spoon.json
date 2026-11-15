@@ -1,0 +1,170 @@
+{
+  "__comment": "Cut out as Youkai's Feasts has its pot: its texture is not in this mod, so the linter cannot read its alpha.",
+  "__lint_allow": [
+    "T009"
+  ],
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "youkaisfeasts:block/bowl/stock/stockpot_parts",
+    "parts": "youkaisfeasts:block/bowl/stock/stockpot_parts"
+  },
+  "render_type": "minecraft:cutout",
+  "elements": [
+    {
+      "name": "spoon_handle",
+      "from": [
+        5.75,
+        6.75,
+        7
+      ],
+      "to": [
+        7.75,
+        18.75,
+        9
+      ],
+      "rotation": {
+        "angle": -22.5,
+        "axis": "z",
+        "origin": [
+          5.7,
+          2.75,
+          7
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            0,
+            0,
+            13
+          ],
+          "texture": "#parts"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            13
+          ],
+          "texture": "#parts"
+        },
+        "south": {
+          "uv": [
+            2,
+            0,
+            0,
+            13
+          ],
+          "texture": "#parts"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            2,
+            13
+          ],
+          "texture": "#parts"
+        },
+        "up": {
+          "uv": [
+            4,
+            0,
+            2,
+            2
+          ],
+          "texture": "#parts"
+        },
+        "down": {
+          "uv": [
+            2,
+            0,
+            4,
+            2
+          ],
+          "texture": "#parts"
+        }
+      }
+    },
+    {
+      "name": "spoon_bowl",
+      "from": [
+        5.75,
+        2.75,
+        6
+      ],
+      "to": [
+        7.75,
+        6.75,
+        10
+      ],
+      "rotation": {
+        "angle": -22.5,
+        "axis": "z",
+        "origin": [
+          5.7,
+          2.75,
+          7
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            12,
+            6,
+            16
+          ],
+          "texture": "#parts"
+        },
+        "east": {
+          "uv": [
+            8,
+            12,
+            12,
+            16
+          ],
+          "texture": "#parts"
+        },
+        "south": {
+          "uv": [
+            6,
+            12,
+            8,
+            16
+          ],
+          "texture": "#parts"
+        },
+        "west": {
+          "uv": [
+            2,
+            12,
+            6,
+            16
+          ],
+          "texture": "#parts"
+        },
+        "up": {
+          "uv": [
+            2,
+            8,
+            4,
+            12
+          ],
+          "texture": "#parts"
+        },
+        "down": {
+          "uv": [
+            2,
+            8,
+            4,
+            12
+          ],
+          "texture": "#parts"
+        }
+      }
+    }
+  ]
+}

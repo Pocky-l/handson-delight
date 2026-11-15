@@ -718,6 +718,25 @@ public final class BoardTests {
         });
     }
 
+    /** Raw chicken falls into two cuts and its bone meal: two marks, and the last one cuts it (CurseForge, a player's report). */
+    public static void rawChickenFallsIntoItsCuts(GameTestHelper helper) {
+        Board setup = board(helper);
+        setup.carry(new ItemStack(Items.CHICKEN, 2));
+        setup.place();
+        helper.assertTrue(setup.onBoard().is(Items.CHICKEN) && setup.onBoard().getCount() == 2, "the chicken lies there to be cut");
+        int marks = setup.logic.plan().marks();
+        helper.assertTrue(marks == 2, "two cuts and a bone: two marks, not " + marks);
+        setup.chop(0);
+        helper.runAfterDelay(4, () -> {
+            helper.assertTrue(setup.onBoard().getCount() == 2, "one mark does not cut it");
+            setup.chop(1);
+            helper.assertTrue(setup.onBoard().isEmpty(), "the last mark cuts both");
+            helper.assertTrue(setup.cook.getInventory().countItem(fd("chicken_cuts")) == 4, "their cuts go to the cook");
+            helper.assertTrue(setup.cook.getInventory().countItem(Items.BONE_MEAL) == 2, "with their bone meal");
+            helper.succeed();
+        });
+    }
+
     public static void anEmptyHandCutsWithTheKnifeInTheInventory(GameTestHelper helper) {
         Board setup = board(helper);
         setup.carry(new ItemStack(fd("cabbage"), 2));

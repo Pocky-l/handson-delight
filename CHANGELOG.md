@@ -43,8 +43,8 @@
   laid up from your inventory and rolled, and Shift makes as many as you have for. What is left on your cursor after a
   step goes back into your inventory when the next step has no use for it (the rest of the rice once a nigiri is to be
   shaped), and stays when it does. Sneak to use the board as before.
-- Youkai's Feasts' small iron pot, short iron pot and stockpot are stations once there is water in them. Click with food on
-  your cursor and it comes down into the soup with a splash and floats there; soy sauce and cream are poured from their
+- Youkai's Feasts' small iron pot, short iron pot and stockpot are stations, empty too: open an empty one with an empty
+  hand and let a water bucket go over it (a water bottle for the two small ones). Click with food on your cursor and it comes down into the soup with a splash and floats there; soy sauce and cream are poured from their
   bottle and bowl. Take the stockpot's ladle by its handle and stir: what floats goes round after it. The soup is drawn
   as in Farmer's Delight's pot, in its own colour, and simmers over the fire. Your inventory shows lit only what the
   pot still takes, and Shift puts in as many as it takes. A right click on the soup takes the last thing back out. The
@@ -62,6 +62,16 @@
   the pot has heat and water and the seconds left. When the last thing on the steamer is done you hear a chime, also when
   you are only passing by. The recipe book has its recipes, and one picked there is laid from your inventory. When you
   leave, the racks and the lid go back on. Sneak to use the steamer as before.
+- Youkai's Feasts' fermentation tank is a station. Click its lid to take it off and put it back on; things go in only
+  with it off, and it ferments only with it on, as before. Pour a bucket or a bottle in at the opening, and drop up to
+  eight things in, one of each kind a place; they float on the liquid or lie on the bottom. Under the lid it bubbles,
+  and the badge shows what it makes and the time left. When it is done the tank lifts its lid itself with a chime, the
+  sake or wine is there in the tank, and tea leaves or natto lie where they were put. A bottle on your cursor is dipped
+  into the drink where you click; with an empty hand a bottle from your inventory is offered over it, and a click dips
+  it. The recipe book has its recipes, and one picked there goes in from your inventory. When you leave, the lid goes
+  back on. Sneak to use the tank as before.
+- Youkai's Feasts' squares on the right of the screen while you look at one of its blocks (what it takes next, what lies
+  in it and its progress) are hidden. Set `youkai_hints` to `true` in the config to see them again.
 - [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s grill is a station. Two skewers lie over its
   fire: lay them from your hand, the stack you let go over the grill or a recipe in its book. When a skewer's lower side
   is done it smokes round its edge; click it and it turns over, once, as Barbeque's Delight allows. Clicked earlier it

@@ -225,12 +225,15 @@ public final class YoukaiPotBehavior implements StationBehavior {
     public void onOpen(StationView view) {
         usable.clear();
         book.opened(view);
+        // What the pot takes now is lit in the drawer, the rest dim: its own hint of what may go in next. An empty pot takes water.
+        view.setInventoryFilter(stack -> {
+            KitchenYoukaiPot now = pot(view);
+            return now == null ? YoukaiPotStation.isWater(stack) : usable.test(stack, now::handson$takes);
+        });
         KitchenYoukaiPot pot = pot(view);
         if (pot == null) {
             return;
         }
-        // What the pot takes now is lit in the drawer, the rest dim: its own hint of what may go in next.
-        view.setInventoryFilter(stack -> usable.test(stack, pot::handson$takes));
         // What the cook came with is meant for the pot: one of it goes in, as the pot's own click puts one in.
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()
@@ -276,7 +279,16 @@ public final class YoukaiPotBehavior implements StationBehavior {
         // The scene's copy of the stockpot stands in only while the block is hidden; passers-by see the block itself.
         boolean copy = view.isBlockHidden();
         view.node("body").ifPresent(node -> node.setVisible(copy));
-        view.node("ladle").ifPresent(node -> node.setVisible(copy));
+        // The ladle is taken only once there is something to stir.
+        boolean filled = pot(view) != null;
+        view.node("ladle").ifPresent(node -> {
+            node.setVisible(copy);
+            node.setEnabled(filled);
+        });
+        if (!filled) {
+            stroking = false;
+            heldByClick = false;
+        }
         moveSpoon(view, dt);
         soup(view);
         book.frame(view, dt);
@@ -328,7 +340,7 @@ public final class YoukaiPotBehavior implements StationBehavior {
             book.click(view, button);
             return true;
         }
-        if (pot(view) == null) {
+        if (pot(view) == null && !YoukaiPotStation.isWater(stack)) {
             return false;
         }
         CompoundTag how = new CompoundTag();
@@ -341,7 +353,8 @@ public final class YoukaiPotBehavior implements StationBehavior {
     @Override
     public boolean onInventoryShiftClick(StationView view, int slot, ItemStack stack) {
         KitchenYoukaiPot pot = pot(view);
-        if (stack.isEmpty() || pot == null || !pot.handson$takes(stack) && !YoukaiPotStation.isIngredient(pot, stack)) {
+        boolean water = pot == null && YoukaiPotStation.isWater(stack);
+        if (!water && (stack.isEmpty() || pot == null || !pot.handson$takes(stack) && !YoukaiPotStation.isIngredient(pot, stack))) {
             return false;
         }
         CompoundTag how = new CompoundTag();
@@ -509,6 +522,10 @@ public final class YoukaiPotBehavior implements StationBehavior {
 
     /** The ladle taken by its handle: held while the button is, or a click takes it in hand until the next click. */
     private void stroke(StationView view, SceneEvent.Stroke.Phase phase) {
+        if (pot(view) == null && phase == SceneEvent.Stroke.Phase.START) {
+            // Nothing to stir in an empty pot: the ladle stays leaning where the block has it.
+            return;
+        }
         switch (phase) {
             case START -> {
                 stroking = true;
@@ -639,7 +656,12 @@ public final class YoukaiPotBehavior implements StationBehavior {
     private void soup(StationView view) {
         KitchenYoukaiPot pot = pot(view);
         NodeView node = view.node("broth").orElse(null);
-        if (pot == null || node == null) {
+        if (node == null) {
+            return;
+        }
+        // An empty pot shows its bare inside until water is poured in.
+        node.setVisible(pot != null);
+        if (pot == null) {
             return;
         }
         KitchenYoukaiPot.Soup soup = pot.handson$soup();

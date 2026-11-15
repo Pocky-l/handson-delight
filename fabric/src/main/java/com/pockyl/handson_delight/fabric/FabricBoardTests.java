@@ -99,6 +99,11 @@ public final class FabricBoardTests implements FabricGameTest {
         BoardTests.aHamTakesTwoChopsAndFeedsTheCook(helper);
     }
 
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void rawChickenFallsIntoItsCuts(GameTestHelper helper) {
+        BoardTests.rawChickenFallsIntoItsCuts(helper);
+    }
+
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void noKnifeNoCut(GameTestHelper helper) {
         BoardTests.noKnifeNoCut(helper);

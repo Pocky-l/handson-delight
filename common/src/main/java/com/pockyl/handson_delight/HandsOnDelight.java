@@ -44,6 +44,9 @@ public final class HandsOnDelight {
         if (HandsOnConfig.keg()) {
             KegStation.register();
         }
+        if (HandsOnConfig.youkaiTank()) {
+            KegStation.registerTank();
+        }
         if (HandsOnConfig.oven()) {
             OvenStation.register();
         }

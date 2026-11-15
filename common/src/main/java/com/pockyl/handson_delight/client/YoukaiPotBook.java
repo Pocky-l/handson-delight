@@ -28,12 +28,9 @@ final class YoukaiPotBook implements RecipeBook.Source {
 
     @Override
     public List<RecipeBook.Page> pages(StationView view) {
-        KitchenYoukaiPot pot = YoukaiPotBehavior.pot(view);
         List<RecipeBook.Page> pages = new ArrayList<>();
-        if (pot == null) {
-            return pages;
-        }
-        for (KitchenYoukaiPot.Dish dish : YoukaiPotStation.dishes(pot)) {
+        // An empty pot lists its dishes too: water goes in first, then a dish picked here.
+        for (KitchenYoukaiPot.Dish dish : YoukaiPotStation.dishes(view.level(), view.level().getBlockState(view.pos()))) {
             // An ingredient nothing in the game fits (a tag no mod fills) makes a dish nobody can cook: it is not shown.
             if (dish.ingredients().stream().anyMatch(ingredient -> ingredient.getItems().length == 0)) {
                 continue;

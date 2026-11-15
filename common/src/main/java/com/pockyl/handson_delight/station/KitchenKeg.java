@@ -13,12 +13,51 @@ import java.util.function.IntSupplier;
 
 /**
  * Brewin' and Chewin's keg, as the station sees it: mixed into its block entity by each loader that has that mod. Slots are
- * counted as the keg's own inventory has them: four ingredients, the container, the output.
+ * counted as the keg's own inventory has them: four ingredients, the container, the output. Youkai's Feasts' fermentation tank is
+ * the same station in its own way (eight things, one a slot, its lid a state of its block, no warmth, what ferments into things
+ * stays where it lay): the defaults here are the keg's.
  */
 public interface KitchenKeg {
     int INGREDIENTS = 4;
     int CONTAINER_SLOT = 4;
     int OUTPUT_SLOT = 5;
+
+    /** How many things go in, each in a slot of its own: the first slots of {@link #handson$getItem}. */
+    default int handson$ingredients() {
+        return INGREDIENTS;
+    }
+
+    /** The most of one thing a slot holds. */
+    default int handson$perSlot() {
+        return 64;
+    }
+
+    /** Whether what ferments into an item goes to an output slot of its own ({@link #OUTPUT_SLOT}); without one it stays where it lay. */
+    default boolean handson$hasOutput() {
+        return true;
+    }
+
+    /** Whether it ferments only at a temperature (the keg's 1 to 5): the badge shows its thermometer. */
+    default boolean handson$feelsWarmth() {
+        return true;
+    }
+
+    /**
+     * Whether the lid is off, when the lid is the block's own (the tank's {@code open} state, which its redstone also turns, and which
+     * it opens itself when something is done); null when the station keeps it, as the keg's.
+     */
+    default Boolean handson$lidOff() {
+        return null;
+    }
+
+    /** Takes the block's own lid off or puts it back; nothing for a lid the station keeps. */
+    default void handson$setLidOff(boolean off) {
+    }
+
+    /** Whether {@code items}, what lies in it, make {@code recipe}: one of each ingredient, as the keg reads its recipes. */
+    default boolean handson$makes(Fermenting recipe, List<ItemStack> items) {
+        return StationRecipes.matches(recipe.ingredients(), items);
+    }
 
     ItemStack handson$getItem(int slot);
 
@@ -54,6 +93,11 @@ public interface KitchenKeg {
 
     /** Whether {@code stack} is a vessel of the keg (a bucket, a bottle, a tankard, a drink): it is poured or filled, never dropped in. */
     boolean handson$isVessel(ItemStack stack);
+
+    /** The colour {@code fluid} is tinted with where it is drawn (its own texture's tint), 0 when it is not known here. */
+    default int handson$tint(Fluid fluid) {
+        return 0;
+    }
 
     /** A full container of {@code fluid} as the keg pours it (a tankard of beer), or of its bucket; empty for none. */
     ItemStack handson$drinkOf(Fluid fluid);

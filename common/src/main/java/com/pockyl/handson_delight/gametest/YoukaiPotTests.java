@@ -77,6 +77,42 @@ public final class YoukaiPotTests {
         setup.logic.onOpen(setup.station, player);
     }
 
+    /**
+     * An empty stockpot is the station too: it opens with an empty hand, not with a water bucket in the hand (its
+     * own click keeps that); a water bucket let go over it at the station goes through its own click, the stockpot with water stands
+     * there, the station stays on it and takes food.
+     */
+    public static void anEmptyYoukaiPotTakesItsWaterAtTheStation(GameTestHelper helper) {
+        if (!Platform.INSTANCE.isLoaded(KitchenYoukaiPot.MOD_ID)) {
+            helper.succeed();
+            return;
+        }
+        BlockPos at = new BlockPos(1, 2, 1);
+        helper.setBlock(at.below(), Blocks.CAMPFIRE);
+        helper.setBlock(at, YoukaiPotStation.EMPTY_STOCKPOT.get());
+        BlockPos pos = helper.absolutePos(at);
+        helper.assertTrue(YoukaiPotStation.STOCKPOT_TYPE.matches(helper.getLevel().getBlockState(pos)), "the empty stockpot is the station");
+        Player player = cook(helper, at);
+        helper.assertTrue(YoukaiPotStation.opens(player, pos, helper.getLevel().getBlockState(pos)), "an empty hand opens it");
+        helper.assertFalse(YoukaiPotStation.dishes(helper.getLevel(), helper.getLevel().getBlockState(pos)).isEmpty(),
+                "its book lists the stockpot's dishes while it is empty");
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(Items.WATER_BUCKET));
+        helper.assertFalse(YoukaiPotStation.opens(player, pos, helper.getLevel().getBlockState(pos)), "water in the hand keeps its own click");
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        PotTests.TestStation station = new PotTests.TestStation(helper.getLevel(), pos, YoukaiPotStation.STOCKPOT_TYPE);
+        YoukaiPotLogic logic = new YoukaiPotLogic(station);
+        station.users.add(player);
+        logic.onOpen(station, player);
+        player.inventoryMenu.setCarried(new ItemStack(Items.WATER_BUCKET));
+        logic.onCustomAction(station, player, YoukaiPotStation.ACTION_PUT, new CompoundTag());
+        helper.assertTrue(helper.getLevel().getBlockState(pos).is(YoukaiPotStation.STOCKPOT.get()), "the water made the stockpot with water");
+        helper.assertTrue(YoukaiPotStation.STOCKPOT_TYPE.matches(helper.getLevel().getBlockState(pos)), "the station stays on it");
+        helper.assertTrue(player.inventoryMenu.getCarried().is(Items.BUCKET), "the empty bucket comes back to the hand");
+        KitchenYoukaiPot pot = KitchenYoukaiPot.of(helper.getLevel().getBlockEntity(pos));
+        helper.assertTrue(pot != null, "and it is a kitchen pot now");
+        helper.succeed();
+    }
+
     /** Its recipes are read with what goes in and the pot each needs, the pot its dish is served in. */
     public static void youkaiPotsReadTheirRecipes(GameTestHelper helper) {
         Setup setup = pot(helper, YoukaiPotStation.SHORT, YoukaiPotStation.SHORT_TYPE);

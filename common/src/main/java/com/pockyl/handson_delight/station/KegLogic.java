@@ -25,6 +25,8 @@ import java.util.List;
 /**
  * The keg's menu by hand: the slots are the keg's own, buckets and drinks go through the keg's own use, and what the station shows
  * is read from it. Fermenting is left to the keg. It also runs on the clients around a keg nobody works at; there it only reads.
+ * Youkai's Feasts' fermentation tank is worked the same way: its lid is its block's, which it also lifts itself when something is
+ * done, and while it is off the tank goes back in its count as it always does.
  */
 public final class KegLogic implements StationLogic {
     /** The most sets of ingredients one pick in the book puts in. */
@@ -44,10 +46,27 @@ public final class KegLogic implements StationLogic {
     public KegLogic(StationContext station) {
         keg = (KitchenKeg) station.blockEntity();
         StationState state = station.state();
-        ingredients = storage(keg, 0, KitchenKeg.INGREDIENTS);
+        ingredients = storage(keg, 0, keg.handson$ingredients());
         state.bindSlots(KegStation.INGREDIENTS, ingredients);
-        state.bindSlots(KegStation.SERVED, storage(keg, KitchenKeg.OUTPUT_SLOT, 1));
+        state.bindSlots(KegStation.SERVED, keg.handson$hasOutput() ? storage(keg, KitchenKeg.OUTPUT_SLOT, 1) : NO_OUTPUT);
     }
+
+    /** The served slot of a keg without an output: what ferments into things stays where it lay. */
+    private static final SlotStorage NO_OUTPUT = new SlotStorage() {
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public ItemStack get(int index) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public void set(int index, ItemStack stack) {
+        }
+    };
 
     private static SlotStorage storage(KitchenKeg keg, int start, int count) {
         return new SlotStorage() {
@@ -70,24 +89,35 @@ public final class KegLogic implements StationLogic {
 
     @Override
     public void onOpen(StationContext station, Player player) {
-        if (!station.level().isClientSide()) {
+        if (!station.level().isClientSide() && keg.handson$feelsWarmth()) {
             keg.handson$feelTemperature();
         }
         refresh(station);
     }
 
+    /** The last cook to go puts the block's own lid back on: the tank is left shut, to ferment. */
+    @Override
+    public void onClose(StationContext station, Player player) {
+        if (!station.level().isClientSide() && keg.handson$lidOff() != null && station.users().stream().allMatch(user -> user == player)) {
+            setLid(station, false);
+        }
+    }
+
     @Override
     public void tick(StationContext station) {
         if (!station.level().isClientSide()) {
-            // Nobody left to put the lid back: it is put back, a keg is never left open.
-            if (station.users().isEmpty() && isOpen(station)) {
-                station.state().setControl(KegStation.LID, 0.0F);
+            if (keg.handson$lidOff() == null) {
+                // Nobody left to put the lid back: it is put back, a keg is never left open.
+                if (station.users().isEmpty() && isOpen(station)) {
+                    station.state().setControl(KegStation.LID, 0.0F);
+                }
+                holdWhileOpen(station);
             }
-            holdWhileOpen(station);
             if (wanted != null && StationRecipes.kinds(ingredients).isEmpty()) {
                 wanted = null;
             }
-            if (unsorted || keg.handson$fluid() != arrangedFor) {
+            // Things one a slot lie as they were put in, and the tank reads its recipes whatever their order.
+            if (keg.handson$perSlot() > 1 && (unsorted || keg.handson$fluid() != arrangedFor)) {
                 unsorted = false;
                 arrangedFor = keg.handson$fluid();
                 arrange();
@@ -118,7 +148,7 @@ public final class KegLogic implements StationLogic {
             inKeg.add(ingredients.get(i));
         }
         StationRecipes.Candidate<KitchenKeg.Fermenting> found = StationRecipes.reads(candidates(true), inKeg);
-        StationRecipes.Choice<KitchenKeg.Fermenting> choice = StationRecipes.choose(candidates(false), kinds, KitchenKeg.INGREDIENTS, wanted,
+        StationRecipes.Choice<KitchenKeg.Fermenting> choice = StationRecipes.choose(candidates(false), kinds, keg.handson$ingredients(), wanted,
                 found == null ? null : found.id(), false);
         if (choice != null) {
             StationRecipes.lay(ingredients, kinds, choice.parts());
@@ -139,6 +169,12 @@ public final class KegLogic implements StationLogic {
     /** Whether the lid is off. */
     public static boolean isOpen(StationContext station) {
         return station.state().getControl(KegStation.LID) > 0.5F;
+    }
+
+    /** Takes the lid off or puts it back: the block's own, or the one the station keeps. */
+    private void setLid(StationContext station, boolean off) {
+        keg.handson$setLidOff(off);
+        station.state().setControl(KegStation.LID, off ? 1.0F : 0.0F);
     }
 
     /**
@@ -165,6 +201,12 @@ public final class KegLogic implements StationLogic {
         return isOpen(station) && !keg.handson$isVessel(stack);
     }
 
+    /** What lies under the block's own lid is taken out only with the lid off, as everything goes in. */
+    @Override
+    public boolean mayTake(StationContext station, Player player, SlotRef slot) {
+        return keg.handson$lidOff() == null || isOpen(station);
+    }
+
     @Override
     public void onTaken(StationContext station, Player player, SlotRef slot, ItemStack stack) {
         if (slot.equals(KegStation.SERVED_SLOT)) {
@@ -176,7 +218,7 @@ public final class KegLogic implements StationLogic {
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
         if (KegStation.ACTION_LID.equals(action)) {
-            station.state().setControl(KegStation.LID, data.getBoolean(KegStation.OPEN) ? 1.0F : 0.0F);
+            setLid(station, data.getBoolean(KegStation.OPEN));
         } else if (KegStation.ACTION_USE.equals(action)) {
             boolean tap = KegStation.TAP.equals(data.getString(KegStation.AT));
             if (!tap && !isOpen(station)) {
@@ -191,7 +233,7 @@ public final class KegLogic implements StationLogic {
         } else if (KegStation.ACTION_FILL.equals(action)) {
             ResourceLocation id = ResourceLocation.tryParse(data.getString(KegStation.DISH));
             // A recipe picked in the book takes the lid off for its ingredients to go in.
-            station.state().setControl(KegStation.LID, 1.0F);
+            setLid(station, true);
             keg.handson$recipes().stream().filter(recipe -> recipe.id().equals(id)).findFirst()
                     .ifPresent(recipe -> fill(player, recipe, data.getBoolean(KegStation.ALL) ? FILL_MOST : 1));
         }
@@ -305,11 +347,12 @@ public final class KegLogic implements StationLogic {
      * not use takes nothing.
      */
     private void fill(Player player, KitchenKeg.Fermenting recipe, int sets) {
+        int perSlot = keg.handson$perSlot();
         StationRecipes.Filled filled = StationRecipes.fill(player.getInventory(), recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty())
-                .toList(), StationRecipes.kinds(ingredients), KitchenKeg.INGREDIENTS, sets);
+                .toList(), StationRecipes.kinds(ingredients), keg.handson$ingredients(), sets, perSlot);
         if (filled != null) {
             wanted = recipe.id();
-            StationRecipes.lay(ingredients, filled.kinds(), filled.parts());
+            StationRecipes.lay(ingredients, filled.kinds(), filled.parts(), perSlot);
         }
     }
 
@@ -319,7 +362,12 @@ public final class KegLogic implements StationLogic {
         int time = data.get(0);
         int total = data.get(1);
         state.setControl(KegStation.PROGRESS, total > 0 ? Mth.clamp((float) time / total, 0.0F, 1.0F) : 0.0F);
-        if (!station.level().isClientSide()) {
+        Boolean lidOff = keg.handson$lidOff();
+        if (lidOff != null) {
+            // The block's lid is the lid: its redstone turns it, and the tank lifts it itself when something is done.
+            state.setControl(KegStation.LID, lidOff ? 1.0F : 0.0F);
+        }
+        if (!station.level().isClientSide() && keg.handson$feelsWarmth()) {
             // The client's keg does not know its temperature, nor which recipe it holds: the server says.
             state.setControl(KegStation.TEMPERATURE, data.get(2));
             state.setControl(KegStation.WANTED, keg.handson$wantedTemperature());

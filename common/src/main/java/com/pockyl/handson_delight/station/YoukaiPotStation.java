@@ -1,10 +1,16 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -21,7 +27,9 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Youkai's Feasts' cooking pots as stations: its small iron pot, short iron pot and stockpot once water is in them. Food comes in
+ * Youkai's Feasts' cooking pots as stations: its small iron pot, short iron pot and stockpot, empty or with water in them, as
+ * every station opens empty and is filled at it. Water poured into an empty one goes through the pot's
+ * own click, which makes it the pot with water, and the station stays open on it. Food comes in
  * from the cook one piece after another while a recipe of that pot still has a place for it (what it would not take stays dim in
  * the drawer), a dish picked in the book goes in from the inventory, the last thing comes back out with a right click. The pot
  * cooks by itself over heat as before; the badge tells what it makes and how long it still takes. Done, the dish stands where the
@@ -90,15 +98,19 @@ public final class YoukaiPotStation {
     public static final Supplier<Block> SMALL = block("cooking_small_iron_pot");
     public static final Supplier<Block> SHORT = block("cooking_short_iron_pot");
     public static final Supplier<Block> STOCKPOT = block("cooking_stockpot");
+    /** The same pots empty: no block entity, its own click with water turns each into the one above. */
+    public static final Supplier<Block> EMPTY_SMALL = block("small_iron_pot");
+    public static final Supplier<Block> EMPTY_SHORT = block("short_iron_pot");
+    public static final Supplier<Block> EMPTY_STOCKPOT = block("stockpot");
 
     /**
      * The pots are the blocks themselves, open on top: the pot's own renderer goes on drawing the soup and what floats in it. The
      * scene stands on the side the cook comes from. The stockpot's ladle stirs what goes in: the scene draws the stockpot while
      * somebody works at it.
      */
-    public static final StationType SMALL_TYPE = type(SMALL_ID, SMALL).build();
-    public static final StationType SHORT_TYPE = type(SHORT_ID, SHORT).build();
-    public static final StationType STOCKPOT_TYPE = type(STOCKPOT_ID, STOCKPOT).hidesBlock().build();
+    public static final StationType SMALL_TYPE = type(SMALL_ID, SMALL, EMPTY_SMALL).build();
+    public static final StationType SHORT_TYPE = type(SHORT_ID, SHORT, EMPTY_SHORT).build();
+    public static final StationType STOCKPOT_TYPE = type(STOCKPOT_ID, STOCKPOT, EMPTY_STOCKPOT).hidesBlock().build();
     public static final List<StationType> TYPES = List.of(SMALL_TYPE, SHORT_TYPE, STOCKPOT_TYPE);
 
     private YoukaiPotStation() {
@@ -109,9 +121,10 @@ public final class YoukaiPotStation {
         return () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(KitchenYoukaiPot.MOD_ID, path));
     }
 
-    private static StationType.Builder type(ResourceLocation id, Supplier<Block> block) {
+    private static StationType.Builder type(ResourceLocation id, Supplier<Block> block, Supplier<Block> empty) {
         return Diegesis.station(id)
                 .block(block)
+                .block(empty)
                 .schema(SCHEMA)
                 .logic(YoukaiPotLogic::new)
                 .orientation(StationType.Orientation.PLAYER)
@@ -126,20 +139,45 @@ public final class YoukaiPotStation {
 
     /**
      * With an empty hand, food a recipe of this pot uses, or a kitchen thing it has no use for. Sneaking keeps the pot's own use (it
-     * tips everything out and the water with it).
+     * tips everything out and the water with it). An empty pot opens with an empty hand or a kitchen thing; water in the hand keeps
+     * its own quick click in the world, as a bucket at the keg does.
      */
     public static boolean opens(Player player, BlockPos pos, BlockState state) {
-        KitchenYoukaiPot pot = KitchenYoukaiPot.of(player.level().getBlockEntity(pos));
-        if (player.isSecondaryUseActive() || pot == null) {
+        if (player.isSecondaryUseActive()) {
             return false;
         }
         ItemStack held = player.getMainHandItem();
+        KitchenYoukaiPot pot = KitchenYoukaiPot.of(player.level().getBlockEntity(pos));
+        if (pot == null) {
+            return isEmptyPot(state) && (held.isEmpty() || StoveStation.isKitchenThing(player.level(), held));
+        }
         return held.isEmpty() || pot.handson$takes(held) || isIngredient(pot, held) || StoveStation.isKitchenThing(player.level(), held);
+    }
+
+    /** Whether {@code state} is one of the pots with no water in it yet. */
+    public static boolean isEmptyPot(BlockState state) {
+        return state.is(EMPTY_SMALL.get()) || state.is(EMPTY_SHORT.get()) || state.is(EMPTY_STOCKPOT.get());
+    }
+
+    /** Water an empty pot takes through its own click: a water bucket, or a water bottle for the two small ones. */
+    public static boolean isWater(ItemStack stack) {
+        PotionContents contents = stack.get(DataComponents.POTION_CONTENTS);
+        return stack.is(Items.WATER_BUCKET) || stack.is(Items.POTION) && contents != null && contents.is(Potions.WATER);
     }
 
     /** The recipes of this pot. */
     public static List<KitchenYoukaiPot.Dish> dishes(KitchenYoukaiPot pot) {
         return pot.handson$dishes().stream().filter(dish -> dish.pot() == pot.handson$pot()).toList();
+    }
+
+    /**
+     * The recipes of the pot standing in {@code state}, empty or not: each dish is served in its pot, which is the empty pot's item.
+     */
+    public static List<KitchenYoukaiPot.Dish> dishes(Level level, BlockState state) {
+        Item pot = isEmptyPot(state) ? state.getBlock().asItem()
+                : state.is(SMALL.get()) ? EMPTY_SMALL.get().asItem() : state.is(SHORT.get()) ? EMPTY_SHORT.get().asItem()
+                : EMPTY_STOCKPOT.get().asItem();
+        return YoukaiPotDishes.of(level).stream().filter(dish -> dish.pot() == pot).toList();
     }
 
     /** Whether {@code stack} goes into some dish of this pot. */

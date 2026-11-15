@@ -1,12 +1,18 @@
 package com.pockyl.handson_delight.station;
 
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.station.StationContext;
@@ -27,11 +33,16 @@ public final class YoukaiPotLogic implements StationLogic {
     /** A stir is seen for this long after the hand last moved the ladle, ticks, as at the cooking pot. */
     private static final int STIR_TICKS = 40;
 
-    private final KitchenYoukaiPot pot;
+    /** The pot's block entity, looked up again at each call: an empty pot has none until water turns it into the pot with water. */
+    private KitchenYoukaiPot pot;
     private long stirredAt = -STIR_TICKS;
     private UUID stirrer;
 
     public YoukaiPotLogic(StationContext station) {
+        pot = KitchenYoukaiPot.of(station.blockEntity());
+    }
+
+    private void lookUp(StationContext station) {
         pot = KitchenYoukaiPot.of(station.blockEntity());
     }
 
@@ -48,6 +59,7 @@ public final class YoukaiPotLogic implements StationLogic {
 
     @Override
     public void onOpen(StationContext station, Player player) {
+        lookUp(station);
         if (pot != null && !station.isClientSide()) {
             pot.handson$setCook(cook(station, player));
         }
@@ -56,6 +68,7 @@ public final class YoukaiPotLogic implements StationLogic {
     /** The one who left was the cook: whoever still works there becomes it, or nobody. */
     @Override
     public void onClose(StationContext station, Player player) {
+        lookUp(station);
         if (pot == null || station.isClientSide()) {
             return;
         }
@@ -93,7 +106,14 @@ public final class YoukaiPotLogic implements StationLogic {
 
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
+        lookUp(station);
         if (pot == null) {
+            if (YoukaiPotStation.ACTION_PUT.equals(action)) {
+                water(station, player, data.contains(YoukaiPotStation.FROM) ? data.getInt(YoukaiPotStation.FROM) : -1);
+            } else if (YoukaiPotStation.ACTION_FILL.equals(action)) {
+                // A dish picked in the book of an empty pot: water goes in first, and the bucket says so.
+                refused(station, new ItemStack(Items.WATER_BUCKET));
+            }
             return;
         }
         if (pot.handson$cook() == null || !station.users().contains(pot.handson$cook().player())) {
@@ -134,6 +154,7 @@ public final class YoukaiPotLogic implements StationLogic {
     /** Left alone, the ladle goes back to its rest for everybody. */
     @Override
     public void tick(StationContext station) {
+        lookUp(station);
         if (station.isClientSide() || isStirring(station.level().getGameTime())
                 || station.state().getControl(YoukaiPotStation.STIRRING) <= 0.5F) {
             return;
@@ -141,6 +162,38 @@ public final class YoukaiPotLogic implements StationLogic {
         station.state().setControl(YoukaiPotStation.STIRRING, 0.0F);
         station.state().setControl(YoukaiPotStation.SPOON_X, 0.0F);
         station.state().setControl(YoukaiPotStation.SPOON_Z, 0.0F);
+    }
+
+    /**
+     * Water poured into an empty pot, from the cursor or inventory slot {@code from}: through the pot's own click with it in the main
+     * hand, which makes the pot with water and empties the container as it always does. The station stays open on the new block.
+     */
+    private void water(StationContext station, Player player, int from) {
+        ItemStack held = held(player, from);
+        BlockState before = station.level().getBlockState(station.pos());
+        if (!YoukaiPotStation.isWater(held) || !YoukaiPotStation.isEmptyPot(before)) {
+            if (!held.isEmpty()) {
+                refused(station, held);
+            }
+            return;
+        }
+        ItemStack poured = held.copyWithCount(1);
+        ItemStack inHand = player.getMainHandItem();
+        player.setItemInHand(InteractionHand.MAIN_HAND, held);
+        before.useItemOn(held, station.level(), player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(station.pos()), Direction.UP, station.pos(), false));
+        ItemStack after = player.getMainHandItem();
+        player.setItemInHand(InteractionHand.MAIN_HAND, inHand);
+        putBack(player, from, after);
+        lookUp(station);
+        if (pot == null) {
+            refused(station, poured);
+            return;
+        }
+        pot.handson$setCook(cook(station, player));
+        ListTag went = new ListTag();
+        went.add(poured.saveOptional(station.level().registryAccess()));
+        in(station, went, false);
     }
 
     /** One of the stack on the cursor, or in inventory slot {@code from}; with {@code all} as many as the pot takes of it. */

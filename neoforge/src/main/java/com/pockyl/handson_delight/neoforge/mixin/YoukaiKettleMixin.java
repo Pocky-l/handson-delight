@@ -1,17 +1,11 @@
 package com.pockyl.handson_delight.neoforge.mixin;
 
-import dev.xkmc.youkaishomecoming.content.item.fluid.IYHFluidItem;
-import dev.xkmc.youkaishomecoming.content.item.fluid.YHFluidHandler;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.alchemy.PotionContents;
-import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -22,9 +16,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
-import net.neoforged.neoforge.fluids.FluidActionResult;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
@@ -34,6 +26,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import vectorwing.farmersdelight.common.block.entity.HeatableBlockEntity;
 
+import com.pockyl.handson_delight.neoforge.YoukaiFluids;
 import com.pockyl.handson_delight.station.KitchenKettle;
 
 import java.util.ArrayList;
@@ -52,8 +45,6 @@ import java.util.List;
 abstract class YoukaiKettleMixin implements KitchenKettle {
     @Unique
     private static final ResourceLocation HANDSON$BREWING = ResourceLocation.tryBuild("youkaisfeasts", "kettle");
-    @Unique
-    private static final int HANDSON$BOTTLE = 250;
 
     @Shadow
     private int heat;
@@ -89,12 +80,6 @@ abstract class YoukaiKettleMixin implements KitchenKettle {
     private FluidStack handson$inside() {
         IFluidHandler tank = handson$tank();
         return tank == null ? FluidStack.EMPTY : tank.getFluidInTank(0);
-    }
-
-    /** The drink the kettle pours of {@code fluid} and the container it goes into, as Youkai's Feasts knows it; null for none. */
-    @Unique
-    private static IYHFluidItem handson$drink(FluidStack fluid) {
-        return !fluid.isEmpty() && YHFluidHandler.of(fluid) instanceof IYHFluidItem drink ? drink : null;
     }
 
     @Override
@@ -212,98 +197,29 @@ abstract class YoukaiKettleMixin implements KitchenKettle {
 
     @Override
     public ItemStack handson$useOne(ItemStack held) {
-        IFluidHandler tank = handson$tank();
-        if (held.isEmpty() || tank == null) {
-            return ItemStack.EMPTY;
-        }
-        if (handson$canServe(held)) {
-            IYHFluidItem drink = handson$drink(handson$inside());
-            if (drink != null) {
-                tank.drain(drink.amount(), IFluidHandler.FluidAction.EXECUTE);
-                held.shrink(1);
-                return drink.asStack(1);
-            }
-            FluidActionResult filled = FluidUtil.tryFillContainer(held.copyWithCount(1), tank, Integer.MAX_VALUE, null, true);
-            if (filled.isSuccess()) {
-                held.shrink(1);
-                return filled.getResult();
-            }
-        } else if (handson$canPour(held)) {
-            if (handson$isWaterBottle(held)) {
-                tank.fill(new FluidStack(Fluids.WATER, HANDSON$BOTTLE), IFluidHandler.FluidAction.EXECUTE);
-                held.shrink(1);
-                return new ItemStack(Items.GLASS_BOTTLE);
-            }
-            FluidActionResult emptied = FluidUtil.tryEmptyContainer(held.copyWithCount(1), tank, Integer.MAX_VALUE, null, true);
-            if (emptied.isSuccess()) {
-                held.shrink(1);
-                return emptied.getResult();
-            }
-        }
-        return ItemStack.EMPTY;
+        return YoukaiFluids.useOne(handson$tank(), held);
     }
 
     /** Its drink into the drink's container (a bottle of tea); out of plain water, an empty bucket or the like, as its own clicks do. */
     @Override
     public boolean handson$canServe(ItemStack stack) {
-        FluidStack inside = handson$inside();
-        IFluidHandler tank = handson$tank();
-        if (stack.isEmpty() || inside.isEmpty() || tank == null) {
-            return false;
-        }
-        IYHFluidItem drink = handson$drink(inside);
-        if (drink != null) {
-            return stack.is(drink.getContainer()) && inside.getAmount() >= drink.amount();
-        }
-        return !handson$isWaterBottle(stack) && FluidUtil.tryFillContainer(stack.copyWithCount(1), tank, Integer.MAX_VALUE, null, false).isSuccess();
+        return YoukaiFluids.canServe(handson$tank(), stack);
     }
 
     /** A water bottle, or anything a liquid is poured from (a water bucket), with room for it. */
     @Override
     public boolean handson$canPour(ItemStack stack) {
-        IFluidHandler tank = handson$tank();
-        if (stack.isEmpty() || tank == null) {
-            return false;
-        }
-        if (handson$isWaterBottle(stack)) {
-            return tank.fill(new FluidStack(Fluids.WATER, HANDSON$BOTTLE), IFluidHandler.FluidAction.SIMULATE) == HANDSON$BOTTLE;
-        }
-        return FluidUtil.tryEmptyContainer(stack.copyWithCount(1), tank, Integer.MAX_VALUE, null, false).isSuccess();
-    }
-
-    @Unique
-    private static boolean handson$isWaterBottle(ItemStack stack) {
-        PotionContents contents = stack.get(DataComponents.POTION_CONTENTS);
-        return stack.is(Items.POTION) && contents != null && contents.is(Potions.WATER);
+        return YoukaiFluids.canPour(handson$tank(), stack);
     }
 
     @Override
     public boolean handson$isVessel(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return false;
-        }
-        if (handson$isWaterBottle(stack) || stack.copyWithCount(1).getCapability(Capabilities.FluidHandler.ITEM) != null) {
-            return true;
-        }
-        for (Brewing recipe : handson$recipes()) {
-            IYHFluidItem drink = handson$drink(new FluidStack(recipe.result(), recipe.baseAmount()));
-            if (drink != null && (stack.is(drink.getContainer()) || stack.is(drink.asStack(1).getItem()))) {
-                return true;
-            }
-        }
-        return false;
+        return YoukaiFluids.isVessel(stack, handson$recipes().stream().map(Brewing::result).toList());
     }
 
     @Override
     public ItemStack handson$drinkOf(Fluid fluid) {
-        if (fluid == Fluids.EMPTY) {
-            return ItemStack.EMPTY;
-        }
-        IYHFluidItem drink = handson$drink(new FluidStack(fluid, 1000));
-        if (drink != null) {
-            return drink.asStack(1);
-        }
-        return fluid.getBucket() == Items.AIR ? ItemStack.EMPTY : new ItemStack(fluid.getBucket());
+        return YoukaiFluids.drinkOf(fluid);
     }
 
     @Override

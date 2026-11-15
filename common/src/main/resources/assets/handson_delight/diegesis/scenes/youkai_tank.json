@@ -1,0 +1,397 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Youkai's Feasts' fermentation tank. The station hides the block while it is used and shows it here: its own walls (2 px, to y 14) and floor (y 2) round an inside x, z 3..13, and its lid with the handle on top, its block's open state (taken off with a click and leant on the tank's right side, put back with another). Full, the liquid stands three quarters up the inside (y 11), never to the brim; up to eight things float on it or lie on the floor. No tap: a drink is dipped out at the opening. Nothing shows while nobody uses it.",
+  "work_plane": 16,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      -7.67,
+      43.0,
+      -34.31
+    ],
+    "target": [
+      7,
+      7,
+      6
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "keg",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/youkai_tank/body",
+        "lit_as_block": true
+      },
+      "children": [
+        {
+          "id": "lid",
+          "pos": [
+            0,
+            14.5,
+            0
+          ],
+          "visual": {
+            "model": "handson_delight:diegesis/youkai_tank/lid",
+            "anchor": [
+              8,
+              14.5,
+              8
+            ],
+            "lit_as_block": true
+          },
+          "collider": {
+            "from": [
+              -6.5,
+              -0.6,
+              -6.5
+            ],
+            "to": [
+              6.5,
+              1.6,
+              6.5
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "drink",
+      "pickable": false,
+      "tank": {
+        "tank": "drink",
+        "inner": {
+          "from": [
+            3,
+            2,
+            3
+          ],
+          "to": [
+            13,
+            11,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "id": "mouth",
+      "drop_zone": "ingredients",
+      "collider": {
+        "from": [
+          3,
+          2,
+          3
+        ],
+        "to": [
+          13,
+          16,
+          13
+        ]
+      }
+    },
+    {
+      "$comment": "Takes the click of an empty hand over the drink, where a container from the inventory is offered and dipped; on only while the hand is empty and the lid is off, so that the opening keeps what is dropped in.",
+      "id": "dip",
+      "collider": {
+        "from": [
+          3,
+          2,
+          3
+        ],
+        "to": [
+          13,
+          11,
+          13
+        ]
+      }
+    },
+    {
+      "id": "item_0",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[0]",
+        "size": 4.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_1",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[1]",
+        "size": 4.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_2",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[2]",
+        "size": 4.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_3",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[3]",
+        "size": 4.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_4",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[4]",
+        "size": 4.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_5",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[5]",
+        "size": 4.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_6",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[6]",
+        "size": 4.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_7",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[7]",
+        "size": 4.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "offer",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": 0.35,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "$comment": "The bucket or bottle a hand tips over the opening as it pours, moved by the code in scene pixels.",
+      "id": "pour_hand",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -2.42,
+        16.87,
+        7.89
+      ],
+      "rotation": [
+        -40,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -2.43,
+        16.88,
+        7.86
+      ],
+      "rotation": [
+        -40,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -2.44,
+        16.9,
+        7.84
+      ],
+      "rotation": [
+        -40,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "thermo",
+      "pos": [
+        -2.43,
+        16.88,
+        7.86
+      ],
+      "rotation": [
+        -40,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "thermo_now",
+      "pos": [
+        -2.44,
+        16.9,
+        7.84
+      ],
+      "rotation": [
+        -40,
+        20,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -2.46,
+        16.93,
+        7.8
+      ],
+      "rotation": [
+        50,
+        20,
+        0
+      ],
+      "scale": 0.156,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        7.06,
+        26.47,
+        -18.2
+      ],
+      "rotation": [
+        -40,
+        20,
+        0
+      ],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -5.3,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          5.3,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

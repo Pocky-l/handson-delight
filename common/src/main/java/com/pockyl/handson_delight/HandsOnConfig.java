@@ -36,6 +36,10 @@ public final class HandsOnConfig {
             "  Off, they are used as before. They keep their own cooking times.",
             "youkai_steamer: Youkai's Feasts' steamer (its pot, racks and lid) as a station, when that mod is there. Off, it is",
             "  used as before. It keeps its own steaming times.",
+            "youkai_tank: Youkai's Feasts' fermentation tank as a station, when that mod is there. Off, it is used as before.",
+            "  It keeps its own fermenting times.",
+            "youkai_hints: Youkai's Feasts' squares on the right of the screen while one of its blocks is looked at (what it",
+            "  takes next, what lies in it and its progress). Off by default.",
             "remove_crafting_recipes: Farmer's Delight's food crafts (sandwiches, salads, rolls, pies, feasts) are made on the",
             "  cutting board only, not in a crafting grid.",
             "  Machines (Create, AE2, Refined Storage) craft them either way.",
@@ -65,6 +69,8 @@ public final class HandsOnConfig {
     private static boolean cuisineBoard = true;
     private static boolean youkaiPots = true;
     private static boolean youkaiSteamer = true;
+    private static boolean youkaiTank = true;
+    private static boolean youkaiHints = false;
     private static boolean removeCraftingRecipes = true;
     private static boolean stirringRequired = true;
     private static boolean recipeBook = true;
@@ -102,6 +108,8 @@ public final class HandsOnConfig {
         cuisineBoard = read(values, "cuisine_board", cuisineBoard);
         youkaiPots = read(values, "youkai_pots", youkaiPots);
         youkaiSteamer = read(values, "youkai_steamer", youkaiSteamer);
+        youkaiTank = read(values, "youkai_tank", youkaiTank);
+        youkaiHints = read(values, "youkai_hints", youkaiHints);
         removeCraftingRecipes = read(values, "remove_crafting_recipes", removeCraftingRecipes);
         stirringRequired = read(values, "stirring_required", stirringRequired);
         recipeBook = read(values, "recipe_book", recipeBook);
@@ -205,6 +213,15 @@ public final class HandsOnConfig {
 
     public static boolean youkaiSteamer() {
         return youkaiSteamer;
+    }
+
+    public static boolean youkaiTank() {
+        return youkaiTank;
+    }
+
+    /** Whether Youkai's Feasts draws its squares of what its blocks take next; this mod hides them unless turned on. */
+    public static boolean youkaiHints() {
+        return youkaiHints;
     }
 
     /**

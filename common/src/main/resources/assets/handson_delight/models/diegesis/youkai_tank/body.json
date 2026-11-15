@@ -1,0 +1,5 @@
+{
+  "__comment": "Youkai's Feasts' own fermentation tank without its lid, by id: walls and floor round an open inside, as its block is drawn with the lid off. The tank's scene draws it while its block is hidden.",
+  "parent": "youkaisfeasts:block/fermentation_tank",
+  "render_type": "minecraft:cutout"
+}

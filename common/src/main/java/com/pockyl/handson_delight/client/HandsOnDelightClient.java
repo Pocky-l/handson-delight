@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
 import com.pockyl.diegesis.api.client.DiegesisClient;
+import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.client.LiquidLook;
 import com.pockyl.diegesis.api.client.ParticleStyle;
 import com.pockyl.handson_delight.HandsOnDelight;
@@ -47,6 +48,7 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(CookingPotStation.ALCHEMIST_ID, view -> new PotBehavior(view, PotBehavior.Shape.ALCHEMIST_POT));
         DiegesisClient.registerBehavior(KegStation.ID, KegBehavior::lying);
         DiegesisClient.registerBehavior(KegStation.STANDING_ID, KegBehavior::standing);
+        DiegesisClient.registerBehavior(KegStation.TANK_ID, KegBehavior::tank);
         DiegesisClient.registerLiquid(HandsOnDelight.id("drink"), LiquidLook.of(0xC0B08850));
         KegLiquids.register();
         DiegesisClient.registerBehavior(OvenStation.ID, OvenBehavior::new);
@@ -114,5 +116,10 @@ public final class HandsOnDelightClient {
     /** Whether the scene at {@code pos} is drawn this frame: then it stands in for the block's renderer. */
     public static boolean isSceneDrawn(BlockPos pos) {
         return DiegesisClient.isSceneDrawn(pos);
+    }
+
+    /** Whether the station at {@code pos} leaves its block out of the world now, its scene showing it instead. */
+    public static boolean isBlockHidden(BlockPos pos) {
+        return DiegesisClient.station(pos).map(StationView::isBlockHidden).orElse(false);
     }
 }

@@ -3,17 +3,12 @@ package com.pockyl.handson_delight.neoforge.mixin;
 import dev.xkmc.youkaishomecoming.content.item.fluid.SlipBottleItem;
 import dev.xkmc.youkaishomecoming.content.pot.cooking.soup.SoupHolder;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -28,13 +23,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import vectorwing.farmersdelight.common.block.entity.HeatableBlockEntity;
 
-import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.station.KitchenYoukaiPot;
+import com.pockyl.handson_delight.station.YoukaiPotDishes;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Youkai's Feasts' cooking pots (small iron pot, short iron pot, stockpot: their common block entity) as a {@link KitchenYoukaiPot}.
@@ -46,17 +39,9 @@ import java.util.Optional;
 @Pseudo
 @Mixin(targets = "dev.xkmc.youkaishomecoming.content.pot.cooking.core.CookingBlockEntity", remap = false)
 abstract class YoukaiPotMixin implements KitchenYoukaiPot {
-    @Unique
-    private static final ResourceLocation HANDSON$COOKING = ResourceLocation.tryBuild(MOD_ID, "pot_cooking");
     /** How near the cook must be for the bowl to go to them rather than out over the pot. */
     @Unique
     private static final double HANDSON$REACH = 8.0;
-    @Unique
-    private static boolean handson$warned;
-    @Unique
-    private RecipeManager handson$readFrom;
-    @Unique
-    private List<Dish> handson$dishes = List.of();
 
     @Unique
     private Cook handson$cook;
@@ -274,52 +259,9 @@ abstract class YoukaiPotMixin implements KitchenYoukaiPot {
         cook.served(dish.copy());
     }
 
+    /** Its pot recipes, read once for each recipe manager's recipes (the book and the drawer ask every frame). */
     @Override
     public List<Dish> handson$dishes() {
-        Level level = handson$level();
-        if (level == null) {
-            return List.of();
-        }
-        RecipeManager manager = level.getRecipeManager();
-        if (manager != handson$readFrom) {
-            handson$dishes = handson$read(manager);
-            handson$readFrom = manager;
-        }
-        return handson$dishes;
-    }
-
-    /** Its pot recipes: what goes in, the dish, the time, and the pot the dish is served in, which is the pot it needs. */
-    @Unique
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static List<Dish> handson$read(RecipeManager manager) {
-        List<Dish> dishes = new ArrayList<>();
-        Optional<RecipeType<?>> type = BuiltInRegistries.RECIPE_TYPE.getOptional(HANDSON$COOKING);
-        if (type.isEmpty()) {
-            return dishes;
-        }
-        for (RecipeHolder<?> holder : (List<RecipeHolder<?>>) (List) manager.getAllRecipesFor((RecipeType) type.get())) {
-            Object recipe = holder.value();
-            try {
-                List<Ingredient> input = List.copyOf((List<Ingredient>) handson$call(recipe, "getInput"));
-                ItemStack result = ((ItemStack) handson$call(recipe, "getResult")).copy();
-                int ticks = (Integer) handson$call(recipe, "getProcessTime");
-                ItemStack pot = result.getCraftingRemainingItem();
-                if (!result.isEmpty() && !pot.isEmpty() && !input.isEmpty()) {
-                    dishes.add(new Dish(holder.id(), result, input, ticks, pot.getItem()));
-                }
-            } catch (ReflectiveOperationException | RuntimeException e) {
-                if (!handson$warned) {
-                    handson$warned = true;
-                    HandsOnDelight.LOGGER.warn("A pot recipe of Youkai's Feasts is not what the station knows: {}", holder.id(), e);
-                }
-            }
-        }
-        return List.copyOf(dishes);
-    }
-
-    @Unique
-    private static Object handson$call(Object target, String name) throws ReflectiveOperationException {
-        Method method = target.getClass().getMethod(name);
-        return method.invoke(target);
+        return YoukaiPotDishes.of(handson$level());
     }
 }

@@ -25,8 +25,6 @@ final class KegFerment {
     private static final float BUMP_TIME = 0.28F;
     /** Of the breaths, how many also bead foam at the tap. */
     private static final float TAP_FOAM = 0.18F;
-    /** Height of the seam where the lid sits in the rim, pixels. */
-    private static final float SEAM = 16.05F;
     private static final int GAS = 0x80FFFFFF;
     private static final int CURING = 0x60D2C4B0;
 
@@ -76,7 +74,7 @@ final class KegFerment {
             bumpAt = time;
             view.playSound(SoundEvents.WOODEN_TRAPDOOR_CLOSE, "lid", 0.06F, 1.7F + random.nextFloat() * 0.2F);
         }
-        if (random.nextFloat() < TAP_FOAM) {
+        if (shape.tap() != null && random.nextFloat() < TAP_FOAM) {
             view.spawnParticles(DiegesisParticles.DROPLET, tap, new Vector3f(0.0F, -5.0F, 0.0F), 0.0F, 1, foam);
         }
     }
@@ -84,7 +82,7 @@ final class KegFerment {
     /** The lid comes off a working brew: a puff of gas and foam out of the opening. */
     void opened(StationView view, ToScene keg, KegBehavior.Shape shape, boolean dry, int foam) {
         RandomSource random = view.level().random;
-        Vector3f middle = keg.at(8.0F, SEAM + 0.5F, (shape.rimZ0() + shape.rimZ1()) / 2.0F);
+        Vector3f middle = keg.at(8.0F, shape.seam() + 0.5F, (shape.rimZ0() + shape.rimZ1()) / 2.0F);
         view.spawnParticles(DiegesisParticles.STEAM, middle, new Vector3f(0.0F, 3.0F, 0.0F), 2.0F, 4, dry ? CURING : GAS);
         if (!dry) {
             for (int i = 0; i < 6; i++) {
@@ -121,6 +119,6 @@ final class KegFerment {
             x = shape.rimX0();
             z = shape.rimZ1() - (along - 2.0F * width - depth);
         }
-        return keg.at(x, SEAM, z);
+        return keg.at(x, shape.seam(), z);
     }
 }

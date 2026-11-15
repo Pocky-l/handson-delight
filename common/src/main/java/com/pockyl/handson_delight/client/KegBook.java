@@ -23,6 +23,20 @@ import java.util.List;
 final class KegBook implements RecipeBook.Source {
     /** A block or item for each temperature a recipe wants, 1 (cold) to 5 (hot); mild (3) wants nothing. */
     private static final ItemLike[] WARMTH = {Items.AIR, Items.PACKED_ICE, Items.SNOW_BLOCK, Items.AIR, Items.TORCH, Items.MAGMA_BLOCK};
+    /** Shorter than this, ticks, a recipe's time is told in seconds (the fermentation tank's minute and a half), else in minutes. */
+    private static final int IN_SECONDS = 3600;
+
+    private final String memory;
+
+    /** {@code memory}: the book's own memory of the page picked last (see {@link RecipeBook.Source#memory}). */
+    KegBook(String memory) {
+        this.memory = memory;
+    }
+
+    @Override
+    public String memory() {
+        return memory;
+    }
 
     @Override
     public List<RecipeBook.Page> pages(StationView view) {
@@ -34,7 +48,7 @@ final class KegBook implements RecipeBook.Source {
         for (KitchenKeg.Fermenting recipe : keg.handson$recipes()) {
             ItemStack dish = recipe.resultItem().isEmpty() ? keg.handson$drinkOf(recipe.resultFluid()) : recipe.resultItem();
             List<Ingredient> ingredients = recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
-            if (dish.isEmpty() || ingredients.size() > KitchenKeg.INGREDIENTS) {
+            if (dish.isEmpty() || ingredients.size() > keg.handson$ingredients()) {
                 continue;
             }
             List<ItemStack> foot = new ArrayList<>();
@@ -49,8 +63,10 @@ final class KegBook implements RecipeBook.Source {
                 foot.add(new ItemStack(WARMTH[warmth]));
             }
             foot.add(new ItemStack(Items.CLOCK));
-            Component minutes = Component.translatable("handson_delight.book.minutes", Math.max(1, Math.round(recipe.ticks() / 1200.0F)));
-            pages.add(new RecipeBook.Page(recipe.id(), dish, ingredients, foot, minutes, false));
+            Component time = recipe.ticks() < IN_SECONDS
+                    ? Component.translatable("handson_delight.book.seconds", Math.max(1, Math.round(recipe.ticks() / 20.0F)))
+                    : Component.translatable("handson_delight.book.minutes", Math.max(1, Math.round(recipe.ticks() / 1200.0F)));
+            pages.add(new RecipeBook.Page(recipe.id(), dish, ingredients, foot, time, false));
         }
         return pages;
     }

@@ -356,9 +356,17 @@ public final class VatBehavior implements StationBehavior {
 
     @Override
     public void onEvent(StationView view, SceneEvent event) {
-        if (event instanceof SceneEvent.Click click && click.button() == 0) {
+        if (event instanceof SceneEvent.Click click && click.node().equals("book_open")) {
+            book.click(view, click.button());
+        } else if (event instanceof SceneEvent.Click click && click.button() == 0) {
             clicked(view, click.node());
         }
+    }
+
+    /** The wheel over the recipe book goes through its ingredients or its list. */
+    @Override
+    public boolean onScroll(StationView view, String node, double amount) {
+        return "book_open".equals(node) && book.scroll(amount);
     }
 
     /**
@@ -371,12 +379,15 @@ public final class VatBehavior implements StationBehavior {
             draw(view, shift, -1);
             return true;
         }
+        if ("book_open".equals(node)) {
+            book.click(view, button);
+            return true;
+        }
         return clicked(view, node);
     }
 
     private boolean clicked(StationView view, String node) {
         switch (node) {
-            case "book_open" -> book.click(view);
             case "lid" -> askLid(view, !isLidOpen(view));
             case "served" -> draw(view, Screen.hasShiftDown(), -1);
             default -> {

@@ -692,7 +692,7 @@ public final class SteamerBehavior implements StationBehavior {
         }
         String node = click.node();
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, click.button());
             return;
         }
         SteamerTower tower = tower(view);
@@ -746,10 +746,13 @@ public final class SteamerBehavior implements StationBehavior {
 
     /**
      * The wheel goes down and up the tower: down opens the rack under the open one (the racks over it lifted aside), up the one over
-     * it, up to the top rack with nothing lifted.
+     * it, up to the top rack with nothing lifted. Over the open recipe book it goes through the book instead.
      */
     @Override
     public boolean onScroll(StationView view, String node, double amount) {
+        if ("book_open".equals(node) && book.scroll(amount)) {
+            return true;
+        }
         SteamerTower tower = tower(view);
         if (tower == null || tower.racks() < 2 || amount == 0.0) {
             return tower != null;
@@ -777,7 +780,7 @@ public final class SteamerBehavior implements StationBehavior {
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, button);
             return true;
         }
         SteamerTower tower = tower(view);

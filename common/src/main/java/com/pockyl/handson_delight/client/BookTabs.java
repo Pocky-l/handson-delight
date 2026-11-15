@@ -12,8 +12,8 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 /**
- * Which tab of a station's recipe book the player last chose, per station type, kept on the client between games: the board opens on
- * its dishes for a player who only wants those.
+ * What the player made of the recipe book, kept on the client between games: which tab they last chose, per station type (the board
+ * opens on its dishes for a player who only wants those), and the size and place they gave the book, the same at every station.
  */
 final class BookTabs {
     private static final String FILE = HandsOnDelight.MOD_ID + "-book.properties";
@@ -34,11 +34,42 @@ final class BookTabs {
         } else {
             values.setProperty(book, tab);
         }
+        write(values);
+    }
+
+    /** A number kept under {@code key}, or {@code fallback} when there is none or it is not a number. */
+    static synchronized float number(String key, float fallback) {
+        String value = values().getProperty(key);
+        if (value == null) {
+            return fallback;
+        }
+        try {
+            float number = Float.parseFloat(value);
+            return Float.isFinite(number) ? number : fallback;
+        } catch (NumberFormatException exception) {
+            return fallback;
+        }
+    }
+
+    /** Keeps {@code numbers[i]} under {@code keys[i]}; null removes the key. */
+    static synchronized void putNumbers(String[] keys, Float[] numbers) {
+        Properties values = values();
+        for (int i = 0; i < keys.length; i++) {
+            if (numbers[i] == null) {
+                values.remove(keys[i]);
+            } else {
+                values.setProperty(keys[i], Float.toString(numbers[i]));
+            }
+        }
+        write(values);
+    }
+
+    private static void write(Properties values) {
         Path path = path();
         try {
             Files.createDirectories(path.getParent());
             try (Writer writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
-                values.store(writer, "The tab each station's recipe book opens on; written by the game.");
+                values.store(writer, "The recipe book: the tab each station's book opens on, its size and place; written by the game.");
             }
         } catch (IOException exception) {
             HandsOnDelight.LOGGER.warn("Could not write {}", path, exception);

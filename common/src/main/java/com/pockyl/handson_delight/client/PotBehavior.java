@@ -473,7 +473,7 @@ public final class PotBehavior implements StationBehavior {
             }
         }
         if (event instanceof SceneEvent.Click click && click.node().equals("book_open")) {
-            book.click(view);
+            book.click(view, click.button());
         } else if (event instanceof SceneEvent.Click click && click.node().equals("soup") && click.button() == 0 && !offered.isEmpty()) {
             CompoundTag how = new CompoundTag();
             how.putBoolean(CookingPotStation.FROM_INVENTORY, true);
@@ -491,11 +491,17 @@ public final class PotBehavior implements StationBehavior {
         }
     }
 
+    /** The wheel over the recipe book goes through its ingredients or its list. */
+    @Override
+    public boolean onScroll(StationView view, String node, double amount) {
+        return "book_open".equals(node) && book.scroll(amount);
+    }
+
     /** A bowl dipped into the soup fills; the book takes its click with a stack in the hand too; the rest goes on to the pot as usual. */
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, button);
             return true;
         }
         if (scroll != null && !"preview".equals(node) && scroll.click(view, stack)) {

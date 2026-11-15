@@ -269,14 +269,20 @@ public final class OvenBehavior implements StationBehavior {
         if (event instanceof SceneEvent.Click click && click.node().startsWith("door_") && click.button() == 0) {
             askDoor(view, !isDoorOpen(view));
         } else if (event instanceof SceneEvent.Click click && click.node().equals("book_open")) {
-            book.click(view);
+            book.click(view, click.button());
         }
+    }
+
+    /** The wheel over the recipe book goes through its ingredients or its list. */
+    @Override
+    public boolean onScroll(StationView view, String node, double amount) {
+        return "book_open".equals(node) && book.scroll(amount);
     }
 
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, button);
             return true;
         }
         if (node.startsWith("door_")) {

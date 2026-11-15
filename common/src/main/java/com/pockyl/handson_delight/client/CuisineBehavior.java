@@ -609,7 +609,7 @@ public final class CuisineBehavior implements StationBehavior {
             return;
         }
         if ("book_open".equals(click.node())) {
-            book.click(view);
+            book.click(view, click.button());
             return;
         }
         KitchenCuisine board = board(view);
@@ -656,6 +656,12 @@ public final class CuisineBehavior implements StationBehavior {
         view.sendAction(CuisineBoardStation.ACTION_CUT, how);
     }
 
+    /** The wheel over the recipe book goes through its ingredients or its list. */
+    @Override
+    public boolean onScroll(StationView view, String node, double amount) {
+        return "book_open".equals(node) && book.scroll(amount);
+    }
+
     /**
      * A stack let go over the board: a knife cuts the finished roll; food goes on as the next step, with shift as many steps of it
      * as the board takes in a row.
@@ -663,7 +669,7 @@ public final class CuisineBehavior implements StationBehavior {
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, button);
             return true;
         }
         KitchenCuisine board = board(view);

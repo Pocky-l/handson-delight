@@ -334,7 +334,7 @@ public final class StoveBehavior implements StationBehavior {
             return;
         }
         if ("book_open".equals(click.node())) {
-            book.click(view);
+            book.click(view, click.button());
             return;
         }
         int place = placeOf(click.node());
@@ -391,6 +391,12 @@ public final class StoveBehavior implements StationBehavior {
         });
     }
 
+    /** The wheel over the recipe book goes through its ingredients or its list. */
+    @Override
+    public boolean onScroll(StationView view, String node, double amount) {
+        return "book_open".equals(node) && book.scroll(amount);
+    }
+
     /**
      * Food let go over the grill goes on: one onto every free place, or with the right button one onto the place under the cursor. The
      * book takes its click with a stack in the hand.
@@ -398,7 +404,7 @@ public final class StoveBehavior implements StationBehavior {
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, button);
             return true;
         }
         CompoundTag how = new CompoundTag();

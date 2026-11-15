@@ -306,7 +306,7 @@ public final class YoukaiPotBehavior implements StationBehavior {
             return;
         }
         if ("book_open".equals(click.node())) {
-            book.click(view);
+            book.click(view, click.button());
             return;
         }
         // A right click over the soup takes the last thing back out.
@@ -315,11 +315,17 @@ public final class YoukaiPotBehavior implements StationBehavior {
         }
     }
 
+    /** The wheel over the recipe book goes through its ingredients or its list. */
+    @Override
+    public boolean onScroll(StationView view, String node, double amount) {
+        return "book_open".equals(node) && book.scroll(amount);
+    }
+
     /** A stack let go over the pot: one of it goes in, with shift as many as the pot takes. */
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, button);
             return true;
         }
         if (pot(view) == null) {

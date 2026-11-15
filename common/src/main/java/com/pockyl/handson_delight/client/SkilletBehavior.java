@@ -704,7 +704,7 @@ public final class SkilletBehavior implements StationBehavior {
         if (event instanceof SceneEvent.Stroke stroke && "handle".equals(stroke.node())) {
             stroked(view, stroke);
         } else if (event instanceof SceneEvent.Click click && "book_open".equals(click.node())) {
-            book.click(view);
+            book.click(view, click.button());
         } else if (event instanceof SceneEvent.Click click && "food".equals(click.node()) && !shown.isEmpty()) {
             // The food itself is what a player clicks when it smokes for turning: it turns, as by the handle. The other button takes
             // it back, raw or half done: a way to start over. Done food is taken by either button.
@@ -833,11 +833,17 @@ public final class SkilletBehavior implements StationBehavior {
         steps.add(new Step(clock + seconds, run));
     }
 
+    /** The wheel over the recipe book goes through its ingredients or its list. */
+    @Override
+    public boolean onScroll(StationView view, String node, double amount) {
+        return "book_open".equals(node) && book.scroll(amount);
+    }
+
     /** Food let go over the pan goes in: all of it, or one with the right button. The book takes its click with a stack in the hand. */
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, button);
             return true;
         }
         CompoundTag how = new CompoundTag();

@@ -85,14 +85,24 @@
   Its banner pattern stays on it while you work.
 - [Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s dungeon stove is a station like
   Farmer's Delight's stove: lay food on its grill, turn each piece at the half and take it off when it is done.
+- Every station's recipe book can be made bigger or smaller and moved a little. Take it by its top right brass corner and
+  pull: the corner across stays where it is and the book grows or shrinks with your hand; the corner lifts towards you
+  under the cursor to show it can be taken. Take it by its cover or an empty bit of a page and it goes with your hand. Wherever
+  it hangs it faces you and stays on the screen. A right click on its cover puts it back as it was. Its size and place
+  are the same at every station and kept in `config/handson_delight-book.properties` between games.
 
 ### Changed
+- The recipe book opens almost twice as fast.
+- The mouse wheel over a recipe book's list turns its pages.
 - Every station's recipe book names the dish or the ingredient under the cursor, as a slot does.
 - The book opens again at the recipe you picked last, at that station or at one like it, as long as what lies in the
   station is on the way to it; before, it opened at the first recipe that fitted, or the first of all. While you work, the
   dishes keep their places in the list: a dish you were making no longer jumped to another page.
 
 ### Fixed
+- A dish with more ingredients than the recipe book's page has room for (seven and more on the cutting board) ran off the
+  bottom of the page. A bar beside them now scrolls them a row at a time: drag its grip, click beside it, or turn the mouse
+  wheel over the page.
 - The items drawn in the recipe books no longer turn darker as you look round or stand at the station from
   another side: they are lit as in your inventory.
 - Food thrown into [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg ferments when its recipe wants

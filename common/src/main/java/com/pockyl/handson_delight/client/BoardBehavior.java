@@ -1207,7 +1207,7 @@ public final class BoardBehavior implements StationBehavior {
     @Override
     public void onEvent(StationView view, SceneEvent event) {
         if (event instanceof SceneEvent.Click click && "book_open".equals(click.node())) {
-            book.click(view);
+            book.click(view, click.button());
             return;
         }
         if (!(event instanceof SceneEvent.Click click) || !"surface".equals(click.node())) {
@@ -1264,6 +1264,12 @@ public final class BoardBehavior implements StationBehavior {
         refresh(view);
     }
 
+    /** The wheel over the recipe book goes through its ingredients or its list. */
+    @Override
+    public boolean onScroll(StationView view, String node, double amount) {
+        return "book_open".equals(node) && book.scroll(amount);
+    }
+
     /**
      * The knife on the cursor chops, and the right button puts it away, as a right click puts away whatever
      * the cursor holds; any other stack let go on the board goes where the board says: onto the dish or to be cut, all
@@ -1273,7 +1279,7 @@ public final class BoardBehavior implements StationBehavior {
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, button);
             return true;
         }
         if (shift && Cutting.canStick(stack) && shownItem.isEmpty() && !carved(view) && BoardLogic.layers(view.state()).isEmpty()) {

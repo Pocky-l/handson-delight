@@ -424,7 +424,7 @@ public final class GrillBehavior implements StationBehavior {
             return;
         }
         if ("book_open".equals(click.node())) {
-            book.click(view);
+            book.click(view, click.button());
             return;
         }
         int place = placeOf(click.node());
@@ -493,6 +493,12 @@ public final class GrillBehavior implements StationBehavior {
         view.playSound(SoundEvents.LANTERN_HIT, "grill", 0.2F, 1.5F);
     }
 
+    /** The wheel over the recipe book goes through its ingredients or its list. */
+    @Override
+    public boolean onScroll(StationView view, String node, double amount) {
+        return "book_open".equals(node) && book.scroll(amount);
+    }
+
     /**
      * A skewer let go over the grill goes on: one onto every free place, or with the right button one onto the place under the cursor.
      * A seasoning on the cursor goes over the skewer it is let go on. The book takes its click with a stack in the hand.
@@ -500,7 +506,7 @@ public final class GrillBehavior implements StationBehavior {
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, button);
             return true;
         }
         CompoundTag how = new CompoundTag();

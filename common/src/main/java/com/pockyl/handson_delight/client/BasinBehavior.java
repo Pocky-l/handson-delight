@@ -241,7 +241,7 @@ public final class BasinBehavior implements StationBehavior {
             return;
         }
         if ("book_open".equals(click.node())) {
-            book.click(view);
+            book.click(view, click.button());
             return;
         }
         if ("stick".equals(click.node())) {
@@ -269,6 +269,12 @@ public final class BasinBehavior implements StationBehavior {
         return -1;
     }
 
+    /** The wheel over the recipe book goes through its ingredients or its list. */
+    @Override
+    public boolean onScroll(StationView view, String node, double amount) {
+        return "book_open".equals(node) && book.scroll(amount);
+    }
+
     /**
      * A stick on the cursor clicked on the basin skewers what lies there (with shift as many as it can); food let go over a compartment
      * goes into it, the whole stack, or one with the right button.
@@ -276,7 +282,7 @@ public final class BasinBehavior implements StationBehavior {
     @Override
     public boolean onItemClick(StationView view, String node, ItemStack stack, int button, boolean shift) {
         if ("book_open".equals(node)) {
-            book.click(view);
+            book.click(view, button);
             return true;
         }
         CompoundTag how = new CompoundTag();

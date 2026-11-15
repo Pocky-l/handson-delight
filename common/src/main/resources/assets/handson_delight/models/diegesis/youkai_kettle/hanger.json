@@ -1,0 +1,455 @@
+{
+  "__comment": "Cut out: Youkai's Feasts' texture (not in this mod, so the linter cannot read its alpha) draws the chain and hoop as planes.",
+  "__lint_allow": [
+    "T009"
+  ],
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "youkaisfeasts:block/utensil/chain",
+    "handle": "youkaisfeasts:block/utensil/cooking_pot_handle",
+    "chain": "youkaisfeasts:block/utensil/chain"
+  },
+  "render_type": "minecraft:cutout",
+  "elements": [
+    {
+      "name": "hoop",
+      "from": [
+        8,
+        7,
+        3
+      ],
+      "to": [
+        8,
+        12,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#handle"
+        },
+        "east": {
+          "uv": [
+            11,
+            8,
+            1,
+            13
+          ],
+          "texture": "#handle"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#handle"
+        },
+        "west": {
+          "uv": [
+            1,
+            8,
+            11,
+            13
+          ],
+          "texture": "#handle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "rotation": 270,
+          "texture": "#handle"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "rotation": 90,
+          "texture": "#handle"
+        }
+      }
+    },
+    {
+      "name": "handle_east",
+      "from": [
+        7,
+        7,
+        3
+      ],
+      "to": [
+        9,
+        12,
+        3
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            0,
+            0,
+            5
+          ],
+          "texture": "#handle"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#handle"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            2,
+            5
+          ],
+          "texture": "#handle"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#handle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "rotation": 270,
+          "texture": "#handle"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "rotation": 90,
+          "texture": "#handle"
+        }
+      }
+    },
+    {
+      "name": "handle_west",
+      "from": [
+        7,
+        7,
+        13
+      ],
+      "to": [
+        9,
+        12,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            0,
+            0,
+            5
+          ],
+          "texture": "#handle"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#handle"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            2,
+            5
+          ],
+          "texture": "#handle"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#handle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "rotation": 270,
+          "texture": "#handle"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "rotation": 90,
+          "texture": "#handle"
+        }
+      }
+    },
+    {
+      "name": "handle_up",
+      "from": [
+        7,
+        11.999,
+        3
+      ],
+      "to": [
+        9,
+        11.999,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#handle"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#handle"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#handle"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#handle"
+        },
+        "up": {
+          "uv": [
+            2,
+            0,
+            12,
+            2
+          ],
+          "rotation": 270,
+          "texture": "#handle"
+        },
+        "down": {
+          "uv": [
+            2,
+            0,
+            12,
+            2
+          ],
+          "rotation": 90,
+          "texture": "#handle"
+        }
+      }
+    },
+    {
+      "name": "chain_11",
+      "from": [
+        6.5,
+        12,
+        8
+      ],
+      "to": [
+        9.5,
+        16,
+        8
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          8,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            0,
+            0,
+            4
+          ],
+          "texture": "#chain"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#chain"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            3,
+            4
+          ],
+          "texture": "#chain"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#chain"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#chain"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#chain"
+        }
+      }
+    },
+    {
+      "name": "chain_12",
+      "from": [
+        8,
+        12,
+        6.5
+      ],
+      "to": [
+        8,
+        16,
+        9.5
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          8,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#chain"
+        },
+        "east": {
+          "uv": [
+            3,
+            0,
+            6,
+            4
+          ],
+          "texture": "#chain"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#chain"
+        },
+        "west": {
+          "uv": [
+            6,
+            0,
+            3,
+            4
+          ],
+          "texture": "#chain"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#chain"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "texture": "#chain"
+        }
+      }
+    }
+  ]
+}

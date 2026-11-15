@@ -11,7 +11,11 @@
     "MonsterPotBlockMixin",
     "KettleMixin",
     "AlchemistPotMixin",
-    "AlchemistPotBlockMixin"
+    "AlchemistPotBlockMixin",
+    "YoukaiKettleMixin",
+    "YoukaiTimedAccess",
+    "YoukaiKettleRecipeAccess",
+    "YoukaiCuisineBoardMixin"
   ],
   "client": [
     "CopperPotQuietMixin",

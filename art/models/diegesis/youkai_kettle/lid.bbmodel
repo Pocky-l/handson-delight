@@ -1,0 +1,240 @@
+{
+	"meta": {
+		"format_version": "5.0",
+		"model_format": "java_block",
+		"box_uv": false
+	},
+	"name": "lid",
+	"parent": "minecraft:block/block",
+	"java_block_version": "26.3",
+	"ambientocclusion": true,
+	"front_gui_light": false,
+	"visible_box": [
+		1,
+		1,
+		0
+	],
+	"variable_placeholders": "",
+	"multi_file_ruleset": "",
+	"variable_placeholder_buttons": [],
+	"unhandled_root_fields": {},
+	"resolution": {
+		"width": 16,
+		"height": 16
+	},
+	"elements": [
+		{
+			"name": "lid",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade_direction_override": "",
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				6,
+				7,
+				6
+			],
+			"to": [
+				10,
+				8,
+				10
+			],
+			"autouv": 0,
+			"color": 3,
+			"origin": [
+				0,
+				0,
+				0
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						10.5,
+						4.5,
+						11,
+						6.5
+					],
+					"texture": 0,
+					"rotation": 90
+				},
+				"east": {
+					"uv": [
+						11,
+						4,
+						13,
+						4.5
+					],
+					"texture": 0
+				},
+				"south": {
+					"uv": [
+						11,
+						4,
+						13,
+						4.5
+					],
+					"texture": 0
+				},
+				"west": {
+					"uv": [
+						11,
+						6.5,
+						13,
+						7
+					],
+					"texture": 0
+				},
+				"up": {
+					"uv": [
+						11,
+						6.5,
+						13,
+						4.5
+					],
+					"texture": 0
+				},
+				"down": {
+					"uv": [
+						11,
+						4.5,
+						13,
+						6.5
+					],
+					"texture": 0
+				}
+			},
+			"type": "cube",
+			"uuid": "c7dcf60b-ffcd-36bf-b7c4-b8a552ed8330"
+		},
+		{
+			"name": "lid_knob",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade_direction_override": "",
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				7,
+				8,
+				7
+			],
+			"to": [
+				9,
+				8.5,
+				9
+			],
+			"autouv": 0,
+			"color": 0,
+			"origin": [
+				0,
+				0,
+				0
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						13,
+						9,
+						12,
+						9.25
+					],
+					"texture": 0
+				},
+				"east": {
+					"uv": [
+						13,
+						9.5,
+						12,
+						9.75
+					],
+					"texture": 0
+				},
+				"south": {
+					"uv": [
+						12,
+						9.5,
+						13,
+						9.75
+					],
+					"texture": 0
+				},
+				"west": {
+					"uv": [
+						12,
+						9.5,
+						13,
+						9.25
+					],
+					"texture": 0
+				},
+				"up": {
+					"uv": [
+						11.5,
+						8.5,
+						10.5,
+						9.5
+					],
+					"texture": 0
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						2,
+						2
+					],
+					"texture": 0
+				}
+			},
+			"type": "cube",
+			"uuid": "58893e9b-ace3-5b60-ebf1-238b33f14fbb"
+		}
+	],
+	"groups": [],
+	"outliner": [
+		"c7dcf60b-ffcd-36bf-b7c4-b8a552ed8330",
+		"58893e9b-ace3-5b60-ebf1-238b33f14fbb"
+	],
+	"textures": [
+		{
+			"name": "kettle.png",
+			"folder": "",
+			"namespace": "youkaisfeasts",
+			"id": "kettle",
+			"group": "",
+			"scope": 0,
+			"width": 32,
+			"height": 32,
+			"uv_width": 16,
+			"uv_height": 16,
+			"particle": true,
+			"use_as_default": false,
+			"layers_enabled": false,
+			"sync_to_project": "",
+			"file_format": "png",
+			"render_mode": "default",
+			"render_sides": "auto",
+			"wrap_mode": "limited",
+			"pbr_channel": "color",
+			"fps": 7,
+			"force_translucent": false,
+			"frame_time": 1,
+			"frame_order_type": "loop",
+			"frame_order": "",
+			"frame_interpolate": false,
+			"visible": true,
+			"internal": true,
+			"saved": true,
+			"uuid": "a708a5d2-ce7f-7275-eb9c-4eb1421cf032"
+		}
+	]
+}

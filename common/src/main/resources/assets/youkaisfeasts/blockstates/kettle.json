@@ -1,0 +1,207 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north",
+        "support": "none|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/body"
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "support": "none|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/body",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "support": "none|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/body",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "support": "none|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/body",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "support": "tray"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/body",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "support": "tray"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/body",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "support": "tray"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/body",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "support": "tray"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/body"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "support": "none|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/lid"
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "support": "none|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/lid",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "support": "none|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/lid",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "support": "none|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/lid",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "support": "tray"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/lid",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "support": "tray"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/lid",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "support": "tray"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/lid",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "support": "tray"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/lid"
+      }
+    },
+    {
+      "when": {
+        "support": "tray"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/tray"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "support": "handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/hanger"
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "support": "handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/hanger",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "support": "handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/hanger",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "support": "handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/youkai_kettle/hanger",
+        "y": 270
+      }
+    }
+  ]
+}

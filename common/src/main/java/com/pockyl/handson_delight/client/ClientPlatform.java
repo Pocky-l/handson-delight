@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.resources.ResourceLocation;
 
 import com.pockyl.handson_delight.platform.Platform;
 
@@ -17,4 +18,12 @@ public interface ClientPlatform {
      * {@code ItemDisplayContext.NONE}: on NeoForge a model can give another one for the GUI.
      */
     BakedModel guiModel(BakedModel model, PoseStack poseStack);
+
+    /**
+     * A model registered by its plain id (another mod's additional model), or null where the loader has no such lookup: vanilla
+     * looks models up by {@code ModelResourceLocation} only.
+     */
+    default BakedModel model(ResourceLocation id) {
+        return null;
+    }
 }

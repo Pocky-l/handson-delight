@@ -73,6 +73,9 @@ dependencies {
     // Farmer's Spell's alchemist pot is a station too, its scroll an Iron's Spells scroll: compiled against both only.
     compileOnly "maven.modrinth:farmers-spell:${farmers_spell_version}"
     compileOnly "maven.modrinth:irons-spells-n-spellbooks:${irons_spellbooks_version}"
+    // Youkai's Feasts' kettle, cuisine board and pots are stations too: compiled against it only (its drinks; its blocks are reached
+    // by name, as their classes build on the L2 libraries nested in its jar).
+    compileOnly "maven.modrinth:gensokyo-delight-youkais-feasts:${youkais_feasts_version}"
 }
 
 // -Pmeals runs only the game tests of Modest Meals' meals at the board, with Modest Meals: it makes Farmer's Delight's burgers,
@@ -129,6 +132,7 @@ if (providers.gradleProperty('addons').isPresent()) {
                     'geckolib:Grwn5rUB',              // GeckoLib 4.9.3, needed by Iron's Spells and Farmer's Spell
                     'curios:yohfFbgD',                // Curios API 9.5.1+1.21.1, needed by Iron's Spells
                     'playeranimator:HJZB6bmA',        // playerAnimator 2.0.4+1.21.1, needed by Iron's Spells
+                    "gensokyo-delight-youkais-feasts:${youkais_feasts_version}", // Youkai's Feasts 1.1.2: its kettle, board and pots (L2 libraries inside)
             ].each { localRuntime "maven.modrinth:${it}" }
         }
     }

@@ -32,6 +32,7 @@ import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
+import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.station.KettleLogic;
 import com.pockyl.handson_delight.station.KettleStation;
 import com.pockyl.handson_delight.station.KitchenKettle;
@@ -44,16 +45,20 @@ import java.util.Optional;
 /**
  * What the kettle shows while somebody works at it: its lid off on the stove beside it or on, the drink inside seen through the
  * opening, the leaves steeping in it and giving it their colour, steam from the spout while it is hot. A cup is filled at the spout:
- * the kettle is lifted by its handle and tipped over it. Done, it whistles with a jet of steam, also to whoever passes by.
+ * the kettle is lifted by its handle and tipped over it. Done, it whistles with a jet of steam, also to whoever passes by. Farmer's
+ * Respite's kettle and Youkai's Feasts' are drawn alike; Youkai's Feasts' boils its water before it brews: the water warms and
+ * comes to the boil, and boiled with nothing to brew, the kettle whistles.
  */
 public final class KettleBehavior implements StationBehavior {
-    private static final String[] ITEM_NODES = {"item_0", "item_1"};
+    private static final String[] ITEM_NODES = {"item_0", "item_1", "item_2", "item_3"};
     /** The badge over the kettle: its plate, the bar, the flame and the icon. */
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "flame", "flame_lit", "preview"};
     private static final String[] SHOWN_IN_USE = {"kettle", "pot", "lid", "drink", "spout", "mouth"};
     @SuppressWarnings("removal")
     private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.withDefaultNamespace("block/white_concrete");
+    /** Farmer's Respite's own whistle for its kettle; this mod's for a kettle whose mod has none (Youkai's Feasts'). */
     private static final SoundEvent WHISTLE = SoundEvent.createVariableRangeEvent(ResourceLocation.tryBuild(KettleStation.MOD_ID, "block.kettle.whistle"));
+    private static final SoundEvent OWN_WHISTLE = SoundEvent.createVariableRangeEvent(HandsOnDelight.id("kettle.whistle"));
 
     /**
      * The kettle's inside, in pixels of its block: the floor, where the drink stands when the kettle is full, the opening's top. The
@@ -97,8 +102,8 @@ public final class KettleBehavior implements StationBehavior {
     private static final Vector3f LID_OUT = new Vector3f(-8.5F, 8.4F, 0.0F);
     private static final Vector3f LID_LEANING = new Vector3f(-5.55F, 1.94F, 0.0F);
     private static final float LID_TURN = 75.0F;
-    /** Where the two things steeping lie under the opening, pixels from the middle; how they turn and bob. */
-    private static final float[][] STEEP_AT = {{-0.9F, 0.5F}, {0.8F, -0.6F}};
+    /** Where the things steeping lie under the opening, pixels from the middle (two in Farmer's Respite's kettle, four in Youkai's). */
+    private static final float[][] STEEP_AT = {{-0.9F, 0.5F}, {0.8F, -0.6F}, {0.7F, 1.0F}, {-0.7F, -1.0F}};
     /** How dark what steeps gets by the end, 0 to 1 of its own colour taken off. */
     private static final float STEEPED = 0.45F;
     /** How soon the drink takes the colour of what it becomes: by this share of the brew it is the new drink's colour. */
@@ -186,6 +191,8 @@ public final class KettleBehavior implements StationBehavior {
     private int servings;
     private boolean ready;
     private float doneAt = -10.0F;
+    /** How far the water had come to the boil at the last look, for a kettle that boils it first; NaN before the first. */
+    private float lastBoil = Float.NaN;
     /** The liquid in the kettle at the last look and what it was brewing into: when the one becomes the other, it is done. */
     private Fluid lastFluid;
     private Fluid becoming = Fluids.EMPTY;
@@ -244,6 +251,7 @@ public final class KettleBehavior implements StationBehavior {
         lid = isLidOff(view) ? 1.0F : 0.0F;
         wasOpen = lid > 0.0F;
         lastFluid = null;
+        lastBoil = Float.NaN;
         refresh(view);
     }
 
@@ -332,9 +340,15 @@ public final class KettleBehavior implements StationBehavior {
         return true;
     }
 
-    /** Whether the lid is off: the kettle block's own state, or as the cook clicked it until the block says so too. */
+    /**
+     * Whether the lid is off: the kettle block's own state (or the station's, for a kettle whose block has none), or as the cook
+     * clicked it until the kettle says so too.
+     */
     private boolean isLidOff(StationView view) {
-        boolean off = KettleStation.isOpen(view.level().getBlockState(view.pos()));
+        KitchenKettle kettle = kettle(view);
+        // A lid that is the station's alone is on whenever nobody works at the kettle, whatever this client last heard.
+        boolean off = kettle == null || kettle.handson$lidInBlock() ? KettleStation.isOpen(view.level().getBlockState(view.pos()))
+                : view.isInUse() && view.state().getControl(KettleStation.LID) > 0.5F;
         if (lidAsked != null && (lidAsked == off || time - lidAskedAt > 1.0F)) {
             lidAsked = null;
         }
@@ -555,6 +569,12 @@ public final class KettleBehavior implements StationBehavior {
             done(view);
         }
         lastFluid = fluid;
+        // Water boiled in a kettle that boils it first, with nothing to brew yet: it whistles, as a kettle on the stove does.
+        float boil = kettle.handson$boilsFirst() && fluid.isSame(Fluids.WATER) ? view.state().getControl(KettleStation.BOIL) : Float.NaN;
+        if (!Float.isNaN(lastBoil) && lastBoil < 1.0F && boil >= 1.0F && making.isEmpty()) {
+            boiled(view);
+        }
+        lastBoil = boil;
     }
 
     private static int colourOf(StationView view, KitchenKettle kettle, Fluid fluid) {
@@ -673,16 +693,19 @@ public final class KettleBehavior implements StationBehavior {
 
     /** The tray of a kettle on a stove, the hanger of one hung up: as the block stands. */
     private static void support(StationView view, boolean shown) {
-        BlockState state = view.level().getBlockState(view.pos());
-        String support = "none";
-        for (Property<?> property : state.getProperties()) {
-            if (property.getName().equals("support")) {
-                support = state.getValue(property).toString().toLowerCase(java.util.Locale.ROOT);
-            }
-        }
-        String standsOn = support;
+        String standsOn = support(view.level().getBlockState(view.pos()));
         view.node("tray").ifPresent(node -> node.setVisible(shown && standsOn.equals("tray")));
         view.node("hanger").ifPresent(node -> node.setVisible(shown && standsOn.equals("handle")));
+    }
+
+    /** What the kettle stands on or hangs from: Farmer's Delight's {@code support} of its block, "none", "tray" or "handle". */
+    private static String support(BlockState state) {
+        for (Property<?> property : state.getProperties()) {
+            if (property.getName().equals("support")) {
+                return state.getValue(property).toString().toLowerCase(java.util.Locale.ROOT);
+            }
+        }
+        return "none";
     }
 
     /** The kettle stands as the block faces, whichever way the scene turned to the player. */
@@ -692,6 +715,11 @@ public final class KettleBehavior implements StationBehavior {
             return;
         }
         Direction block = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
+        KitchenKettle kettle = kettle(view);
+        if (kettle != null && kettle.handson$turnsOnTray() && "tray".equals(support(state))) {
+            // On its tray its mod draws the kettle a quarter turned to the right: the world's block and the scene's agree.
+            block = block.getClockWise();
+        }
         float turn = view.facing().toYRot() - block.toYRot();
         if (turn != shownTurn) {
             shownTurn = turn;
@@ -800,8 +828,11 @@ public final class KettleBehavior implements StationBehavior {
         boolean heated = kettle != null && kettle.handson$isHeated();
         boolean wet = kettle != null && kettle.handson$amount() > 0;
         boolean brewing = heated && becoming != Fluids.EMPTY;
+        // Water still coming to the boil in a kettle that boils it first: it warms, simmering more and more.
+        float boil = view.state().getControl(KettleStation.BOIL);
+        boolean warming = heated && wet && boil < 1.0F;
         // Nobody at it: this client does not know how far a brew is, only that one goes on. A drink left on the fire keeps boiling.
-        float strength = !heated || !wet ? 0.0F : brewing ? inUse ? 0.35F + 0.65F * progress : 0.6F : 1.0F;
+        float strength = !heated || !wet ? 0.0F : warming ? 0.1F + 0.5F * boil : brewing ? inUse ? 0.35F + 0.65F * progress : 0.6F : 1.0F;
         view.node("drink").ifPresent(node -> {
             node.setAgitation(heated && wet ? 0.02F + 0.06F * strength : 0.005F);
             node.setEdgeBoil(heated && wet ? 0.1F + 0.4F * strength : 0.0F);
@@ -809,7 +840,7 @@ public final class KettleBehavior implements StationBehavior {
         // While it pours, the stream is what is watched: no puffs round the cup.
         boolean onFire = heated && wet && cups.hold() <= 0.0F;
         // Brewing, it comes to the boil as the brew goes on; a drink done, or water, boils on.
-        boolean boiling = onFire && !brewing;
+        boolean boiling = onFire && !brewing && !warming;
         float hot = !onFire ? 0.0F : boiling ? STEAM_BOILING : STEAM_HOT + STEAM_BREWING * strength;
         steam += dt * hot;
         if (steam >= 1.0F) {
@@ -840,7 +871,8 @@ public final class KettleBehavior implements StationBehavior {
             // Picked up, it is off the fire: the whistle stops.
             jet = 0.0F;
         }
-        view.loopSound("whistle", WHISTLE, jet > 0.0F ? WHISTLE_VOLUME * Math.min(1.0F, jet / 0.5F) : 0.0F, 1.0F);
+        view.loopSound("whistle", kettle != null && kettle.handson$lidInBlock() ? WHISTLE : OWN_WHISTLE,
+                jet > 0.0F ? WHISTLE_VOLUME * Math.min(1.0F, jet / 0.5F) : 0.0F, 1.0F);
         if (jet > 0.0F) {
             jet -= dt;
             Vector3f lip = lipAt(cups.hold(), cups.tip());
@@ -891,7 +923,7 @@ public final class KettleBehavior implements StationBehavior {
             return;
         }
         doneAt = time;
-        if (!KettleStation.isOpen(view.level().getBlockState(view.pos()))) {
+        if (!isLidOff(view)) {
             jet = JET_TIME;
         } else {
             view.spawnOnLiquid(DiegesisParticles.STEAM, "drink", 8, 0xA0FFFFFF, STEAM_OUT);
@@ -899,6 +931,19 @@ public final class KettleBehavior implements StationBehavior {
         if (view.isInUse()) {
             view.playSound(SoundEvents.NOTE_BLOCK_CHIME.value(), "badge", 0.35F, 1.26F);
             view.playSound(SoundEvents.NOTE_BLOCK_CHIME.value(), "badge", 0.3F, 1.5F);
+        }
+    }
+
+    /** Plain water has come to the boil, the lid on: the whistle and its jet, for whoever is near; with it off, the steam only rises. */
+    private void boiled(StationView view) {
+        KitchenKettle kettle = kettle(view);
+        if (kettle == null || !kettle.handson$isHeated()) {
+            return;
+        }
+        if (!isLidOff(view)) {
+            jet = JET_TIME;
+        } else {
+            view.spawnOnLiquid(DiegesisParticles.STEAM, "drink", 6, 0xA0FFFFFF, STEAM_OUT);
         }
     }
 
@@ -921,8 +966,9 @@ public final class KettleBehavior implements StationBehavior {
         int left = view.state().data().getInt(KettleStation.LEFT);
         boolean heated = view.state().getControl(KettleStation.HEATED) > 0.5F;
         boolean brewing = becoming != Fluids.EMPTY;
-        int seconds = brewing && progress > 0.0F && left > 0 ? Math.max(1, Mth.ceil(left / 20.0F)) : 0;
-        int bar = brewing ? Math.round(progress * BAR_LENGTH) : ready ? BAR_LENGTH : 0;
+        float boil = view.state().getControl(KettleStation.BOIL);
+        int seconds = brewing && (progress > 0.0F || boil < 1.0F) && left > 0 ? Math.max(1, Mth.ceil(left / 20.0F)) : 0;
+        int bar = brewing ? Math.round(brewed(view, progress, boil) * BAR_LENGTH) : ready ? BAR_LENGTH : 0;
         String text = seconds >= 60 ? seconds / 60 + ":" + String.format("%02d", seconds % 60) : seconds > 0 ? Integer.toString(seconds)
                 : !brewing && servings > 0 ? "x" + Math.min(servings, 99) : "";
         String dial = bar + "/" + text;
@@ -944,6 +990,23 @@ public final class KettleBehavior implements StationBehavior {
         view.node("flame").ifPresent(node -> node.setVisible(shown && brewing && !heated && Mth.sin(time * 6.0F) > 0.0F));
         view.node("flame_lit").ifPresent(node -> node.setVisible(shown && brewing && heated));
         preview(view, shown, seconds);
+    }
+
+    /**
+     * How far along the brew is, 0 to 1, as the badge's bar shows it: in a kettle that boils its water first, the boiling is the bar's
+     * first part, as long as it takes against the brew.
+     */
+    private float brewed(StationView view, float progress, float boil) {
+        KitchenKettle kettle = kettle(view);
+        if (kettle == null || !kettle.handson$boilsFirst()) {
+            return progress;
+        }
+        Optional<KitchenKettle.Brewing> making = making(view, kettle, fluidIn(view));
+        if (making.isEmpty()) {
+            return progress;
+        }
+        float boiling = (float) making.get().baseAmount() / (making.get().baseAmount() + Math.max(1, making.get().ticks()));
+        return boil < 1.0F ? boiling * boil : boiling + (1.0F - boiling) * progress;
     }
 
     /** A line of digits, colons and "x" centred under the bar, a pixel between characters. */

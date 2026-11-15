@@ -16,17 +16,7 @@
   sides, and the badge shows its warmth against the recipe's. No bottle is needed to start: the drink waits in the vat,
   beer golden under its head, until you click it with a bottle (or a wafer for ice cream) and draw it. Sneak to use its
   own menu; a bottle in its menu or from a hopper works as before.
-- [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s grill is a station. Two skewers lie over its
-  fire: lay them from your hand, the stack you let go over the grill or a recipe in its book. When a skewer's lower side
-  is done it smokes round its edge; click it and it turns over, once, as Barbeque's Delight allows. Clicked earlier it
-  only twitches. Click a skewer with a powder and it is shaken over it, with a sauce and it is dabbed on, and the
-  seasoning stays on the skewer in its colour. Left on after it is done, a skewer darkens and smokes harder until it
-  burns. Sneak to use the grill as before.
-- Its ingredients basin is a station too. Put the meat in one compartment and the side in the other. A stick from your
-  inventory lies ready on the rim: click it and the pieces hop onto it one after another, the side coming from the other
-  compartment, so nothing has to be held in the off hand. Shift makes as many skewers as there is food for, and a
-  recipe picked in its book fills the compartments from your inventory.
-- [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port) (its unofficial port)'s kettle opens as a station. Click its lid to lift it
+- [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle opens as a station. Click its lid to lift it
   off and set it on the stove beside the kettle; pour a bucket of water or milk in at the opening and drop the leaves
   in. They float, soak and sink to the bottom, and the water takes their colour as it brews. Steam rises from the
   spout while the kettle is on the fire, more as the brew nears done. When it is done the kettle whistles softly with
@@ -37,6 +27,30 @@
   Sneaking keeps the kettle's own menu.
 - `kettle_time` in `config/handson_delight.properties` makes drinks take longer or shorter in Farmer's Respite's kettle,
   however they got into it.
+- [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)'s kettle opens as a station the same way. Until now nothing showed inside it, only a percentage
+  when you looked at it. Lift the lid, pour the water in and drop four leaves in, one by one or straight from the book.
+  The water comes to the boil first. You see it warm up, bubble more and more and steam from the spout, and the badge
+  counts that time too. Boiled with nothing in it, the kettle whistles. Then the leaves steep and the water turns into
+  tea. Pour it from the spout into bottles, one at a time or every bottle with Shift. When you leave, the lid goes back
+  on, as the kettle looks in the world. Sneak to use the kettle as before.
+- Youkai's Feasts' cuisine board is a station. Its sushi and rolls are made step by step, and the recipe book beside it
+  shows every step in order, from the empty board. Click with the next thing on your cursor and it comes down onto the board; a
+  sauce is poured out of its bottle. Held over the board, the next step shows where it will go, see-through. With an
+  empty hand, a click shapes the rice into nigiri or rolls the sheet up, and the roll comes over the sheet from your
+  side. The dishes lie facing you, rolls across in front of you. A finished roll is cut as on the cutting board: the
+  next cut is a dashed line, the knife (on your cursor, or offered from your inventory) stands on it, and each click
+  cuts one; at the last one the roll falls into its pieces, which come to you. A right click takes the last step back, rice into a bowl of yours. A recipe picked in the book is
+  laid up from your inventory and rolled, and Shift makes as many as you have for. Sneak to use the board as before.
+- [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s grill is a station. Two skewers lie over its
+  fire: lay them from your hand, the stack you let go over the grill or a recipe in its book. When a skewer's lower side
+  is done it smokes round its edge; click it and it turns over, once, as Barbeque's Delight allows. Clicked earlier it
+  only twitches. Click a skewer with a powder and it is shaken over it, with a sauce and it is dabbed on, and the
+  seasoning stays on the skewer in its colour. Left on after it is done, a skewer darkens and smokes harder until it
+  burns. Sneak to use the grill as before.
+- Its ingredients basin is a station too. Put the meat in one compartment and the side in the other. A stick from your
+  inventory lies ready on the rim: click it and the pieces hop onto it one after another, the side coming from the other
+  compartment, so nothing has to be held in the off hand. Shift makes as many skewers as there is food for, and a
+  recipe picked in its book fills the compartments from your inventory.
 - [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell)'s alchemist pot is a pot station: its stick
   stirs, things float and boil in it, and it cooks its own recipes first and Farmer's Delight's after. A scroll of
   [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) clicked on the pot hangs open over

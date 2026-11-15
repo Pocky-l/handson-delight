@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import com.pockyl.handson_delight.station.BasinStation;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
+import com.pockyl.handson_delight.station.CuisineBoardStation;
 import com.pockyl.handson_delight.station.GrillStation;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.OvenStation;
@@ -55,6 +56,9 @@ public final class HandsOnDelight {
         }
         if (HandsOnConfig.kettle()) {
             KettleStation.register();
+        }
+        if (HandsOnConfig.cuisineBoard()) {
+            CuisineBoardStation.register();
         }
     }
 

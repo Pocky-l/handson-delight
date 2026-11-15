@@ -1,0 +1,355 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "youkaisfeasts:block/utensil/cooking_pot_tray_side",
+    "tray_side": "youkaisfeasts:block/utensil/cooking_pot_tray_side",
+    "tray_top": "youkaisfeasts:block/utensil/cooking_pot_tray_top"
+  },
+  "elements": [
+    {
+      "name": "grate",
+      "from": [
+        0,
+        -1,
+        0
+      ],
+      "to": [
+        16,
+        0,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ],
+          "texture": "#tray_top"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ],
+          "texture": "#tray_top"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ],
+          "texture": "#tray_top"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ],
+          "texture": "#tray_top"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#tray_top"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#tray_top"
+        }
+      }
+    },
+    {
+      "name": "leg_se",
+      "from": [
+        15,
+        -16,
+        15
+      ],
+      "to": [
+        16,
+        -1,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            1,
+            1,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "east": {
+          "uv": [
+            0,
+            1,
+            1,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "south": {
+          "uv": [
+            15,
+            1,
+            16,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "west": {
+          "uv": [
+            15,
+            1,
+            16,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            0.5,
+            0.5
+          ],
+          "texture": "#tray_side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            0.5,
+            0.5
+          ],
+          "texture": "#tray_side"
+        }
+      }
+    },
+    {
+      "name": "leg_sw",
+      "from": [
+        0,
+        -16,
+        15
+      ],
+      "to": [
+        1,
+        -1,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            15,
+            1,
+            16,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "east": {
+          "uv": [
+            0,
+            1,
+            1,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "south": {
+          "uv": [
+            0,
+            1,
+            1,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "west": {
+          "uv": [
+            15,
+            1,
+            16,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            0.5,
+            0.5
+          ],
+          "texture": "#tray_side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            0.5,
+            0.5
+          ],
+          "texture": "#tray_side"
+        }
+      }
+    },
+    {
+      "name": "leg_ne",
+      "from": [
+        15,
+        -16,
+        0
+      ],
+      "to": [
+        16,
+        -1,
+        1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            1,
+            1,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "east": {
+          "uv": [
+            15,
+            1,
+            16,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "south": {
+          "uv": [
+            15,
+            1,
+            16,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "west": {
+          "uv": [
+            0,
+            1,
+            1,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            0.5,
+            0.5
+          ],
+          "texture": "#tray_side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            0.5,
+            0.5
+          ],
+          "texture": "#tray_side"
+        }
+      }
+    },
+    {
+      "name": "leg_nw",
+      "from": [
+        0,
+        -16,
+        0
+      ],
+      "to": [
+        1,
+        -1,
+        1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            15,
+            1,
+            16,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "east": {
+          "uv": [
+            15,
+            1,
+            16,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "south": {
+          "uv": [
+            0,
+            1,
+            1,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "west": {
+          "uv": [
+            0,
+            1,
+            1,
+            16
+          ],
+          "texture": "#tray_side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            0.5,
+            0.5
+          ],
+          "texture": "#tray_side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            0.5,
+            0.5
+          ],
+          "texture": "#tray_side"
+        }
+      }
+    }
+  ]
+}

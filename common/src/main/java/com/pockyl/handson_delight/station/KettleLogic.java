@@ -10,8 +10,6 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 
@@ -36,13 +34,16 @@ public final class KettleLogic implements StationLogic {
     private static final int FILL_MOST = 16;
 
     private final KitchenKettle kettle;
+    private final SlotStorage ingredients;
+    /** The recipe the cook last picked in the book: the kettle's choice while its leaves make it, until the kettle is empty. */
+    private ResourceLocation wanted;
 
     public KettleLogic(StationContext station) {
         kettle = (KitchenKettle) station.blockEntity();
-        station.state().bindSlots(KettleStation.INGREDIENTS, new SlotStorage() {
+        ingredients = new SlotStorage() {
             @Override
             public int size() {
-                return KitchenKettle.INGREDIENTS;
+                return kettle.handson$ingredients();
             }
 
             @Override
@@ -54,12 +55,22 @@ public final class KettleLogic implements StationLogic {
             public void set(int index, ItemStack stack) {
                 kettle.handson$setItem(index, stack);
             }
-        });
+        };
+        station.state().bindSlots(KettleStation.INGREDIENTS, ingredients);
     }
 
     @Override
     public void onOpen(StationContext station, Player player) {
         refresh(station);
+    }
+
+    /** A lid that is the station's alone (Youkai's Feasts' kettle) goes back on when the last cook leaves, as the world draws it. */
+    @Override
+    public void onClose(StationContext station, Player player) {
+        if (!station.level().isClientSide() && !kettle.handson$lidInBlock() && station.users().stream().allMatch(user -> user == player)) {
+            kettle.handson$setOpen(false);
+            refresh(station);
+        }
     }
 
     @Override
@@ -79,79 +90,58 @@ public final class KettleLogic implements StationLogic {
 
     /**
      * Things dropped into the kettle lie in it together, not in its two slots: two leaves dropped in one after the other stack in one
-     * slot, and Farmer's Respite's recipe of two leaves wants one in each. What lies in the kettle is laid out the way a recipe wants
-     * it: a stack shared out over both slots, or two of a kind put together, when that makes a recipe of the kettle's liquid (of any
-     * liquid while it has none) and the way it lies does not.
+     * slot, and Farmer's Respite's recipe of two leaves wants one in each. What lies in the kettle is laid out the way the recipe it
+     * makes wants it ({@link StationRecipes#choose}), of the kettle's liquid (of any liquid while it has none).
      */
     private void arrange(StationContext station) {
-        ItemStack first = kettle.handson$getItem(0);
-        ItemStack second = kettle.handson$getItem(1);
-        if (first.isEmpty() && second.isEmpty() || makesSomething(List.of(first, second))) {
+        if (kettle.handson$perSlot() == 1) {
+            // One thing a slot (Youkai's Feasts'): its own slots hold no more, so things lie apart already.
             return;
         }
-        if (second.isEmpty() && first.getCount() >= 2 || first.isEmpty() && second.getCount() >= 2) {
-            ItemStack stack = first.isEmpty() ? second : first;
-            ItemStack rest = stack.copyWithCount(stack.getCount() - 1);
-            ItemStack one = stack.copyWithCount(1);
-            if (makesSomething(List.of(rest, one))) {
-                kettle.handson$setItem(0, rest);
-                kettle.handson$setItem(1, one);
-            }
-        } else if (!first.isEmpty() && ItemStack.isSameItemSameComponents(first, second) && first.getCount() + second.getCount() <= first.getMaxStackSize()) {
-            ItemStack together = first.copyWithCount(first.getCount() + second.getCount());
-            if (makesSomething(List.of(together, ItemStack.EMPTY))) {
-                kettle.handson$setItem(0, together);
-                kettle.handson$setItem(1, ItemStack.EMPTY);
-            }
+        List<ItemStack> kinds = StationRecipes.kinds(ingredients);
+        if (kinds.isEmpty()) {
+            wanted = null;
+            return;
+        }
+        List<StationRecipes.Candidate<KitchenKettle.Brewing>> candidates = candidates();
+        List<ItemStack> inKettle = new ArrayList<>();
+        for (int i = 0; i < ingredients.size(); i++) {
+            inKettle.add(ingredients.get(i));
+        }
+        StationRecipes.Candidate<KitchenKettle.Brewing> found = StationRecipes.reads(candidates, inKettle);
+        StationRecipes.Choice<KitchenKettle.Brewing> choice = StationRecipes.choose(candidates, kinds, kettle.handson$ingredients(), wanted,
+                found == null ? null : found.id(), false);
+        if (choice != null) {
+            StationRecipes.lay(ingredients, kinds, choice.parts());
         }
     }
 
-    private boolean makesSomething(List<ItemStack> slots) {
-        List<ItemStack> items = slots.stream().filter(stack -> !stack.isEmpty()).toList();
+    /** The kettle's recipes of the liquid it holds, or all of them while it holds none, in their order. */
+    private List<StationRecipes.Candidate<KitchenKettle.Brewing>> candidates() {
         Fluid fluid = kettle.handson$fluid();
-        return kettle.handson$recipes().stream().anyMatch(recipe -> (fluid == Fluids.EMPTY || recipe.base().isSame(fluid)) && matches(recipe, items));
+        List<KitchenKettle.Brewing> recipes = kettle.handson$recipes().stream().filter(recipe -> fluid == Fluids.EMPTY || recipe.base().isSame(fluid))
+                .toList();
+        return StationRecipes.candidates(recipes, KitchenKettle.Brewing::id, KitchenKettle.Brewing::ingredients);
     }
 
     /** Whether {@code items}, one stack a slot, are the recipe's ingredients, one each, in any order. */
     public static boolean matches(KitchenKettle.Brewing recipe, List<ItemStack> items) {
-        List<Ingredient> wanted = recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
-        if (wanted.size() != items.size()) {
-            return false;
-        }
-        boolean[] used = new boolean[items.size()];
-        for (Ingredient ingredient : wanted) {
-            boolean found = false;
-            for (int i = 0; i < items.size() && !found; i++) {
-                if (!used[i] && ingredient.test(items.get(i))) {
-                    used[i] = true;
-                    found = true;
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /** Whether the lid is off. */
-    public static boolean isOpen(StationContext station) {
-        return station.state().getControl(KettleStation.LID) > 0.5F;
+        return StationRecipes.matches(recipe.ingredients(), items);
     }
 
     /** Only what steeps goes in, and only at the open top: buckets, cups and drinks are poured or filled, never dropped in. */
     @Override
     public boolean mayPlace(StationContext station, Player player, SlotRef slot, ItemStack stack) {
-        return KettleStation.isOpen(station.level().getBlockState(station.pos())) && !kettle.handson$isVessel(stack);
+        return kettle.handson$isOpen() && !kettle.handson$isVessel(stack);
     }
 
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
         if (KettleStation.ACTION_LID.equals(action)) {
-            setLid(station, data.getBoolean(KettleStation.OPEN));
+            kettle.handson$setOpen(data.getBoolean(KettleStation.OPEN));
         } else if (KettleStation.ACTION_USE.equals(action)) {
             boolean spout = KettleStation.SPOUT.equals(data.getString(KettleStation.AT));
-            if (!spout && !KettleStation.isOpen(station.level().getBlockState(station.pos()))) {
+            if (!spout && !kettle.handson$isOpen()) {
                 // Nothing is poured in through the lid.
                 return;
             }
@@ -163,20 +153,11 @@ public final class KettleLogic implements StationLogic {
         } else if (KettleStation.ACTION_FILL.equals(action)) {
             ResourceLocation id = ResourceLocation.tryParse(data.getString(KettleStation.DISH));
             // A recipe picked in the book takes the lid off for its leaves to go in.
-            setLid(station, true);
+            kettle.handson$setOpen(true);
             kettle.handson$recipes().stream().filter(recipe -> recipe.id().equals(id)).findFirst()
                     .ifPresent(recipe -> fill(player, recipe, data.getBoolean(KettleStation.ALL) ? FILL_MOST : 1));
         }
         refresh(station);
-    }
-
-    /** Takes the lid off ({@code open}) or puts it back: the kettle block's own state, as Farmer's Respite's sneaking click sets it. */
-    private static void setLid(StationContext station, boolean open) {
-        BlockState state = station.level().getBlockState(station.pos());
-        BooleanProperty lid = KettleStation.lidProperty(state);
-        if (lid != null && state.getValue(lid) == open) {
-            station.level().setBlockAndUpdate(station.pos(), state.setValue(lid, !open));
-        }
     }
 
     /** The stack on the cursor at the opening (poured in) or at the spout (filled); whatever comes back goes to the hand or the inventory. */
@@ -271,66 +252,19 @@ public final class KettleLogic implements StationLogic {
         return bucket;
     }
 
-    /** Puts up to {@code sets} sets of the recipe's ingredients from the inventory into the kettle, one slot per ingredient. */
+    /**
+     * Puts up to {@code sets} whole sets of the recipe's ingredients from the inventory into the kettle, laid out the way its mod reads
+     * the recipe, never more a slot than the kettle holds (one leaf a slot in Youkai's Feasts'); the picked recipe stays the kettle's
+     * choice while its leaves make it.
+     */
     private void fill(Player player, KitchenKettle.Brewing recipe, int sets) {
-        List<Ingredient> ingredients = recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
-        if (ingredients.isEmpty() || ingredients.size() > KitchenKettle.INGREDIENTS) {
-            return;
+        int perSlot = kettle.handson$perSlot();
+        StationRecipes.Filled filled = StationRecipes.fill(player.getInventory(), recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty())
+                .toList(), StationRecipes.kinds(ingredients), kettle.handson$ingredients(), sets, perSlot);
+        if (filled != null) {
+            wanted = recipe.id();
+            StationRecipes.lay(ingredients, filled.kinds(), filled.parts(), perSlot);
         }
-        ItemStack[] inKettle = new ItemStack[KitchenKettle.INGREDIENTS];
-        for (int i = 0; i < inKettle.length; i++) {
-            inKettle[i] = kettle.handson$getItem(i).copy();
-            boolean fits = i < ingredients.size() ? inKettle[i].isEmpty() || ingredients.get(i).test(inKettle[i]) : inKettle[i].isEmpty();
-            if (!fits) {
-                return;
-            }
-        }
-        Inventory inventory = player.getInventory();
-        int done = 0;
-        while (done < sets) {
-            int[] from = new int[ingredients.size()];
-            boolean found = true;
-            for (int i = 0; i < from.length && found; i++) {
-                from[i] = source(inventory, ingredients.get(i), inKettle[i], from, i);
-                found = from[i] >= 0;
-            }
-            if (!found) {
-                break;
-            }
-            for (int i = 0; i < from.length; i++) {
-                ItemStack one = inventory.removeItem(from[i], 1);
-                if (inKettle[i].isEmpty()) {
-                    inKettle[i] = one;
-                } else {
-                    inKettle[i].grow(1);
-                }
-            }
-            done++;
-        }
-        for (int i = 0; i < ingredients.size() && done > 0; i++) {
-            kettle.handson$setItem(i, inKettle[i]);
-        }
-    }
-
-    /** The inventory slot that gives the next item for the kettle's slot {@code index}, not wanted by an earlier one beyond what it has. */
-    private static int source(Inventory inventory, Ingredient ingredient, ItemStack there, int[] taken, int index) {
-        if (!there.isEmpty() && there.getCount() >= there.getMaxStackSize()) {
-            return -1;
-        }
-        for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
-            ItemStack stack = inventory.getItem(slot);
-            if (stack.isEmpty() || !ingredient.test(stack) || !there.isEmpty() && !ItemStack.isSameItemSameComponents(there, stack)) {
-                continue;
-            }
-            int wanted = 1;
-            for (int earlier = 0; earlier < index; earlier++) {
-                wanted += taken[earlier] == slot ? 1 : 0;
-            }
-            if (stack.getCount() >= wanted) {
-                return slot;
-            }
-        }
-        return -1;
     }
 
     private void refresh(StationContext station) {
@@ -340,11 +274,17 @@ public final class KettleLogic implements StationLogic {
         int total = data.get(1);
         state.setControl(KettleStation.PROGRESS, total > 0 ? Mth.clamp((float) time / total, 0.0F, 1.0F) : 0.0F);
         state.setControl(KettleStation.HEATED, kettle.handson$isHeated() ? 1.0F : 0.0F);
-        state.setControl(KettleStation.LID, KettleStation.isOpen(station.level().getBlockState(station.pos())) ? 1.0F : 0.0F);
+        float boil = kettle.handson$boil();
+        state.setControl(KettleStation.BOIL, boil < 0.0F ? 1.0F : boil);
+        if (kettle.handson$lidInBlock() || !station.level().isClientSide()) {
+            // A lid that is the station's alone is known to the server only: the clients have it from the station's state.
+            state.setControl(KettleStation.LID, kettle.handson$isOpen() ? 1.0F : 0.0F);
+        }
         CompoundTag own = state.data().copy();
         own.putString(KettleStation.FLUID, kettle.handson$fluid() == Fluids.EMPTY ? "" : BuiltInRegistries.FLUID.getKey(kettle.handson$fluid()).toString());
-        // In whole seconds, as the badge tells it.
-        own.putInt(KettleStation.LEFT, total > 0 && time > 0 ? Mth.ceil((total - time) / 20.0F) * 20 : 0);
+        // In whole seconds, as the badge tells it; water that still has to boil first counts.
+        int toBoil = kettle.handson$ticksToBoil();
+        own.putInt(KettleStation.LEFT, total > 0 && (time > 0 || toBoil > 0) ? Mth.ceil((toBoil + total - time) / 20.0F) * 20 : 0);
         state.setData(own);
         int capacity = Math.max(1, kettle.handson$capacity());
         // The tank holds the kettle's own liquid, so that it looks like what it is (KettleLiquids on the client).

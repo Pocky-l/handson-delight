@@ -70,6 +70,16 @@ open as stations, and its recipes, and those of its addons, work in them.
 - **Vat** of [Cultural Delights](https://modrinth.com/mod/cultural-delights). A stone tub under a lid that swings up.
   Pour water or milk in and drop the rest in to float, shut the lid and it ages at the warmth under it: it boils over a
   fire and frosts over on ice. The drink stays in the vat until you draw it with a bottle, beer under its head of foam.
+- **Kettle** of [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port). Lift its lid off onto the stove, pour
+  a bucket in at the opening and drop the leaves in: they float, soak and sink, giving the water their colour while it
+  brews over the fire, with steam rising from the spout. Done, the kettle whistles. Click the spout with a bottle and
+  the kettle is lifted by its handle and tipped to pour one; with an empty hand a bottle is offered from your
+  inventory, and Shift pours every cup there is.
+- **Kettle** of [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts). The same station: its water comes to the boil first, warming and
+  steaming until the kettle whistles, then its four leaves steep into tea.
+- **Cuisine board** of [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts). Sushi
+  and rolls step by step, in the order its book shows: what you put on comes down onto the board, sauce is poured, an
+  empty hand shapes the nigiri or rolls the sheet up, and a knife cuts the roll along dashed lines, as on the board.
 - **Grill** of [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge). Two skewers lie over its fire.
   One smokes when its lower side is done: click it to turn it over, once. Click a skewer with a powder to shake it over
   or with a sauce to dab it on, and the seasoning stays on it. A skewer left on after it is done darkens, smokes and
@@ -78,11 +88,6 @@ open as stations, and its recipes, and those of its addons, work in them.
   compartment and the side in the other. A stick from your inventory lies ready on its rim: click it and the pieces go
   onto it one after another, the side from the other compartment, nothing in your off hand. Shift makes as many as
   there is food for.
-- **Kettle** of [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port). Lift its lid off onto the stove, pour
-  a bucket in at the opening and drop the leaves in: they float, soak and sink, giving the water their colour while it
-  brews over the fire, with steam rising from the spout. Done, the kettle whistles. Click the spout with a bottle and
-  the kettle is lifted by its handle and tipped to pour one; with an empty hand a bottle is offered from your
-  inventory, and Shift pours every cup there is.
 - **Alchemist pot** of [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell). Stir it with its stick
   like the cooking pot. An [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) scroll
   clicked on it hangs over its rim and its school shows on the pot: a fire scroll burns under it and heats it. Dishes
@@ -126,7 +131,8 @@ the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-
 [Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot and every cutting board of
 [Chopper's Delight](https://modrinth.com/mod/choppers-delight), the decorated one too, each in its own look.
 [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle opens as a station too, its tray on a stove
-drawn with Farmer's Delight's own.
+drawn with Farmer's Delight's own, and so does [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)'s kettle,
+and its cuisine board.
 [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell)'s alchemist pot opens as a pot station with
 its [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) scroll.
 [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s kebabs and bibimbap are put together on the
@@ -144,13 +150,14 @@ which each player sets in their own file.
 | `cooking_pot`, `cutting_board`, `skillet`, `stove` | `true` | The station of that block. Off, the block works as in Farmer's Delight. `cooking_pot` covers the addons' pots too (copper, monster, alchemist) |
 | `keg` | `true` | Brewin' and Chewin's keg as a station. Off, the keg keeps its own menu |
 | `oven`, `vat` | `true` | Cultural Delights' oven and vat as stations. Off, they keep their own menus |
+| `kettle` | `true` | The kettles of Farmer's Respite and Youkai's Feasts as stations. Off, each is used as before |
 | `grill`, `basin` | `true` | Barbeque's Delight's grill and ingredients basin as stations. Off, they are used as before |
-| `kettle` | `true` | Farmer's Respite's kettle as a station. Off, the kettle keeps its own menu |
+| `cuisine_board` | `true` | Youkai's Feasts' cuisine board as a station. Off, it is used as before |
 | `remove_crafting_recipes` | `true` | Farmer's Delight's food crafts are made on the board only |
 | `stirring_required` | `true` | Food you put into the pot waits for the spoon while you are at it |
 | `recipe_book` | `true` | The recipe book beside the stations |
 | `cooking_pot_time`, `skillet_time`, `stove_time` | `1.0` | How long food takes at that station: `2.0` twice as long, `0.5` half, from `0.1` to `10`. The pot's covers food left alone and fed by hoppers too, and the addons' pots |
-| `kettle_time` | `1.0` | The same for drinks brewed in Farmer's Respite's kettle, at the station, in its menu or fed by a hopper |
+| `kettle_time` | `1.0` | The same for drinks brewed in Farmer's Respite's kettle, at the station, in its menu or fed by a hopper. Youkai's Feasts' kettle keeps its own times |
 
 ## Modpacks
 

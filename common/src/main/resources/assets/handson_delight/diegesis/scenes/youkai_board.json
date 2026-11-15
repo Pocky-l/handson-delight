@@ -1,0 +1,94 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Youkai's Feasts' cuisine board is the block itself, a bamboo board x 1..15, z 1..15, 1 px high, turned as it faces. What lies on it is drawn by code with the board's own models (part_N, each the whole block's space with its origin at the scene's, unturned: their front, which the board shows to whoever placed it, faces the cook, rolls lie across), the same its renderer draws, which is stopped while the scene is drawn. preview_N are the parts the step held over the board would add, see-through. fly_N bring what goes on from the cook; hand_0 pours a sauce out of its bottle. knife_turn/knife is the cook's knife (laid with its tip to -x, turned over so that its edge is down; turned by code across the roll), on the cursor or offered see-through from the inventory over a finished roll, following the cursor along it and standing on the next dashed mark when near it (a left click there cuts that mark, as at the board); piece_N are the cut pieces leaving for the cook; lift_N are ghosts of what comes off the board or bounces back. mouth catches stacks let go on the board (the slot hand stays empty), surface the clicks of an empty hand. The scene stands on the side the cook comes from; the camera stands to the board as the basin's to the basin, and the book hangs where it hangs there.",
+  "work_plane": 2,
+  "idle_visible": true,
+  "camera": {
+    "position": [8, 37, -21],
+    "target": [8, 2, 8],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "hover_outline": false
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "mouth",
+      "drop_zone": "hand",
+      "collider": {"from": [1, 0, 1], "to": [15, 6.5, 15]}
+    },
+    {
+      "id": "surface",
+      "collider": {"from": [1, 0, 1], "to": [15, 6.5, 15]}
+    },
+    {
+      "id": "part",
+      "pos": [8, 0, 8],
+      "repeat": {"count": [1, 12, 1], "step": [0, 0, 0]},
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "preview",
+      "pos": [8, 0, 8],
+      "repeat": {"count": [1, 12, 1], "step": [0, 0, 0]},
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "fly",
+      "pos": [8, 2, 8],
+      "repeat": {"count": [1, 4, 1], "step": [0, 0, 0]},
+      "pickable": false,
+      "hidden": true
+    },
+    {"$comment": "The roll being rolled up, turning about its own length on its way from the cook's edge to the middle.",
+      "id": "roll", "pos": [8, 0, 8], "pickable": false, "hidden": true},
+    {"$comment": "What a hand brings over and pours (a bottle of sauce), moved by the code in scene pixels.",
+      "id": "hand_0", "pos": [0, 0, 0], "pickable": false, "hidden": true},
+    {"$comment": "The cuts on a finished dish, drawn by code over its top: scored are the lines already cut, marks the next one, dashed.",
+      "id": "scored", "pos": [8, 0, 8], "pickable": false, "hidden": true},
+    {"id": "marks_shade", "pos": [8, 0, 8], "pickable": false, "hidden": true},
+    {"id": "marks", "pos": [8, 0, 8], "pickable": false, "hidden": true},
+    {
+      "id": "knife_turn",
+      "pos": [8, 1, 8],
+      "pickable": false,
+      "children": [
+        {"id": "knife", "rotation": [180, 0, 45], "scale": 0.45, "pickable": false, "hidden": true}
+      ]
+    },
+    {
+      "id": "piece",
+      "pos": [8, 1, 8],
+      "repeat": {"count": [1, 6, 1], "step": [0, 0, 0]},
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "lift",
+      "pos": [8, 1, 8],
+      "repeat": {"count": [1, 3, 1], "step": [0, 0, 0]},
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "book_open",
+      "pos": [15.83, 16.72, -4],
+      "rotation": [-50, 0, 0],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {"from": [-4.4, -0.4, -3.9], "to": [4.4, 1.4, 3.9]}
+    }
+  ]
+}

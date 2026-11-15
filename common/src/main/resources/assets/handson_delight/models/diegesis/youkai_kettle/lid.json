@@ -1,0 +1,148 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "youkaisfeasts:block/utensil/kettle",
+    "kettle": "youkaisfeasts:block/utensil/kettle"
+  },
+  "elements": [
+    {
+      "name": "lid",
+      "from": [
+        6,
+        7,
+        6
+      ],
+      "to": [
+        10,
+        8,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10.5,
+            4.5,
+            11,
+            6.5
+          ],
+          "rotation": 90,
+          "texture": "#kettle"
+        },
+        "east": {
+          "uv": [
+            11,
+            4,
+            13,
+            4.5
+          ],
+          "texture": "#kettle"
+        },
+        "south": {
+          "uv": [
+            11,
+            4,
+            13,
+            4.5
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            11,
+            6.5,
+            13,
+            7
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            11,
+            6.5,
+            13,
+            4.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            11,
+            4.5,
+            13,
+            6.5
+          ],
+          "texture": "#kettle"
+        }
+      }
+    },
+    {
+      "name": "lid_knob",
+      "from": [
+        7,
+        8,
+        7
+      ],
+      "to": [
+        9,
+        8.5,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13,
+            9,
+            12,
+            9.25
+          ],
+          "texture": "#kettle"
+        },
+        "east": {
+          "uv": [
+            13,
+            9.5,
+            12,
+            9.75
+          ],
+          "texture": "#kettle"
+        },
+        "south": {
+          "uv": [
+            12,
+            9.5,
+            13,
+            9.75
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            12,
+            9.5,
+            13,
+            9.25
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            11.5,
+            8.5,
+            10.5,
+            9.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        }
+      }
+    }
+  ]
+}

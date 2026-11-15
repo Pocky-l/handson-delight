@@ -27,9 +27,11 @@ public final class HandsOnConfig {
             "cooking_pot, cutting_board, skillet, stove: the station of that block. Off, the block works as in Farmer's Delight.",
             "keg: Brewin' and Chewin's keg as a station, when that mod is there. Off, the keg keeps its own menu.",
             "oven, vat: Cultural Delights' oven and vat as stations, when that mod is there. Off, they keep their own menus.",
+            "kettle: the kettles of Farmer's Respite and Youkai's Feasts as stations, when those mods are there. Off, each",
+            "  kettle is used as before.",
             "grill, basin: Barbeque's Delight's grill and ingredients basin as stations, when that mod is there. Off, they are",
             "  used as before.",
-            "kettle: Farmer's Respite's kettle as a station, when that mod is there. Off, the kettle keeps its own menu.",
+            "cuisine_board: Youkai's Feasts' cuisine board as a station, when that mod is there. Off, it is used as before.",
             "remove_crafting_recipes: Farmer's Delight's food crafts (sandwiches, salads, rolls, pies, feasts) are made on the",
             "  cutting board only, not in a crafting grid.",
             "  Machines (Create, AE2, Refined Storage) craft them either way.",
@@ -43,6 +45,7 @@ public final class HandsOnConfig {
             "skillet_time, stove_time: the same for food fried in the skillet and grilled on the stove at the station.",
             "  Food put in with Farmer's Delight's own right click (sneaking, a player without this mod) keeps its time.",
             "kettle_time: the same for drinks brewed in Farmer's Respite's kettle, however they got into it.",
+            "  Youkai's Feasts' kettle keeps its own times.",
             "The recipe book shows the times as they are on the server.");
 
     private static boolean cookingPot = true;
@@ -55,6 +58,7 @@ public final class HandsOnConfig {
     private static boolean grill = true;
     private static boolean basin = true;
     private static boolean kettle = true;
+    private static boolean cuisineBoard = true;
     private static boolean removeCraftingRecipes = true;
     private static boolean stirringRequired = true;
     private static boolean recipeBook = true;
@@ -89,6 +93,7 @@ public final class HandsOnConfig {
         grill = read(values, "grill", grill);
         basin = read(values, "basin", basin);
         kettle = read(values, "kettle", kettle);
+        cuisineBoard = read(values, "cuisine_board", cuisineBoard);
         removeCraftingRecipes = read(values, "remove_crafting_recipes", removeCraftingRecipes);
         stirringRequired = read(values, "stirring_required", stirringRequired);
         recipeBook = read(values, "recipe_book", recipeBook);
@@ -180,6 +185,10 @@ public final class HandsOnConfig {
 
     public static boolean kettle() {
         return kettle;
+    }
+
+    public static boolean cuisineBoard() {
+        return cuisineBoard;
     }
 
     /**

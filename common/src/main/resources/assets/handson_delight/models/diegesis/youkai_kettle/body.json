@@ -1,0 +1,736 @@
+{
+  "__comment": "Cut out: Youkai's Feasts' texture (not in this mod, so the linter cannot read its alpha) draws the handle as a plane.",
+  "__lint_allow": [
+    "T009"
+  ],
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "youkaisfeasts:block/utensil/kettle",
+    "kettle": "youkaisfeasts:block/utensil/kettle"
+  },
+  "render_type": "minecraft:cutout",
+  "elements": [
+    {
+      "name": "spout",
+      "from": [
+        7,
+        2,
+        1
+      ],
+      "to": [
+        9,
+        8,
+        3
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            12,
+            3,
+            15
+          ],
+          "texture": "#kettle"
+        },
+        "east": {
+          "uv": [
+            0,
+            12,
+            1,
+            15
+          ],
+          "texture": "#kettle"
+        },
+        "south": {
+          "uv": [
+            3,
+            12,
+            4,
+            15
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            3,
+            12,
+            4,
+            15
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            0,
+            11,
+            1,
+            12
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            3,
+            15,
+            4,
+            16
+          ],
+          "texture": "#kettle"
+        }
+      }
+    },
+    {
+      "name": "spout_tip",
+      "from": [
+        7,
+        6,
+        0
+      ],
+      "to": [
+        9,
+        8,
+        1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            9.5,
+            1.5,
+            10.5
+          ],
+          "texture": "#kettle"
+        },
+        "east": {
+          "uv": [
+            0,
+            9.5,
+            0.5,
+            10.5
+          ],
+          "texture": "#kettle"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            1.5,
+            9.5,
+            2,
+            10.5
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            9,
+            1.5,
+            9.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            10.5,
+            1.5,
+            11
+          ],
+          "texture": "#kettle"
+        }
+      }
+    },
+    {
+      "name": "shell_north",
+      "from": [
+        3,
+        0,
+        3
+      ],
+      "to": [
+        13,
+        7,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            3.5,
+            10,
+            7
+          ],
+          "texture": "#kettle"
+        },
+        "east": {
+          "uv": [
+            14.5,
+            0,
+            15,
+            3.5
+          ],
+          "texture": "#kettle"
+        },
+        "south": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            0,
+            5,
+            0.5,
+            8.5
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            0,
+            5,
+            5,
+            4.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            11,
+            15.5,
+            16,
+            16
+          ],
+          "texture": "#kettle",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "shell_south",
+      "from": [
+        3,
+        0,
+        12
+      ],
+      "to": [
+        13,
+        7,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        },
+        "east": {
+          "uv": [
+            10,
+            0,
+            10.5,
+            3.5
+          ],
+          "texture": "#kettle"
+        },
+        "south": {
+          "uv": [
+            5,
+            0,
+            10,
+            3.5
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            4.5,
+            5,
+            5,
+            8.5
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0.5,
+            5,
+            0
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            11,
+            11,
+            16,
+            11.5
+          ],
+          "texture": "#kettle",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "shell_west",
+      "from": [
+        3,
+        0,
+        4
+      ],
+      "to": [
+        4,
+        7,
+        12
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            5,
+            4.5,
+            8.5
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            0,
+            4.5,
+            0.5,
+            0.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            11,
+            11.5,
+            11.5,
+            15.5
+          ],
+          "texture": "#kettle",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "shell_east",
+      "from": [
+        12,
+        0,
+        4
+      ],
+      "to": [
+        13,
+        7,
+        12
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            10.5,
+            0,
+            14.5,
+            3.5
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            4.5,
+            4.5,
+            5,
+            0.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            15.5,
+            11.5,
+            16,
+            15.5
+          ],
+          "texture": "#kettle",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "floor",
+      "from": [
+        4,
+        0,
+        4
+      ],
+      "to": [
+        12,
+        1,
+        12
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            11.5,
+            11.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#kettle",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "top_north",
+      "from": [
+        4,
+        6,
+        4
+      ],
+      "to": [
+        12,
+        7,
+        6
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            4.5,
+            4.5,
+            3.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        }
+      }
+    },
+    {
+      "name": "top_south",
+      "from": [
+        4,
+        6,
+        10
+      ],
+      "to": [
+        12,
+        7,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            1.5,
+            4.5,
+            0.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        }
+      }
+    },
+    {
+      "name": "top_west",
+      "from": [
+        4,
+        6,
+        6
+      ],
+      "to": [
+        6,
+        7,
+        10
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            3.5,
+            1.5,
+            1.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        }
+      }
+    },
+    {
+      "name": "top_east",
+      "from": [
+        10,
+        6,
+        6
+      ],
+      "to": [
+        12,
+        7,
+        10
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            3.5,
+            3.5,
+            4.5,
+            1.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            1.5,
+            1.5,
+            2,
+            2
+          ],
+          "texture": "#kettle"
+        }
+      }
+    },
+    {
+      "name": "handle",
+      "from": [
+        7,
+        4,
+        14
+      ],
+      "to": [
+        9,
+        8,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            8.5,
+            13,
+            10.5
+          ],
+          "texture": "#kettle"
+        },
+        "east": {
+          "uv": [
+            10,
+            8.5,
+            11,
+            10.5
+          ],
+          "texture": "#kettle"
+        },
+        "south": {
+          "uv": [
+            11,
+            8.5,
+            12,
+            10.5
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            13,
+            8.5,
+            14,
+            10.5
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            13,
+            7.5,
+            14,
+            8.5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            10,
+            10.5,
+            11,
+            11.5
+          ],
+          "texture": "#kettle"
+        }
+      }
+    },
+    {
+      "name": "handle_plane",
+      "from": [
+        8,
+        2,
+        10
+      ],
+      "to": [
+        8,
+        9,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            0,
+            8
+          ],
+          "texture": "#kettle"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            7.5,
+            6,
+            11
+          ],
+          "texture": "#kettle"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            0,
+            8
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            6,
+            7.5,
+            8.5,
+            11
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            0,
+            5
+          ],
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            0,
+            5
+          ],
+          "texture": "#kettle"
+        }
+      }
+    }
+  ]
+}

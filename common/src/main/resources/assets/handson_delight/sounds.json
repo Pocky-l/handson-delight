@@ -54,5 +54,13 @@
       "handson_delight:keg/pour_quick1",
       "handson_delight:keg/pour_quick2"
     ]
+  },
+  "kettle.whistle": {
+    "sounds": [
+      {
+        "name": "handson_delight:kettle/whistle",
+        "stream": false
+      }
+    ]
   }
 }

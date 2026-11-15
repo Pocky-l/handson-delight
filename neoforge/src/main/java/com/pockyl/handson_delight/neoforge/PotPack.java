@@ -28,7 +28,8 @@ import java.util.Set;
  * open, its spoon in the station's hand, and this mod is not ordered after Miner's Delight, so only the pack is sure to win; so does
  * Dungeons Delight's monster pot, and Cultural Delights' oven, a brick oven with a real door and a hearth inside instead of a
  * painted front, and its vat, hollow under a lid that lifts. Farmer's Respite's kettle comes the same way: its opening under the lid is a
- * real one, and its tray is Farmer's Delight's heating tray, where its own model names  tray textures Farmer's Delight no longer has. Farmer's Spell's alchemist pot comes the same way: its dark top is a real opening.
+ * real one, and its tray is Farmer's Delight's heating tray, where its own model names tray textures Farmer's Delight no longer has. Farmer's Spell's alchemist pot comes the same way: its dark top is a real opening;
+ * so does Youkai's Feasts' kettle: its painted hole is a real opening under its lid, which the station lifts.
  * <p>
  * Vanilla Delight dyes the pot: it empties the block's models and draws the pot from its block entity with its own models, one
  * per colour and support, which are Farmer's Delight's pot again. This mod's versions of them (its pot in Vanilla Delight's
@@ -42,11 +43,12 @@ final class PotPack {
             ResourceLocation.fromNamespaceAndPath("culturaldelights", "blockstates/oven.json"),
             ResourceLocation.fromNamespaceAndPath("culturaldelights", "blockstates/vat.json"),
             ResourceLocation.fromNamespaceAndPath("farmersrespite", "blockstates/kettle.json"),
-            ResourceLocation.fromNamespaceAndPath("farmers_spell", "blockstates/alchemist_pot.json"));
+            ResourceLocation.fromNamespaceAndPath("farmers_spell", "blockstates/alchemist_pot.json"),
+            ResourceLocation.fromNamespaceAndPath("youkaisfeasts", "blockstates/kettle.json"));
     private static final String DYED_NAMESPACE = "vanilladelight";
     private static final String DYED_MODELS = "models/block/cooking_pot_";
     private static final Set<String> NAMESPACES = Set.of("farmersdelight", "minersdelight", "dungeonsdelight", "culturaldelights", "farmersrespite",
-            "farmers_spell", DYED_NAMESPACE);
+            "farmers_spell", "youkaisfeasts", DYED_NAMESPACE);
 
     private PotPack() {
     }

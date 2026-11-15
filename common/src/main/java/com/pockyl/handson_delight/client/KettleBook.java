@@ -31,7 +31,7 @@ final class KettleBook implements RecipeBook.Source {
         for (KitchenKettle.Brewing recipe : kettle.handson$recipes()) {
             ItemStack dish = kettle.handson$drinkOf(recipe.result());
             List<Ingredient> ingredients = recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
-            if (dish.isEmpty() || ingredients.size() > KitchenKettle.INGREDIENTS) {
+            if (dish.isEmpty() || ingredients.size() > kettle.handson$ingredients()) {
                 continue;
             }
             List<ItemStack> foot = new ArrayList<>();
@@ -40,7 +40,8 @@ final class KettleBook implements RecipeBook.Source {
                 foot.add(base);
             }
             foot.add(new ItemStack(Items.CLOCK));
-            int ticks = HandsOnConfig.scaled(recipe.ticks(), CookingTimes.kettle());
+            // A kettle that boils its water first takes a tick a millibucket for that, from cold water; its times are not ours to scale.
+            int ticks = kettle.handson$boilsFirst() ? recipe.baseAmount() + recipe.ticks() : HandsOnConfig.scaled(recipe.ticks(), CookingTimes.kettle());
             // Farmer's Respite's own recipes brew in seconds (their files name the time a way its reader does not read).
             Component time = ticks < 2400 ? Component.translatable("handson_delight.book.seconds", Math.max(1, Math.round(ticks / 20.0F)))
                     : Component.translatable("handson_delight.book.minutes", Math.round(ticks / 1200.0F));

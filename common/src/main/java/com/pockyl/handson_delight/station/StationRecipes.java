@@ -170,19 +170,32 @@ public final class StationRecipes {
         }
     }
 
+    /** How many of {@code kind} one slot holds: a stack, or {@code perSlot} where the station takes fewer (one leaf a slot). */
+    private static int hold(ItemStack kind, int perSlot) {
+        return Math.min(kind.getMaxStackSize(), perSlot);
+    }
+
     /** How many servings the kinds make laid over {@code parts} slots: the smallest slot sets it. */
     public static int servings(List<ItemStack> kinds, int[] parts) {
+        return servings(kinds, parts, Integer.MAX_VALUE);
+    }
+
+    private static int servings(List<ItemStack> kinds, int[] parts, int perSlot) {
         int servings = Integer.MAX_VALUE;
         for (int kind = 0; kind < parts.length; kind++) {
-            servings = Math.min(servings, Math.min(kinds.get(kind).getCount(), parts[kind] * kinds.get(kind).getMaxStackSize()) / parts[kind]);
+            servings = Math.min(servings, Math.min(kinds.get(kind).getCount(), parts[kind] * hold(kinds.get(kind), perSlot)) / parts[kind]);
         }
         return servings;
     }
 
     /** Whether every kind fits the slots {@code parts} gives it, a stack a slot. */
     public static boolean fits(List<ItemStack> kinds, int[] parts) {
+        return fits(kinds, parts, Integer.MAX_VALUE);
+    }
+
+    private static boolean fits(List<ItemStack> kinds, int[] parts, int perSlot) {
         for (int kind = 0; kind < parts.length; kind++) {
-            if (kinds.get(kind).getCount() > parts[kind] * kinds.get(kind).getMaxStackSize()) {
+            if (kinds.get(kind).getCount() > parts[kind] * hold(kinds.get(kind), perSlot)) {
                 return false;
             }
         }
@@ -191,9 +204,13 @@ public final class StationRecipes {
 
     /** How many items the slots {@code parts} gives every kind hold. */
     public static int kept(List<ItemStack> kinds, int[] parts) {
+        return kept(kinds, parts, Integer.MAX_VALUE);
+    }
+
+    private static int kept(List<ItemStack> kinds, int[] parts, int perSlot) {
         int kept = 0;
         for (int kind = 0; kind < parts.length; kind++) {
-            kept += Math.min(kinds.get(kind).getCount(), parts[kind] * kinds.get(kind).getMaxStackSize());
+            kept += Math.min(kinds.get(kind).getCount(), parts[kind] * hold(kinds.get(kind), perSlot));
         }
         return kept;
     }
@@ -278,6 +295,11 @@ public final class StationRecipes {
      * alone.
      */
     public static List<ItemStack> lay(SlotStorage slots, List<ItemStack> kinds, int[] parts) {
+        return lay(slots, kinds, parts, Integer.MAX_VALUE);
+    }
+
+    /** {@link #lay(SlotStorage, List, int[])} in a station whose slots hold at most {@code perSlot} each. */
+    public static List<ItemStack> lay(SlotStorage slots, List<ItemStack> kinds, int[] parts, int perSlot) {
         int size = slots.size();
         int[] kindAt = new int[size];
         Arrays.fill(kindAt, -1);
@@ -307,7 +329,7 @@ public final class StationRecipes {
         int[] partsLeft = parts.clone();
         for (int kind = 0; kind < kinds.size(); kind++) {
             ItemStack stack = kinds.get(kind);
-            left[kind] = Math.min(stack.getCount(), parts[kind] * stack.getMaxStackSize());
+            left[kind] = Math.min(stack.getCount(), parts[kind] * hold(stack, perSlot));
             if (left[kind] < stack.getCount()) {
                 rest.add(stack.copyWithCount(stack.getCount() - left[kind]));
             }
@@ -339,6 +361,11 @@ public final class StationRecipes {
      * result out.
      */
     public static Filled fill(Inventory inventory, List<Ingredient> ingredients, List<ItemStack> kinds, int slots, int sets) {
+        return fill(inventory, ingredients, kinds, slots, sets, Integer.MAX_VALUE);
+    }
+
+    /** {@link #fill(Inventory, List, List, int, int)} for a station whose slots hold at most {@code perSlot} each. */
+    public static Filled fill(Inventory inventory, List<Ingredient> ingredients, List<ItemStack> kinds, int slots, int sets, int perSlot) {
         if (ingredients.isEmpty() || ingredients.size() > slots || !Cookable.all(ingredients)) {
             return null;
         }
@@ -362,7 +389,7 @@ public final class StationRecipes {
                 add(more, inventory.getItem(from[i]).copyWithCount(1));
             }
             int[] laid = Arrays.stream(from).anyMatch(slot -> slot < 0) ? null : parts(ingredients, more);
-            if (laid == null || !fits(more, laid)) {
+            if (laid == null || !fits(more, laid, perSlot)) {
                 break;
             }
             for (int slot : from) {

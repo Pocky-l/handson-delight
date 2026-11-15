@@ -1,0 +1,424 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Youkai's Feasts' kettle: Farmer's Respite's kettle scene (kettle.json) with its models in Youkai's Feasts' texture, the same shape: walls 1 px thick, a 4x4 opening under the lid (x 6..10, z 6..10), the inside x 4..12, z 4..12, floor y 1, the drink up to y 5.5 when the kettle is full. It steeps four leaves, one in each of its slots (item_0..item_3). On its tray Youkai's Feasts turns the kettle a quarter to the right; the code turns 'kettle' so. Its tray stands on legs down into the block below.",
+  "work_plane": 8,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      -16.52,
+      31.09,
+      -20.52
+    ],
+    "target": [
+      8,
+      4.0,
+      4.0
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "kettle",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "children": [
+        {
+          "id": "tray",
+          "pickable": false,
+          "hidden": true,
+          "visual": {
+            "model": "handson_delight:diegesis/youkai_kettle/tray",
+            "anchor": [
+              8,
+              0,
+              8
+            ],
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "hanger",
+          "pickable": false,
+          "hidden": true,
+          "visual": {
+            "model": "handson_delight:diegesis/youkai_kettle/hanger",
+            "anchor": [
+              8,
+              0,
+              8
+            ],
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "pot",
+          "pos": [
+            0,
+            0,
+            -5
+          ],
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/youkai_kettle/body",
+            "anchor": [
+              8,
+              0,
+              3
+            ],
+            "lit_as_block": true
+          },
+          "children": [
+            {
+              "id": "lid",
+              "pos": [
+                0,
+                7,
+                5
+              ],
+              "visual": {
+                "model": "handson_delight:diegesis/youkai_kettle/lid",
+                "anchor": [
+                  8,
+                  7,
+                  8
+                ],
+                "lit_as_block": true
+              },
+              "collider": {
+                "from": [
+                  -2.2,
+                  -0.4,
+                  -2.2
+                ],
+                "to": [
+                  2.2,
+                  1.6,
+                  2.2
+                ]
+              }
+            },
+            {
+              "$comment": "The spout, block z 0..3, y 2..8: a cup clicked here is filled.",
+              "id": "spout",
+              "pos": [
+                0,
+                5,
+                -1.5
+              ],
+              "collider": {
+                "from": [
+                  -1.8,
+                  -3.2,
+                  -2.4
+                ],
+                "to": [
+                  1.8,
+                  3.6,
+                  1.8
+                ]
+              }
+            },
+            {
+              "id": "drink",
+              "pickable": false,
+              "tank": {
+                "tank": "drink",
+                "inner": {
+                  "from": [
+                    -4,
+                    1,
+                    1
+                  ],
+                  "to": [
+                    4,
+                    5.5,
+                    9
+                  ]
+                }
+              }
+            },
+            {
+              "id": "mouth",
+              "drop_zone": "ingredients",
+              "collider": {
+                "from": [
+                  -4,
+                  4.5,
+                  1
+                ],
+                "to": [
+                  4,
+                  8.5,
+                  9
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "item_0",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[0]",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_1",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[1]",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_2",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[2]",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_3",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[3]",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "offer",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": 0.35,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "$comment": "The cup a drink is poured into under the spout: a glass mug of this mod for a bottle (the tea is seen rising in it), any other container as its item; moved, turned and filled by the code, drawn over everything, as it is held up in front of the stove.",
+      "id": "cup",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "hidden": true,
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/kettle/mug",
+        "anchor": [
+          8.5,
+          0,
+          8.5
+        ]
+      },
+      "tank": {
+        "tank": "drink",
+        "inner": {
+          "from": [
+            -2.4,
+            0.6,
+            -2.4
+          ],
+          "to": [
+            2.4,
+            5.8,
+            2.4
+          ]
+        }
+      }
+    },
+    {
+      "$comment": "The bucket a hand tips over the opening as it pours, moved by the code in scene pixels.",
+      "id": "pour_hand",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -1.38,
+        10.96,
+        6.49
+      ],
+      "rotation": [
+        -38,
+        45,
+        0
+      ],
+      "pickable": false,
+      "scale": 0.9763
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -1.4,
+        10.97,
+        6.48
+      ],
+      "rotation": [
+        -38,
+        45,
+        0
+      ],
+      "pickable": false,
+      "scale": 0.9763
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -1.41,
+        10.99,
+        6.46
+      ],
+      "rotation": [
+        -38,
+        45,
+        0
+      ],
+      "pickable": false,
+      "scale": 0.9763
+    },
+    {
+      "id": "flame",
+      "pos": [
+        -1.4,
+        10.97,
+        6.48
+      ],
+      "rotation": [
+        -38,
+        45,
+        0
+      ],
+      "pickable": false,
+      "scale": 0.9763
+    },
+    {
+      "id": "flame_lit",
+      "pos": [
+        -1.41,
+        10.99,
+        6.46
+      ],
+      "rotation": [
+        -38,
+        45,
+        0
+      ],
+      "pickable": false,
+      "scale": 0.9763
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -1.44,
+        11.02,
+        6.43
+      ],
+      "rotation": [
+        52,
+        45,
+        0
+      ],
+      "scale": 0.122,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        3.54,
+        15.64,
+        -11.96
+      ],
+      "rotation": [
+        -38,
+        45,
+        0
+      ],
+      "scale": 0.6736,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -4.4,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          4.4,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

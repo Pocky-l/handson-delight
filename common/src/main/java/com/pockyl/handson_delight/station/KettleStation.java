@@ -22,23 +22,28 @@ import com.pockyl.handson_delight.platform.Platform;
 import java.util.function.Supplier;
 
 /**
- * Farmer's Respite's kettle as a station: its lid comes off onto the stove beside it, water is poured in at the opening and the
- * leaves dropped in after it steep there over the heat, and the drink is poured out of the spout into a cup. It brews as Farmer's
- * Respite brews it, whoever is at it; the station only shows it and does by hand what its menu did.
+ * A kettle as a station: its lid comes off onto the stove beside it, water is poured in at the opening and the leaves dropped in
+ * after it steep there over the heat, and the drink is poured out of the spout into a cup. Farmer's Respite's kettle ({@link #TYPE})
+ * and Youkai's Feasts' ({@link #YOUKAI_TYPE}, which boils its water before it brews) are the same station on their own blocks. Each
+ * brews as its mod brews, whoever is at it; the station only shows it and does by hand what its menu or its clicks did.
  */
 public final class KettleStation {
     public static final String MOD_ID = "farmersrespite";
     public static final ResourceLocation ID = HandsOnDelight.id("kettle");
+    public static final String YOUKAI_MOD_ID = "youkaisfeasts";
+    public static final ResourceLocation YOUKAI_ID = HandsOnDelight.id("youkai_kettle");
 
     public static final String INGREDIENTS = "ingredients";
     public static final String DRINK = "drink";
     public static final String PROGRESS = "progress";
     /** Whether something under the kettle heats it (1) or not (0): nothing brews cold. */
     public static final String HEATED = "heated";
+    /** How far the water has come to the boil, 0 to 1, in a kettle that boils it before it brews; 1 in any other. */
+    public static final String BOIL = "boil";
     /**
-     * Whether the lid is off (1) or on (0): the kettle block's own {@code lid} state, which Farmer's Respite draws in the world too. The
-     * cook takes it off and puts it back with a click on it ({@link #ACTION_LID}); only with the lid off does anything go in at the
-     * top. A kettle left open stays open.
+     * Whether the lid is off (1) or on (0): Farmer's Respite's kettle block's own {@code lid} state, which it draws in the world too
+     * (a kettle left open stays open); Youkai's Feasts' kettle has none, its lid goes back on when the last cook leaves. The cook takes
+     * it off and puts it back with a click on it ({@link #ACTION_LID}); only with the lid off does anything go in at the top.
      */
     public static final String LID = "lid";
     /** A custom action: the lid is taken off or put back; data {@link #OPEN}. */
@@ -69,35 +74,55 @@ public final class KettleStation {
     public static final ResourceLocation EFFECT_POURED = HandsOnDelight.id("kettle_poured");
     public static final ResourceLocation EFFECT_SERVED = HandsOnDelight.id("kettle_served");
 
-    @SuppressWarnings("removal")
     public static final Supplier<Block> KETTLE = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "kettle"));
+    public static final Supplier<Block> YOUKAI_KETTLE = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(YOUKAI_MOD_ID, "kettle"));
 
-    public static final StationSchema SCHEMA = StationSchema.builder()
-            .slots(INGREDIENTS, KitchenKettle.INGREDIENTS, SlotRules.DEFAULT.kept())
-            .tank(DRINK, TankSpec.of(100))
-            .control(PROGRESS, ControlSpec.stepped(0.0F, 1.0F, 100, 0.0F).locked())
-            .control(HEATED, ControlSpec.stepped(0.0F, 1.0F, 1, 0.0F).locked())
-            .control(LID, ControlSpec.stepped(0.0F, 1.0F, 1, 0.0F).locked())
-            .build();
+    public static final StationSchema SCHEMA = schema(KitchenKettle.INGREDIENTS, SlotRules.DEFAULT.kept());
+    /** Youkai's Feasts' kettle steeps four things, one in each of its slots. */
+    public static final StationSchema YOUKAI_SCHEMA = schema(KitchenKettle.MOST_INGREDIENTS, SlotRules.DEFAULT.kept().maxStack(1));
 
     /** The kettle's block is hidden while somebody works at it: the scene shows it, its lid off or tipped to pour. */
-    public static final StationType TYPE = Diegesis.station(ID)
-            .block(KETTLE)
-            .schema(SCHEMA)
-            .logic(KettleLogic::new)
-            .orientation(StationType.Orientation.PLAYER)
-            .openWhen(KettleStation::opens)
-            .hidesBlock()
-            .idleLogic()
-            .build();
+    public static final StationType TYPE = type(ID, KETTLE, SCHEMA);
+    public static final StationType YOUKAI_TYPE = type(YOUKAI_ID, YOUKAI_KETTLE, YOUKAI_SCHEMA);
 
     private KettleStation() {
+    }
+
+    private static StationSchema schema(int ingredients, SlotRules rules) {
+        return StationSchema.builder()
+                .slots(INGREDIENTS, ingredients, rules)
+                .tank(DRINK, TankSpec.of(100))
+                .control(PROGRESS, ControlSpec.stepped(0.0F, 1.0F, 100, 0.0F).locked())
+                .control(HEATED, ControlSpec.stepped(0.0F, 1.0F, 1, 0.0F).locked())
+                .control(LID, ControlSpec.stepped(0.0F, 1.0F, 1, 0.0F).locked())
+                .control(BOIL, ControlSpec.stepped(0.0F, 1.0F, 100, 1.0F).locked())
+                .build();
+    }
+
+    private static StationType type(ResourceLocation id, Supplier<Block> block, StationSchema schema) {
+        return Diegesis.station(id)
+                .block(block)
+                .schema(schema)
+                .logic(KettleLogic::new)
+                .orientation(StationType.Orientation.PLAYER)
+                .openWhen(KettleStation::opens)
+                .hidesBlock()
+                .idleLogic()
+                .build();
     }
 
     public static void register() {
         if (Platform.INSTANCE.isLoaded(MOD_ID)) {
             Diegesis.register(TYPE);
         }
+        if (Platform.INSTANCE.isLoaded(YOUKAI_MOD_ID)) {
+            Diegesis.register(YOUKAI_TYPE);
+        }
+    }
+
+    /** Whether {@code id} is one of the kettle stations. */
+    public static boolean isKettle(ResourceLocation id) {
+        return ID.equals(id) || YOUKAI_ID.equals(id);
     }
 
     /** Farmer's Respite's {@code lid} property of the kettle block, read by name; null on anything else. */
@@ -117,8 +142,8 @@ public final class KettleStation {
     }
 
     /**
-     * Sneaking keeps the kettle's own use (its lid by an empty hand, its menu); a cup that fills or a bucket that pours in the hand keeps
-     * its quick use in the world.
+     * Sneaking keeps the kettle's own use (Farmer's Respite: its lid by an empty hand, its menu; Youkai's Feasts: tipping it out); a cup
+     * that fills or a bucket that pours in the hand keeps its quick use in the world.
      */
     private static boolean opens(Player player, BlockPos pos, BlockState state) {
         if (player.isSecondaryUseActive()) {

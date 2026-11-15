@@ -16,6 +16,7 @@ import net.minecraft.world.level.material.Fluids;
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.platform.Platform;
+import com.pockyl.handson_delight.station.StationRecipes;
 import com.pockyl.handson_delight.station.KettleLogic;
 import com.pockyl.handson_delight.station.KettleStation;
 import com.pockyl.handson_delight.station.KitchenKettle;
@@ -71,6 +72,16 @@ public final class KettleTests {
     private static void pourWater(Setup setup, Player player) {
         player.inventoryMenu.setCarried(new ItemStack(Items.WATER_BUCKET));
         setup.logic.onCustomAction(setup.station, player, KettleStation.ACTION_USE, at(KettleStation.MOUTH, false));
+    }
+
+    /** Every brewing recipe the game has, its leaves thrown in or picked in the book: see {@link StationAudit}. */
+    public static void everyKettleRecipeFromItsLeavesThrownIn(GameTestHelper helper) {
+        Setup setup = kettle(helper, false);
+        if (setup == null) {
+            return;
+        }
+        StationAudit.audit(helper, "kettle", StationRecipes.candidates(setup.kettle.handson$recipes(), KitchenKettle.Brewing::id,
+                KitchenKettle.Brewing::ingredients), KitchenKettle.Brewing::base, setup.kettle.handson$ingredients());
     }
 
     /**

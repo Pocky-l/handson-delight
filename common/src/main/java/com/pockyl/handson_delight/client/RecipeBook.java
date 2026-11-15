@@ -42,7 +42,9 @@ import com.pockyl.handson_delight.station.PotLogic;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -173,6 +175,19 @@ final class RecipeBook implements NodePainter {
     private String tab;
     private boolean tabRemembered;
     private Tab hoveredTab;
+    /**
+     * The list keeps its order from the book's opening on: a dish never moves away from where the player found it while they
+     * cook it (a rolled sheet is no longer its ingredients, which would put the dish at the end).
+     */
+    private boolean keepOrder;
+    /** What is drawn on the right page and where, units of that page, for naming it under the cursor. */
+    private final List<Drawn> drawn = new ArrayList<>();
+    private Component tip;
+    /**
+     * The page the player last picked, kept on the client while the game runs: for each station block, and for each kind of
+     * station. Coming back, the book opens at it again while what lies in the station goes on to it.
+     */
+    private static final Map<String, Object> PICKED = new HashMap<>();
     private float refresh;
     private float reach;
     private float time;
@@ -252,6 +267,19 @@ final class RecipeBook implements NodePainter {
         default String memory() {
             return "";
         }
+
+        /**
+         * Whether what lies in the station now can go on to the page {@code key}, so that a page picked before stays open; by default
+         * when the station makes nothing yet or makes that page.
+         */
+        default boolean fits(StationView view, Object key) {
+            Object current = current(view);
+            return current == null || current.equals(key);
+        }
+    }
+
+    /** Something drawn on the right page, its box in units of that page. */
+    private record Drawn(float x, float y, float size, ItemStack stack) {
     }
 
     /** A tab over the list: the kind of recipe it shows ({@code Page.kind}; null: all), drawn as {@code icon}. */
@@ -304,6 +332,7 @@ final class RecipeBook implements NodePainter {
             if (connection != null) {
                 connection.send(new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.REQUEST_STATS));
             }
+            keepOrder = false;
             read(view);
             picked = shown(view);
             page = picked == null ? 0 : entries.indexOf(picked) / PER_PAGE;
@@ -365,6 +394,7 @@ final class RecipeBook implements NodePainter {
             if (connection != null) {
                 connection.send(new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.REQUEST_STATS));
             }
+            keepOrder = false;
             read(view);
             picked = shown(view);
             page = picked == null ? 0 : entries.indexOf(picked) / PER_PAGE;
@@ -389,11 +419,52 @@ final class RecipeBook implements NodePainter {
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F, 0.6F));
     }
 
-    /** The page of what the station makes now, else the first. */
+    /**
+     * The page the player picked last at this station (else at this kind of station) while what lies in it goes on to it; else the
+     * page of what the station makes now; else the first. A page under another tab shows all the tabs' pages.
+     */
     private Entry shown(StationView view) {
+        List<Object> wanted = new ArrayList<>();
+        for (String memory : List.of(placeMemory(view), kindMemory())) {
+            Object kept = PICKED.get(memory);
+            if (kept != null && source.fits(view, kept)) {
+                wanted.add(kept);
+            }
+        }
         Object current = source.current(view);
-        return entries.stream().filter(entry -> entry.page().key().equals(current)).findFirst()
-                .orElse(entries.isEmpty() ? null : entries.get(0));
+        if (current != null) {
+            wanted.add(current);
+        }
+        for (Object key : wanted) {
+            Optional<Entry> found = find(key);
+            if (found.isEmpty() && tab != null) {
+                tab = null;
+                keepOrder = false;
+                read(view);
+                found = find(key);
+            }
+            if (found.isPresent()) {
+                return found.get();
+            }
+        }
+        return entries.isEmpty() ? null : entries.get(0);
+    }
+
+    private Optional<Entry> find(Object key) {
+        return entries.stream().filter(entry -> entry.page().key().equals(key)).findFirst();
+    }
+
+    private String kindMemory() {
+        return source.getClass().getName();
+    }
+
+    private String placeMemory(StationView view) {
+        return kindMemory() + "@" + view.pos().asLong();
+    }
+
+    /** The page the player has picked, null for none. */
+    Object pickedKey() {
+        return picked == null ? null : picked.page().key();
     }
 
     /** What the player has made changed (a serving, a dish): the stars on the page follow once the server tells the new numbers. */
@@ -424,7 +495,7 @@ final class RecipeBook implements NodePainter {
                 found.add(entry(page, pool));
             }
         }
-        if (cursorX >= 0.0F && !entries.isEmpty()) {
+        if ((keepOrder || cursorX >= 0.0F) && !entries.isEmpty()) {
             // Under the cursor the list keeps its order: a dish never moves away from where the player points.
             List<Object> before = entries.stream().map(entry -> entry.page().key()).toList();
             found.sort(Comparator.comparingInt(entry -> {
@@ -439,6 +510,7 @@ final class RecipeBook implements NodePainter {
             picked = found.stream().filter(entry -> entry.page().key().equals(kept)).findFirst().orElse(null);
         }
         entries = found;
+        keepOrder = true;
         page = Math.min(page, pages() - 1);
     }
 
@@ -547,6 +619,25 @@ final class RecipeBook implements NodePainter {
             read(view);
         }
         follow(view, node);
+        name(node);
+    }
+
+    /** Under the cursor a dish or what goes in is named, as an item in a slot is. */
+    private void name(NodeView node) {
+        ItemStack under = hovered != null ? hovered.dish() : ItemStack.EMPTY;
+        if (hovered == null && hoveredTab == null && cursorX >= UNITS_WIDE && !onRibbon()) {
+            float x = cursorX - UNITS_WIDE;
+            for (Drawn thing : drawn) {
+                if (x >= thing.x() && x < thing.x() + thing.size() && cursorY >= thing.y() && cursorY < thing.y() + thing.size()) {
+                    under = thing.stack();
+                }
+            }
+        }
+        Component text = under.isEmpty() ? Component.empty() : under.getHoverName();
+        if (!Objects.equals(text, tip)) {
+            tip = text;
+            node.setTooltip(text);
+        }
     }
 
     /** How far open the book is drawn: the covers lift slowly, swing over and settle flat, and close the same way back. */
@@ -643,6 +734,7 @@ final class RecipeBook implements NodePainter {
                 BookTabs.put(source.memory(), tab);
                 page = 0;
                 flip = 1.0F;
+                keepOrder = false;
                 read(view);
                 // The right page shows the first of the kind until another is picked.
                 if (picked == null && !entries.isEmpty()) {
@@ -652,6 +744,8 @@ final class RecipeBook implements NodePainter {
             }
         } else if (hovered != null) {
             picked = hovered;
+            PICKED.put(placeMemory(view), picked.page().key());
+            PICKED.put(kindMemory(), picked.page().key());
             source.picked(view, picked.page());
         } else if (cursorY >= ARROW_Y && cursorY < ARROW_Y + ARROW_HEIGHT) {
             if (cursorX >= GRID_X && cursorX < GRID_X + ARROW_WIDTH) {
@@ -797,8 +891,10 @@ final class RecipeBook implements NodePainter {
     private void drawDish(Sheet canvas, Entry entry) {
         Font font = Minecraft.getInstance().font;
         float middle = RIGHT_MIDDLE;
+        drawn.clear();
         canvas.ribbon(onRibbon());
         canvas.item(entry.dish(), middle - DISH_SIZE / 2.0F, 3.0F, DISH_SIZE);
+        drawn.add(new Drawn(middle - DISH_SIZE / 2.0F, 3.0F, DISH_SIZE, entry.dish()));
         float line = 25.0F;
         // Two lines at most: a long modded name must leave room for what goes in.
         if (nameFor != entry) {
@@ -826,7 +922,9 @@ final class RecipeBook implements NodePainter {
             ItemStack[] choices = entry.ingredients().get(i).getItems();
             if (choices.length > 0) {
                 canvas.rect(x, y, WELL_SIZE, WELL_SIZE, WELL_LIFT, entry.found()[i] ? WELL_READY : WELL);
-                canvas.item(choices[(int) (second % choices.length)], x + 0.5F, y + 0.5F, 16.0F, !entry.found()[i]);
+                ItemStack choice = choices[(int) (second % choices.length)];
+                canvas.item(choice, x + 0.5F, y + 0.5F, 16.0F, !entry.found()[i]);
+                drawn.add(new Drawn(x, y, WELL_SIZE, choice));
             }
         }
         // The small print goes where there is room left, in the middle, on the line of the list's arrows.
@@ -842,6 +940,7 @@ final class RecipeBook implements NodePainter {
             float x = middle - wide / 2.0F;
             for (ItemStack small : foot) {
                 canvas.item(small, x, bottom, FOOT_SIZE);
+                drawn.add(new Drawn(x, bottom, FOOT_SIZE, small));
                 x += FOOT_PITCH;
             }
             if (note != null) {

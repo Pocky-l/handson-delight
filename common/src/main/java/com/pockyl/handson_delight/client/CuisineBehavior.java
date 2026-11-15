@@ -23,6 +23,7 @@ import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.station.CuisineBoardStation;
+import com.pockyl.handson_delight.station.CuisineLogic;
 import com.pockyl.handson_delight.station.Cutting;
 import com.pockyl.handson_delight.station.KitchenCuisine;
 
@@ -37,8 +38,7 @@ import java.util.Set;
  * Youkai's Feasts' cuisine board on the client. What lies on it is drawn with the board's own models, as its renderer draws them;
  * every step shows as it is done: food comes down from the cook onto the board, a sauce is poured out of its bottle, rice is
  * pressed into nigiri, a sheet is rolled up under the hands, a knife cuts the roll into its pieces, which go to the cook. Held over
- * the board, the next step shows see-through where it would go: the food on the cursor, or with an empty hand the shaping or
- * rolling a click would do.
+ * the board, the food on the cursor shows see-through where it would go; food an empty hand would shape or roll rises under it.
  */
 public final class CuisineBehavior implements StationBehavior {
     private static final int PARTS = 12;
@@ -54,8 +54,9 @@ public final class CuisineBehavior implements StationBehavior {
     /** How see-through the next step stands over the board, and the knife offered from the inventory. */
     private static final int PREVIEW = 0x66FFFFFF;
     private static final int OFFERED = 0x8CFFFFFF;
-    /** What a step by hand turns into something else fades under the see-through new thing. */
-    private static final int FADING = 0x90FFFFFF;
+    /** How far food rises under an empty hand that would shape or roll it, pixels, and how fast. */
+    private static final float LIFT = 0.5F;
+    private static final float LIFT_TIME = 0.1F;
     /**
      * The knife lies across the roll, edge down, its tip away from the cook, turned this much towards the cook's left so that the
      * camera sees its blade and not only its back; its handle is that far back from the middle of the icon.
@@ -114,6 +115,7 @@ public final class CuisineBehavior implements StationBehavior {
     private final List<ResourceLocation> shownModels = new ArrayList<>();
     private List<ResourceLocation> previewModels = List.of();
     private Object previewFor;
+    private boolean lifted;
     private KitchenMotions.Motion hand;
     private float clock;
     /** Until when steps already told are being shown: what the board holds then is not drawn yet. */
@@ -132,6 +134,12 @@ public final class CuisineBehavior implements StationBehavior {
     private float chopAge = Float.NaN;
     private int askedMark = -1;
     private float askedAt;
+    /**
+     * A stack put on from the cursor: once the board has it, what is left on the cursor goes back into the inventory unless the
+     * next step wants it, so the cursor does not cover the board. What lay there before, and when it was sent.
+     */
+    private List<ItemStack> putFrom;
+    private float putAt;
 
     private record Step(float at, Runnable run) {
     }
@@ -197,6 +205,7 @@ public final class CuisineBehavior implements StationBehavior {
         if (board == null) {
             return;
         }
+        putAway(view, board);
         if (clock >= busyUntil && steps.isEmpty() && !cutting && !sameStacks(board.handson$contents(), shown)) {
             // Changed by somebody's own click on the board, or a step not shown: drawn as it is, what came on popping up.
             showContents(view, board.handson$contents(), true);
@@ -225,6 +234,45 @@ public final class CuisineBehavior implements StationBehavior {
             knife(view, board, dt);
         }
         book.frame(view, dt);
+    }
+
+    /**
+     * After a step from the cursor went on, the rest of the stack goes back into the inventory when the next step has no use for
+     * it: rice for a nigiri, whose next step is the hand's. It stays for a step that takes it again (a second rice for a California
+     * sheet). A dish picked in the book that what lies on the board is the start of decides which step is next.
+     */
+    private void putAway(StationView view, KitchenCuisine board) {
+        if (putFrom == null) {
+            return;
+        }
+        List<ItemStack> on = board.handson$contents();
+        if (clock - putAt > 2.0F) {
+            putFrom = null;
+            return;
+        }
+        if (sameStacks(on, putFrom)) {
+            return;
+        }
+        putFrom = null;
+        LocalPlayer player = Minecraft.getInstance().player;
+        ItemStack carried = player == null ? ItemStack.EMPTY : player.inventoryMenu.getCarried();
+        if (!carried.isEmpty() && !wanted(view, board, on, carried)) {
+            view.putAwayCarried();
+        }
+    }
+
+    /** Whether the board's next step takes {@code stack}, for the dish picked in the book when the board is on the way to it. */
+    private boolean wanted(StationView view, KitchenCuisine board, List<ItemStack> on, ItemStack stack) {
+        if (board.handson$takes(stack) <= 0) {
+            return false;
+        }
+        KitchenCuisine.Dish dish = CuisineBook.dish(view, book.pickedKey());
+        if (dish == null || CuisineLogic.done(dish, on) < 0) {
+            return true;
+        }
+        List<ItemStack> next = new ArrayList<>(on);
+        next.add(stack.copyWithCount(1));
+        return CuisineLogic.done(dish, next) >= 0;
     }
 
     private void after(float seconds, Runnable run) {
@@ -271,11 +319,12 @@ public final class CuisineBehavior implements StationBehavior {
         shownModels.clear();
         shownModels.addAll(models.subList(0, Math.min(models.size(), PARTS)));
         previewFor = null;
+        lifted = false;
     }
 
     /**
-     * Held over the board, the parts the next step would add stand there see-through: the food on the cursor, or with an empty hand
-     * what the hand would shape or roll.
+     * Held over the board, the parts the food on the cursor would add stand there see-through. With an empty hand over food the
+     * hand would shape or roll, nothing turns see-through (food going see-through under the hand reads as wrong): it rises a little.
      */
     private void preview(StationView view, KitchenCuisine board) {
         LocalPlayer player = Minecraft.getInstance().player;
@@ -283,13 +332,11 @@ public final class CuisineBehavior implements StationBehavior {
         boolean over = view.isFocused() && player != null && clock >= busyUntil && !cutting
                 && (hovered(view, "surface") || hovered(view, "mouth"));
         ItemStack carried = player == null ? ItemStack.EMPTY : player.inventoryMenu.getCarried();
+        lift(view, over && carried.isEmpty() && board.handson$byHand() && overDish(view).isPresent());
         List<ItemStack> next = null;
         if (over && !carried.isEmpty() && board.handson$takes(carried) > 0) {
             next = new ArrayList<>(shown);
             next.add(carried.copyWithCount(1));
-        } else if (over && carried.isEmpty() && board.handson$byHand()) {
-            next = new ArrayList<>(shown);
-            next.add(ItemStack.EMPTY);
         }
         Object key = next == null ? null : List.of(carried.getItem(), shown.size(), shownModels.hashCode());
         if (Objects.equals(key, previewFor)) {
@@ -298,7 +345,6 @@ public final class CuisineBehavior implements StationBehavior {
         previewFor = key;
         List<ResourceLocation> models = next == null ? null : board.handson$modelsOf(next);
         previewModels = models == null ? List.of() : models.stream().filter(model -> !shownModels.contains(model)).toList();
-        boolean byHand = next != null && carried.isEmpty();
         float turn = turn(view);
         for (int k = 0; k < PARTS; k++) {
             ResourceLocation model = k < previewModels.size() ? previewModels.get(k) : null;
@@ -312,12 +358,21 @@ public final class CuisineBehavior implements StationBehavior {
                 }
             });
         }
-        // Shaped or rolled, what lies there now becomes the new thing: it fades under the see-through one.
-        for (int k = 0; k < shownModels.size(); k++) {
-            int index = k;
-            view.node("part_" + k).ifPresent(node -> node.setTint(byHand && !previewModels.isEmpty()
-                    && !Objects.requireNonNull(models).contains(shownModels.get(index)) ? FADING : 0xFFFFFFFF));
+    }
+
+    /**
+     * The food a click of the empty hand would shape or roll rises a little while the cursor is on it, and settles when it leaves.
+     * Once a step is being shown its own moves take the parts over.
+     */
+    private void lift(StationView view, boolean up) {
+        if (up == lifted) {
+            return;
         }
+        lifted = up;
+        if (!up && clock < busyUntil) {
+            return;
+        }
+        visibleParts(view).forEach(part -> part.moveTo(REST.x, REST.y + (up ? LIFT : 0.0F), REST.z, LIFT_TIME));
     }
 
     private static boolean hovered(StationView view, String node) {
@@ -624,6 +679,8 @@ public final class CuisineBehavior implements StationBehavior {
         }
         how.putBoolean(CuisineBoardStation.ALL, shift);
         view.sendAction(CuisineBoardStation.ACTION_PUT, how);
+        putFrom = copy(board.handson$contents());
+        putAt = clock;
         return true;
     }
 
@@ -666,6 +723,7 @@ public final class CuisineBehavior implements StationBehavior {
         } else if (CuisineBoardStation.EFFECT_CUT.equals(effect)) {
             cut(view, data);
         } else if (CuisineBoardStation.EFFECT_REFUSED.equals(effect)) {
+            putFrom = null;
             refused(view, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(CuisineBoardStation.STACK)));
         }
     }
@@ -683,7 +741,8 @@ public final class CuisineBehavior implements StationBehavior {
             if (laid.isEmpty()) {
                 after(begins, () -> byHand(view, afterIt));
                 at += handTime(afterIt) + GAP;
-            } else if (KitchenMotions.containerOf(laid).isPresent() && view.node("hand_0").isPresent()) {
+            } else if (KitchenLooks.isPoured(laid) && view.node("hand_0").isPresent()) {
+                // Only a liquid is poured: rice comes in a bowl too, but goes down as food.
                 float poured = pourTime(view, laid);
                 after(begins, () -> pour(view, laid, afterIt));
                 at += poured + GAP;
@@ -833,24 +892,52 @@ public final class CuisineBehavior implements StationBehavior {
         busyUntil = clock + at + AWAY + GAP;
     }
 
-    /** The last step came off: what it added lifts and goes to the cook. */
+    /**
+     * The last step came off. When it only added parts, they lift and go to the cook. Most steps of its dishes draw the whole thing
+     * anew (kelp with rice on it is an open sheet, a second rice a bigger mound, a filling a new tube): then what stays is drawn as
+     * it lies now, in place, and only the food that came off goes to the cook, so the half-made roll never leaves the board.
+     */
     private void back(StationView view, CompoundTag data) {
         float at = start();
         List<ItemStack> afterIt = stacks(view, data.getList(CuisineBoardStation.AFTER, Tag.TAG_COMPOUND));
+        ItemStack off = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(CuisineBoardStation.STACK));
         after(at, () -> {
             KitchenCuisine board = board(view);
             List<ResourceLocation> left = board == null ? null : board.handson$modelsOf(afterIt);
+            view.playSound(SoundEvents.ITEM_PICKUP, "surface", 0.3F, 1.5F);
+            if (left == null || !shownModels.containsAll(left)) {
+                showContents(view, afterIt, false);
+                goesBack(view, off);
+                return;
+            }
             List<NodeView> going = new ArrayList<>();
             for (int k = 0; k < shownModels.size(); k++) {
-                if (left == null || !left.contains(shownModels.get(k))) {
+                if (!left.contains(shownModels.get(k))) {
                     view.node("part_" + k).ifPresent(going::add);
                 }
             }
             leave(view, going);
-            view.playSound(SoundEvents.ITEM_PICKUP, "surface", 0.3F, 1.5F);
             after(AWAY, () -> showContents(view, afterIt, false));
         });
         busyUntil = clock + at + AWAY + GAP;
+    }
+
+    /** {@code stack} lifts off the board and goes to the cook, as it came down. */
+    private void goesBack(StationView view, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        view.node("fly_0").ifPresent(node -> {
+            show(node, stack, FLY_SIZE);
+            node.moveTo(0.0F, LAND_Y - 2.0F, 0.0F, 0.0F);
+            node.rotateTo(0.0F, 0.0F, 0.0F, 0.0F);
+            node.scaleTo(1.0F, 0.0F);
+            node.setVisible(true);
+            Vector3f away = FromPlayer.offset(view, LAND_Y + 6.0F, 0, 1);
+            node.hopTo(away.x, LAND_Y + 4.0F, away.z, 2.0F, AWAY);
+            node.scaleTo(0.0F, AWAY);
+            after(AWAY, () -> node.setVisible(false));
+        });
     }
 
     /** {@code parts} go up and towards the cook, shrinking away. */

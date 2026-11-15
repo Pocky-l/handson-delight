@@ -127,12 +127,13 @@ public final class CuttingBoardStation {
      */
     public static final TagKey<Block> BOARDS = TagKey.create(Registries.BLOCK, HandsOnDelight.id("cutting_boards"));
 
+    /** Opens from any side, turned to the cook; what lies there stays on the board's base, its handle beside it. */
     public static final StationType TYPE = Diegesis.station(ID)
             .block(FarmersDelightContent.CUTTING_BOARD)
             .tag(BOARDS)
             .schema(SCHEMA)
             .logic(BoardLogic::new)
-            .orientation(StationType.Orientation.BLOCK)
+            .orientation(StationType.Orientation.PLAYER)
             .openWhen(CuttingBoardStation::opens)
             .idleLogic()
             .build();

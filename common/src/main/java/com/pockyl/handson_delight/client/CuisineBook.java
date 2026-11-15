@@ -103,4 +103,22 @@ final class CuisineBook implements RecipeBook.Source {
         return board.handson$dishes().stream().filter(dish -> CuisineLogic.done(dish, on) > 0).findFirst()
                 .map(KitchenCuisine.Dish::id).orElse(null);
     }
+
+    /** A dish picked before stays open while what lies on the board is the start of it: rice is the start of every nigiri. */
+    @Override
+    public boolean fits(StationView view, Object key) {
+        return dish(view, key) != null;
+    }
+
+    /** The dish {@code key} while what lies on the board is the start of it or the dish itself, done and waiting to be cut, else null. */
+    static KitchenCuisine.Dish dish(StationView view, Object key) {
+        KitchenCuisine board = CuisineBehavior.board(view);
+        if (board == null || key == null) {
+            return null;
+        }
+        List<ItemStack> on = board.handson$contents();
+        ItemStack finished = board.handson$finished();
+        return board.handson$dishes().stream().filter(dish -> dish.id().equals(key) && (CuisineLogic.done(dish, on) >= 0
+                || !finished.isEmpty() && ItemStack.isSameItem(finished, dish.result()))).findFirst().orElse(null);
+    }
 }

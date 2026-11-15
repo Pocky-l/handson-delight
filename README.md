@@ -128,7 +128,7 @@ Addons of Farmer's Delight work too: their dishes are made on the board, their p
 the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) and
 [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) open as stations. So do
 [Miner's Delight](https://modrinth.com/mod/miners-delight)'s copper pot,
-[Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot and every cutting board of
+[Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot and dungeon stove, and every cutting board of
 [Chopper's Delight](https://modrinth.com/mod/choppers-delight), the decorated one too, each in its own look.
 [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle opens as a station too, its tray on a stove
 drawn with Farmer's Delight's own, and so does [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)'s kettle,

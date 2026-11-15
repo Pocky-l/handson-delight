@@ -52,15 +52,21 @@ public final class PotBehavior implements StationBehavior {
      * the spoon's end, where it pivots in its model. A full pot stays 1.5 px under the rim: higher, what floats, the foam at the walls
      * and the waves showed as a thin line over the rim from the side at a low camera angle. The scene's {@code broth} tank ends at the
      * same height. {@code rim}: where an egg is knocked; {@code lean}: how the spoon leans at rest in its model, degrees, plus to the
-     * right; {@code scroll}: the pot holds a spell scroll ({@link PotScroll}).
+     * right; {@code scroll}: the pot holds a spell scroll ({@link PotScroll}); {@code liquid}: what the pot holds instead of the
+     * biome's water (RGB, alpha as the water's), 0 for water.
      */
-    public record Shape(int slots, float floor, float depth, float spoonEnd, float rim, float lean, boolean scroll) {
+    public record Shape(int slots, float floor, float depth, float spoonEnd, float rim, float lean, boolean scroll, int liquid) {
         /** Farmer's Delight's pot: walls 2 px, floor 2 px, rim at 10. */
-        public static final Shape COOKING_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.5F, 3.0F, 10.0F, 22.5F, false);
+        public static final Shape COOKING_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.5F, 3.0F, 10.0F, 22.5F, false, 0);
         /** Miner's Delight's copper pot: as wide inside, walls and floor 1 px, rim at 8. */
-        public static final Shape COPPER_POT = new Shape(CookingPotStation.COPPER_SLOTS, 1.0F, 5.5F, 2.0F, 10.0F, 22.5F, false);
+        public static final Shape COPPER_POT = new Shape(CookingPotStation.COPPER_SLOTS, 1.0F, 5.5F, 2.0F, 10.0F, 22.5F, false, 0);
+        /**
+         * Dungeons Delight's monster pot: Farmer's Delight's pot (our model in its textures) full of the green ooze its own top shows
+         * (`monster_pot_top`, an animated green surface), whatever cooks in it.
+         */
+        public static final Shape MONSTER_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.5F, 3.0F, 10.0F, 22.5F, false, 0x47A44F);
         /** Farmer's Spell's alchemist pot: as wide inside, floor 2 px, rim at 9; its stick leans the other way and it holds a scroll. */
-        public static final Shape ALCHEMIST_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 5.5F, 3.0F, 9.0F, -22.5F, true);
+        public static final Shape ALCHEMIST_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 5.5F, 3.0F, 9.0F, -22.5F, true, 0);
     }
 
     /** Arrays are as long as the biggest pot needs; a pot uses its own {@link Shape#slots} of them. */
@@ -132,6 +138,9 @@ public final class PotBehavior implements StationBehavior {
     /** Water takes this alpha, a finished soup the other: it thickens as it cooks. */
     private static final int WATER_ALPHA = 0xA0;
     private static final int SOUP_ALPHA = 0xF0;
+    /** The monster pot's ooze is nearly as thick as a soup before anything cooks, and takes at most this much of the food's colour. */
+    private static final int OOZE_ALPHA = 0xE0;
+    private static final float OOZE_TAKES = 0.35F;
     /** How much of the food's colour the water has before any cooking. */
     private static final float RAW_TINT = 0.3F;
 
@@ -216,6 +225,8 @@ public final class PotBehavior implements StationBehavior {
     private final float brothFloor;
     private final float brothDepth;
     private final float spoonEnd;
+    /** {@link Shape#liquid}: what the pot holds instead of water, RGB, or 0. */
+    private final int liquid;
     private final float rimTop;
     private final float restLean;
     /** The alchemist pot's scroll, or null for a pot without one. */
@@ -372,6 +383,7 @@ public final class PotBehavior implements StationBehavior {
         brothFloor = shape.floor();
         brothDepth = shape.depth();
         spoonEnd = shape.spoonEnd();
+        liquid = shape.liquid();
         rimTop = shape.rim();
         restLean = shape.lean();
         scroll = shape.scroll() ? new PotScroll() : null;
@@ -1009,7 +1021,8 @@ public final class PotBehavior implements StationBehavior {
 
     /** Clear water, tinted by what is in it, deepening to the colour of the food as it cooks. */
     private void colour(StationView view, ItemStack meal, ItemStack[] items) {
-        int water = WATER_ALPHA << 24 | BiomeColors.getAverageWaterColor(view.level(), view.pos()) & 0xFFFFFF;
+        int water = liquid != 0 ? OOZE_ALPHA << 24 | liquid
+                : WATER_ALPHA << 24 | BiomeColors.getAverageWaterColor(view.level(), view.pos()) & 0xFFFFFF;
         if (meal.isEmpty()) {
             // A liquid poured in colours the water from when it runs: milk makes it milky before anything cooks.
             for (int i = 0; i < items.length; i++) {
@@ -1034,7 +1047,8 @@ public final class PotBehavior implements StationBehavior {
         if (!food.isEmpty()) {
             float cooked = meal.isEmpty() ? RAW_TINT + (1.0F - RAW_TINT) * view.state().getControl(CookingPotStation.PROGRESS) : 1.0F;
             int soup = preview.isEmpty() ? FoodColors.mix(food) : FoodColors.broth(view.level(), preview);
-            colour = blend(water, SOUP_ALPHA << 24 | soup, cooked);
+            // The monster pot's ooze stays green: the food only shades it.
+            colour = blend(water, SOUP_ALPHA << 24 | soup, liquid != 0 ? cooked * OOZE_TAKES : cooked);
             uneven = cooked;
         }
         float mottle = uneven;

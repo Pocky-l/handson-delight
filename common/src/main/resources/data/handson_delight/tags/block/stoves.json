@@ -12,6 +12,10 @@
     {
       "id": "mynethersdelight:nether_stove",
       "required": false
+    },
+    {
+      "id": "dungeonsdelight:dungeon_stove",
+      "required": false
     }
   ]
 }

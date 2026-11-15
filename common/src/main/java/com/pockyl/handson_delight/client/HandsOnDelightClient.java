@@ -41,7 +41,7 @@ public final class HandsOnDelightClient {
     public static void init() {
         DiegesisClient.registerBehavior(CookingPotStation.ID, PotBehavior::new);
         DiegesisClient.registerBehavior(CookingPotStation.COPPER_ID, view -> new PotBehavior(view, PotBehavior.Shape.COPPER_POT));
-        DiegesisClient.registerBehavior(CookingPotStation.MONSTER_ID, PotBehavior::new);
+        DiegesisClient.registerBehavior(CookingPotStation.MONSTER_ID, view -> new PotBehavior(view, PotBehavior.Shape.MONSTER_POT));
         DiegesisClient.registerBehavior(CookingPotStation.ALCHEMIST_ID, view -> new PotBehavior(view, PotBehavior.Shape.ALCHEMIST_POT));
         DiegesisClient.registerBehavior(KegStation.ID, KegBehavior::lying);
         DiegesisClient.registerBehavior(KegStation.STANDING_ID, KegBehavior::standing);

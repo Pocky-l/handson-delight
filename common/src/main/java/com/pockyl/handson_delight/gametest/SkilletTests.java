@@ -69,6 +69,8 @@ public final class SkilletTests {
         BlockPos pos = helper.absolutePos(fire.above());
         Station station = new Station(helper.getLevel(), pos);
         SkilletBlockEntity skillet = (SkilletBlockEntity) helper.getLevel().getBlockEntity(pos);
+        // The empty template is smaller than the area counted: food an earlier batch left in the same spot would count as jumped out.
+        helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3)).forEach(ItemEntity::discard);
         return new Pan(station, new SkilletLogic(station), skillet, helper.makeMockPlayer(GameType.CREATIVE));
     }
 

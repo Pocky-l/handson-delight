@@ -76,7 +76,7 @@ public final class StoveStation {
 
     /**
      * Stoves that open as this station: Farmer's Delight's and addons' built on its class (End's Delight's End stove, My Nether's
-     * Delight's Nether stove). A pack adds its own.
+     * Delight's Nether stove, Dungeons Delight's dungeon stove). A pack adds its own.
      */
     public static final TagKey<Block> STOVES = TagKey.create(Registries.BLOCK, HandsOnDelight.id("stoves"));
 

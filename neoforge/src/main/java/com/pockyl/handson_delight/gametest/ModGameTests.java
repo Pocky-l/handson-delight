@@ -740,6 +740,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void youkaiBoardTakesBackOnlyTheLastStep(GameTestHelper helper) {
+        YoukaiBoardTests.youkaiBoardTakesBackOnlyTheLastStep(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void youkaiBookMakesSeveralDishes(GameTestHelper helper) {
         YoukaiBoardTests.youkaiBookMakesSeveralDishes(helper);
     }

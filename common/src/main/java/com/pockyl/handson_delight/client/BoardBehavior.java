@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -20,6 +21,8 @@ import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.joml.Vector3f;
 
 
@@ -52,8 +55,8 @@ import java.util.Optional;
 public final class BoardBehavior implements StationBehavior {
     /** The board's top and the middle of the place an item lies on, scene pixels. */
     private static final float TOP = 1.0F;
-    private static final float MIDDLE_X = 6.5F;
-    private static final float MIDDLE_Z = 8.0F;
+    private static final float BASE_X = 6.5F;
+    private static final float BASE_Z = 8.0F;
     /** How big an item lying to be cut is, and a layer of a dish; how far layers lie apart, how high the dish's promise floats. */
     private static final float ITEM_SIZE = 10.0F;
     private static final float LAYER_SIZE = 9.0F;
@@ -279,6 +282,13 @@ public final class BoardBehavior implements StationBehavior {
     /** How high the item's node was last put to rest: a pile under it that came or went meanwhile moves it there. */
     private float itemRestY;
     private final List<Step> steps = new ArrayList<>();
+    /**
+     * The middle of the place an item lies on, scene pixels (the board's base, {@link #placeWork}), and how far the scene is turned
+     * from the block's own facing, degrees; -1 before it is known.
+     */
+    private float middleX = BASE_X;
+    private float middleZ = BASE_Z;
+    private int workTurn = -1;
     /** What a hand pours or cracks over the stack, while it does; one at a time, there is one hand. */
     private KitchenMotions.Motion handMotion;
 
@@ -290,8 +300,42 @@ public final class BoardBehavior implements StationBehavior {
         Arrays.fill(shownLayers, ItemStack.EMPTY);
     }
 
+    /**
+     * The scene faces the cook from whichever side they come, the block keeps its own facing: what lies on the board goes to the
+     * middle of its base (Farmer's Delight's base is x 1..12 of the block's own frame, the handle beside it), turned into the scene's
+     * frame. The {@code work} node carries everything that lies or works there.
+     */
+    private void placeWork(StationView view) {
+        BlockState state = view.level().getBlockState(view.pos());
+        int turn = state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
+                ? yaw(view.facing()) - yaw(state.getValue(BlockStateProperties.HORIZONTAL_FACING)) : 0;
+        turn = Math.floorMod(turn, 360);
+        if (turn == workTurn) {
+            return;
+        }
+        workTurn = turn;
+        float angle = turn * Mth.DEG_TO_RAD;
+        middleX = 8.0F + (BASE_X - 8.0F) * Mth.cos(angle);
+        middleZ = 8.0F - (BASE_X - 8.0F) * Mth.sin(angle);
+        float x = middleX - BASE_X;
+        float z = middleZ - BASE_Z;
+        view.node("work").ifPresent(node -> node.moveTo(x, 0.0F, z, 0.0F));
+    }
+
+    /** A facing as the scene is turned to it, degrees: north 0, east 90, south 180, west 270. */
+    private static int yaw(Direction facing) {
+        return switch (facing) {
+            case EAST -> 90;
+            case SOUTH -> 180;
+            case WEST -> 270;
+            default -> 0;
+        };
+    }
+
     @Override
     public void onSceneReady(StationView view) {
+        workTurn = -1;
+        placeWork(view);
         shownItem = ItemStack.EMPTY;
         Arrays.fill(shownLayers, ItemStack.EMPTY);
         knife = null;
@@ -628,15 +672,17 @@ public final class BoardBehavior implements StationBehavior {
         view.node("lift_" + ghost).ifPresent(node -> {
             node.setShape(null, null);
             node.setVisual(Visual.ofItem(tool.getItem()).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));
-            // The scene faces the cook, half a turn from how Farmer's Delight's renderer stands to the block.
-            node.rotateTo(0.0F, 180.0F, carvedTurn(tool), 0.0F);
+            // Farmer's Delight's renderer stands it half a turn from the block's facing, through the block's middle; the scene is
+            // turned from that facing by workTurn.
+            node.rotateTo(0.0F, 180.0F + workTurn, carvedTurn(tool), 0.0F);
             node.scaleTo(CARVED_SCALE, 0.0F);
-            float x = CARVED_X - MIDDLE_X;
-            node.moveTo(x, CARVED_Y, 0.0F, 0.0F);
+            float x = CARVED_X - middleX;
+            float z = CARVED_X - middleZ;
+            node.moveTo(x, CARVED_Y, z, 0.0F);
             node.setVisible(true);
-            node.moveTo(x, CARVED_Y + PULL_HEIGHT, 0.0F, PULL_TIME);
+            node.moveTo(x, CARVED_Y + PULL_HEIGHT, z, PULL_TIME);
             after(PULL_TIME, () -> {
-                node.moveTo(x, CARVED_Y + PULL_HEIGHT + 1.0F, 0.0F, AWAY_TIME);
+                node.moveTo(x, CARVED_Y + PULL_HEIGHT + 1.0F, z, AWAY_TIME);
                 node.scaleTo(0.0F, AWAY_TIME);
             });
             after(PULL_TIME + AWAY_TIME, () -> node.setVisible(false));
@@ -719,6 +765,7 @@ public final class BoardBehavior implements StationBehavior {
 
     @Override
     public void frame(StationView view, float dt) {
+        placeWork(view);
         clock += dt;
         bouncing = Math.max(0.0F, bouncing - dt);
         if (!steps.isEmpty()) {
@@ -992,8 +1039,8 @@ public final class BoardBehavior implements StationBehavior {
         pendingSince = clock;
         CompoundTag at = new CompoundTag();
         at.putInt(CuttingBoardStation.MARK, strokeMark);
-        at.putFloat(CuttingBoardStation.AT, MIDDLE_Z + toolZ);
-        at.putFloat(CuttingBoardStation.AT_X, MIDDLE_X + toolX);
+        at.putFloat(CuttingBoardStation.AT, middleZ + toolZ);
+        at.putFloat(CuttingBoardStation.AT_X, middleX + toolX);
         view.sendAction(CuttingBoardStation.ACTION_CHOP, at);
         refresh(view);
     }
@@ -1152,9 +1199,9 @@ public final class BoardBehavior implements StationBehavior {
      */
     private Optional<Vector3f> overItem(StationView view) {
         return view.cursorOn(TOP + itemHeight())
-                .filter(point -> Math.abs(point.x - MIDDLE_X) < ITEM_SIZE / 2.0F + 1.0F
-                        && Math.abs(point.z - MIDDLE_Z) < ITEM_SIZE / 2.0F + 1.0F)
-                .map(point -> new Vector3f(Mth.clamp(point.x - MIDDLE_X, -REACH, REACH), 0.0F, Mth.clamp(point.z - MIDDLE_Z, -REACH, REACH)));
+                .filter(point -> Math.abs(point.x - middleX) < ITEM_SIZE / 2.0F + 1.0F
+                        && Math.abs(point.z - middleZ) < ITEM_SIZE / 2.0F + 1.0F)
+                .map(point -> new Vector3f(Mth.clamp(point.x - middleX, -REACH, REACH), 0.0F, Mth.clamp(point.z - middleZ, -REACH, REACH)));
     }
 
     @Override
@@ -1212,7 +1259,7 @@ public final class BoardBehavior implements StationBehavior {
         pendingSince = clock;
         CompoundTag at = new CompoundTag();
         at.putInt(CuttingBoardStation.MARK, overMark);
-        at.putFloat(CuttingBoardStation.AT, MIDDLE_Z + knifeZ);
+        at.putFloat(CuttingBoardStation.AT, middleZ + knifeZ);
         view.sendAction(CuttingBoardStation.ACTION_CHOP, at);
         refresh(view);
     }
@@ -1319,7 +1366,7 @@ public final class BoardBehavior implements StationBehavior {
                 : Cutting.findWith(view.level(), worked, toolStack).map(recipe -> recipe.getResults()).orElse(List.of());
         boolean block = !worked.isEmpty() && ItemVoxels.icon(worked).isEmpty();
         int color = worked.isEmpty() ? 0xFFE0D0A0 : 0xFF000000 | FoodColors.main(worked);
-        float x = data.contains(CuttingBoardStation.AT_X) ? data.getFloat(CuttingBoardStation.AT_X) : MIDDLE_X;
+        float x = data.contains(CuttingBoardStation.AT_X) ? data.getFloat(CuttingBoardStation.AT_X) : middleX;
         float top = TOP + (block ? BLOCK_SIZE : ITEM_SIZE / 16.0F);
         Vector3f at = new Vector3f(x, top, data.getFloat(CuttingBoardStation.AT));
         boolean done = data.getBoolean(CuttingBoardStation.DONE);
@@ -1331,7 +1378,7 @@ public final class BoardBehavior implements StationBehavior {
             case STRIP -> view.spawnParticles(DiegesisParticles.DUST, new Vector3f(x, TOP + BLOCK_SIZE * 0.35F, at.z), new Vector3f(0.0F, 1.0F, -3.0F),
                     2.0F, 12, color);
             case SMASH -> view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 6.0F, 0.0F), 2.2F, 10, color);
-            case DIG -> view.spawnParticles(DiegesisParticles.DUST, new Vector3f(x, TOP + BLOCK_SIZE * 0.6F, MIDDLE_Z - BLOCK_SIZE / 2.0F),
+            case DIG -> view.spawnParticles(DiegesisParticles.DUST, new Vector3f(x, TOP + BLOCK_SIZE * 0.6F, middleZ - BLOCK_SIZE / 2.0F),
                     new Vector3f(0.0F, 5.0F, -3.0F), 1.6F, 9, color);
             case PRY -> view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 3.0F, -1.0F), 1.0F, 4, color);
             case SNIP -> view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 2.0F, 0.0F), 0.8F, 3, color);
@@ -1387,7 +1434,7 @@ public final class BoardBehavior implements StationBehavior {
             });
             return;
         }
-        Vector3f middle = new Vector3f(MIDDLE_X, TOP + BLOCK_SIZE / 2.0F, MIDDLE_Z);
+        Vector3f middle = new Vector3f(middleX, TOP + BLOCK_SIZE / 2.0F, middleZ);
         view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 5.0F, 0.0F), 3.0F, how == ToolStroke.DIG ? 14 : 18, color);
     }
 
@@ -1554,7 +1601,7 @@ public final class BoardBehavior implements StationBehavior {
         after(MELT_TIME, () -> view.node("pile").ifPresent(pile -> pile.setVisible(shownItem.getCount() > 1)));
         // Flour dust off what was pressed, rolled or kneaded; a dish tossed in its bowl only glints (crumbs in the
         // food's own colour flew green off every salad).
-        Vector3f middle = new Vector3f(MIDDLE_X, TOP + 1.0F, MIDDLE_Z);
+        Vector3f middle = new Vector3f(middleX, TOP + 1.0F, middleZ);
         if (finish == AssemblyRecipes.Finish.FREEZE) {
             view.spawnParticles(DiegesisParticles.DUST, middle, new Vector3f(0.0F, 2.0F, 0.0F), 2.5F, 12, FROST);
         } else if (finish != AssemblyRecipes.Finish.TOSS && finish != AssemblyRecipes.Finish.ARRANGE) {
@@ -1834,7 +1881,7 @@ public final class BoardBehavior implements StationBehavior {
             });
         }
         after(FREEZE_GATHER, () -> {
-            Vector3f at = new Vector3f(MIDDLE_X + x, TOP + LAYER_STEP * 2.0F, MIDDLE_Z + z);
+            Vector3f at = new Vector3f(middleX + x, TOP + LAYER_STEP * 2.0F, middleZ + z);
             view.spawnParticles(DiegesisParticles.DUST, at, new Vector3f(0.0F, 1.5F, 0.0F), 1.8F, 10, FROST);
             view.spawnParticles(DiegesisParticles.GLINT, at, new Vector3f(0.0F, 1.0F, 0.0F), 1.5F, 4, FROST);
             view.playSound(SoundEvents.GLASS_BREAK, "surface", 0.2F, 1.8F);
@@ -1881,7 +1928,7 @@ public final class BoardBehavior implements StationBehavior {
             NodeView hand = view.node("hand_0").get();
             float top = TOP + index * LAYER_STEP + 0.3F;
             Vector3f from = handFrom(view, top + POUR_HEIGHT, fromPlayer, x, z);
-            KitchenMotions.Pour pour = new KitchenMotions.Pour(hand, "pour", layer, from, new Vector3f(MIDDLE_X + x, top, MIDDLE_Z + z),
+            KitchenMotions.Pour pour = new KitchenMotions.Pour(hand, "pour", layer, from, new Vector3f(middleX + x, top, middleZ + z),
                     () -> top, null, POUR_SIZE, -1.0F, 0.0F);
             // The liquid spreads over the layer under it as it runs.
             pour.onFlow(() -> {
@@ -1898,10 +1945,10 @@ public final class BoardBehavior implements StationBehavior {
             node.setVisible(false);
             float top = TOP + index * LAYER_STEP;
             Vector3f from = handFrom(view, top + POUR_HEIGHT, fromPlayer, x, z);
-            Vector3f knock = new Vector3f(MIDDLE_X - KNOCK_ASIDE, TOP, MIDDLE_Z + z);
+            Vector3f knock = new Vector3f(middleX - KNOCK_ASIDE, TOP, middleZ + z);
             float size = index == 0 ? ITEM_SIZE : LAYER_SIZE;
             startHand(new KitchenMotions.Crack(view.node("hand_0").get(), view.node("spill_0").get(), layer, from, knock,
-                    new Vector3f(MIDDLE_X + x, 0.0F, MIDDLE_Z + z), () -> top, null, EGG_SIZE, size, false, 0.0F)
+                    new Vector3f(middleX + x, 0.0F, middleZ + z), () -> top, null, EGG_SIZE, size, false, 0.0F)
                     .insideTurn(turn(index))
                     .onLanded(() -> {
                         node.setVisible(true);
@@ -1932,10 +1979,10 @@ public final class BoardBehavior implements StationBehavior {
     private Vector3f handFrom(StationView view, float height, boolean fromPlayer, float x, float z) {
         if (fromPlayer) {
             Vector3f off = FromPlayer.offset(view, height, 0, 1);
-            return new Vector3f(MIDDLE_X + x + off.x, height, MIDDLE_Z + z + off.z);
+            return new Vector3f(middleX + x + off.x, height, middleZ + z + off.z);
         }
         Optional<Vector3f> cursor = view.isFocused() ? view.cursorOn(height) : Optional.empty();
-        return cursor.orElse(new Vector3f(MIDDLE_X + x, height + 2.0F, MIDDLE_Z + z));
+        return cursor.orElse(new Vector3f(middleX + x, height + 2.0F, middleZ + z));
     }
 
     @Override

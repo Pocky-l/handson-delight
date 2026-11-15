@@ -10,13 +10,18 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CuisineBoardStation;
 import com.pockyl.handson_delight.station.CuisineLogic;
 import com.pockyl.handson_delight.station.KitchenCuisine;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Youkai's Feasts' cuisine board at the station: nigiri shaped by hand and topped, a maki laid up from the book, rolled and cut with
@@ -205,6 +210,67 @@ public final class YoukaiBoardTests {
         helper.assertTrue(setup.board.handson$contents().isEmpty() && player.getInventory().countItem(farmers("cooked_rice")) == 1
                 && player.getInventory().countItem(Items.BOWL) == 0, "the rice went back into the cook's bowl");
         helper.succeed();
+    }
+
+    /**
+     * Every step of every dish taken back leaves on the board what lay there before it, and the board can draw that: the scene
+     * redraws it in place. Most steps draw the whole thing anew (kelp becomes an open sheet under the rice), so the models of what
+     * stays are not always among those shown; a half-made roll used to lift off whole and come back.
+     */
+    public static void youkaiBoardTakesBackOnlyTheLastStep(GameTestHelper helper) {
+        if (board(helper) == null) {
+            return;
+        }
+        List<String> wrong = new ArrayList<>();
+        int checked = 0;
+        int redrawn = 0;
+        for (KitchenCuisine.Dish dish : board(helper).board.handson$dishes()) {
+            helper.setBlock(new BlockPos(1, 2, 1), Blocks.AIR);
+            Setup setup = board(helper);
+            Player player = helper.makeMockPlayer(GameType.CREATIVE);
+            for (Ingredient step : dish.steps()) {
+                List<ItemStack> before = List.copyOf(setup.board.handson$contents());
+                if (step.isEmpty()) {
+                    act(setup, player, CuisineBoardStation.ACTION_SHAPE, false);
+                } else if (step.getItems().length > 0) {
+                    player.inventoryMenu.setCarried(step.getItems()[0].copyWithCount(16));
+                    act(setup, player, CuisineBoardStation.ACTION_PUT, false);
+                }
+                List<ItemStack> after = List.copyOf(setup.board.handson$contents());
+                if (after.size() != before.size() + 1 || before.isEmpty()) {
+                    continue;
+                }
+                checked++;
+                List<ResourceLocation> stays = setup.board.handson$modelsOf(before);
+                List<ResourceLocation> shown = setup.board.handson$modelsOf(after);
+                if (stays == null || stays.isEmpty() || shown == null) {
+                    wrong.add(dish.id().getPath() + " " + before + " -> " + after);
+                } else if (!shown.containsAll(stays)) {
+                    redrawn++;
+                }
+                act(setup, player, CuisineBoardStation.ACTION_BACK, false);
+                if (!setup.board.handson$contents().equals(before) && !sameItems(setup.board.handson$contents(), before)) {
+                    wrong.add(dish.id().getPath() + " back from " + after + " left " + setup.board.handson$contents());
+                    break;
+                }
+                act(setup, player, step.isEmpty() ? CuisineBoardStation.ACTION_SHAPE : CuisineBoardStation.ACTION_PUT, false);
+            }
+        }
+        helper.assertTrue(checked > 40 && redrawn > 0, "steps checked " + checked + ", redrawn in place " + redrawn);
+        helper.assertTrue(wrong.isEmpty(), wrong.size() + " of " + checked + " steps: " + String.join("; ", wrong));
+        helper.succeed();
+    }
+
+    private static boolean sameItems(List<ItemStack> a, List<ItemStack> b) {
+        if (a.size() != b.size()) {
+            return false;
+        }
+        for (int i = 0; i < a.size(); i++) {
+            if (!ItemStack.isSameItem(a.get(i), b.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

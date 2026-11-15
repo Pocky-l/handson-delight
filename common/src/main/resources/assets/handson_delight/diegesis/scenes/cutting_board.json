@@ -31,36 +31,61 @@
       "id": "surface",
       "collider": {"from": [1, 0, 1], "to": [15, 5, 15]}
     },
-    {"id": "pile", "pos": [6.5, 1.01, 8], "rotation": [0, 17, 0], "pickable": false, "hidden": true},
-    {"id": "item", "pos": [6.5, 1.01, 8], "pickable": false, "hidden": true},
     {
-      "id": "item_block",
-      "pos": [6.5, 3.61, 8],
-      "scale": 0.65,
+      "$comment": "Everything that lies or works on the board, moved by the code to the middle of the board's base as the scene turns to the cook (BoardBehavior.placeWork).",
+      "id": "work",
+      "pos": [0, 0, 0],
       "pickable": false,
-      "hidden": true,
       "children": [
-        {"$comment": "Cracks in stone or wood struck with a pickaxe or an axe, drawn by code over the block from the strokes made.",
-          "id": "item_crack", "pickable": false, "hidden": true}
+        {"id": "pile", "pos": [6.5, 1.01, 8], "rotation": [0, 17, 0], "pickable": false, "hidden": true},
+        {"id": "item", "pos": [6.5, 1.01, 8], "pickable": false, "hidden": true},
+        {
+          "id": "item_block",
+          "pos": [6.5, 3.61, 8],
+          "scale": 0.65,
+          "pickable": false,
+          "hidden": true,
+          "children": [
+            {"$comment": "Cracks in stone or wood struck with a pickaxe or an axe, drawn by code over the block from the strokes made.",
+              "id": "item_crack", "pickable": false, "hidden": true}
+          ]
+        },
+        {"$comment": "A block worked whole (a stripped log) leaving the board for the cook.",
+          "id": "block_gone", "pos": [6.5, 3.61, 8], "scale": 0.65, "pickable": false, "hidden": true},
+        {"id": "marks", "pos": [6.5, 1.01, 8], "pickable": false, "hidden": true},
+        {"id": "item_gone", "pos": [6.5, 1.01, 8], "pickable": false, "hidden": true},
+        {
+          "id": "lift",
+          "pos": [6.5, 1.01, 8],
+          "repeat": {"count": [1, 3, 1], "step": [0, 0, 0]},
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "id": "layer",
+          "pos": [6.5, 1.01, 8],
+          "repeat": {"count": [1, 9, 1], "step": [0, 0.65, 0]},
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "id": "tool_turn",
+          "pos": [6.5, 1, 8],
+          "pickable": false,
+          "children": [
+            {"$comment": "Any tool but the knife (axe, pickaxe, shovel, hoe, shears), posed by code for its own stroke (ToolStroke).",
+              "id": "tool", "scale": 0.45, "pickable": false, "hidden": true}
+          ]
+        },
+        {
+          "id": "knife_turn",
+          "pos": [6.5, 1, 8],
+          "pickable": false,
+          "children": [
+            {"id": "knife", "rotation": [20, 0, -135], "scale": 0.45, "pickable": false, "hidden": true}
+          ]
+        }
       ]
-    },
-    {"$comment": "A block worked whole (a stripped log) leaving the board for the cook.",
-      "id": "block_gone", "pos": [6.5, 3.61, 8], "scale": 0.65, "pickable": false, "hidden": true},
-    {"id": "marks", "pos": [6.5, 1.01, 8], "pickable": false, "hidden": true},
-    {"id": "item_gone", "pos": [6.5, 1.01, 8], "pickable": false, "hidden": true},
-    {
-      "id": "lift",
-      "pos": [6.5, 1.01, 8],
-      "repeat": {"count": [1, 3, 1], "step": [0, 0, 0]},
-      "pickable": false,
-      "hidden": true
-    },
-    {
-      "id": "layer",
-      "pos": [6.5, 1.01, 8],
-      "repeat": {"count": [1, 9, 1], "step": [0, 0.65, 0]},
-      "pickable": false,
-      "hidden": true
     },
     {"$comment": "What a hand brings over and pours or cracks (a bottle of milk, an egg), moved by the code in scene pixels.",
       "id": "hand_0", "pos": [0, 0, 0], "pickable": false, "hidden": true},
@@ -73,23 +98,6 @@
       "scale": 0.69,
       "hidden": true,
       "collider": {"from": [-4.4, -0.4, -3.9], "to": [4.4, 1.4, 3.9]}
-    },
-    {
-      "id": "tool_turn",
-      "pos": [6.5, 1, 8],
-      "pickable": false,
-      "children": [
-        {"$comment": "Any tool but the knife (axe, pickaxe, shovel, hoe, shears), posed by code for its own stroke (ToolStroke).",
-          "id": "tool", "scale": 0.45, "pickable": false, "hidden": true}
-      ]
-    },
-    {
-      "id": "knife_turn",
-      "pos": [6.5, 1, 8],
-      "pickable": false,
-      "children": [
-        {"id": "knife", "rotation": [20, 0, -135], "scale": 0.45, "pickable": false, "hidden": true}
-      ]
     }
   ]
 }

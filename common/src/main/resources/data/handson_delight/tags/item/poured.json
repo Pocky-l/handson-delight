@@ -65,6 +65,18 @@
     {
       "id": "culturaldelights:vinegar",
       "required": false
+    },
+    {
+      "id": "youkaisfeasts:soy_sauce_bottle",
+      "required": false
+    },
+    {
+      "id": "youkaisfeasts:mayonnaise_bottle",
+      "required": false
+    },
+    {
+      "id": "youkaisfeasts:bowl_of_cream",
+      "required": false
     }
   ]
 }

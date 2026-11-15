@@ -35,12 +35,14 @@
   on, as the kettle looks in the world. Sneak to use the kettle as before.
 - Youkai's Feasts' cuisine board is a station. Its sushi and rolls are made step by step, and the recipe book beside it
   shows every step in order, from the empty board. Click with the next thing on your cursor and it comes down onto the board; a
-  sauce is poured out of its bottle. Held over the board, the next step shows where it will go, see-through. With an
-  empty hand, a click shapes the rice into nigiri or rolls the sheet up, and the roll comes over the sheet from your
+  sauce is poured out of its bottle. Held over the board, the next step shows where it will go, see-through. Food that an
+  empty hand would shape or roll rises a little under the cursor, and a click shapes the rice into nigiri or rolls the sheet up, and the roll comes over the sheet from your
   side. The dishes lie facing you, rolls across in front of you. A finished roll is cut as on the cutting board: the
   next cut is a dashed line, the knife (on your cursor, or offered from your inventory) stands on it, and each click
   cuts one; at the last one the roll falls into its pieces, which come to you. A right click takes the last step back, rice into a bowl of yours. A recipe picked in the book is
-  laid up from your inventory and rolled, and Shift makes as many as you have for. Sneak to use the board as before.
+  laid up from your inventory and rolled, and Shift makes as many as you have for. What is left on your cursor after a
+  step goes back into your inventory when the next step has no use for it (the rest of the rice once a nigiri is to be
+  shaped), and stays when it does. Sneak to use the board as before.
 - [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s grill is a station. Two skewers lie over its
   fire: lay them from your hand, the stack you let go over the grill or a recipe in its book. When a skewer's lower side
   is done it smokes round its edge; click it and it turns over, once, as Barbeque's Delight allows. Clicked earlier it
@@ -62,6 +64,14 @@
 - [Chopper's Delight](https://www.curseforge.com/minecraft/mc-mods/choppers-delight)'s decorated cutting board, the one
   with a banner pattern, works like every other board now: click it to cut, put dishes together and stick a knife in.
   Its banner pattern stays on it while you work.
+- [Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s dungeon stove is a station like
+  Farmer's Delight's stove: lay food on its grill, turn each piece at the half and take it off when it is done.
+
+### Changed
+- Every station's recipe book names the dish or the ingredient under the cursor, as a slot does.
+- The book opens again at the recipe you picked last, at that station or at one like it, as long as what lies in the
+  station is on the way to it; before, it opened at the first recipe that fitted, or the first of all. While you work, the
+  dishes keep their places in the list: a dish you were making no longer jumped to another page.
 
 ### Fixed
 - Food thrown into [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg ferments when its recipe wants
@@ -82,6 +92,10 @@
 - Cutting a pumpkin, a melon or another block on the cutting board, the knife hung inside it instead of over it, and
   stood off the line the cursor pointed at, so the line was hard to hit. The knife now stands over the top of what it
   cuts, right under the cursor.
+- The cutting board opens from whichever side you stand at, facing you, with the food in the middle of the board
+  beside its handle. Before, the camera always went round to the side the board was placed from.
+- Dungeons Delight's monster pot is full of its green ooze again, as it is in the world, instead of plain water. What
+  cooks in it only shades the ooze.
 
 ## [1.4.1+1.21.1] - 2026-11-14
 ### New

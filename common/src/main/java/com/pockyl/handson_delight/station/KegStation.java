@@ -75,6 +75,8 @@ public final class KegStation {
     public static final String LEFT = "left";
     /** In a poured or tapped effect, with {@link #FLUID}: how many millibuckets ran. */
     public static final String AMOUNT = "amount";
+    /** In a tapped effect: how many containers were filled, one drink each whatever its size (a bucket is one). */
+    public static final String COUNT = "count";
     /** In a poured or tapped effect: the container used, as it was before (a water bucket poured, a tankard filled). */
     public static final String VESSEL = "vessel";
     /** Played for everybody who sees it: something poured in at the opening, a drink drawn at the tap. */

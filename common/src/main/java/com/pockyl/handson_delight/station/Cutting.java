@@ -27,6 +27,7 @@ import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,11 @@ public final class Cutting {
     private Cutting() {
     }
 
-    /** Every cutting recipe, Farmer's Delight's and its addons', in the order the recipe manager gives them. */
+    /**
+     * Every cutting recipe, Farmer's Delight's and its addons', by id. Never in the recipe manager's order: on 1.20.1 a client keeps
+     * its recipes in hash maps of their own, so its order differs from its server's, and an item two recipes cut (raw chicken, by
+     * Farmer's Delight and by PizzaCraft) got two marks on the client and three on the server, and stayed whole (GitHub #26).
+     */
     public static List<CuttingBoardRecipe> everything(Level level) {
         return cached(level).everything();
     }
@@ -65,9 +70,13 @@ public final class Cutting {
         return cached(level).ordered();
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private static Cached cached(Level level) {
-        RecipeManager manager = level.getRecipeManager();
+        return cached(level.getRecipeManager(), level);
+    }
+
+    /** The cutting recipes of {@code manager}, which need not be the level's: a test reads them as a client would. */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Cached cached(RecipeManager manager, Level level) {
         Map<?, ?> recipes = ((RecipeManagerAccessor) manager).handson$byName();
         synchronized (CACHE) {
             Cached cached = CACHE.get(manager);
@@ -81,6 +90,7 @@ public final class Cutting {
                         ids.put(cutting, holder.id());
                     }
                 }
+                everything.sort(Comparator.comparing(ids::get));
                 List<CookingPotRecipe> pot = Platform.INSTANCE.cookingRecipes(level).stream().map(RecipeHolder::value).toList();
                 List<CuttingBoardRecipe> ordered = new ArrayList<>(everything.stream().filter(recipe -> isCooking(recipe, pot)).toList());
                 everything.stream().filter(recipe -> !ordered.contains(recipe)).forEach(ordered::add);
@@ -127,9 +137,13 @@ public final class Cutting {
     }
 
     public static List<CuttingBoardRecipe> recipesFor(Level level, ItemStack item) {
+        return recipesFor(all(level), item);
+    }
+
+    private static List<CuttingBoardRecipe> recipesFor(List<CuttingBoardRecipe> all, ItemStack item) {
         List<CuttingBoardRecipe> found = new ArrayList<>();
         if (!item.isEmpty()) {
-            all(level).stream().filter(recipe -> recipe.getIngredients().get(0).test(item)).forEach(found::add);
+            all.stream().filter(recipe -> recipe.getIngredients().get(0).test(item)).forEach(found::add);
         }
         return found;
     }
@@ -146,18 +160,26 @@ public final class Cutting {
         STRIPS
     }
 
-    /** How {@code item} is cut: in how many marks, laid how. Both sides read the same recipes and tags, so they agree. */
+    /**
+     * How {@code item} is cut: in how many marks, laid how. Both sides read the same recipes (by id, see {@link #everything}) and tags,
+     * so they agree.
+     */
     public record Plan(int marks, Style style) {
     }
 
     public static Plan plan(Level level, ItemStack item) {
+        return plan(level.getRecipeManager(), level, item);
+    }
+
+    /** {@link #plan(Level, ItemStack)} by the recipes of {@code manager}: a test plans as a client would. */
+    public static Plan plan(RecipeManager manager, Level level, ItemStack item) {
         Style style = item.is(KitchenTags.CUT_IN_WEDGES) || isRound(item) ? Style.WEDGES
                 : item.is(KitchenTags.CUT_IN_STRIPS) ? Style.STRIPS
                 : item.is(KitchenTags.SLICED_STRAIGHT) ? Style.STRAIGHT : Style.ACROSS;
         if (style == Style.STRIPS) {
             return new Plan(STRIPS, style);
         }
-        int pieces = recipesFor(level, item).stream().findFirst().map(Cutting::pieces).orElse(2);
+        int pieces = recipesFor(cached(manager, level).ordered(), item).stream().findFirst().map(Cutting::pieces).orElse(2);
         // n cuts across make n + 1 pieces; n cuts through the middle make 2n wedges.
         int marks = style == Style.WEDGES ? (pieces + 1) / 2 : pieces - 1;
         return new Plan(Mth.clamp(marks, 1, MOST_MARKS), style);

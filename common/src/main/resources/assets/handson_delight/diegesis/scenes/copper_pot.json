@@ -201,6 +201,22 @@
       }
     },
     {
+      "id": "sunk",
+      "$comment": "The surface of the soup, moved to its level by the code: takes the click of an empty hand off anything floating while something went in without floating (milk poured, an egg cracked, sugar dissolved), and it comes back out. Off otherwise.",
+      "collider": {
+        "from": [
+          4,
+          -0.3,
+          4
+        ],
+        "to": [
+          12,
+          0.3,
+          12
+        ]
+      }
+    },
+    {
       "id": "melt_0",
       "pos": [
         8,
@@ -261,6 +277,88 @@
         0
       ],
       "scale": 0.2,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "$comment": "What a hand brings over the soup and pours, cracks or shakes out (a bottle of milk, an egg, sugar), moved by the code in scene pixels; one for each ingredient slot.",
+      "id": "hand_0",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_1",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_2",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_3",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "$comment": "The inside of an egg cracked over the soup, dropping into it.",
+      "id": "spill_0",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "spill_1",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "spill_2",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "spill_3",
+      "pos": [
+        0,
+        0,
+        0
+      ],
       "hidden": true,
       "pickable": false
     },

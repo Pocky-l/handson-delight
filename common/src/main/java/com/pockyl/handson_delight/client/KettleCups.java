@@ -46,8 +46,6 @@ final class KettleCups {
     private static final float ANSWER = 0.8F;
     /** Seconds the kettle takes to be set down when no cup follows. */
     private static final float SET_DOWN = 0.22F;
-    /** A drink poured: about this many millibuckets for each cup filled. */
-    private static final int SERVING = 250;
 
     /** Seconds: coming, the kettle lifted and tipped, running, set down with the last drop, going. */
     private record Pace(float come, float tip, float run, float settle, float go) {
@@ -148,11 +146,11 @@ final class KettleCups {
     }
 
     /**
-     * The kettle poured {@code millibuckets} into {@code vessel}: the cook's own cup that waits for it goes on, with more after it when
+     * The kettle filled {@code count} of {@code vessel}: the cook's own cup that waits for it goes on, with more after it when
      * several were filled; a drink somebody else poured comes now.
      */
-    void served(ItemStack vessel, ItemStack drink, ResourceLocation liquid, int color, int millibuckets) {
-        int drinks = Math.max(1, Math.round((float) millibuckets / SERVING));
+    void served(ItemStack vessel, ItemStack drink, ResourceLocation liquid, int color, int count) {
+        int drinks = Math.max(1, count);
         Cup own = unanswered();
         if (own != null) {
             own.answered = true;

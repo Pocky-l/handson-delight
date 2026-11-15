@@ -112,6 +112,33 @@ public final class YoukaiKettleTests {
     }
 
     /**
+     * An empty hand at the spout of a kettle of plain water takes no bucket from the inventory: it asks for a drink, never for the
+     * water back. A bucket brought on the cursor still draws it, as one served filling.
+     */
+    public static void youkaiKettleWaterStaysFromAnEmptyHand(GameTestHelper helper) {
+        Setup setup = kettle(helper, false);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        lid(setup, player, true);
+        pourWater(setup, player);
+        player.inventoryMenu.setCarried(ItemStack.EMPTY);
+        player.getInventory().setItem(3, new ItemStack(Items.BUCKET));
+        helper.assertTrue(KettleLogic.containerSlot(setup.kettle, player.getInventory()) < 0, "no bucket is offered to an empty hand");
+        CompoundTag fromInventory = at(KettleStation.SPOUT, false);
+        fromInventory.putBoolean(KettleStation.FROM_INVENTORY, true);
+        setup.logic.onCustomAction(setup.station, player, KettleStation.ACTION_USE, fromInventory);
+        helper.assertTrue(setup.kettle.handson$amount() == 1000 && player.getInventory().getItem(3).is(Items.BUCKET),
+                "the water stays in the kettle, got " + setup.kettle.handson$amount());
+        player.inventoryMenu.setCarried(player.getInventory().removeItemNoUpdate(3));
+        setup.logic.onCustomAction(setup.station, player, KettleStation.ACTION_USE, at(KettleStation.SPOUT, false));
+        helper.assertTrue(setup.kettle.handson$amount() == 0 && player.inventoryMenu.getCarried().is(Items.WATER_BUCKET),
+                "a bucket on the cursor draws the water");
+        helper.succeed();
+    }
+
+    /**
      * Black tea: the book puts four leaves in from the inventory (one set: a slot holds one) and takes the lid off; the water poured in
      * comes to the boil over the campfire before anything brews; then the kettle brews it, and the tea is poured out of the spout into
      * bottles, one a click, or every serving from the inventory with shift.

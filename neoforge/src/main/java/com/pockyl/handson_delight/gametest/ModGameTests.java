@@ -384,6 +384,11 @@ public final class ModGameTests {
         BoardTests.rawChickenFallsIntoItsCuts(helper);
     }
 
+    @GameTest(template = "empty")
+    public static void aClientPlansTheMarksItsServerPlans(GameTestHelper helper) {
+        BoardTests.aClientPlansTheMarksItsServerPlans(helper);
+    }
+
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void noKnifeNoCut(GameTestHelper helper) {
         BoardTests.noKnifeNoCut(helper);
@@ -522,6 +527,11 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void everyRecipeReachesItsStation(GameTestHelper helper) {
         RecipeAudit.everyRecipeReachesItsStation(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void everyPotSceneHasEveryPart(GameTestHelper helper) {
+        PotSceneTests.everyPotSceneHasEveryPart(helper);
     }
 
     @GameTest(template = "empty")
@@ -732,6 +742,11 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void youkaiKettleLidIsTheStations(GameTestHelper helper) {
         YoukaiKettleTests.youkaiKettleLidIsTheStations(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void youkaiKettleWaterStaysFromAnEmptyHand(GameTestHelper helper) {
+        YoukaiKettleTests.youkaiKettleWaterStaysFromAnEmptyHand(helper);
     }
 
     @GameTest(template = "empty", timeoutTicks = 100)

@@ -126,6 +126,11 @@ public final class FabricBoardTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aClientPlansTheMarksItsServerPlans(GameTestHelper helper) {
+        BoardTests.aClientPlansTheMarksItsServerPlans(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void noKnifeNoCut(GameTestHelper helper) {
         BoardTests.noKnifeNoCut(helper);
     }

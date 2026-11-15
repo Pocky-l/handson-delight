@@ -68,6 +68,8 @@ public final class KettleStation {
     public static final String LEFT = "left";
     /** In a poured or served effect, with {@link #FLUID}: how many millibuckets ran. */
     public static final String AMOUNT = "amount";
+    /** In a served effect: how many containers were filled, one drink each whatever its size (a bucket is one). */
+    public static final String COUNT = "count";
     /** In a poured or served effect: the container used, as it was before (a water bucket poured, a bottle filled). */
     public static final String VESSEL = "vessel";
     /** Played for everybody who sees it: something poured in at the opening, a drink poured out of the spout. */

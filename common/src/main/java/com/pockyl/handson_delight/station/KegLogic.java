@@ -8,6 +8,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
@@ -263,15 +264,16 @@ public final class KegLogic implements StationLogic {
             player.inventoryMenu.setCarried(ItemStack.EMPTY);
         }
         station.effect(tap ? KegStation.EFFECT_TAPPED : KegStation.EFFECT_POURED, tap ? KegStation.TAP : KegStation.MOUTH,
-                used(tap ? drawn : keg.handson$fluid(), Math.abs(keg.handson$amount() - before), vessel));
+                used(tap ? drawn : keg.handson$fluid(), Math.abs(keg.handson$amount() - before), vessel, back.size()));
     }
 
-    /** What an effect at the keg tells the clients: which liquid ran, and how much of it, for how long its stream runs. */
-    private static CompoundTag used(Fluid fluid, int millibuckets, ItemStack vessel) {
+    /** What an effect at the keg tells the clients: which liquid ran, how much of it (how long its stream runs), and into how many. */
+    private static CompoundTag used(Fluid fluid, int millibuckets, ItemStack vessel, int count) {
         CompoundTag data = new CompoundTag();
         data.putString(KegStation.VESSEL, BuiltInRegistries.ITEM.getKey(vessel.getItem()).toString());
         data.putString(KegStation.FLUID, fluid == Fluids.EMPTY ? "" : BuiltInRegistries.FLUID.getKey(fluid).toString());
         data.putInt(KegStation.AMOUNT, millibuckets);
+        data.putInt(KegStation.COUNT, count);
         return data;
     }
 
@@ -313,7 +315,7 @@ public final class KegLogic implements StationLogic {
             }
         }
         player.getInventory().setChanged();
-        station.effect(KegStation.EFFECT_TAPPED, KegStation.TAP, used(drawn, Math.abs(keg.handson$amount() - before), vessel));
+        station.effect(KegStation.EFFECT_TAPPED, KegStation.TAP, used(drawn, Math.abs(keg.handson$amount() - before), vessel, back.size()));
     }
 
     /** Brewin' and Chewin's own rule of which of the keg's temperatures, 1 to 5, a recipe that wants {@code wanted} takes. */
@@ -328,17 +330,24 @@ public final class KegLogic implements StationLogic {
         };
     }
 
-    /** The inventory slot whose container the drink is drawn into: the one in hand first; -1 without one. */
+    /**
+     * The inventory slot whose container the drink is drawn into: the one in hand first; -1 without one. A bucket is never taken
+     * from the inventory (an empty hand asks for a drink, not for a tank's water back); a bucket on the cursor still draws.
+     */
     public static int containerSlot(KitchenKeg keg, Inventory inventory) {
-        if (keg.handson$canTap(inventory.getSelected())) {
+        if (offerable(keg, inventory.getSelected())) {
             return inventory.selected;
         }
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
-            if (keg.handson$canTap(inventory.getItem(slot))) {
+            if (offerable(keg, inventory.getItem(slot))) {
                 return slot;
             }
         }
         return -1;
+    }
+
+    private static boolean offerable(KitchenKeg keg, ItemStack stack) {
+        return !stack.is(Items.BUCKET) && keg.handson$canTap(stack);
     }
 
     /**

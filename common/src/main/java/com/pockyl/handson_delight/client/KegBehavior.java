@@ -458,7 +458,7 @@ public final class KegBehavior implements StationBehavior {
         } else if (KegStation.EFFECT_TAPPED.equals(effect) && fluid != Fluids.EMPTY) {
             Item vessel = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(data.getString(KegStation.VESSEL)));
             draughts.tapped(view, new ItemStack(vessel), BuiltInRegistries.FLUID.getKey(fluid), colourOf(view, keg(view), fluid),
-                    KegLiquids.of(fluid).orElse(null), data.getInt(KegStation.AMOUNT));
+                    KegLiquids.of(fluid).orElse(null), data.getInt(KegStation.COUNT));
         }
     }
 

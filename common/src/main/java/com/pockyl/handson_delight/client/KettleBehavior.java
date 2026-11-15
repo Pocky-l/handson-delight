@@ -404,7 +404,7 @@ public final class KettleBehavior implements StationBehavior {
         } else if (KettleStation.EFFECT_SERVED.equals(effect) && fluid != Fluids.EMPTY && kettle != null) {
             ItemStack cup = new ItemStack(vessel);
             cups.served(cup, filled(kettle, cup, fluid), BuiltInRegistries.FLUID.getKey(fluid), colourOf(view, kettle, fluid),
-                    data.getInt(KettleStation.AMOUNT));
+                    data.getInt(KettleStation.COUNT));
         }
     }
 

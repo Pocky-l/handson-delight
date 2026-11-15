@@ -184,7 +184,7 @@ public final class KettleLogic implements StationLogic {
             player.inventoryMenu.setCarried(ItemStack.EMPTY);
         }
         station.effect(spout ? KettleStation.EFFECT_SERVED : KettleStation.EFFECT_POURED, spout ? KettleStation.SPOUT : KettleStation.MOUTH,
-                used(spout ? before : kettle.handson$fluid(), Math.abs(kettle.handson$amount() - amount), vessel));
+                used(spout ? before : kettle.handson$fluid(), Math.abs(kettle.handson$amount() - amount), vessel, back.size()));
     }
 
     /** Uses {@code stack} on the kettle once, or with {@code all} for as long as it still fills or pours, one at a time. */
@@ -213,43 +213,46 @@ public final class KettleLogic implements StationLogic {
         ItemStack vessel = container.copyWithCount(1);
         Fluid drawn = kettle.handson$fluid();
         int before = kettle.handson$amount();
-        for (ItemStack stack : useWhile(container, true, all)) {
+        List<ItemStack> back = useWhile(container, true, all);
+        for (ItemStack stack : back) {
             if (!player.getInventory().add(stack)) {
                 player.drop(stack, false);
             }
         }
         player.getInventory().setChanged();
-        station.effect(KettleStation.EFFECT_SERVED, KettleStation.SPOUT, used(drawn, Math.abs(kettle.handson$amount() - before), vessel));
+        station.effect(KettleStation.EFFECT_SERVED, KettleStation.SPOUT,
+                used(drawn, Math.abs(kettle.handson$amount() - before), vessel, back.size()));
     }
 
-    /** What an effect at the kettle tells the clients: which liquid ran, how much of it, and from or into what. */
-    private static CompoundTag used(Fluid fluid, int millibuckets, ItemStack vessel) {
+    /** What an effect at the kettle tells the clients: which liquid ran, how much of it, from or into what, and how many of those. */
+    private static CompoundTag used(Fluid fluid, int millibuckets, ItemStack vessel, int count) {
         CompoundTag data = new CompoundTag();
         data.putString(KettleStation.VESSEL, BuiltInRegistries.ITEM.getKey(vessel.getItem()).toString());
         data.putString(KettleStation.FLUID, fluid == Fluids.EMPTY ? "" : BuiltInRegistries.FLUID.getKey(fluid).toString());
         data.putInt(KettleStation.AMOUNT, millibuckets);
+        data.putInt(KettleStation.COUNT, count);
         return data;
     }
 
     /**
-     * The inventory slot whose cup the drink is poured into: the one in hand first, then a cup or bottle, a bucket only when there is
-     * none; -1 without one.
+     * The inventory slot whose cup the drink is poured into: the one in hand first, then any cup or bottle; -1 without one. A bucket
+     * is never taken from the inventory: an empty hand at the spout asks for a drink, not for the kettle's water back. A bucket on
+     * the cursor still draws it.
      */
     public static int containerSlot(KitchenKettle kettle, Inventory inventory) {
-        if (kettle.handson$canServe(inventory.getSelected())) {
+        if (offerable(kettle, inventory.getSelected())) {
             return inventory.selected;
         }
-        int bucket = -1;
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
-            ItemStack stack = inventory.getItem(slot);
-            if (kettle.handson$canServe(stack)) {
-                if (!stack.is(Items.BUCKET)) {
-                    return slot;
-                }
-                bucket = bucket < 0 ? slot : bucket;
+            if (offerable(kettle, inventory.getItem(slot))) {
+                return slot;
             }
         }
-        return bucket;
+        return -1;
+    }
+
+    private static boolean offerable(KitchenKettle kettle, ItemStack stack) {
+        return !stack.is(Items.BUCKET) && kettle.handson$canServe(stack);
     }
 
     /**

@@ -113,6 +113,10 @@
   dishes keep their places in the list: a dish you were making no longer jumped to another page.
 
 ### Fixed
+- Raw chicken could stay whole on the cutting board after its cuts in modpacks with
+  [PizzaCraft](https://modrinth.com/mod/pizzacraft), which cuts it into more pieces than Farmer's Delight does. Your game
+  and the server could pick different recipes for it, so the board drew two cuts while the server waited for a third. Both
+  now pick the same one, for chicken and anything else two mods cut.
 - A dish with more ingredients than the recipe book's page has room for (seven and more on the cutting board) ran off the
   bottom of the page. A bar beside them now scrolls them a row at a time: drag its grip, click beside it, or turn the mouse
   wheel over the page.
@@ -140,6 +144,13 @@
   beside its handle. Before, the camera always went round to the side the board was placed from.
 - Dungeons Delight's monster pot is full of its green ooze again, as it is in the world, instead of plain water. What
   cooks in it only shades the ooze.
+- At Miner's Delight's copper pot, milk, an egg or sugar that went in comes back out with a click on the soup, as at
+  Farmer's Delight's pot, and they are poured, cracked and shaken in by hand there too.
+- Clicking the keg's tap with an empty hand no longer takes an empty bucket from your inventory and draws the keg's
+  liquid into it: only a mug or bottle is offered. A bucket on your cursor still fills, and shows as one drink, not four.
+- On some computers (seen on a Mac) a block beside the station could cover the recipe book. The book is now drawn over
+  everything there too, only without smoothing its edges
+  ([#9](https://github.com/Pocky-l/handson-delight/issues/9)).
 
 - A glass bottle or a stick can be laid on the cutting board again in modpacks where an addon also cuts something with
   it ([Fright's Delight](https://modrinth.com/mod/frights-delight) cuts with a bottle), so melon juice, bottled drinks,

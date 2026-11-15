@@ -51,8 +51,6 @@ final class KegDraughts {
     private static final float RUN_BUBBLES = 9.0F;
     /** A mug the cook brought waits this long for the keg's word; without it, it goes back empty. */
     private static final float ANSWER = 0.8F;
-    /** A drink drawn: about this many millibuckets for each container filled. */
-    private static final int DRINK = 250;
 
     /** Seconds: coming, running, the last drops, going. */
     private record Pace(float come, float run, float drip, float go) {
@@ -148,11 +146,11 @@ final class KegDraughts {
     }
 
     /**
-     * The keg drew {@code millibuckets} into {@code vessel}: the cook's own mug that waits for it goes on, with more after it when
+     * The keg filled {@code count} of {@code vessel}: the cook's own mug that waits for it goes on, with more after it when
      * several were filled; a drink somebody else drew comes now.
      */
-    void tapped(StationView view, ItemStack vessel, ResourceLocation liquid, int color, KegLiquids.Drink look, int millibuckets) {
-        int drinks = Math.max(1, Math.round((float) millibuckets / DRINK));
+    void tapped(StationView view, ItemStack vessel, ResourceLocation liquid, int color, KegLiquids.Drink look, int count) {
+        int drinks = Math.max(1, count);
         Mug own = unanswered();
         if (own != null) {
             own.answered = true;

@@ -27,6 +27,8 @@ public final class HandsOnConfig {
             "cooking_pot, cutting_board, skillet, stove: the station of that block. Off, the block works as in Farmer's Delight.",
             "keg: Brewin' and Chewin's keg as a station, when that mod is there. Off, the keg keeps its own menu.",
             "oven, vat: Cultural Delights' oven and vat as stations, when that mod is there. Off, they keep their own menus.",
+            "grill, basin: Barbeque's Delight's grill and ingredients basin as stations, when that mod is there. Off, they are",
+            "  used as before.",
             "remove_crafting_recipes: Farmer's Delight's food crafts (sandwiches, salads, rolls, pies, feasts) are made on the",
             "  cutting board only, not in a crafting grid.",
             "  Machines (Create, AE2, Refined Storage) craft them either way.",
@@ -48,6 +50,8 @@ public final class HandsOnConfig {
     private static boolean keg = true;
     private static boolean oven = true;
     private static boolean vat = true;
+    private static boolean grill = true;
+    private static boolean basin = true;
     private static boolean removeCraftingRecipes = true;
     private static boolean stirringRequired = true;
     private static boolean recipeBook = true;
@@ -78,6 +82,8 @@ public final class HandsOnConfig {
         keg = read(values, "keg", keg);
         oven = read(values, "oven", oven);
         vat = read(values, "vat", vat);
+        grill = read(values, "grill", grill);
+        basin = read(values, "basin", basin);
         removeCraftingRecipes = read(values, "remove_crafting_recipes", removeCraftingRecipes);
         stirringRequired = read(values, "stirring_required", stirringRequired);
         recipeBook = read(values, "recipe_book", recipeBook);
@@ -156,6 +162,14 @@ public final class HandsOnConfig {
 
     public static boolean vat() {
         return vat;
+    }
+
+    public static boolean grill() {
+        return grill;
+    }
+
+    public static boolean basin() {
+        return basin;
     }
 
     /** Whether board dishes leave players' crafting grids; never without the board to make them. */

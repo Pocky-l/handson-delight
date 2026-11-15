@@ -7,8 +7,10 @@ import com.pockyl.diegesis.api.client.DiegesisClient;
 import com.pockyl.diegesis.api.client.LiquidLook;
 import com.pockyl.diegesis.api.client.ParticleStyle;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.station.BasinStation;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
+import com.pockyl.handson_delight.station.GrillStation;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.OvenStation;
 import com.pockyl.handson_delight.station.SkilletStation;
@@ -42,6 +44,8 @@ public final class HandsOnDelightClient {
         KegLiquids.register();
         DiegesisClient.registerBehavior(OvenStation.ID, OvenBehavior::new);
         DiegesisClient.registerBehavior(VatStation.ID, VatBehavior::new);
+        DiegesisClient.registerBehavior(GrillStation.ID, GrillBehavior::new);
+        DiegesisClient.registerBehavior(BasinStation.ID, BasinBehavior::new);
         DiegesisClient.registerLiquid(VatLogic.BREW_LIQUID, LiquidLook.of(0xD0B8D8F0));
         // Ice cream in the vat: opaque, grainy as snow, so thick that it hardly moves.
         DiegesisClient.registerLiquid(VatLogic.CREAM_LIQUID,

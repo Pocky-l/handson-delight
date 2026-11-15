@@ -1,0 +1,70 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Barbeque's Delight's grill is the block itself, turned as it faces; its grate is at y 15 inside a rim to y 16. piece_N are its two places, side by side a fifth of a block off the middle as the grill has them (place 0 on the cook's left), each a skewer built from its icon lying front to back, which the cook clicks to turn or take; dressing_N is the seasoning lying on its top (a skewer is 0.53 high), moving with it. mouth catches stacks let go over the grill, grill the clicks beside the skewers; both are thin, at the grate, so a click on a skewer reaches it. hand_N brings a seasoning over skewer N and shakes it out; lift_N are ghosts of what leaves the grill or bounces back. The camera stands to the grill as to the stove, a pixel lower with the grate, and the recipe book hangs where it hangs there.",
+  "work_plane": 16,
+  "idle_visible": true,
+  "camera": {
+    "position": [8, 49.5, -21],
+    "target": [8, 15, 8],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "hover_outline": true
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "mouth",
+      "drop_zone": "hand",
+      "collider": {"from": [1, 14.8, 1], "to": [15, 15.2, 15]}
+    },
+    {
+      "id": "grill",
+      "collider": {"from": [1, 14.8, 1], "to": [15, 15.1, 15]}
+    },
+    {
+      "id": "piece_0",
+      "pos": [11.2, 15.05, 8],
+      "hidden": true,
+      "collider": {"from": [-2.2, -0.2, -6], "to": [2.2, 1.6, 6]},
+      "children": [
+        {"id": "dressing_0", "pos": [0, 0.54, 0], "hidden": true, "pickable": false}
+      ]
+    },
+    {
+      "id": "piece_1",
+      "pos": [4.8, 15.05, 8],
+      "hidden": true,
+      "collider": {"from": [-2.2, -0.2, -6], "to": [2.2, 1.6, 6]},
+      "children": [
+        {"id": "dressing_1", "pos": [0, 0.54, 0], "hidden": true, "pickable": false}
+      ]
+    },
+    {"id": "hand_0", "pos": [0, 0, 0], "hidden": true, "pickable": false},
+    {"id": "hand_1", "pos": [0, 0, 0], "hidden": true, "pickable": false},
+    {
+      "id": "lift",
+      "pos": [8, 15.05, 8],
+      "repeat": {"count": [1, 3, 1], "step": [0, 0, 0]},
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "book_open",
+      "pos": [15.83, 29.72, -4],
+      "rotation": [-50, 0, 0],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {"from": [-4.4, -0.4, -3.9], "to": [4.4, 1.4, 3.9]}
+    }
+  ]
+}

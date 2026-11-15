@@ -17,7 +17,8 @@ import java.util.Set;
 public final class OptionalMixins implements IMixinConfigPlugin {
     private static final String PACKAGE = "com.pockyl.handson_delight.mixin.";
     private static final Set<String> OPTIONAL = Set.of(PACKAGE + "AddonStoveSmokeMixin", PACKAGE + "KegMixin", PACKAGE + "OvenMixin",
-            PACKAGE + "VatMixin", PACKAGE + "VatUprightMixin", PACKAGE + "VatSparksMixin", PACKAGE + "DecoratedBoardMixin", PACKAGE + "DecoratedBoardContentMixin");
+            PACKAGE + "VatMixin", PACKAGE + "VatUprightMixin", PACKAGE + "VatSparksMixin", PACKAGE + "GrillSmokeMixin",
+            PACKAGE + "GrillSizzleMixin", PACKAGE + "DecoratedBoardMixin", PACKAGE + "DecoratedBoardContentMixin");
     /** The NeoForge mixins into addons' own stations (Miner's Delight's copper pot, Dungeons Delight's monster pot). */
     private static final String ADDON_STATIONS = "com.pockyl.handson_delight.neoforge.mixin.";
 

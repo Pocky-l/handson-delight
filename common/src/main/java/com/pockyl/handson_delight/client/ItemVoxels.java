@@ -399,6 +399,37 @@ final class ItemVoxels {
         return mesh.build();
     }
 
+    /**
+     * A powder over food the shape of {@code shape}, drawn {@code size} across: a {@code share} of its pixels, never its outer
+     * {@code margin}, picked the same way every time for the same {@code seed}, each a speck {@code thick} pixels high in the powder's
+     * own colour ({@code column, row} of {@code colour}'s sprite).
+     */
+    static MeshShape specks(Icon shape, float size, float thick, Icon colour, int column, int row, long seed, float share, int margin) {
+        float pixel = shape.pixel(size);
+        float u = (column + 0.5F) / colour.width();
+        float v = (row + 0.5F) / colour.height();
+        int[] bounds = shape.bounds();
+        java.util.Random pick = new java.util.Random(seed);
+        MeshShape.Builder mesh = MeshShape.builder();
+        for (int r = 0; r < shape.height(); r++) {
+            for (int c = 0; c < shape.width(); c++) {
+                boolean inside = c >= bounds[0] + margin && c <= bounds[1] - margin && r >= bounds[2] + margin && r <= bounds[3] - margin;
+                if (pick.nextFloat() >= share || !inside || !shape.solid(c, r)) {
+                    continue;
+                }
+                float left = (shape.width() / 2.0F - c) * pixel;
+                float right = left - pixel;
+                float far = (shape.height() / 2.0F - r) * pixel;
+                float near = far - pixel;
+                mesh.corner(right, thick, near, u, v, 0, 1, 0).corner(right, thick, far, u, v, 0, 1, 0)
+                        .corner(left, thick, far, u, v, 0, 1, 0).corner(left, thick, near, u, v, 0, 1, 0);
+                side(mesh, new Vector3f(left, 0, near), new Vector3f(left, thick, near), new Vector3f(right, thick, near),
+                        new Vector3f(right, 0, near), 0, 0, -1, u, v);
+            }
+        }
+        return mesh.build();
+    }
+
     /** Which row of a drizzled line pixel {@code (c, r)} is, 0 its top and 1 below it; -1 between the lines. */
     private static int drizzle(int c, int r) {
         float phase = (float) (c % (2 * DRIZZLE_TURN)) / DRIZZLE_TURN;

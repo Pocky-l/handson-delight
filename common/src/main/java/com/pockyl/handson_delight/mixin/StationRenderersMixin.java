@@ -14,6 +14,8 @@ import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
 
 import com.pockyl.handson_delight.client.HandsOnDelightClient;
 import com.pockyl.handson_delight.station.KitchenBoard;
+import com.pockyl.handson_delight.station.KitchenBasin;
+import com.pockyl.handson_delight.station.KitchenGrill;
 
 /**
  * Where a scene shows the board, the skillet or the stove, it draws the food itself, so that a knife can cut it, it can fly and
@@ -31,7 +33,8 @@ abstract class StationRenderersMixin {
     private void handson$drawnByScene(BlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffers,
             CallbackInfo callback) {
         boolean drawnByScene = blockEntity instanceof AbstractStoveBlockEntity || blockEntity instanceof SkilletBlockEntity
-                || blockEntity instanceof CookingPotBlockEntity
+                || blockEntity instanceof CookingPotBlockEntity || KitchenGrill.isGrill(blockEntity)
+                || KitchenBasin.isBasin(blockEntity)
                 || blockEntity instanceof KitchenBoard board && !board.handson$isCarving() && !board.handson$rendersBoard();
         if (drawnByScene && HandsOnDelightClient.isSceneDrawn(blockEntity.getBlockPos())) {
             callback.cancel();

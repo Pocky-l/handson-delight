@@ -35,7 +35,9 @@
     "AddonStoveSmokeMixin",
     "CampfireSmokeMixin",
     "DecoratedBoardContentMixin",
-    "VatSparksMixin"
+    "VatSparksMixin",
+    "GrillSmokeMixin",
+    "GrillSizzleMixin"
   ],
   "injectors": {
     "defaultRequire": 1

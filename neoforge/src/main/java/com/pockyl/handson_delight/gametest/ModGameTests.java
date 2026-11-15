@@ -594,6 +594,41 @@ public final class ModGameTests {
         VatTests.aStackIsSharedOutAndBottlesStayOut(helper);
     }
 
+    @GameTest(template = "empty")
+    public static void theGrillReadsItsRecipes(GameTestHelper helper) {
+        GrillTests.theGrillReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aSkewerTurnsOnceFromItsHalfAndIsDoneAfter(GameTestHelper helper) {
+        GrillTests.aSkewerTurnsOnceFromItsHalfAndIsDoneAfter(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aPowderSeasonsASkewerOnTheGrill(GameTestHelper helper) {
+        GrillTests.aPowderSeasonsASkewerOnTheGrill(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theGrillOpensForWhatItTakes(GameTestHelper helper) {
+        GrillTests.theGrillOpensForWhatItTakes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theBasinReadsItsRecipes(GameTestHelper helper) {
+        BasinTests.theBasinReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aStickSkewersTheFoodOfOneCompartmentWithTheSideOfTheOther(GameTestHelper helper) {
+        BasinTests.aStickSkewersTheFoodOfOneCompartmentWithTheSideOfTheOther(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aRecipeFromTheBookFillsAndSkewers(GameTestHelper helper) {
+        BasinTests.aRecipeFromTheBookFillsAndSkewers(helper);
+    }
+
     /** {@link PotTests.MealMaker}'s meal of what lies in the pot on NeoForge. */
     private static final class MealOfWhatLiesThere extends CookingPotRecipe {
         private final NonNullList<Ingredient> inputs;

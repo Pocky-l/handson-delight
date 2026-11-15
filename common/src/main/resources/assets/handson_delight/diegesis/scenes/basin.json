@@ -1,0 +1,76 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Barbeque's Delight's ingredients basin is the block itself, turned as it faces: a wooden tray to y 4 with its floor at y 1 and a divider at x 7.5..8.5, so two compartments, 0 on the cook's left (x 8.5..14) and 1 on the right (x 2..7.5), z 2..14. compartment_N is the click place of each, food_N_K the pieces drawn lying in it. stick is a stick from the cook's inventory lying ready on the front rim: a click skewers. On a skewering, skewer is the stick lying over the basin, its point away from the cook, and bead_K are the pieces, each turned across it at the point and pushed down onto the ones before; then all of it leaves for the cook. lift_N are ghosts of what bounces back. The camera stands to the basin as to the stove, lower with it, and the recipe book hangs where it hangs there.",
+  "work_plane": 4,
+  "idle_visible": true,
+  "camera": {
+    "position": [8, 37, -21],
+    "target": [8, 2.5, 8],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "hover_outline": true
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "mouth",
+      "drop_zone": "hand",
+      "collider": {"from": [1, 3.8, 1], "to": [15, 4.2, 15]}
+    },
+    {"id": "compartment_0", "collider": {"from": [8.5, 1, 2], "to": [14, 3.9, 14]}},
+    {"id": "compartment_1", "collider": {"from": [2, 1, 2], "to": [7.5, 3.9, 14]}},
+    {
+      "id": "food_0",
+      "pos": [11.25, 1.02, 8],
+      "repeat": {"count": [1, 6, 1], "step": [0, 0, 0]},
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "food_1",
+      "pos": [4.75, 1.02, 8],
+      "repeat": {"count": [1, 6, 1], "step": [0, 0, 0]},
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "stick",
+      "pos": [8, 4.05, 1.5],
+      "hidden": true,
+      "collider": {"from": [-6, -0.3, -1.2], "to": [6, 1.2, 1.2]}
+    },
+    {"id": "skewer", "pos": [8, 6, 8], "hidden": true, "pickable": false},
+    {
+      "id": "bead",
+      "pos": [8, 6, 8],
+      "repeat": {"count": [1, 4, 1], "step": [0, 0, 0]},
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "lift",
+      "pos": [8, 4.05, 8],
+      "repeat": {"count": [1, 3, 1], "step": [0, 0, 0]},
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "book_open",
+      "pos": [15.83, 17.22, -4],
+      "rotation": [-50, 0, 0],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {"from": [-4.4, -0.4, -3.9], "to": [4.4, 1.4, 3.9]}
+    }
+  ]
+}

@@ -29,6 +29,7 @@ public final class HandsOnConfig {
             "oven, vat: Cultural Delights' oven and vat as stations, when that mod is there. Off, they keep their own menus.",
             "grill, basin: Barbeque's Delight's grill and ingredients basin as stations, when that mod is there. Off, they are",
             "  used as before.",
+            "kettle: Farmer's Respite's kettle as a station, when that mod is there. Off, the kettle keeps its own menu.",
             "remove_crafting_recipes: Farmer's Delight's food crafts (sandwiches, salads, rolls, pies, feasts) are made on the",
             "  cutting board only, not in a crafting grid.",
             "  Machines (Create, AE2, Refined Storage) craft them either way.",
@@ -41,6 +42,7 @@ public final class HandsOnConfig {
             "  menu (Miner's Delight's copper pot too).",
             "skillet_time, stove_time: the same for food fried in the skillet and grilled on the stove at the station.",
             "  Food put in with Farmer's Delight's own right click (sneaking, a player without this mod) keeps its time.",
+            "kettle_time: the same for drinks brewed in Farmer's Respite's kettle, however they got into it.",
             "The recipe book shows the times as they are on the server.");
 
     private static boolean cookingPot = true;
@@ -52,12 +54,14 @@ public final class HandsOnConfig {
     private static boolean vat = true;
     private static boolean grill = true;
     private static boolean basin = true;
+    private static boolean kettle = true;
     private static boolean removeCraftingRecipes = true;
     private static boolean stirringRequired = true;
     private static boolean recipeBook = true;
     private static float cookingPotTime = 1.0F;
     private static float skilletTime = 1.0F;
     private static float stoveTime = 1.0F;
+    private static float kettleTime = 1.0F;
 
     private HandsOnConfig() {
     }
@@ -84,12 +88,14 @@ public final class HandsOnConfig {
         vat = read(values, "vat", vat);
         grill = read(values, "grill", grill);
         basin = read(values, "basin", basin);
+        kettle = read(values, "kettle", kettle);
         removeCraftingRecipes = read(values, "remove_crafting_recipes", removeCraftingRecipes);
         stirringRequired = read(values, "stirring_required", stirringRequired);
         recipeBook = read(values, "recipe_book", recipeBook);
         cookingPotTime = readTime(values, "cooking_pot_time", cookingPotTime);
         skilletTime = readTime(values, "skillet_time", skilletTime);
         stoveTime = readTime(values, "stove_time", stoveTime);
+        kettleTime = readTime(values, "kettle_time", kettleTime);
         if (unread) {
             // Never write the defaults over a file the player wrote and the game could not read.
             return;
@@ -172,6 +178,18 @@ public final class HandsOnConfig {
         return basin;
     }
 
+    public static boolean kettle() {
+        return kettle;
+    }
+
+    /**
+     * How many times as long as usual a drink takes to brew in Farmer's Respite's kettle, at the station, in its menu or fed by a
+     * hopper. 1 with the kettle's station off, when the kettle is Farmer's Respite's own.
+     */
+    public static float kettleTime() {
+        return kettle ? kettleTime : 1.0F;
+    }
+
     /** Whether board dishes leave players' crafting grids; never without the board to make them. */
     public static boolean removeCraftingRecipes() {
         return removeCraftingRecipes && cuttingBoard;
@@ -204,6 +222,11 @@ public final class HandsOnConfig {
         cookingPotTime = pot;
         skilletTime = skillet;
         stoveTime = stove;
+    }
+
+    /** Sets the kettle's brewing time for a game test. */
+    public static void setKettleTime(float times) {
+        kettleTime = times;
     }
 
     /** {@code ticks} as long as {@code times} makes them, never less than a tick. */

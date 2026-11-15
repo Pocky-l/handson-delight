@@ -8,13 +8,19 @@
     "CopperPotMixin",
     "CopperPotBlockMixin",
     "MonsterPotMixin",
-    "MonsterPotBlockMixin"
+    "MonsterPotBlockMixin",
+    "KettleMixin",
+    "AlchemistPotMixin",
+    "AlchemistPotBlockMixin"
   ],
   "client": [
     "CopperPotQuietMixin",
     "CopperPotSteamMixin",
     "MonsterPotQuietMixin",
-    "MonsterPotSteamMixin"
+    "MonsterPotSteamMixin",
+    "KettleQuietMixin",
+    "AlchemistPotQuietMixin",
+    "AlchemistPotSteamMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -68,6 +68,11 @@ dependencies {
     compileOnly "maven.modrinth:cultural-delights:${cultural_delights_version}"
     // Dungeons Delight's monster pot is a station too: compiled against it only.
     compileOnly "maven.modrinth:dungeons_delight:${dungeons_delight_version}"
+    // Farmer's Respite's kettle (its unofficial NeoForge port) is a station too: compiled against it only.
+    compileOnly "maven.modrinth:farmers-respite-unofficial-port:${farmers_respite_version}"
+    // Farmer's Spell's alchemist pot is a station too, its scroll an Iron's Spells scroll: compiled against both only.
+    compileOnly "maven.modrinth:farmers-spell:${farmers_spell_version}"
+    compileOnly "maven.modrinth:irons-spells-n-spellbooks:${irons_spellbooks_version}"
 }
 
 // -Pmeals runs only the game tests of Modest Meals' meals at the board, with Modest Meals: it makes Farmer's Delight's burgers,
@@ -86,8 +91,8 @@ if (meals) {
 }
 
 // -Paddons runs the game and the game tests with the most downloaded Farmer's Delight addons that have a NeoForge 1.21.1 build
-// (Modrinth version ids), so that the mod is tested with them as well as without. Delightful, Nether's Delight and Farmer's
-// Respite have none.
+// (Modrinth version ids), so that the mod is tested with them as well as without. Delightful and Nether's Delight have none; Farmer's
+// Respite has an unofficial port.
 if (providers.gradleProperty('addons').isPresent()) {
     dependencies {
         [
@@ -106,6 +111,7 @@ if (providers.gradleProperty('addons').isPresent()) {
                 "dungeons_delight:${dungeons_delight_version}", // Dungeons Delight 1.21.1-1.5.2
                 'runiclib:tk5EQpUG',              // RunicLib 5.0.7, needed by Dungeons Delight
                 "choppers-delight:${choppers_delight_version}",      // Chopper's Delight 1.2.2: cutting boards of every wood, Farmer's Delight's own block
+                "farmers-respite-unofficial-port:${farmers_respite_version}", // Farmer's Respite Unofficial Port 3.0.1: its kettle
         ].each { localRuntime "maven.modrinth:${it}" }
         // -Paddons=wide adds the next most downloaded addons that need no other mods: more food, own crafts and tags. Vintage
         // Delight, in the 1.20.1 list, has no NeoForge 1.21.1 build.
@@ -117,6 +123,12 @@ if (providers.gradleProperty('addons').isPresent()) {
                     "cultural-delights:${cultural_delights_version}", // Cultural Delights 0.19.8-1.21.1
                     'barbeques-delight-forge:rvUhMw6d', // Barbeque's Delight 1.3.0
                     'festive-delight:FP8ZwEus',       // Festive Delight 2.0.0
+                    "farmers-spell:${farmers_spell_version}", // Farmer's Spell 'n Spell Book 1.0.7.1: its alchemist pot
+                    "irons-spells-n-spellbooks:${irons_spellbooks_version}", // Iron's Spells 'n Spellbooks 1.21.1-3.16.3, needed by it
+                    'irons-lib:dgH7P81J',             // Iron's Lib 1.21.1-2.3.0, needed by Iron's Spells
+                    'geckolib:Grwn5rUB',              // GeckoLib 4.9.3, needed by Iron's Spells and Farmer's Spell
+                    'curios:yohfFbgD',                // Curios API 9.5.1+1.21.1, needed by Iron's Spells
+                    'playeranimator:HJZB6bmA',        // playerAnimator 2.0.4+1.21.1, needed by Iron's Spells
             ].each { localRuntime "maven.modrinth:${it}" }
         }
     }

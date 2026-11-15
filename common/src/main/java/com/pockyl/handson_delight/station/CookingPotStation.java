@@ -31,10 +31,13 @@ public final class CookingPotStation {
     public static final ResourceLocation ID = HandsOnDelight.id("cooking_pot");
     public static final ResourceLocation COPPER_ID = HandsOnDelight.id("copper_pot");
     public static final ResourceLocation MONSTER_ID = HandsOnDelight.id("monster_pot");
+    public static final ResourceLocation ALCHEMIST_ID = HandsOnDelight.id("alchemist_pot");
 
     public static final String INGREDIENTS = "ingredients";
     public static final String MEAL = "meal";
     public static final String SERVED = "served";
+    /** The alchemist pot's spell scroll, never used up: a window on the pot's own scroll slot. */
+    public static final String SCROLL = "scroll";
     public static final String BROTH = "broth";
     public static final String PROGRESS = "progress";
     public static final String HEATED = "heated";
@@ -54,6 +57,7 @@ public final class CookingPotStation {
 
     public static final SlotRef MEAL_SLOT = SlotRef.of(MEAL, 0);
     public static final SlotRef SERVED_SLOT = SlotRef.of(SERVED, 0);
+    public static final SlotRef SCROLL_SLOT = SlotRef.of(SCROLL, 0);
 
     /** A custom action: the container on the player's cursor takes a serving of the soup. */
     public static final String ACTION_SCOOP = "scoop";
@@ -69,6 +73,12 @@ public final class CookingPotStation {
      * cracked, sugar dissolved) comes back out whole, the last first.
      */
     public static final String ACTION_TAKE_BACK = "take_back";
+    /**
+     * A custom action: the scroll on the player's cursor, or with {@link #FROM_HAND} the one in their hand, hangs over the alchemist pot;
+     * the one hanging there before takes its place.
+     */
+    public static final String ACTION_HANG = "hang";
+    public static final String FROM_HAND = "from_hand";
     public static final String DISH = "dish";
     /** How many sets one fill puts in at most: as many as one batch cooks without taking longer. */
     public static final int FILL_MOST = 16;
@@ -89,20 +99,26 @@ public final class CookingPotStation {
     public static final int SLOTS = 6;
     public static final int COPPER_SLOTS = 4;
 
-    public static final StationSchema SCHEMA = schema(SLOTS);
+    public static final StationSchema SCHEMA = schema(SLOTS, false);
 
     public static final StationType TYPE = type(ID, FarmersDelightContent.COOKING_POT, SCHEMA);
-    public static final StationType COPPER_TYPE = type(COPPER_ID, FarmersDelightContent.COPPER_POT, schema(COPPER_SLOTS));
+    public static final StationType COPPER_TYPE = type(COPPER_ID, FarmersDelightContent.COPPER_POT, schema(COPPER_SLOTS, false));
     public static final StationType MONSTER_TYPE = type(MONSTER_ID, FarmersDelightContent.MONSTER_POT, SCHEMA);
+    public static final StationType ALCHEMIST_TYPE = type(ALCHEMIST_ID, FarmersDelightContent.ALCHEMIST_POT, schema(SLOTS, true));
 
     private CookingPotStation() {
     }
 
-    private static StationSchema schema(int slots) {
-        return StationSchema.builder()
+    /** {@code scroll}: the pot holds a spell scroll too, which only the logic tells from other things ({@code PotLogic.mayPlace}). */
+    private static StationSchema schema(int slots, boolean scroll) {
+        StationSchema.Builder builder = StationSchema.builder()
                 .slots(INGREDIENTS, slots, SlotRules.DEFAULT.kept().accepts(stack -> !isDish(stack)))
                 .slots(MEAL, 1, SlotRules.DEFAULT.kept().accepts(stack -> false))
-                .slots(SERVED, 1, SlotRules.DEFAULT.kept().accepts(stack -> false))
+                .slots(SERVED, 1, SlotRules.DEFAULT.kept().accepts(stack -> false));
+        if (scroll) {
+            builder.slots(SCROLL, 1, SlotRules.DEFAULT.kept().maxStack(1));
+        }
+        return builder
                 .tank(BROTH, TankSpec.of(100))
                 .control(PROGRESS, ControlSpec.stepped(0.0F, 1.0F, 100, 0.0F).locked())
                 .control(HEATED, ControlSpec.toggle(false).locked())
@@ -131,6 +147,9 @@ public final class CookingPotStation {
         }
         if (Platform.INSTANCE.isLoaded(FarmersDelightContent.DUNGEONS_DELIGHT)) {
             Diegesis.register(MONSTER_TYPE);
+        }
+        if (Platform.INSTANCE.isLoaded(FarmersDelightContent.FARMERS_SPELL)) {
+            Diegesis.register(ALCHEMIST_TYPE);
         }
     }
 

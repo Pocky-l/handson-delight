@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link KegTests}, {@link OvenTests}, {@link VatTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
+ * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
  * and {@link RecipeAudit} on NeoForge.
  */
 @GameTestHolder(HandsOnDelight.MOD_ID)
@@ -534,6 +534,56 @@ public final class ModGameTests {
         MonsterPotTests.aHopperFedMonsterPotCooksByItself(helper);
     }
 
+    private static boolean spellSchools;
+
+    /**
+     * Iron's Spells reads every spell's school from its config, which a server builds when it syncs data packs to joining players:
+     * a game test server has none, so every spell would be of its default school. Its sync is fired once, to no player.
+     */
+    private static void spellSchools(GameTestHelper helper) {
+        if (!spellSchools && net.neoforged.fml.ModList.get().isLoaded("irons_spellbooks")) {
+            spellSchools = true;
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(
+                    new net.neoforged.neoforge.event.OnDatapackSyncEvent(helper.getLevel().getServer().getPlayerList(), null));
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void theAlchemistPotIsAPotStation(GameTestHelper helper) {
+        spellSchools(helper);
+        AlchemistPotTests.theAlchemistPotIsAPotStation(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aScrollHangsOverThePot(GameTestHelper helper) {
+        spellSchools(helper);
+        AlchemistPotTests.aScrollHangsOverThePot(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aSchoolRecipeWaitsForItsScroll(GameTestHelper helper) {
+        spellSchools(helper);
+        AlchemistPotTests.aSchoolRecipeWaitsForItsScroll(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aFireScrollHeatsThePot(GameTestHelper helper) {
+        spellSchools(helper);
+        AlchemistPotTests.aFireScrollHeatsThePot(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theBookHangsTheScrollADishNeeds(GameTestHelper helper) {
+        spellSchools(helper);
+        AlchemistPotTests.theBookHangsTheScrollADishNeeds(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aHopperFedAlchemistPotCooksByItself(GameTestHelper helper) {
+        spellSchools(helper);
+        AlchemistPotTests.aHopperFedAlchemistPotCooksByItself(helper);
+    }
+
     @GameTest(template = "empty")
     public static void aDishOfMoreThanFourIsNotFilledIn(GameTestHelper helper) {
         CopperPotTests.aDishOfMoreThanFourIsNotFilledIn(helper);
@@ -687,6 +737,26 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void aRecipeFromTheBookFillsAndSkewers(GameTestHelper helper) {
         BasinTests.aRecipeFromTheBookFillsAndSkewers(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theKettlesLidIsTheBlocksOwn(GameTestHelper helper) {
+        KettleTests.theLidIsTheBlocksOwn(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void greenTeaBrewsAndIsPouredFromTheSpout(GameTestHelper helper) {
+        KettleTests.greenTeaBrewsAndIsPouredFromTheSpout(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void leavesDroppedInLieAsTheRecipeWants(GameTestHelper helper) {
+        KettleTests.leavesDroppedInLieAsTheRecipeWants(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void kettleTimeScalesTheBrew(GameTestHelper helper) {
+        KettleTests.kettleTimeScalesTheBrew(helper);
     }
 
     /** {@link PotTests.MealMaker}'s meal of what lies in the pot on NeoForge. */

@@ -14,9 +14,10 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * How the liquids of a keg look, each as what it is: a beer golden with a head of foam and bubbles rising, a stout nearly black
- * under a grey head, vodka clear, eggnog thick and creamy, grenadine glittering. Colours follow Brewin' and Chewin's own drinks;
- * the alpha is how clear the liquid is. Liquids nobody describes here take the colour of the drink poured from them.
+ * How the liquids of a keg or a kettle look, each as what it is: a beer golden with a head of foam and bubbles rising, a stout
+ * nearly black under a grey head, vodka clear, eggnog thick and creamy, grenadine glittering; a green tea clear and pale, coffee
+ * nearly black, cocoa thick and milky. Colours follow Brewin' and Chewin's and Farmer's Respite's own drinks; the alpha is how clear
+ * the liquid is. Liquids nobody describes here take the colour of the drink poured from them.
  */
 final class KegLiquids {
     /**
@@ -106,6 +107,35 @@ final class KegLiquids {
         Drink milk = Drink.of(0xFAF6F3EA).thick(0.1F);
         drink("minecraft", "milk", milk);
         drink(bnc, "milk", milk);
+        // Farmer's Respite's kettle: each drink in its own fluid's colour; a long one has milk in it, a strong one is darker.
+        String respite = "farmersrespite";
+        tea(respite, "green_tea", 0x9FA63B, 0xB4);
+        tea(respite, "yellow_tea", 0xA98341, 0xB8);
+        tea(respite, "black_tea", 0x773D27, 0xD0);
+        tea(respite, "rose_hip_tea", 0xBD2529, 0xC0);
+        tea(respite, "dandelion_tea", 0xE09831, 0xB4);
+        tea(respite, "purulent_tea", 0x822235, 0xD0);
+        tea(respite, "gamblers_tea", 0x584434, 0xD8);
+        tea(respite, "coffee", 0x482A1B, 0xF4);
+        tea(respite, "apple_cider", 0xC48846, 0xC8);
+        tea(respite, "melon_juice", 0xDF4233, 0xC8);
+        drink(respite, "hot_cocoa", Drink.of(0xF88D553A).thick(0.4F).cloudy(0.2F).foam(0.12F, 0xF0E8D2BC));
+        drink(respite, "strong_hot_cocoa", Drink.of(0xFA6E3F28).thick(0.5F).cloudy(0.2F).foam(0.1F, 0xF0E0C8B0));
+    }
+
+    /** A drink of the kettle and its long (with milk) and strong (darker) kin, as Farmer's Respite brews them. */
+    private static void tea(String namespace, String path, int rgb, int alpha) {
+        drink(namespace, path, Drink.of(alpha << 24 | rgb));
+        drink(namespace, "long_" + path, Drink.of(Math.min(0xF0, alpha + 0x30) << 24 | mix(rgb, 0xF2E6D2, 0.35F)).cloudy(0.3F).thick(0.1F));
+        drink(namespace, "strong_" + path, Drink.of(Math.min(0xF4, alpha + 0x18) << 24 | mix(rgb, 0x1E1008, 0.25F)));
+    }
+
+    private static int mix(int from, int to, float amount) {
+        int result = 0;
+        for (int shift = 0; shift < 24; shift += 8) {
+            result |= Math.round((from >>> shift & 0xFF) + amount * ((to >>> shift & 0xFF) - (from >>> shift & 0xFF))) << shift;
+        }
+        return result;
     }
 
     private KegLiquids() {

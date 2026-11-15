@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
 import com.pockyl.diegesis.api.client.DiegesisParticles;
 import com.pockyl.diegesis.api.client.Floater;
@@ -34,6 +35,7 @@ import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.KitchenPot;
 import com.pockyl.handson_delight.station.PotLogic;
+import com.pockyl.handson_delight.station.ScrollPot;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,13 +51,16 @@ public final class PotBehavior implements StationBehavior {
      * The inside of a pot, in pixels: how many ingredients it holds, where the liquid starts, how deep a full pot is, and the height of
      * the spoon's end, where it pivots in its model. A full pot stays 1.5 px under the rim: higher, what floats, the foam at the walls
      * and the waves showed as a thin line over the rim from the side at a low camera angle. The scene's {@code broth} tank ends at the
-     * same height.
+     * same height. {@code rim}: where an egg is knocked; {@code lean}: how the spoon leans at rest in its model, degrees, plus to the
+     * right; {@code scroll}: the pot holds a spell scroll ({@link PotScroll}).
      */
-    public record Shape(int slots, float floor, float depth, float spoonEnd) {
+    public record Shape(int slots, float floor, float depth, float spoonEnd, float rim, float lean, boolean scroll) {
         /** Farmer's Delight's pot: walls 2 px, floor 2 px, rim at 10. */
-        public static final Shape COOKING_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.5F, 3.0F);
+        public static final Shape COOKING_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.5F, 3.0F, 10.0F, 22.5F, false);
         /** Miner's Delight's copper pot: as wide inside, walls and floor 1 px, rim at 8. */
-        public static final Shape COPPER_POT = new Shape(CookingPotStation.COPPER_SLOTS, 1.0F, 5.5F, 2.0F);
+        public static final Shape COPPER_POT = new Shape(CookingPotStation.COPPER_SLOTS, 1.0F, 5.5F, 2.0F, 10.0F, 22.5F, false);
+        /** Farmer's Spell's alchemist pot: as wide inside, floor 2 px, rim at 9; its stick leans the other way and it holds a scroll. */
+        public static final Shape ALCHEMIST_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 5.5F, 3.0F, 9.0F, -22.5F, true);
     }
 
     /** Arrays are as long as the biggest pot needs; a pot uses its own {@link Shape#slots} of them. */
@@ -132,8 +137,7 @@ public final class PotBehavior implements StationBehavior {
 
     /** How far the spoon's end goes from the pot's middle, in pixels. */
     private static final float SPOON_REACH = 2.3F;
-    /** How much the spoon leans at rest (Farmer's Delight's own angle) and in the hand, degrees. */
-    private static final float REST_LEAN = 22.5F;
+    /** How much the spoon leans in the hand, degrees; at rest it leans as its model does ({@link Shape#lean}). */
     private static final float STIR_LEAN = 7.0F;
     /** The spoon's half width; how far from it an item's middle stays; how far from the pot's middle a wall lets an item go. */
     private static final float SPOON_RADIUS = 1.05F;
@@ -212,6 +216,13 @@ public final class PotBehavior implements StationBehavior {
     private final float brothFloor;
     private final float brothDepth;
     private final float spoonEnd;
+    private final float rimTop;
+    private final float restLean;
+    /** The alchemist pot's scroll, or null for a pot without one. */
+    private final PotScroll scroll;
+    /** The school the dish in the pot waits for (its scroll does not hang there), or null; the school the dish was looked up under. */
+    private ResourceLocation waitingFor;
+    private ResourceLocation cookedUnder;
     private final RecipeBook book;
     /** Whether an item goes into some dish or serves one: only those show in the inventory at the pot. */
     private final UsableCache usable = new UsableCache();
@@ -284,7 +295,6 @@ public final class PotBehavior implements StationBehavior {
     private static final float POUR_X = 7.4F;
     private static final float POUR_Z = 8.8F;
     private static final float RIM_OUT = 5.0F;
-    private static final float RIM_TOP = 10.0F;
     /** How fast the soup's colour follows what goes in, per second. */
     private static final float RECOLOUR_RATE = 4.0F;
     private static final Vector3f SCOOP_ORIGIN = new Vector3f(8.0F, 8.0F, 8.0F);
@@ -362,6 +372,9 @@ public final class PotBehavior implements StationBehavior {
         brothFloor = shape.floor();
         brothDepth = shape.depth();
         spoonEnd = shape.spoonEnd();
+        rimTop = shape.rim();
+        restLean = shape.lean();
+        scroll = shape.scroll() ? new PotScroll() : null;
         book = new RecipeBook(new PotBook(slots));
         java.util.Arrays.fill(shown, ItemStack.EMPTY);
         java.util.Arrays.fill(meltAge, Float.NaN);
@@ -391,6 +404,9 @@ public final class PotBehavior implements StationBehavior {
         }
         view.node("book_open").ifPresent(node -> node.setPainter(book));
         view.node("pot").ifPresent(node -> node.setPainter(new PotBody(view, node)));
+        if (scroll != null) {
+            scroll.ready(view);
+        }
         refresh(view, true);
     }
 
@@ -401,6 +417,9 @@ public final class PotBehavior implements StationBehavior {
         view.setInventoryFilter(stack -> usable.test(stack, it -> usable(view, it)));
         book.opened(view);
         refresh(view, true);
+        if (scroll != null) {
+            scroll.opened(view);
+        }
     }
 
     @Override
@@ -467,6 +486,9 @@ public final class PotBehavior implements StationBehavior {
             book.click(view);
             return true;
         }
+        if (scroll != null && !"preview".equals(node) && scroll.click(view, stack)) {
+            return true;
+        }
         if ("preview".equals(node) || !canScoop(view, stack)) {
             return false;
         }
@@ -499,6 +521,10 @@ public final class PotBehavior implements StationBehavior {
     private static boolean usable(StationView view, ItemStack stack) {
         KitchenPot pot = KitchenPot.of(view.level().getBlockEntity(view.pos()));
         if (pot != null && pot.handson$servesIn(stack)) {
+            return true;
+        }
+        ScrollPot scrolls = ScrollPot.of(view.level().getBlockEntity(view.pos()));
+        if (scrolls != null && scrolls.handson$isScroll(stack)) {
             return true;
         }
         return PotLogic.offered(KitchenPot.recipes(view.level().getBlockEntity(view.pos()), view.level()).stream().map(RecipeHolder::value)
@@ -642,6 +668,9 @@ public final class PotBehavior implements StationBehavior {
         StationState state = view.state();
         ItemStack[] items = state.getItems(CookingPotStation.INGREDIENTS);
         ItemStack meal = state.getItem(CookingPotStation.MEAL_SLOT);
+        if (scroll != null) {
+            scroll.refresh(view, quiet);
+        }
         if (!quiet && servings >= 0 && meal.getCount() > servings) {
             cookedThrough(view, items);
             graded(view);
@@ -759,7 +788,7 @@ public final class PotBehavior implements StationBehavior {
         Vector3f onto = new Vector3f(POUR_X, 0.0F, POUR_Z + POUR_SPREAD * (index % 3 - 1));
         if (KitchenLooks.isCracked(stack)) {
             // Knocked on the right rim, away from the spoon, and opened over the soup next to it.
-            Vector3f rim = new Vector3f(8.0F - RIM_OUT, RIM_TOP, onto.z);
+            Vector3f rim = new Vector3f(8.0F - RIM_OUT, rimTop, onto.z);
             Vector3f over = new Vector3f(8.0F - 2.0F, 0.0F, onto.z);
             NodeView inside = view.node("spill_" + index).orElse(hand);
             going[index] = new KitchenMotions.Crack(hand, inside, stack, from, rim, over, surface, broth, EGG_SIZE, EGG_INSIDE, true, 0.0F)
@@ -809,8 +838,10 @@ public final class PotBehavior implements StationBehavior {
         boolean shown = here && !preview.isEmpty();
         boolean running = shown && (view.state().getItem(CookingPotStation.MEAL_SLOT).isEmpty() || hasIngredients(view) || !Float.isNaN(gradeAge));
         view.node("badge").ifPresent(plate -> plate.setVisible(shown));
-        view.node("dial_track").ifPresent(track -> track.setVisible(running));
-        view.node("dial").ifPresent(dial -> dial.setVisible(running));
+        // A dish waiting for its school's scroll does not cook: no bar, the scroll blinks instead.
+        boolean waiting = waitingFor != null && view.state().getItem(CookingPotStation.MEAL_SLOT).isEmpty();
+        view.node("dial_track").ifPresent(track -> track.setVisible(running && !waiting));
+        view.node("dial").ifPresent(dial -> dial.setVisible(running && !waiting));
     }
 
     /** The badge comes with the camera as the book does, growing as it flies in and going as it flies back. */
@@ -1058,9 +1089,15 @@ public final class PotBehavior implements StationBehavior {
         });
     }
 
-    /** What the ingredients make; recipes are on the client too, so the player sees it before anything cooks. */
+    /**
+     * What the ingredients make; recipes are on the client too, so the player sees it before anything cooks. At the alchemist pot a dish
+     * whose school's scroll does not hang there shows too, waiting for it.
+     */
     private ItemStack cooked(StationView view, ItemStack[] items) {
-        boolean same = true;
+        ScrollPot scrolls = ScrollPot.of(view.level().getBlockEntity(view.pos()));
+        ResourceLocation under = scrolls == null ? null : scrolls.handson$school();
+        boolean same = java.util.Objects.equals(under, cookedUnder);
+        cookedUnder = under;
         for (int i = 0; i < slots && same; i++) {
             same = cookedFor[i] != null && ItemStack.matches(cookedFor[i], items[i]);
         }
@@ -1072,6 +1109,13 @@ public final class PotBehavior implements StationBehavior {
             cookedMade = KitchenPot.findRecipe(view.level().getBlockEntity(view.pos()), view.level(), Arrays.asList(items))
                     .map(found -> pot != null ? pot.handson$cooked(found.value()) : Platform.INSTANCE.cooked(view.level(), found.value(), Arrays.asList(items)))
                     .orElse(ItemStack.EMPTY);
+            waitingFor = null;
+            Optional<CookingPotRecipe> waiting = scrolls == null ? Optional.empty()
+                    : scrolls.handson$waiting(view.level(), Arrays.asList(items)).map(RecipeHolder::value);
+            if (waiting.isPresent()) {
+                waitingFor = scrolls.handson$schoolFor(waiting.get());
+                cookedMade = waiting.get().getResultItem(view.level().registryAccess());
+            }
         }
         return cookedMade;
     }
@@ -1099,6 +1143,12 @@ public final class PotBehavior implements StationBehavior {
 
         turnToBlock(view);
         level = Mth.lerp(Math.min(1.0F, dt * 3.0F), level, state.getTank(CookingPotStation.BROTH).amount() / 100.0F);
+        // A gluttony scroll makes the pot boil harder.
+        float boil = scroll == null ? 1.0F : scroll.boil();
+        if (scroll != null) {
+            scroll.frame(view, dt, heated, cooking, brothFloor + brothDepth * level);
+            scroll.badge(view, here && !preview.isEmpty(), meal ? null : waitingFor);
+        }
         moveSpoon(view, dt, stirred);
         arrivals(view, dt);
         drift(view, dt);
@@ -1117,13 +1167,13 @@ public final class PotBehavior implements StationBehavior {
         boolean offering = view.node("mouth").map(NodeView::isHovered).orElse(false) || bowlOverSoup(view) || !offered.isEmpty();
         view.node("pot").ifPresent(pot -> pot.setOutlined(offering));
         view.node("broth").ifPresent(broth -> {
-            broth.setAgitation(!heated ? 0.0F : cooking ? 0.12F : 0.03F);
+            broth.setAgitation((!heated ? 0.0F : cooking ? 0.12F : 0.03F) * boil);
             // A pot starts to boil along its walls.
-            broth.setEdgeBoil(!heated ? 0.0F : cooking ? 0.9F : soup ? 0.55F : 0.3F);
+            broth.setEdgeBoil(Math.min(1.0F, (!heated ? 0.0F : cooking ? 0.9F : soup ? 0.55F : 0.3F) * boil));
         });
 
         // Hot water only breathes; what cooks simmers all over, and a soup left alone goes on bubbling slowly.
-        bubbles += dt * (!heated ? 0.0F : cooking ? 7.0F : soup ? 2.2F : 0.8F);
+        bubbles += dt * boil * (!heated ? 0.0F : cooking ? 7.0F : soup ? 2.2F : 0.8F);
         if (bubbles >= 1.0F) {
             view.spawnInLiquid(DiegesisParticles.BUBBLE, "broth", (int) bubbles, bubbleColor, RISE);
             bubbles -= (int) bubbles;
@@ -1133,7 +1183,7 @@ public final class PotBehavior implements StationBehavior {
             view.spawnOnLiquid(DiegesisParticles.STEAM, "broth", (int) steam, STEAM_COLOR, STEAM_RISE);
             steam -= (int) steam;
         }
-        edgeBubbles += dt * (!heated ? 0.0F : cooking ? 16.0F : soup ? 8.0F : 4.0F);
+        edgeBubbles += dt * boil * (!heated ? 0.0F : cooking ? 16.0F : soup ? 8.0F : 4.0F);
         if (edgeBubbles >= 1.0F) {
             view.spawnAtLiquidEdge(DiegesisParticles.BUBBLE_POP, "broth", (int) edgeBubbles, bubbleColor, EDGE_BUBBLE_SIZE);
             edgeBubbles -= (int) edgeBubbles;
@@ -1288,7 +1338,7 @@ public final class PotBehavior implements StationBehavior {
     /** Leans the spoon from its rest towards the hand's upright, its end staying where the hand has it. */
     private void pose(NodeView spoon, NodeView pot) {
         // The lean grows with the distance from the middle, so it goes through the middle without a jump.
-        float rest = (float) Math.tan(REST_LEAN * Mth.DEG_TO_RAD);
+        float rest = (float) Math.tan(restLean * Mth.DEG_TO_RAD);
         float held = (float) Math.tan(STIR_LEAN * Mth.DEG_TO_RAD) / SPOON_REACH;
         float leanX = Mth.lerp(grip, rest, tipX * held);
         float leanZ = Mth.lerp(grip, 0.0F, tipZ * held);

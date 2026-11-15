@@ -26,6 +26,25 @@
   inventory lies ready on the rim: click it and the pieces hop onto it one after another, the side coming from the other
   compartment, so nothing has to be held in the off hand. Shift makes as many skewers as there is food for, and a
   recipe picked in its book fills the compartments from your inventory.
+- [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port) (its unofficial port)'s kettle opens as a station. Click its lid to lift it
+  off and set it on the stove beside the kettle; pour a bucket of water or milk in at the opening and drop the leaves
+  in. They float, soak and sink to the bottom, and the water takes their colour as it brews. Steam rises from the
+  spout while the kettle is on the fire, more as the brew nears done. When it is done the kettle whistles softly with
+  a jet of steam, also for anyone passing by, and keeps boiling. Click the spout with a bottle: you pick the kettle up,
+  turn it side on and tip it, and the tea runs into a glass mug and rises in it. With an empty hand a bottle is offered
+  from your inventory, and Shift pours every cup there is. Its badge shows what brews, whether the fire under it is
+  lit, the time left, and then how many cups are in it. Its recipes are in the book with what they are brewed in.
+  Sneaking keeps the kettle's own menu.
+- `kettle_time` in `config/handson_delight.properties` makes drinks take longer or shorter in Farmer's Respite's kettle,
+  however they got into it.
+- [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell)'s alchemist pot is a pot station: its stick
+  stirs, things float and boil in it, and it cooks its own recipes first and Farmer's Delight's after. A scroll of
+  [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) clicked on the pot hangs open over
+  its back rim, and so does one in your hand when you open it; click it to take it back. Its school shows on the pot: a
+  fire scroll burns under it like a campfire and heats it, ice frosts the rim, lightning crackles over the liquid, holy
+  light rises from it, gluttony makes it boil harder. A dish that needs a school waits for its scroll: the scroll blinks
+  on the badge, and the book lists it with the dish. Picking such a dish in the book hangs a matching scroll from your
+  inventory. Sneaking keeps the pot's own menu.
 - [Chopper's Delight](https://www.curseforge.com/minecraft/mc-mods/choppers-delight)'s decorated cutting board, the one
   with a banner pattern, works like every other board now: click it to cut, put dishes together and stick a knife in.
   Its banner pattern stays on it while you work.
@@ -44,6 +63,8 @@
 - [Christmas Delight](https://modrinth.com/mod/christmas-delight)'s milk dishes (eggnog, hot chocolate, log cake and
   four more) cook with Farmer's Delight's milk bottle or a milk bucket. They ask for milk by a tag nothing filled, so
   they could not be cooked at all.
+- Farmer's Respite's kettle on a stove or a campfire shows its tray again, drawn with Farmer's Delight's own: its own
+  model asked for tray textures Farmer's Delight no longer has. With the lid off, its opening is open.
 - Cutting a pumpkin, a melon or another block on the cutting board, the knife hung inside it instead of over it, and
   stood off the line the cursor pointed at, so the line was hard to hit. The knife now stands over the top of what it
   cuts, right under the cursor.

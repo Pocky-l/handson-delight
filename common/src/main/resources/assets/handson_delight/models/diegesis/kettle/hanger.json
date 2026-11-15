@@ -1,0 +1,208 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "farmersrespite:block/kettle_handle",
+    "handle": "farmersrespite:block/kettle_handle"
+  },
+  "elements": [
+    {
+      "name": "hanger_front",
+      "from": [
+        6,
+        10,
+        8
+      ],
+      "to": [
+        10,
+        16,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            8,
+            5,
+            15
+          ],
+          "texture": "#handle"
+        },
+        "south": {
+          "uv": [
+            1,
+            8,
+            5,
+            15
+          ],
+          "texture": "#handle"
+        }
+      }
+    },
+    {
+      "name": "hanger_west",
+      "from": [
+        6,
+        10,
+        7
+      ],
+      "to": [
+        6,
+        16,
+        9
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            6
+          ],
+          "texture": "#handle"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            2,
+            6
+          ],
+          "texture": "#handle"
+        }
+      }
+    },
+    {
+      "name": "hanger_east",
+      "from": [
+        10,
+        10,
+        7
+      ],
+      "to": [
+        10,
+        16,
+        9
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            6
+          ],
+          "texture": "#handle"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            2,
+            6
+          ],
+          "texture": "#handle"
+        }
+      }
+    },
+    {
+      "name": "hanger_top",
+      "from": [
+        6,
+        15.99,
+        7
+      ],
+      "to": [
+        10,
+        15.99,
+        9
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ],
+          "texture": "#handle"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ],
+          "texture": "#handle"
+        }
+      }
+    },
+    {
+      "name": "hanger_foot_west",
+      "from": [
+        6,
+        10,
+        7
+      ],
+      "to": [
+        7,
+        10,
+        9
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            3,
+            0,
+            4,
+            2
+          ],
+          "texture": "#handle"
+        },
+        "down": {
+          "uv": [
+            3,
+            0,
+            4,
+            2
+          ],
+          "texture": "#handle"
+        }
+      }
+    },
+    {
+      "name": "hanger_foot_east",
+      "from": [
+        9,
+        10,
+        7
+      ],
+      "to": [
+        10,
+        10,
+        9
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            1,
+            2
+          ],
+          "texture": "#handle"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            1,
+            2
+          ],
+          "texture": "#handle"
+        }
+      }
+    }
+  ]
+}

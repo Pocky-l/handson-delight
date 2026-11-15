@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "handson_delight:diegesis/alchemist_pot/body"
+    },
+    "facing=east": {
+      "model": "handson_delight:diegesis/alchemist_pot/body",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "handson_delight:diegesis/alchemist_pot/body",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "handson_delight:diegesis/alchemist_pot/body",
+      "y": 270
+    }
+  }
+}

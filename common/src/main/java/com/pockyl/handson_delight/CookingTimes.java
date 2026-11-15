@@ -10,6 +10,7 @@ public final class CookingTimes {
     private static final String POT = "cooking_pot";
     private static final String SKILLET = "skillet";
     private static final String STOVE = "stove";
+    private static final String KETTLE = "kettle";
 
     private static volatile CompoundTag received;
 
@@ -22,6 +23,7 @@ public final class CookingTimes {
         times.putFloat(POT, HandsOnConfig.cookingPotTime());
         times.putFloat(SKILLET, HandsOnConfig.skilletTime());
         times.putFloat(STOVE, HandsOnConfig.stoveTime());
+        times.putFloat(KETTLE, HandsOnConfig.kettleTime());
         return times;
     }
 
@@ -44,6 +46,10 @@ public final class CookingTimes {
 
     public static float stove() {
         return read(STOVE, HandsOnConfig.stoveTime());
+    }
+
+    public static float kettle() {
+        return read(KETTLE, HandsOnConfig.kettleTime());
     }
 
     private static float read(String key, float own) {

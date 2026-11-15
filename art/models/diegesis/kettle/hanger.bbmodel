@@ -1,0 +1,593 @@
+{
+	"meta": {
+		"format_version": "5.0",
+		"model_format": "java_block",
+		"box_uv": false
+	},
+	"name": "kettle_handle_lid",
+	"parent": "block/block",
+	"java_block_version": "26.3",
+	"ambientocclusion": true,
+	"front_gui_light": false,
+	"visible_box": [
+		1,
+		1,
+		0
+	],
+	"variable_placeholders": "",
+	"multi_file_ruleset": "",
+	"variable_placeholder_buttons": [],
+	"unhandled_root_fields": {
+		"render_type": "minecraft:cutout"
+	},
+	"resolution": {
+		"width": 16,
+		"height": 16
+	},
+	"elements": [
+		{
+			"name": "hanger_front",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade_direction_override": "",
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				6,
+				10,
+				8
+			],
+			"to": [
+				10,
+				16,
+				8
+			],
+			"autouv": 0,
+			"color": 6,
+			"origin": [
+				0,
+				0,
+				0
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						1,
+						8,
+						5,
+						15
+					],
+					"texture": 0
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"south": {
+					"uv": [
+						1,
+						8,
+						5,
+						15
+					],
+					"texture": 0
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				}
+			},
+			"type": "cube",
+			"uuid": "94048cbf-81f2-dee6-a0bd-7f2273890ce0"
+		},
+		{
+			"name": "hanger_west",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade_direction_override": "",
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				6,
+				10,
+				7
+			],
+			"to": [
+				6,
+				16,
+				9
+			],
+			"autouv": 0,
+			"color": 6,
+			"origin": [
+				0,
+				0,
+				0
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						2,
+						6
+					],
+					"texture": 0
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						2,
+						6
+					],
+					"texture": 0
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				}
+			},
+			"type": "cube",
+			"uuid": "f5f35b93-fc34-ee78-ea75-dc464c368815"
+		},
+		{
+			"name": "hanger_east",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade_direction_override": "",
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				10,
+				10,
+				7
+			],
+			"to": [
+				10,
+				16,
+				9
+			],
+			"autouv": 0,
+			"color": 5,
+			"origin": [
+				0,
+				0,
+				0
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						2,
+						6
+					],
+					"texture": 0
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						2,
+						6
+					],
+					"texture": 0
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				}
+			},
+			"type": "cube",
+			"uuid": "10058867-a2de-e42c-b4b6-004ba8b59120"
+		},
+		{
+			"name": "hanger_top",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade_direction_override": "",
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				6,
+				15.99,
+				7
+			],
+			"to": [
+				10,
+				15.99,
+				9
+			],
+			"autouv": 0,
+			"color": 4,
+			"origin": [
+				0,
+				0,
+				0
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						4,
+						2
+					],
+					"texture": 0
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						4,
+						2
+					],
+					"texture": 0
+				}
+			},
+			"type": "cube",
+			"uuid": "31959a92-0b4f-524a-d1bf-a41ec01c80ca"
+		},
+		{
+			"name": "hanger_foot_west",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade_direction_override": "",
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				6,
+				10,
+				7
+			],
+			"to": [
+				7,
+				10,
+				9
+			],
+			"autouv": 0,
+			"color": 9,
+			"origin": [
+				0,
+				0,
+				0
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"up": {
+					"uv": [
+						3,
+						0,
+						4,
+						2
+					],
+					"texture": 0
+				},
+				"down": {
+					"uv": [
+						3,
+						0,
+						4,
+						2
+					],
+					"texture": 0
+				}
+			},
+			"type": "cube",
+			"uuid": "68ff268a-03a0-eec2-e74c-e13f067a6a13"
+		},
+		{
+			"name": "hanger_foot_east",
+			"box_uv": false,
+			"render_order": "default",
+			"rescale": false,
+			"locked": false,
+			"shade_direction_override": "",
+			"light_emission": 0,
+			"export": true,
+			"scope": 0,
+			"allow_mirror_modeling": true,
+			"from": [
+				9,
+				10,
+				7
+			],
+			"to": [
+				10,
+				10,
+				9
+			],
+			"autouv": 0,
+			"color": 2,
+			"origin": [
+				0,
+				0,
+				0
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						0,
+						0
+					],
+					"texture": null
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						1,
+						2
+					],
+					"texture": 0
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						1,
+						2
+					],
+					"texture": 0
+				}
+			},
+			"type": "cube",
+			"uuid": "0f878c0e-b346-b202-d3c8-4c0b881fffc9"
+		}
+	],
+	"groups": [],
+	"outliner": [
+		"94048cbf-81f2-dee6-a0bd-7f2273890ce0",
+		"f5f35b93-fc34-ee78-ea75-dc464c368815",
+		"10058867-a2de-e42c-b4b6-004ba8b59120",
+		"31959a92-0b4f-524a-d1bf-a41ec01c80ca",
+		"68ff268a-03a0-eec2-e74c-e13f067a6a13",
+		"0f878c0e-b346-b202-d3c8-4c0b881fffc9"
+	],
+	"textures": [
+		{
+			"name": "kettle_handle.png",
+			"folder": "block",
+			"namespace": "farmersrespite",
+			"id": "0",
+			"group": "",
+			"scope": 0,
+			"width": 16,
+			"height": 16,
+			"uv_width": 16,
+			"uv_height": 16,
+			"particle": false,
+			"use_as_default": false,
+			"layers_enabled": false,
+			"sync_to_project": "",
+			"file_format": "png",
+			"render_mode": "default",
+			"render_sides": "auto",
+			"wrap_mode": "limited",
+			"pbr_channel": "color",
+			"fps": 7,
+			"force_translucent": false,
+			"frame_time": 1,
+			"frame_order_type": "loop",
+			"frame_order": "",
+			"frame_interpolate": false,
+			"visible": true,
+			"internal": true,
+			"saved": true,
+			"uuid": "ee718f3a-a169-854d-5095-c623a3287f18"
+		}
+	]
+}

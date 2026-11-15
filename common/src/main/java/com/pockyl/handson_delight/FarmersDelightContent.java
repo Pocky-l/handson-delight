@@ -26,6 +26,12 @@ public final class FarmersDelightContent {
     public static final String DUNGEONS_DELIGHT = "dungeonsdelight";
     /** Dungeons Delight's monster pot: Farmer's Delight's pot in its own textures, cooking its own recipes of monster food. */
     public static final Supplier<Block> MONSTER_POT = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(DUNGEONS_DELIGHT, "monster_pot"));
+    public static final String FARMERS_SPELL = "farmers_spell";
+    /**
+     * Farmer's Spell's alchemist pot: Farmer's Delight's pot in a shape of its own, cooking its own recipes first and Farmer's Delight's
+     * after, with an Iron's Spells scroll whose school some of its recipes need.
+     */
+    public static final Supplier<Block> ALCHEMIST_POT = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(FARMERS_SPELL, "alchemist_pot"));
     public static final Supplier<RecipeType<?>> CUTTING = () -> BuiltInRegistries.RECIPE_TYPE.get(id("cutting"));
 
     public static final SoundEvent BOIL_SOUP = sound("block.cooking_pot.boil_soup");

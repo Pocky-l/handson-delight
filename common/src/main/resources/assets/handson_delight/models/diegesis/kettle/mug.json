@@ -1,0 +1,337 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "handson_delight:block/kettle/mug",
+    "mug": "handson_delight:block/kettle/mug"
+  },
+  "elements": [
+    {
+      "name": "glass",
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        11,
+        6,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ],
+          "texture": "#mug"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ],
+          "texture": "#mug"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ],
+          "texture": "#mug"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ],
+          "texture": "#mug"
+        },
+        "down": {
+          "uv": [
+            6,
+            0,
+            11,
+            5
+          ],
+          "texture": "#mug"
+        }
+      }
+    },
+    {
+      "name": "inside_north",
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        11,
+        6,
+        6
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ],
+          "texture": "#mug"
+        }
+      }
+    },
+    {
+      "name": "inside_south",
+      "from": [
+        6,
+        0,
+        11
+      ],
+      "to": [
+        11,
+        6,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ],
+          "texture": "#mug"
+        }
+      }
+    },
+    {
+      "name": "inside_west",
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        6,
+        6,
+        11
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ],
+          "texture": "#mug"
+        }
+      }
+    },
+    {
+      "name": "inside_east",
+      "from": [
+        11,
+        0,
+        6
+      ],
+      "to": [
+        11,
+        6,
+        11
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ],
+          "texture": "#mug"
+        }
+      }
+    },
+    {
+      "name": "handle_low",
+      "from": [
+        11,
+        1,
+        8
+      ],
+      "to": [
+        12,
+        2,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            3,
+            13,
+            4
+          ],
+          "texture": "#mug"
+        },
+        "south": {
+          "uv": [
+            12,
+            3,
+            13,
+            4
+          ],
+          "texture": "#mug"
+        },
+        "up": {
+          "uv": [
+            12,
+            2,
+            13,
+            3
+          ],
+          "texture": "#mug"
+        },
+        "down": {
+          "uv": [
+            12,
+            3,
+            13,
+            4
+          ],
+          "texture": "#mug"
+        }
+      }
+    },
+    {
+      "name": "handle_high",
+      "from": [
+        11,
+        4,
+        8
+      ],
+      "to": [
+        12,
+        5,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            0,
+            13,
+            1
+          ],
+          "texture": "#mug"
+        },
+        "south": {
+          "uv": [
+            12,
+            0,
+            13,
+            1
+          ],
+          "texture": "#mug"
+        },
+        "up": {
+          "uv": [
+            12,
+            0,
+            13,
+            1
+          ],
+          "texture": "#mug"
+        },
+        "down": {
+          "uv": [
+            12,
+            1,
+            13,
+            2
+          ],
+          "texture": "#mug"
+        }
+      }
+    },
+    {
+      "name": "handle_grip",
+      "from": [
+        12,
+        1,
+        8
+      ],
+      "to": [
+        13,
+        5,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13,
+            0,
+            14,
+            4
+          ],
+          "texture": "#mug"
+        },
+        "east": {
+          "uv": [
+            14,
+            0,
+            15,
+            4
+          ],
+          "texture": "#mug"
+        },
+        "south": {
+          "uv": [
+            13,
+            0,
+            14,
+            4
+          ],
+          "texture": "#mug"
+        },
+        "west": {
+          "uv": [
+            13,
+            0,
+            14,
+            4
+          ],
+          "texture": "#mug"
+        },
+        "up": {
+          "uv": [
+            13,
+            0,
+            14,
+            1
+          ],
+          "texture": "#mug"
+        },
+        "down": {
+          "uv": [
+            14,
+            3,
+            15,
+            4
+          ],
+          "texture": "#mug"
+        }
+      }
+    }
+  ]
+}

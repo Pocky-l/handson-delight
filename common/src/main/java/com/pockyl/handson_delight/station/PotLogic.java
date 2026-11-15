@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
@@ -56,6 +57,8 @@ public final class PotLogic implements StationLogic {
     private static final int THIRD_STAR = 32;
 
     private final KitchenPot pot;
+    /** The same pot when it holds a spell scroll too (the alchemist pot), or null. */
+    private final ScrollPot scrolls;
     private final PotCooking cooking;
     private boolean unsorted;
     /** Who stirs the pot, or last opened it while nobody stirred: their stars are the ones that can fill. */
@@ -65,6 +68,8 @@ public final class PotLogic implements StationLogic {
     private final ItemStack[] resultFor;
     private ItemStack resultMade = ItemStack.EMPTY;
     private CookingPotRecipe recipeMade;
+    /** The school of the scroll the result was looked up under: some recipes cook only under their school. */
+    private ResourceLocation resultSchool;
     /** The dish the cook last picked in the book: the pot's choice while its food makes it, until the pot is empty. */
     private ResourceLocation wanted;
 
@@ -77,6 +82,25 @@ public final class PotLogic implements StationLogic {
         state.bindSlots(CookingPotStation.MEAL, storage(pot, pot.handson$slots(), 1));
         // After the meal lie the container and then the served dish.
         state.bindSlots(CookingPotStation.SERVED, storage(pot, pot.handson$slots() + 2, 1));
+        scrolls = ScrollPot.of(pot.handson$blockEntity());
+        if (scrolls != null) {
+            state.bindSlots(CookingPotStation.SCROLL, new SlotStorage() {
+                @Override
+                public int size() {
+                    return 1;
+                }
+
+                @Override
+                public ItemStack get(int index) {
+                    return scrolls.handson$scroll();
+                }
+
+                @Override
+                public void set(int index, ItemStack stack) {
+                    scrolls.handson$setScroll(stack);
+                }
+            });
+        }
     }
 
     private static SlotStorage storage(KitchenPot pot, int start, int count) {
@@ -240,9 +264,12 @@ public final class PotLogic implements StationLogic {
         return !slot.equals(CookingPotStation.MEAL_SLOT);
     }
 
-    /** What a soup is served in does not go into the water, unless some recipe cooks with it. */
+    /** What a soup is served in does not go into the water, unless some recipe cooks with it. A spell scroll hangs, never goes in. */
     @Override
     public boolean mayPlace(StationContext station, Player player, SlotRef slot, ItemStack stack) {
+        if (scrolls != null && (slot.group().equals(CookingPotStation.SCROLL) || scrolls.handson$isScroll(stack))) {
+            return slot.group().equals(CookingPotStation.SCROLL) && scrolls.handson$isScroll(stack);
+        }
         boolean serves = pot.handson$servesIn(stack);
         for (RecipeHolder<CookingPotRecipe> holder : pot.handson$recipes(station.level())) {
             CookingPotRecipe recipe = holder.value();
@@ -447,6 +474,8 @@ public final class PotLogic implements StationLogic {
                     .ifPresent(recipe -> fill(player, recipe, data.getBoolean(CookingPotStation.SCOOP_ALL) ? CookingPotStation.FILL_MOST : 1));
         } else if (CookingPotStation.ACTION_TAKE_BACK.equals(action)) {
             takeBack(player);
+        } else if (CookingPotStation.ACTION_HANG.equals(action)) {
+            hang(player, data.getBoolean(CookingPotStation.FROM_HAND));
         } else if (CookingPotStation.ACTION_STIR.equals(action)) {
             long now = station.level().getGameTime();
             if (isStirring(station) && !player.getUUID().equals(cook)) {
@@ -463,6 +492,53 @@ public final class PotLogic implements StationLogic {
             cooking.skill().move(now, at, x, z, pot.handson$isHeated() && batch(station) > 0, openStars(player, dish));
             station.state().setControl(CookingPotStation.SPOON_X, x);
             station.state().setControl(CookingPotStation.SPOON_Z, z);
+        }
+    }
+
+    /**
+     * The scroll on the cursor, or in the hand, hangs over the pot; the one there before goes where it came from, or to the inventory
+     * when a stack of scrolls left more there.
+     */
+    private void hang(Player player, boolean fromHand) {
+        ItemStack offered = fromHand ? player.getMainHandItem() : player.inventoryMenu.getCarried();
+        if (scrolls == null || !scrolls.handson$isScroll(offered)) {
+            return;
+        }
+        ItemStack before = scrolls.handson$scroll().copy();
+        // Copies only: a stack changed where it lies is not seen as changed.
+        ItemStack rest = offered.copyWithCount(offered.getCount() - 1);
+        scrolls.handson$setScroll(offered.copyWithCount(1));
+        ItemStack back = rest.isEmpty() ? before : rest;
+        if (fromHand) {
+            player.setItemInHand(InteractionHand.MAIN_HAND, back);
+        } else {
+            player.inventoryMenu.setCarried(back);
+        }
+        if (!rest.isEmpty() && !before.isEmpty() && !player.getInventory().add(before)) {
+            player.drop(before, false);
+        }
+    }
+
+    /**
+     * Before a dish of the book whose recipe wants a school cooks, a scroll of that school from the inventory hangs over the pot; the
+     * one there before takes its place in the inventory.
+     */
+    private void hangFor(Player player, CookingPotRecipe recipe) {
+        ResourceLocation school = scrolls == null ? null : scrolls.handson$schoolFor(recipe);
+        if (school == null || school.equals(scrolls.handson$school())) {
+            return;
+        }
+        Inventory inventory = player.getInventory();
+        int slot = scrolls.scrollSlot(inventory, school);
+        if (slot < 0) {
+            return;
+        }
+        ItemStack before = scrolls.handson$scroll().copy();
+        ItemStack taken = inventory.getItem(slot);
+        inventory.setItem(slot, taken.getCount() > 1 ? taken.copyWithCount(taken.getCount() - 1) : before);
+        scrolls.handson$setScroll(taken.copyWithCount(1));
+        if (taken.getCount() > 1 && !before.isEmpty() && !inventory.add(before)) {
+            player.drop(before, false);
         }
     }
 
@@ -511,6 +587,7 @@ public final class PotLogic implements StationLogic {
         }
         wanted = recipe.id();
         lay(pot, filled.kinds(), filled.parts());
+        hangFor(player, recipe.value());
         cooking.feedByHand();
     }
 
@@ -593,7 +670,9 @@ public final class PotLogic implements StationLogic {
     /** The recipe the ingredients in the pot make, or null. */
     private CookingPotRecipe recipe(StationContext station) {
         ItemStack[] inPot = station.state().getItems(CookingPotStation.INGREDIENTS);
-        boolean same = true;
+        ResourceLocation school = scrolls == null ? null : scrolls.handson$school();
+        boolean same = java.util.Objects.equals(school, resultSchool);
+        resultSchool = school;
         for (int i = 0; i < resultFor.length && same; i++) {
             same = resultFor[i] != null && ItemStack.matches(resultFor[i], inPot[i]);
         }

@@ -1,0 +1,79 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "farmersrespite:block/kettle",
+    "kettle": "farmersrespite:block/kettle"
+  },
+  "elements": [
+    {
+      "name": "lid",
+      "from": [
+        6,
+        7,
+        6
+      ],
+      "to": [
+        10,
+        8,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            5.25,
+            7,
+            5.5
+          ],
+          "texture": "#kettle"
+        },
+        "east": {
+          "uv": [
+            7,
+            5.25,
+            8,
+            5.5
+          ],
+          "texture": "#kettle"
+        },
+        "south": {
+          "uv": [
+            8,
+            5.25,
+            9,
+            5.5
+          ],
+          "texture": "#kettle"
+        },
+        "west": {
+          "uv": [
+            5,
+            5.25,
+            6,
+            5.5
+          ],
+          "texture": "#kettle"
+        },
+        "up": {
+          "uv": [
+            6,
+            4.25,
+            7,
+            5.25
+          ],
+          "rotation": 180,
+          "texture": "#kettle"
+        },
+        "down": {
+          "uv": [
+            6,
+            4.25,
+            7,
+            5.25
+          ],
+          "texture": "#kettle"
+        }
+      }
+    }
+  ]
+}

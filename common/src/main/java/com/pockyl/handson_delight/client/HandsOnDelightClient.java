@@ -13,6 +13,7 @@ import com.pockyl.handson_delight.station.CuttingBoardStation;
 import com.pockyl.handson_delight.station.GrillStation;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.OvenStation;
+import com.pockyl.handson_delight.station.KettleStation;
 import com.pockyl.handson_delight.station.SkilletStation;
 import com.pockyl.handson_delight.station.StoveStation;
 import com.pockyl.handson_delight.station.VatLogic;
@@ -26,6 +27,8 @@ public final class HandsOnDelightClient {
     public static final ResourceLocation OIL_POP = HandsOnDelight.id("oil_pop");
     public static final ResourceLocation FAT = HandsOnDelight.id("fat");
     public static final ResourceLocation PAN_SMOKE = HandsOnDelight.id("pan_smoke");
+    /** A campfire's flame under a pot heated by a fire scroll: the game's flame, as big as a campfire's, glowing. */
+    public static final ResourceLocation SCROLL_FLAME = HandsOnDelight.id("scroll_flame");
     public static final ResourceLocation HEAT = HandsOnDelight.id("heat");
     public static final ResourceLocation GRAIN = HandsOnDelight.id("grain");
     @SuppressWarnings("removal")
@@ -38,6 +41,7 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(CookingPotStation.ID, PotBehavior::new);
         DiegesisClient.registerBehavior(CookingPotStation.COPPER_ID, view -> new PotBehavior(view, PotBehavior.Shape.COPPER_POT));
         DiegesisClient.registerBehavior(CookingPotStation.MONSTER_ID, PotBehavior::new);
+        DiegesisClient.registerBehavior(CookingPotStation.ALCHEMIST_ID, view -> new PotBehavior(view, PotBehavior.Shape.ALCHEMIST_POT));
         DiegesisClient.registerBehavior(KegStation.ID, KegBehavior::lying);
         DiegesisClient.registerBehavior(KegStation.STANDING_ID, KegBehavior::standing);
         DiegesisClient.registerLiquid(HandsOnDelight.id("drink"), LiquidLook.of(0xC0B08850));
@@ -50,6 +54,7 @@ public final class HandsOnDelightClient {
         // Ice cream in the vat: opaque, grainy as snow, so thick that it hardly moves.
         DiegesisClient.registerLiquid(VatLogic.CREAM_LIQUID,
                 new LiquidLook(0xFFF6EEDC, ResourceLocation.withDefaultNamespace("block/snow"), false, 0.95F));
+        DiegesisClient.registerBehavior(KettleStation.ID, KettleBehavior::new);
         DiegesisClient.registerBehavior(CuttingBoardStation.ID, BoardBehavior::new);
         DiegesisClient.registerBehavior(SkilletStation.ID, SkilletBehavior::new);
         DiegesisClient.registerBehavior(StoveStation.ID, StoveBehavior::new);
@@ -84,6 +89,8 @@ public final class HandsOnDelightClient {
                 .gravity(-4.0F).drag(0.75F).grow(3.0F).wobble(1.0F).fadeIn(0.3F).build());
         DiegesisClient.registerParticle(HEAT, ParticleStyle.builder(frames("heat", 4)).color(0x48FFFFFF)
                 .size(3.0F, 4.0F).life(0.8F, 1.3F).gravity(-5.0F).drag(0.6F).grow(0.4F).wobble(0.3F).fadeIn(0.4F).build());
+        DiegesisClient.registerParticle(SCROLL_FLAME, ParticleStyle.builder(ResourceLocation.withDefaultNamespace("flame")).color(0xFFFFFFFF)
+                .size(1.6F, 2.4F).life(0.35F, 0.6F).gravity(-6.0F).drag(0.8F).emissive().grow(0.35F).wobble(0.2F).build());
         // Sugar, cocoa and the like shaken out over a pot: fine grains that fall straight and are gone in the soup.
         DiegesisClient.registerParticle(GRAIN, ParticleStyle.builder(ResourceLocation.withDefaultNamespace("generic_0")).color(0xFFFFFFFF)
                 .size(0.28F, 0.42F).life(0.35F, 0.6F).gravity(55.0F).drag(0.2F).pop().build());

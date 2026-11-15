@@ -49,6 +49,8 @@ public final class VatLogic implements StationLogic {
     private int heldAt = -1;
     /** The places are being shared out: their own changes do not share them out again. */
     private boolean arranging;
+    /** The recipe the cook last picked in the book: the vat's choice while its food makes it, until it is empty. */
+    private ResourceLocation picked;
 
     public VatLogic(StationContext station) {
         vat = KitchenVat.of(station.blockEntity());
@@ -327,91 +329,52 @@ public final class VatLogic implements StationLogic {
         }
     }
 
+    /** The vat's places as slots; laying them out is no cook's change. */
+    private SlotStorage placesAsSlots() {
+        return new SlotStorage() {
+            @Override
+            public int size() {
+                return KitchenVat.INGREDIENTS;
+            }
+
+            @Override
+            public ItemStack get(int index) {
+                return vat.getItem(index);
+            }
+
+            @Override
+            public void set(int index, ItemStack stack) {
+                arranging = true;
+                try {
+                    vat.setItem(index, stack);
+                } finally {
+                    arranging = false;
+                }
+            }
+        };
+    }
+
     /**
-     * The vat ages one of each place at a time, so two lemons dropped in as one stack make no margarita: what lies in it is shared out
-     * over its places when that makes a recipe and the way it lies does not. A stack bigger than a set stays a stack of sets, shared as
-     * evenly as it goes.
+     * The vat ages one of each place at a time, so two lemons dropped in as one stack make no margarita: what lies in it is laid out
+     * over its places the way the recipe it makes wants it ({@link StationRecipes#choose}).
      */
     private void arrange(Level level) {
         if (arranging) {
             return;
         }
-        ItemStack[] places = places();
-        List<ItemStack> kinds = new ArrayList<>();
-        for (ItemStack there : places) {
-            if (there.isEmpty()) {
-                continue;
-            }
-            ItemStack kind = kinds.stream().filter(it -> ItemStack.isSameItemSameComponents(it, there)).findFirst().orElse(null);
-            if (kind == null) {
-                kinds.add(there.copy());
-            } else {
-                kind.grow(there.getCount());
-            }
-        }
+        SlotStorage slots = placesAsSlots();
+        List<ItemStack> kinds = StationRecipes.kinds(slots);
         if (kinds.isEmpty()) {
+            picked = null;
             return;
         }
         List<KitchenVat.Aging> recipes = KitchenVat.recipes(level);
-        if (KitchenVat.matchingPlaces(recipes, places).isPresent()) {
-            return;
+        ResourceLocation found = KitchenVat.matchingPlaces(recipes, places()).map(KitchenVat.Aging::id).orElse(null);
+        StationRecipes.Choice<KitchenVat.Aging> choice = StationRecipes.choose(StationRecipes.candidates(recipes, KitchenVat.Aging::id,
+                KitchenVat.Aging::ingredients), kinds, KitchenVat.INGREDIENTS, picked, found, false);
+        if (choice != null) {
+            StationRecipes.lay(slots, kinds, choice.parts());
         }
-        for (KitchenVat.Aging recipe : recipes) {
-            List<Ingredient> wanted = recipe.ingredients();
-            if (wanted.size() < kinds.size()) {
-                continue;
-            }
-            int[] left = kinds.stream().mapToInt(ItemStack::getCount).toArray();
-            int[] kindOf = new int[wanted.size()];
-            if (!assign(wanted, 0, kinds, left, kindOf)) {
-                continue;
-            }
-            int[] shares = new int[kinds.size()];
-            for (int kind : kindOf) {
-                shares[kind]++;
-            }
-            int[] given = new int[kinds.size()];
-            arranging = true;
-            try {
-                for (int slot = 0; slot < KitchenVat.INGREDIENTS; slot++) {
-                    if (slot >= kindOf.length) {
-                        vat.setItem(slot, ItemStack.EMPTY);
-                        continue;
-                    }
-                    int kind = kindOf[slot];
-                    int total = kinds.get(kind).getCount();
-                    int share = total / shares[kind] + (given[kind] < total % shares[kind] ? 1 : 0);
-                    given[kind]++;
-                    vat.setItem(slot, kinds.get(kind).copyWithCount(share));
-                }
-            } finally {
-                arranging = false;
-            }
-            return;
-        }
-    }
-
-    /** Gives each of the recipe's ingredients, from {@code index} on, a kind with one left of it; true once every kind is used. */
-    private static boolean assign(List<Ingredient> wanted, int index, List<ItemStack> kinds, int[] left, int[] kindOf) {
-        if (index == wanted.size()) {
-            for (int kind = 0; kind < kinds.size(); kind++) {
-                if (left[kind] == kinds.get(kind).getCount()) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        for (int kind = 0; kind < kinds.size(); kind++) {
-            if (left[kind] > 0 && wanted.get(index).test(kinds.get(kind))) {
-                left[kind]--;
-                kindOf[index] = kind;
-                if (assign(wanted, index + 1, kinds, left, kindOf)) {
-                    return true;
-                }
-                left[kind]++;
-            }
-        }
-        return false;
     }
 
     private ItemStack[] places() {
@@ -428,75 +391,23 @@ public final class VatLogic implements StationLogic {
      * output for anything else.
      */
     private void fill(Player player, KitchenVat.Aging recipe, int sets) {
-        List<Ingredient> wanted = recipe.ingredients();
-        ItemStack[] inVat = new ItemStack[KitchenVat.INGREDIENTS];
-        for (int slot = 0; slot < inVat.length; slot++) {
-            inVat[slot] = vat.getItem(slot).copy();
-        }
-        // What lies there must be the start of the same recipe: nothing beyond its places, nothing else in them.
-        for (int slot = 0; slot < inVat.length; slot++) {
-            if (slot >= wanted.size() ? !inVat[slot].isEmpty() : !inVat[slot].isEmpty() && !wanted.get(slot).test(inVat[slot])) {
-                return;
-            }
-        }
+        SlotStorage slots = placesAsSlots();
+        List<ItemStack> kinds = StationRecipes.kinds(slots);
+        int[] parts = kinds.isEmpty() ? null : StationRecipes.parts(recipe.ingredients(), kinds);
+        int already = parts == null ? 0 : StationRecipes.servings(kinds, parts);
         ItemStack done = recipe.hasContainer() ? vat.servings() : vat.getItem(KitchenVat.OUTPUT_SLOT);
         int room = done.isEmpty() ? recipe.result().getMaxStackSize()
                 : ItemStack.isSameItemSameComponents(done, recipe.result()) ? done.getMaxStackSize() - done.getCount() : 0;
-        int already = Integer.MAX_VALUE;
-        for (int slot = 0; slot < wanted.size(); slot++) {
-            already = Math.min(already, inVat[slot].getCount());
-        }
         int most = Math.min(sets, Math.max(1, room / Math.max(1, recipe.result().getCount())) - already);
-        Inventory inventory = player.getInventory();
-        int made = 0;
-        while (made < most) {
-            int[] from = new int[wanted.size()];
-            boolean found = true;
-            for (int i = 0; i < from.length && found; i++) {
-                from[i] = source(inventory, wanted.get(i), inVat[i], from, i);
-                found = from[i] >= 0;
-            }
-            if (!found) {
-                break;
-            }
-            for (int i = 0; i < from.length; i++) {
-                ItemStack one = inventory.removeItem(from[i], 1);
-                inVat[i] = inVat[i].isEmpty() ? one : inVat[i].copyWithCount(inVat[i].getCount() + 1);
-            }
-            made++;
+        if (most <= 0) {
+            return;
         }
-        if (made > 0) {
-            arranging = true;
-            try {
-                for (int slot = 0; slot < wanted.size(); slot++) {
-                    vat.setItem(slot, inVat[slot]);
-                }
-            } finally {
-                arranging = false;
-            }
-            inventory.setChanged();
+        StationRecipes.Filled filled = StationRecipes.fill(player.getInventory(), recipe.ingredients(), kinds, KitchenVat.INGREDIENTS, most);
+        if (filled != null) {
+            picked = recipe.id();
+            StationRecipes.lay(slots, filled.kinds(), filled.parts());
+            player.getInventory().setChanged();
         }
-    }
-
-    /** The inventory slot that gives the next item for place {@code index}, not wanted by an earlier one beyond what it has. */
-    private static int source(Inventory inventory, Ingredient ingredient, ItemStack there, int[] taken, int index) {
-        if (!there.isEmpty() && there.getCount() >= there.getMaxStackSize()) {
-            return -1;
-        }
-        for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
-            ItemStack stack = inventory.getItem(slot);
-            if (stack.isEmpty() || !ingredient.test(stack) || !there.isEmpty() && !ItemStack.isSameItemSameComponents(there, stack)) {
-                continue;
-            }
-            int wanted = 1;
-            for (int earlier = 0; earlier < index; earlier++) {
-                wanted += taken[earlier] == slot ? 1 : 0;
-            }
-            if (stack.getCount() >= wanted) {
-                return slot;
-            }
-        }
-        return -1;
     }
 
     /**

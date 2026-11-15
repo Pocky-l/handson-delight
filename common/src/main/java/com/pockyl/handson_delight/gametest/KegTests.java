@@ -19,6 +19,7 @@ import net.minecraft.world.level.material.Fluids;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.handson_delight.platform.Platform;
+import com.pockyl.handson_delight.station.StationRecipes;
 import com.pockyl.handson_delight.station.KegLogic;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.KitchenKeg;
@@ -367,6 +368,80 @@ public final class KegTests {
      * Jerky: no liquid at all, three raw meats dropped in; it wants a warm keg, which magma beside it gives. It comes out as three
      * pieces in the keg's output, which the station serves.
      */
+    /** Three beef thrown in lie as one stack, and Brewin' and Chewin' reads one a slot: the keg lays them out, and they dry to jerky. */
+    public static void jerkyFromThreeBeefThrownIn(GameTestHelper helper) {
+        Setup setup = keg(helper);
+        if (setup == null) {
+            return;
+        }
+        SlotRef first = SlotRef.of(KegStation.INGREDIENTS, 0);
+        setup.station.state().setItem(first, new ItemStack(Items.BEEF, 3));
+        setup.logic.onSlotChanged(setup.station, first);
+        setup.keg.handson$feelTemperature();
+        setup.logic.tick(setup.station);
+        helper.assertTrue(setup.keg.handson$getItem(1).is(Items.BEEF) && setup.keg.handson$getItem(2).is(Items.BEEF),
+                "the beef is laid out one a slot, got " + setup.keg.handson$getItem(0) + " " + setup.keg.handson$getItem(1));
+        warmTo(helper, setup, Blocks.MAGMA_BLOCK);
+        helper.runAfterDelay(2, () -> skipToTheEnd(helper, setup, "jerky"));
+        helper.runAfterDelay(10, () -> {
+            setup.logic.tick(setup.station);
+            ItemStack served = setup.station.state().getItem(KegStation.SERVED_SLOT);
+            helper.assertTrue(served.is(bnc("jerky")), "jerky to take at the station, got " + served);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Two sea pickles and glow berries thrown into an empty keg, the honey poured in after them: the pickles lie one a slot, as Brewin'
+     * and Chewin' reads the recipe, and pickle in a cool keg.
+     */
+    public static void pickledPicklesFromFoodThrownInBeforeTheHoney(GameTestHelper helper) {
+        Setup setup = keg(helper);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        // A cook at the keg: a keg left by its last cook has its lid put back.
+        setup.station.users.add(player);
+        lid(setup.station, setup.logic, player, true);
+        SlotRef first = SlotRef.of(KegStation.INGREDIENTS, 0);
+        SlotRef second = SlotRef.of(KegStation.INGREDIENTS, 1);
+        setup.station.state().setItem(first, new ItemStack(Items.SEA_PICKLE, 2));
+        setup.logic.onSlotChanged(setup.station, first);
+        setup.station.state().setItem(second, new ItemStack(Items.GLOW_BERRIES));
+        setup.logic.onSlotChanged(setup.station, second);
+        setup.logic.tick(setup.station);
+        player.inventoryMenu.setCarried(new ItemStack(Items.HONEY_BOTTLE, 4));
+        setup.logic.onCustomAction(setup.station, player, KegStation.ACTION_USE, at(KegStation.MOUTH, true));
+        setup.logic.tick(setup.station);
+        helper.assertTrue(fluid(setup.keg).equals("honey"), "the honey is poured in, got " + fluid(setup.keg));
+        int pickles = 0;
+        for (int slot = 0; slot < KitchenKeg.INGREDIENTS; slot++) {
+            pickles += setup.keg.handson$getItem(slot).is(Items.SEA_PICKLE) && setup.keg.handson$getItem(slot).getCount() == 1 ? 1 : 0;
+        }
+        helper.assertTrue(pickles == 2, "the pickles lie one a slot, got " + setup.keg.handson$getItem(0) + " " + setup.keg.handson$getItem(1) + " "
+                + setup.keg.handson$getItem(2));
+        lid(setup.station, setup.logic, player, false);
+        warmTo(helper, setup, Blocks.ICE);
+        helper.runAfterDelay(2, () -> skipToTheEnd(helper, setup, "pickled pickles"));
+        helper.runAfterDelay(10, () -> {
+            setup.logic.tick(setup.station);
+            ItemStack served = setup.station.state().getItem(KegStation.SERVED_SLOT);
+            helper.assertTrue(served.is(bnc("pickled_pickles")), "pickles to take at the station, got " + served);
+            helper.succeed();
+        });
+    }
+
+    /** Every fermenting recipe the game has, its food thrown in or picked in the book: see {@link StationAudit}. */
+    public static void everyKegRecipeFromItsFoodThrownIn(GameTestHelper helper) {
+        Setup setup = keg(helper);
+        if (setup == null) {
+            return;
+        }
+        StationAudit.audit(helper, "keg", StationRecipes.candidates(setup.keg.handson$recipes(), KitchenKeg.Fermenting::id,
+                KitchenKeg.Fermenting::ingredients), KitchenKeg.Fermenting::base, KitchenKeg.INGREDIENTS);
+    }
+
     public static void jerkyDriesInAWarmKeg(GameTestHelper helper) {
         Setup setup = keg(helper);
         if (setup == null) {

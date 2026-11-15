@@ -35,6 +35,7 @@ import com.pockyl.diegesis.api.client.DiegesisClient;
 import com.pockyl.diegesis.api.client.NodePainter;
 import com.pockyl.diegesis.api.client.NodeView;
 import com.pockyl.diegesis.api.client.StationView;
+import com.pockyl.handson_delight.Cookable;
 import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.station.PotLogic;
@@ -418,7 +419,8 @@ final class RecipeBook implements NodePainter {
         List<ItemStack> pool = pool(view);
         List<Entry> found = new ArrayList<>();
         for (Page page : source.pages(view)) {
-            if (tab == null || tab.equals(page.kind())) {
+            // A recipe whose ingredient no item is (an addon's tag nothing fills) cannot be made: it is not offered.
+            if ((tab == null || tab.equals(page.kind())) && Cookable.all(page.ingredients())) {
                 found.add(entry(page, pool));
             }
         }

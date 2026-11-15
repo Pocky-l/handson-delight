@@ -31,13 +31,21 @@ public final class KegLogic implements StationLogic {
     private static final int FILL_MOST = 16;
 
     private final KitchenKeg keg;
+    private final SlotStorage ingredients;
+    /** A cook changed what lies in the keg: it is laid out on the next tick. */
+    private boolean unsorted;
+    /** The recipe the cook last picked in the book: the keg's choice while its food makes it, until the keg is empty. */
+    private ResourceLocation wanted;
+    /** The liquid the food was last laid out for: food thrown into an empty keg is laid out again once its liquid is poured in. */
+    private Fluid arrangedFor = Fluids.EMPTY;
     /** While the lid is off: how far the keg had fermented, which it stays at until the lid is back on; -1 with the lid on. */
     private int heldAt = -1;
 
     public KegLogic(StationContext station) {
         keg = (KitchenKeg) station.blockEntity();
         StationState state = station.state();
-        state.bindSlots(KegStation.INGREDIENTS, storage(keg, 0, KitchenKeg.INGREDIENTS));
+        ingredients = storage(keg, 0, KitchenKeg.INGREDIENTS);
+        state.bindSlots(KegStation.INGREDIENTS, ingredients);
         state.bindSlots(KegStation.SERVED, storage(keg, KitchenKeg.OUTPUT_SLOT, 1));
     }
 
@@ -76,8 +84,56 @@ public final class KegLogic implements StationLogic {
                 station.state().setControl(KegStation.LID, 0.0F);
             }
             holdWhileOpen(station);
+            if (wanted != null && StationRecipes.kinds(ingredients).isEmpty()) {
+                wanted = null;
+            }
+            if (unsorted || keg.handson$fluid() != arrangedFor) {
+                unsorted = false;
+                arrangedFor = keg.handson$fluid();
+                arrange();
+            }
         }
         refresh(station);
+    }
+
+    @Override
+    public void onSlotChanged(StationContext station, SlotRef slot) {
+        if (slot.group().equals(KegStation.INGREDIENTS) && !station.level().isClientSide()) {
+            unsorted = true;
+        }
+    }
+
+    /**
+     * Food thrown in lies together, three beef in one stack, and Brewin' and Chewin' reads a recipe one ingredient a slot: what lies in
+     * the keg is laid out the way the recipe it makes wants it ({@link StationRecipes#choose}). Food that makes nothing stays as it
+     * lies.
+     */
+    private void arrange() {
+        List<ItemStack> kinds = StationRecipes.kinds(ingredients);
+        if (kinds.isEmpty()) {
+            return;
+        }
+        List<ItemStack> inKeg = new java.util.ArrayList<>();
+        for (int i = 0; i < ingredients.size(); i++) {
+            inKeg.add(ingredients.get(i));
+        }
+        StationRecipes.Candidate<KitchenKeg.Fermenting> found = StationRecipes.reads(candidates(true), inKeg);
+        StationRecipes.Choice<KitchenKeg.Fermenting> choice = StationRecipes.choose(candidates(false), kinds, KitchenKeg.INGREDIENTS, wanted,
+                found == null ? null : found.id(), false);
+        if (choice != null) {
+            StationRecipes.lay(ingredients, kinds, choice.parts());
+        }
+    }
+
+    /**
+     * The keg's recipes for the liquid it holds, as Brewin' and Chewin' reads them: of that base, or of none while it is empty. Without
+     * {@code exact}, an empty keg takes any: its liquid may be poured in after the food.
+     */
+    private List<StationRecipes.Candidate<KitchenKeg.Fermenting>> candidates(boolean exact) {
+        Fluid fluid = keg.handson$fluid();
+        List<KitchenKeg.Fermenting> recipes = keg.handson$recipes().stream().filter(recipe -> fluid == Fluids.EMPTY
+                ? !exact || recipe.base() == Fluids.EMPTY : recipe.base().isSame(fluid)).toList();
+        return StationRecipes.candidates(recipes, KitchenKeg.Fermenting::id, KitchenKeg.Fermenting::ingredients);
     }
 
     /** Whether the lid is off. */
@@ -243,66 +299,18 @@ public final class KegLogic implements StationLogic {
         return -1;
     }
 
-    /** Puts up to {@code sets} sets of the recipe's ingredients from the inventory into the keg, one slot per ingredient. */
+    /**
+     * Puts up to {@code sets} whole sets of the recipe's ingredients from the inventory into the keg, laid out the way Brewin' and
+     * Chewin' reads the recipe; the picked recipe stays the keg's choice while its food makes it. A keg that holds food the recipe does
+     * not use takes nothing.
+     */
     private void fill(Player player, KitchenKeg.Fermenting recipe, int sets) {
-        List<Ingredient> ingredients = recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
-        if (ingredients.isEmpty() || ingredients.size() > KitchenKeg.INGREDIENTS) {
-            return;
+        StationRecipes.Filled filled = StationRecipes.fill(player.getInventory(), recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty())
+                .toList(), StationRecipes.kinds(ingredients), KitchenKeg.INGREDIENTS, sets);
+        if (filled != null) {
+            wanted = recipe.id();
+            StationRecipes.lay(ingredients, filled.kinds(), filled.parts());
         }
-        ItemStack[] inKeg = new ItemStack[KitchenKeg.INGREDIENTS];
-        for (int i = 0; i < inKeg.length; i++) {
-            inKeg[i] = keg.handson$getItem(i).copy();
-            boolean fits = i < ingredients.size() ? inKeg[i].isEmpty() || ingredients.get(i).test(inKeg[i]) : inKeg[i].isEmpty();
-            if (!fits) {
-                return;
-            }
-        }
-        Inventory inventory = player.getInventory();
-        int done = 0;
-        while (done < sets) {
-            int[] from = new int[ingredients.size()];
-            boolean found = true;
-            for (int i = 0; i < from.length && found; i++) {
-                from[i] = source(inventory, ingredients.get(i), inKeg[i], from, i);
-                found = from[i] >= 0;
-            }
-            if (!found) {
-                break;
-            }
-            for (int i = 0; i < from.length; i++) {
-                ItemStack one = inventory.removeItem(from[i], 1);
-                if (inKeg[i].isEmpty()) {
-                    inKeg[i] = one;
-                } else {
-                    inKeg[i].grow(1);
-                }
-            }
-            done++;
-        }
-        for (int i = 0; i < ingredients.size() && done > 0; i++) {
-            keg.handson$setItem(i, inKeg[i]);
-        }
-    }
-
-    /** The inventory slot that gives the next item for the keg's slot {@code index}, not wanted by an earlier one beyond what it has. */
-    private static int source(Inventory inventory, Ingredient ingredient, ItemStack there, int[] taken, int index) {
-        if (!there.isEmpty() && there.getCount() >= there.getMaxStackSize()) {
-            return -1;
-        }
-        for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
-            ItemStack stack = inventory.getItem(slot);
-            if (stack.isEmpty() || !ingredient.test(stack) || !there.isEmpty() && !ItemStack.isSameItemSameComponents(there, stack)) {
-                continue;
-            }
-            int wanted = 1;
-            for (int earlier = 0; earlier < index; earlier++) {
-                wanted += taken[earlier] == slot ? 1 : 0;
-            }
-            if (stack.getCount() >= wanted) {
-                return slot;
-            }
-        }
-        return -1;
     }
 
     private void refresh(StationContext station) {

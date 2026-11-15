@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.4.2+1.21.1] - Unreleased
+## [1.5.0+1.21.1] - Unreleased
 ### New
 - [Cultural Delights](https://modrinth.com/mod/cultural-delights)'s oven is a station. In the world it is a brick oven
   with a hearth inside and a grated door, and its fire glows through the grate while the block under it heats it.
@@ -31,6 +31,19 @@
   Its banner pattern stays on it while you work.
 
 ### Fixed
+- Food thrown into [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg ferments when its recipe wants
+  two or three of the same thing: three beef for jerky, two fish for kippers, two sea pickles, two cocoa beans. They
+  lay together in one stack, and the keg found no recipe in them. Food thrown in before the liquid is laid out again
+  once it is poured.
+- Food thrown into the cooking pot together cooks the dish it makes again. Two of the same ingredient (two sugars for a
+  candy cane) lie together in the pot, and some dishes never started or the pot offered another dish of the same food.
+  When the food in the pot makes more than one dish, the pot cooks the one that uses it up, and a dish picked in the
+  book stays the one it cooks.
+- The stations' books no longer list dishes nobody can make: an addon recipe asking for an ingredient no item is never
+  cooked, but sat in the book looking complete.
+- [Christmas Delight](https://modrinth.com/mod/christmas-delight)'s milk dishes (eggnog, hot chocolate, log cake and
+  four more) cook with Farmer's Delight's milk bottle or a milk bucket. They ask for milk by a tag nothing filled, so
+  they could not be cooked at all.
 - Cutting a pumpkin, a melon or another block on the cutting board, the knife hung inside it instead of over it, and
   stood off the line the cursor pointed at, so the line was hard to hit. The knife now stands over the top of what it
   cuts, right under the cursor.

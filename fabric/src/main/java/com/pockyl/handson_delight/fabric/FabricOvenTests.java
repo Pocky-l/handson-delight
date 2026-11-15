@@ -12,6 +12,11 @@ import com.pockyl.handson_delight.gametest.OvenTests;
  */
 public final class FabricOvenTests implements FabricGameTest {
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyLooseBakingFromItsFoodLaidOn(GameTestHelper helper) {
+        OvenTests.everyLooseBakingFromItsFoodLaidOn(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void theOvenReadsItsRecipes(GameTestHelper helper) {
         OvenTests.theOvenReadsItsRecipes(helper);
     }

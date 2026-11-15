@@ -60,6 +60,41 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void milkAskedForAsFoodIsMilk(GameTestHelper helper) {
+        PotTests.milkAskedForAsFoodIsMilk(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void twoAlikeThrownInMakeTheirDish(GameTestHelper helper) {
+        PotTests.twoAlikeThrownInMakeTheirDish(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theFullerDishOnceItsLastIngredientIsIn(GameTestHelper helper) {
+        PotTests.theFullerDishOnceItsLastIngredientIsIn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aTagTakesWhatTheOtherIngredientsLeave(GameTestHelper helper) {
+        PotTests.aTagTakesWhatTheOtherIngredientsLeave(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theBookKeepsThePickedDish(GameTestHelper helper) {
+        PotTests.theBookKeepsThePickedDish(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aDishNobodyCanMakeIsNotOffered(GameTestHelper helper) {
+        PotTests.aDishNobodyCanMakeIsNotOffered(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void everyDishFromItsFoodThrownIn(GameTestHelper helper) {
+        PotTests.everyDishFromItsFoodThrownIn(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void aStackIsSharedOutForARecipeOfTwoAlike(GameTestHelper helper) {
         PotTests.aStackIsSharedOutForARecipeOfTwoAlike(helper);
     }
@@ -530,6 +565,21 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 100)
+    public static void pickledPicklesFromFoodThrownInBeforeTheHoney(GameTestHelper helper) {
+        KegTests.pickledPicklesFromFoodThrownInBeforeTheHoney(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void everyKegRecipeFromItsFoodThrownIn(GameTestHelper helper) {
+        KegTests.everyKegRecipeFromItsFoodThrownIn(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void jerkyFromThreeBeefThrownIn(GameTestHelper helper) {
+        KegTests.jerkyFromThreeBeefThrownIn(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
     public static void jerkyDriesInAWarmKeg(GameTestHelper helper) {
         KegTests.jerkyDriesInAWarmKeg(helper);
     }
@@ -537,6 +587,16 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 120)
     public static void theLidKeepsThingsOutAndTheBrewWaitsUnderIt(GameTestHelper helper) {
         KegTests.theLidKeepsThingsOutAndTheBrewWaitsUnderIt(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void everyLooseBakingFromItsFoodLaidOn(GameTestHelper helper) {
+        OvenTests.everyLooseBakingFromItsFoodLaidOn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void everyAgingFromItsFoodDroppedIn(GameTestHelper helper) {
+        VatTests.everyAgingFromItsFoodDroppedIn(helper);
     }
 
     @GameTest(template = "empty")

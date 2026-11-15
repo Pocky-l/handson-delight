@@ -588,24 +588,7 @@ public final class KegBehavior implements StationBehavior {
     }
 
     private static boolean matches(KitchenKeg.Fermenting recipe, List<ItemStack> items) {
-        List<net.minecraft.world.item.crafting.Ingredient> wanted = recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
-        if (wanted.size() != items.size()) {
-            return false;
-        }
-        boolean[] used = new boolean[items.size()];
-        for (var ingredient : wanted) {
-            boolean found = false;
-            for (int i = 0; i < items.size() && !found; i++) {
-                if (!used[i] && ingredient.test(items.get(i))) {
-                    used[i] = true;
-                    found = true;
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-        return true;
+        return com.pockyl.handson_delight.station.StationRecipes.matches(recipe.ingredients(), items);
     }
 
     private void tooltip(StationView view) {

@@ -32,6 +32,8 @@ public final class OvenLogic implements StationLogic {
     private int heldAt = -1;
     /** The tray is being shared out: its own changes do not share it out again. */
     private boolean arranging;
+    /** The recipe the cook last picked in the book: the oven's choice while the tray's food makes it, until the tray is empty. */
+    private net.minecraft.resources.ResourceLocation picked;
 
     public OvenLogic(StationContext station) {
         oven = KitchenOven.of(station.blockEntity());
@@ -205,93 +207,61 @@ public final class OvenLogic implements StationLogic {
         }
     }
 
+    /** The tray's places as slots; laying them out is no cook's change. */
+    private com.pockyl.diegesis.api.state.SlotStorage tray() {
+        return new com.pockyl.diegesis.api.state.SlotStorage() {
+            @Override
+            public int size() {
+                return KitchenOven.INGREDIENTS;
+            }
+
+            @Override
+            public ItemStack get(int index) {
+                return oven.getItem(index);
+            }
+
+            @Override
+            public void set(int index, ItemStack stack) {
+                arranging = true;
+                try {
+                    oven.setItem(index, stack);
+                } finally {
+                    arranging = false;
+                }
+            }
+        };
+    }
+
     /**
-     * The oven bakes one of each place at a time, so three cinnamon sticks laid as one stack make no pie: what lies on the tray is shared
-     * out over its places when that makes a recipe and the way it lies does not, as a cook spreads the sticks out. A stack bigger than
-     * a set stays a stack of sets, shared as evenly as it goes. Recipes laid out in the grid are left as the cook laid them.
+     * The oven bakes one of each place at a time, so three cinnamon sticks laid as one stack make no pie: what lies on the tray is laid
+     * out over its places the way the recipe it makes wants it ({@link StationRecipes#choose}), as a cook spreads the sticks out.
+     * Recipes laid out in the grid are left as the cook laid them.
      */
     private void arrange(net.minecraft.world.level.Level level) {
         if (arranging) {
             return;
         }
-        ItemStack[] tray = new ItemStack[KitchenOven.INGREDIENTS];
-        List<ItemStack> kinds = new java.util.ArrayList<>();
-        for (int slot = 0; slot < tray.length; slot++) {
-            tray[slot] = oven.getItem(slot);
-            if (tray[slot].isEmpty()) {
-                continue;
-            }
-            ItemStack there = tray[slot];
-            ItemStack kind = kinds.stream().filter(it -> ItemStack.isSameItemSameComponents(it, there)).findFirst().orElse(null);
-            if (kind == null) {
-                kinds.add(there.copy());
-            } else {
-                kind.grow(there.getCount());
-            }
-        }
+        com.pockyl.diegesis.api.state.SlotStorage tray = tray();
+        List<ItemStack> kinds = StationRecipes.kinds(tray);
         if (kinds.isEmpty()) {
+            picked = null;
             return;
+        }
+        ItemStack[] grid = new ItemStack[KitchenOven.INGREDIENTS];
+        for (int slot = 0; slot < grid.length; slot++) {
+            grid[slot] = oven.getItem(slot);
         }
         List<KitchenOven.Baking> recipes = KitchenOven.recipes(level);
-        if (KitchenOven.matching(recipes, tray).isPresent()) {
+        java.util.Optional<KitchenOven.Baking> now = KitchenOven.matching(recipes, grid);
+        if (now.isPresent() && now.get().isShaped()) {
             return;
         }
-        for (KitchenOven.Baking recipe : recipes) {
-            List<Ingredient> wanted = recipe.ingredients();
-            if (recipe.isShaped() || wanted.size() > KitchenOven.INGREDIENTS || wanted.size() < kinds.size()) {
-                continue;
-            }
-            int[] left = kinds.stream().mapToInt(ItemStack::getCount).toArray();
-            int[] kindOf = new int[wanted.size()];
-            if (!assign(wanted, 0, kinds, left, kindOf)) {
-                continue;
-            }
-            int[] places = new int[kinds.size()];
-            for (int kind : kindOf) {
-                places[kind]++;
-            }
-            int[] given = new int[kinds.size()];
-            arranging = true;
-            try {
-                for (int slot = 0; slot < KitchenOven.INGREDIENTS; slot++) {
-                    if (slot >= kindOf.length) {
-                        oven.setItem(slot, ItemStack.EMPTY);
-                        continue;
-                    }
-                    int kind = kindOf[slot];
-                    int total = kinds.get(kind).getCount();
-                    int share = total / places[kind] + (given[kind] < total % places[kind] ? 1 : 0);
-                    given[kind]++;
-                    oven.setItem(slot, kinds.get(kind).copyWithCount(share));
-                }
-            } finally {
-                arranging = false;
-            }
-            return;
+        List<KitchenOven.Baking> loose = recipes.stream().filter(recipe -> !recipe.isShaped()).toList();
+        StationRecipes.Choice<KitchenOven.Baking> choice = StationRecipes.choose(StationRecipes.candidates(loose, KitchenOven.Baking::id,
+                KitchenOven.Baking::ingredients), kinds, KitchenOven.INGREDIENTS, picked, now.map(KitchenOven.Baking::id).orElse(null), false);
+        if (choice != null) {
+            StationRecipes.lay(tray, kinds, choice.parts());
         }
-    }
-
-    /** Gives each of the recipe's ingredients, from {@code index} on, a kind with one left of it; true once every kind is used. */
-    private static boolean assign(List<Ingredient> wanted, int index, List<ItemStack> kinds, int[] left, int[] kindOf) {
-        if (index == wanted.size()) {
-            for (int kind = 0; kind < kinds.size(); kind++) {
-                if (left[kind] == kinds.get(kind).getCount()) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        for (int kind = 0; kind < kinds.size(); kind++) {
-            if (left[kind] > 0 && wanted.get(index).test(kinds.get(kind))) {
-                left[kind]--;
-                kindOf[index] = kind;
-                if (assign(wanted, index + 1, kinds, left, kindOf)) {
-                    return true;
-                }
-                left[kind]++;
-            }
-        }
-        return false;
     }
 
     /**
@@ -299,6 +269,10 @@ public final class OvenLogic implements StationLogic {
      * them, any other in the grid's places from the first on. Never more sets than the output slot has room for when baked.
      */
     private void fill(Player player, KitchenOven.Baking recipe, int sets) {
+        if (!recipe.isShaped()) {
+            fillLoose(player, recipe, sets);
+            return;
+        }
         int[] places = places(recipe);
         List<Ingredient> wanted = recipe.isShaped() ? recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList()
                 : recipe.ingredients();
@@ -347,6 +321,30 @@ public final class OvenLogic implements StationLogic {
                 oven.setItem(place, onTray[place]);
             }
             inventory.setChanged();
+        }
+    }
+
+    /**
+     * A recipe of no grid: its ingredients go on the tray laid out the way the oven reads it, whatever lies there of it already; the
+     * picked recipe stays the oven's choice while the tray's food makes it. Never more sets than the output slot has room for.
+     */
+    private void fillLoose(Player player, KitchenOven.Baking recipe, int sets) {
+        com.pockyl.diegesis.api.state.SlotStorage tray = tray();
+        List<ItemStack> kinds = StationRecipes.kinds(tray);
+        int[] parts = kinds.isEmpty() ? null : StationRecipes.parts(recipe.ingredients(), kinds);
+        int already = parts == null ? 0 : StationRecipes.servings(kinds, parts);
+        ItemStack output = oven.getItem(KitchenOven.OUTPUT_SLOT);
+        int room = output.isEmpty() ? recipe.result().getMaxStackSize()
+                : ItemStack.isSameItemSameComponents(output, recipe.result()) ? output.getMaxStackSize() - output.getCount() : 0;
+        int most = Math.min(sets, Math.max(1, room / Math.max(1, recipe.result().getCount())) - already);
+        if (most <= 0) {
+            return;
+        }
+        StationRecipes.Filled filled = StationRecipes.fill(player.getInventory(), recipe.ingredients(), kinds, KitchenOven.INGREDIENTS, most);
+        if (filled != null) {
+            picked = recipe.id();
+            StationRecipes.lay(tray, filled.kinds(), filled.parts());
+            player.getInventory().setChanged();
         }
     }
 

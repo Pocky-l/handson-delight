@@ -46,6 +46,41 @@ public final class FabricPotTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void milkAskedForAsFoodIsMilk(GameTestHelper helper) {
+        PotTests.milkAskedForAsFoodIsMilk(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void twoAlikeThrownInMakeTheirDish(GameTestHelper helper) {
+        PotTests.twoAlikeThrownInMakeTheirDish(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void theFullerDishOnceItsLastIngredientIsIn(GameTestHelper helper) {
+        PotTests.theFullerDishOnceItsLastIngredientIsIn(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aTagTakesWhatTheOtherIngredientsLeave(GameTestHelper helper) {
+        PotTests.aTagTakesWhatTheOtherIngredientsLeave(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void theBookKeepsThePickedDish(GameTestHelper helper) {
+        PotTests.theBookKeepsThePickedDish(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aDishNobodyCanMakeIsNotOffered(GameTestHelper helper) {
+        PotTests.aDishNobodyCanMakeIsNotOffered(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyDishFromItsFoodThrownIn(GameTestHelper helper) {
+        PotTests.everyDishFromItsFoodThrownIn(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void aStackIsSharedOutForARecipeOfTwoAlike(GameTestHelper helper) {
         PotTests.aStackIsSharedOutForARecipeOfTwoAlike(helper);
     }

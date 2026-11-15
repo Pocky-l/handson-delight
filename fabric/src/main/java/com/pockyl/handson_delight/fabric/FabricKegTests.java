@@ -42,6 +42,21 @@ public final class FabricKegTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void jerkyFromThreeBeefThrownIn(GameTestHelper helper) {
+        KegTests.jerkyFromThreeBeefThrownIn(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void pickledPicklesFromFoodThrownInBeforeTheHoney(GameTestHelper helper) {
+        KegTests.pickledPicklesFromFoodThrownInBeforeTheHoney(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyKegRecipeFromItsFoodThrownIn(GameTestHelper helper) {
+        KegTests.everyKegRecipeFromItsFoodThrownIn(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
     public void jerkyDriesInAWarmKeg(GameTestHelper helper) {
         KegTests.jerkyDriesInAWarmKeg(helper);
     }

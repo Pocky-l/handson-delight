@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -12,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -35,6 +37,7 @@ import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
+import com.pockyl.handson_delight.Cookable;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
@@ -42,6 +45,7 @@ import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.KitchenPot;
 import com.pockyl.handson_delight.station.PotLogic;
+import com.pockyl.handson_delight.station.PotRecipes;
 import com.pockyl.handson_delight.station.StirSkill;
 
 import java.util.ArrayList;
@@ -144,7 +148,7 @@ public final class PotTests {
         Setup setup = pot(helper);
         SlotRef first = SlotRef.of(CookingPotStation.INGREDIENTS, 0);
         // A mod may match a stack in one slot as two tomatoes (Autochef's Delight): then the pot cooks them as they lie.
-        boolean stacksMatch = Platform.INSTANCE.findRecipe(helper.getLevel(), List.of(new ItemStack(fd("tomato"), 5))).isPresent();
+        boolean stacksMatch = stacksMatch(helper);
         Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(fd("tomato"), 5));
         setup.logic.onSlotChanged(setup.station, first);
         setup.logic.tick(setup.station);
@@ -160,6 +164,160 @@ public final class PotTests {
         setup.logic.tick(setup.station);
         helper.assertTrue(Platform.INSTANCE.getItem(setup.pot, 0).getCount() == 6, "what makes nothing stays as it is");
         helper.succeed();
+    }
+
+    /** The dish the ingredient slots make as Farmer's Delight reads them, or null. */
+    private static ResourceLocation made(GameTestHelper helper, CookingPotBlockEntity pot) {
+        List<ItemStack> inPot = new ArrayList<>();
+        for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
+            inPot.add(Platform.INSTANCE.getItem(pot, i));
+        }
+        return Platform.INSTANCE.findRecipe(helper.getLevel(), inPot).map(RecipeHolder::id).orElse(null);
+    }
+
+    /**
+     * Whether a mod reads the pot's slots as amounts (Autochef's Delight): then a stack of tomatoes is two tomatoes, and among recipes
+     * of the same food that mod picks the dish, whichever way the food lies.
+     */
+    private static boolean stacksMatch(GameTestHelper helper) {
+        return Platform.INSTANCE.findRecipe(helper.getLevel(), List.of(new ItemStack(fd("tomato"), 5))).isPresent();
+    }
+
+    /** Whether the pot makes {@code dish}, or, where a mod picks among recipes of the same food, at least some dish. */
+    private static boolean makes(GameTestHelper helper, CookingPotBlockEntity pot, String dish) {
+        return stacksMatch(helper) ? made(helper, pot) != null : HandsOnDelight.id(dish).equals(made(helper, pot));
+    }
+
+    /** Puts {@code stack} into the pot as a cook does, and lets the station tick once. */
+    private static void throwIn(Setup setup, int slot, ItemStack stack) {
+        putIn(setup, slot, stack);
+        setup.logic.tick(setup.station);
+    }
+
+    /**
+     * Two alike thrown in lie in one slot. Christmas Delight's candy cane is sugar, sugar and a dye: the pot lays the sugars in two slots
+     * for it, and does not cook the dish of sugar and dye beside it, which would leave a sugar over. More servings come first, though.
+     */
+    public static void twoAlikeThrownInMakeTheirDish(GameTestHelper helper) {
+        addRecipe(helper, "cane", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, Ingredient.of(Items.GLOWSTONE_DUST),
+                Ingredient.of(Items.GLOWSTONE_DUST), Ingredient.of(Items.RED_DYE));
+        addRecipe(helper, "cane_half", new ItemStack(Items.STRING), ItemStack.EMPTY, 40, Ingredient.of(Items.GLOWSTONE_DUST),
+                Ingredient.of(Items.RED_DYE));
+        Setup setup = pot(helper);
+        throwIn(setup, 0, new ItemStack(Items.GLOWSTONE_DUST, 2));
+        throwIn(setup, 1, new ItemStack(Items.RED_DYE));
+        helper.assertTrue(makes(helper, setup.pot, "test_cane"), "the cane, got " + made(helper, setup.pot));
+        empty(setup.pot);
+        // A batch of the smaller dish with some dust over (ten corn and six milk for elote) stays that dish: six servings, not five.
+        throwIn(setup, 0, new ItemStack(Items.GLOWSTONE_DUST, 10));
+        throwIn(setup, 1, new ItemStack(Items.RED_DYE, 6));
+        helper.assertTrue(makes(helper, setup.pot, "test_cane_half"), "six of the half, got " + made(helper, setup.pot));
+        empty(setup.pot);
+        // Three dust and a dye make one of either and neither whole (three corn and a milk bucket): it cooks as it did, the half.
+        throwIn(setup, 0, new ItemStack(Items.GLOWSTONE_DUST, 3));
+        throwIn(setup, 1, new ItemStack(Items.RED_DYE));
+        helper.assertTrue(makes(helper, setup.pot, "test_cane_half"), "the half as before, got " + made(helper, setup.pot));
+        empty(setup.pot);
+        helper.succeed();
+    }
+
+    /**
+     * Christmas Delight's cevapi is Burek and two more things: with Burek's food in the pot it makes Burek (the second mutton lies over),
+     * and once the last thing is in, the cevapi.
+     */
+    public static void theFullerDishOnceItsLastIngredientIsIn(GameTestHelper helper) {
+        addRecipe(helper, "burek", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, Ingredient.of(Items.AMETHYST_SHARD),
+                Ingredient.of(Items.PRISMARINE_SHARD), Ingredient.of(Items.ECHO_SHARD));
+        addRecipe(helper, "cevapi", new ItemStack(Items.STRING), ItemStack.EMPTY, 40, Ingredient.of(Items.AMETHYST_SHARD),
+                Ingredient.of(Items.PRISMARINE_SHARD), Ingredient.of(Items.PRISMARINE_SHARD), Ingredient.of(Items.ECHO_SHARD),
+                Ingredient.of(Items.NAUTILUS_SHELL));
+        Setup setup = pot(helper);
+        throwIn(setup, 0, new ItemStack(Items.AMETHYST_SHARD));
+        throwIn(setup, 1, new ItemStack(Items.PRISMARINE_SHARD, 2));
+        throwIn(setup, 2, new ItemStack(Items.ECHO_SHARD));
+        helper.assertTrue(makes(helper, setup.pot, "test_burek"), "burek so far, got " + made(helper, setup.pot));
+        throwIn(setup, 3, new ItemStack(Items.NAUTILUS_SHELL));
+        helper.assertTrue(makes(helper, setup.pot, "test_cevapi"), "the cevapi, got " + made(helper, setup.pot));
+        empty(setup.pot);
+        helper.succeed();
+    }
+
+    /** A tag may take what another ingredient wants: a flower and two dandelions are a dandelion stack and a poppy. */
+    public static void aTagTakesWhatTheOtherIngredientsLeave(GameTestHelper helper) {
+        addRecipe(helper, "posy", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, Ingredient.of(ItemTags.SMALL_FLOWERS),
+                Ingredient.of(Items.DANDELION), Ingredient.of(Items.DANDELION));
+        Setup setup = pot(helper);
+        throwIn(setup, 0, new ItemStack(Items.DANDELION, 2));
+        throwIn(setup, 1, new ItemStack(Items.POPPY));
+        helper.assertTrue(makes(helper, setup.pot, "test_posy"), "the posy, got " + made(helper, setup.pot));
+        empty(setup.pot);
+        helper.succeed();
+    }
+
+    /**
+     * Two quartz and two flint make one dish of four or two of a dish of two (Rustic Delight's dark coffee and coffee): thrown in, the
+     * fuller dish; picked in the book, the one picked.
+     */
+    public static void theBookKeepsThePickedDish(GameTestHelper helper) {
+        addRecipe(helper, "pair", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, Ingredient.of(Items.QUARTZ), Ingredient.of(Items.FLINT));
+        addRecipe(helper, "pairs", new ItemStack(Items.STRING), ItemStack.EMPTY, 40, Ingredient.of(Items.QUARTZ), Ingredient.of(Items.QUARTZ),
+                Ingredient.of(Items.FLINT), Ingredient.of(Items.FLINT));
+        Setup setup = pot(helper);
+        throwIn(setup, 0, new ItemStack(Items.QUARTZ, 2));
+        throwIn(setup, 1, new ItemStack(Items.FLINT, 2));
+        helper.assertTrue(makes(helper, setup.pot, "test_pairs"), "thrown in: the dish of four, got "
+                + made(helper, setup.pot));
+        empty(setup.pot);
+        setup.logic.tick(setup.station);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.getInventory().add(new ItemStack(Items.QUARTZ, 2));
+        player.getInventory().add(new ItemStack(Items.FLINT, 2));
+        CompoundTag fill = new CompoundTag();
+        fill.putString(CookingPotStation.DISH, HandsOnDelight.id("test_pair").toString());
+        fill.putBoolean(CookingPotStation.SCOOP_ALL, true);
+        setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_FILL, fill);
+        setup.logic.tick(setup.station);
+        helper.assertTrue(makes(helper, setup.pot, "test_pair"), "picked: the dish of two, got " + made(helper, setup.pot));
+        helper.assertTrue(player.getInventory().countItem(Items.QUARTZ) == 0, "both sets went in");
+        empty(setup.pot);
+        helper.succeed();
+    }
+
+    /**
+     * Christmas Delight asks for milk by a tag nothing fills: such a dish cannot be made, so it is not offered, the book puts nothing in
+     * for it, and its food is never laid out for it.
+     */
+    public static void aDishNobodyCanMakeIsNotOffered(GameTestHelper helper) {
+        Ingredient nothing = Ingredient.of(TagKey.create(Registries.ITEM, HandsOnDelight.id("test_nothing")));
+        addRecipe(helper, "yogurt", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, Ingredient.of(Items.HONEY_BOTTLE), nothing, nothing);
+        helper.assertFalse(Cookable.ingredient(nothing), "an empty tag is no ingredient anyone has");
+        helper.assertTrue(Cookable.ingredient(Ingredient.of(Items.HONEY_BOTTLE)) && Cookable.ingredient(Ingredient.EMPTY),
+                "an item is, and a gap asks for nothing");
+        Setup setup = pot(helper);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.getInventory().add(new ItemStack(Items.HONEY_BOTTLE, 2));
+        CompoundTag fill = new CompoundTag();
+        fill.putString(CookingPotStation.DISH, HandsOnDelight.id("test_yogurt").toString());
+        setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_FILL, fill);
+        helper.assertTrue(PotRecipes.kinds((KitchenPot) setup.pot).isEmpty() && player.getInventory().countItem(Items.HONEY_BOTTLE) == 2,
+                "the book puts nothing in");
+        empty(setup.pot);
+        helper.succeed();
+    }
+
+    /** Christmas Delight asks for milk as {@code c:foods/milk}, which no other mod fills: it takes the milk bottle and the bucket. */
+    public static void milkAskedForAsFoodIsMilk(GameTestHelper helper) {
+        Ingredient milk = Ingredient.of(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "foods/milk")));
+        helper.assertTrue(milk.test(new ItemStack(fd("milk_bottle"))), "a milk bottle is milk");
+        helper.assertTrue(milk.test(new ItemStack(Items.MILK_BUCKET)), "a milk bucket is milk");
+        helper.assertTrue(Cookable.ingredient(milk), "so the dishes of milk can be made");
+        helper.succeed();
+    }
+
+    /** Every cooking recipe the game has, its food thrown in or picked in the book: see {@link StationAudit}. */
+    public static void everyDishFromItsFoodThrownIn(GameTestHelper helper) {
+        StationAudit.audit(helper, "cooking pot", PotRecipes.candidates(Platform.INSTANCE.cookingRecipes(helper.getLevel())), recipe -> null,
+                CookingPotStation.SLOTS);
     }
 
     public static void dishesStayOutOfTheWater(GameTestHelper helper) {

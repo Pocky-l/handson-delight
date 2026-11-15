@@ -21,6 +21,7 @@ import net.minecraft.world.phys.Vec3;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.handson_delight.platform.Platform;
+import com.pockyl.handson_delight.station.StationRecipes;
 import com.pockyl.handson_delight.station.KitchenVat;
 import com.pockyl.handson_delight.station.VatLogic;
 import com.pockyl.handson_delight.station.VatStation;
@@ -97,6 +98,16 @@ public final class VatTests {
         CompoundTag data = new CompoundTag();
         data.putInt(VatStation.FROM, from);
         setup.logic.onCustomAction(setup.station, player, VatStation.ACTION_PUT, data);
+    }
+
+    /** Every aging recipe the vat has, its food dropped in or picked in the book: see {@link StationAudit}. */
+    public static void everyAgingFromItsFoodDroppedIn(GameTestHelper helper) {
+        if (!Platform.INSTANCE.isLoaded(KitchenVat.MOD_ID)) {
+            helper.succeed();
+            return;
+        }
+        StationAudit.audit(helper, "vat", StationRecipes.candidates(KitchenVat.recipes(helper.getLevel()), KitchenVat.Aging::id,
+                KitchenVat.Aging::ingredients), recipe -> null, KitchenVat.INGREDIENTS);
     }
 
     /**

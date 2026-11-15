@@ -12,6 +12,11 @@ import com.pockyl.handson_delight.gametest.VatTests;
  */
 public final class FabricVatTests implements FabricGameTest {
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyAgingFromItsFoodDroppedIn(GameTestHelper helper) {
+        VatTests.everyAgingFromItsFoodDroppedIn(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void theVatReadsItsRecipes(GameTestHelper helper) {
         VatTests.theVatReadsItsRecipes(helper);
     }

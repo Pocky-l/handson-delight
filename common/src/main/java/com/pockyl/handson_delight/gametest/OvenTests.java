@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.handson_delight.platform.Platform;
+import com.pockyl.handson_delight.station.StationRecipes;
 import com.pockyl.handson_delight.station.KitchenOven;
 import com.pockyl.handson_delight.station.OvenLogic;
 import com.pockyl.handson_delight.station.OvenStation;
@@ -69,6 +70,17 @@ public final class OvenTests {
         data.putString(OvenStation.DISH, recipe);
         data.putBoolean(OvenStation.ALL, all);
         setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_FILL, data);
+    }
+
+    /** Every recipe of no grid the oven has, its food laid on the tray or picked in the book: see {@link StationAudit}. */
+    public static void everyLooseBakingFromItsFoodLaidOn(GameTestHelper helper) {
+        if (!Platform.INSTANCE.isLoaded(KitchenOven.MOD_ID)) {
+            helper.succeed();
+            return;
+        }
+        java.util.List<KitchenOven.Baking> loose = KitchenOven.recipes(helper.getLevel()).stream().filter(recipe -> !recipe.isShaped()).toList();
+        StationAudit.audit(helper, "oven", StationRecipes.candidates(loose, KitchenOven.Baking::id, KitchenOven.Baking::ingredients),
+                recipe -> null, KitchenOven.INGREDIENTS);
     }
 
     /**
@@ -211,8 +223,13 @@ public final class OvenTests {
         Optional<KitchenOven.Baking> making = KitchenOven.matching(KitchenOven.recipes(helper.getLevel()),
                 setup.station.state().getItems(OvenStation.INGREDIENTS));
         helper.assertTrue(making.isPresent() && making.get().id().toString().equals(PIE), "the stack was shared out into the pie");
-        helper.assertTrue(setup.oven.getItem(0).getCount() == 1 && setup.oven.getItem(1).is(cultural("cinnamon")),
-                "one stick a place, got " + setup.oven.getItem(0) + ", " + setup.oven.getItem(1));
+        int sticks = 0;
+        for (int slot = 0; slot < KitchenOven.INGREDIENTS; slot++) {
+            ItemStack there = setup.oven.getItem(slot);
+            sticks += there.is(cultural("cinnamon")) && there.getCount() == 1 ? 1 : 0;
+        }
+        // The stack keeps its place and the sticks go to free places: what lies on the tray does not move about.
+        helper.assertTrue(sticks == 3, "one stick a place, three places, got " + sticks);
         helper.succeed();
     }
 }

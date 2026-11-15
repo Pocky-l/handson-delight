@@ -2,199 +2,39 @@
 
 ## [1.5.0+1.21.1] - 2026-11-15
 ### New
-- [Cultural Delights](https://modrinth.com/mod/cultural-delights)'s oven is a station. In the world it is a brick oven
-  with a hearth inside and a grated door, and its fire glows through the grate while the block under it heats it.
-  Right-click it: the door opens like a pair of gates and the baking tray slides out. Lay what you bake on it (a pie's
-  filling goes on its crust in layers, the rest in neat piles), or pick a recipe in its book. Shut the door with a click
-  and it bakes; through the grate you see it brown, and the badge counts down. Open it and the tray brings the dish out,
-  a pie or a cake as the real thing. Leave and the door shuts behind you. Three of a kind laid as one stack are spread
-  over the tray as the oven needs them. Sneak to use its own menu.
-- Cultural Delights' vat is a station too. A new vat is always placed standing on its bottom (one already lying on its
-  side keeps its own menu). It is a stone tub now, open inside under a lid
-  that swings up on its hinge. Pour water or milk in, drop the rest in and it floats round on it, close the lid and it
-  ages at the warmth under it: over a fire it boils and steams, over ice it frosts over and cold mist spills down its
-  sides, and the badge shows its warmth against the recipe's. No bottle is needed to start: the drink waits in the vat,
-  beer golden under its head, until you click it with a bottle (or a wafer for ice cream) and draw it. Sneak to use its
-  own menu; a bottle in its menu or from a hopper works as before.
-- [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle opens as a station. Click its lid to lift it
-  off and set it on the stove beside the kettle; pour a bucket of water or milk in at the opening and drop the leaves
-  in. They float, soak and sink to the bottom, and the water takes their colour as it brews. Steam rises from the
-  spout while the kettle is on the fire, more as the brew nears done. When it is done the kettle whistles softly with
-  a jet of steam, also for anyone passing by, and keeps boiling. Click the spout with a bottle: you pick the kettle up,
-  turn it side on and tip it, and the tea runs into a glass mug and rises in it. With an empty hand a bottle is offered
-  from your inventory, and Shift pours every cup there is. Its badge shows what brews, whether the fire under it is
-  lit, the time left, and then how many cups are in it. Its recipes are in the book with what they are brewed in.
-  Sneaking keeps the kettle's own menu.
-- `kettle_time` in `config/handson_delight.properties` makes drinks take longer or shorter in Farmer's Respite's kettle,
-  however they got into it.
-- [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)'s kettle opens as a station the same way. Until now nothing showed inside it, only a percentage
-  when you looked at it. Lift the lid, pour the water in and drop four leaves in, one by one or straight from the book.
-  The water comes to the boil first. You see it warm up, bubble more and more and steam from the spout, and the badge
-  counts that time too. Boiled with nothing in it, the kettle whistles. Then the leaves steep and the water turns into
-  tea. Pour it from the spout into bottles, one at a time or every bottle with Shift. When you leave, the lid goes back
-  on, as the kettle looks in the world. Sneak to use the kettle as before.
-- Youkai's Feasts' cuisine board is a station. Its sushi and rolls are made step by step, and the recipe book beside it
-  shows every step in order, from the empty board. Click with the next thing on your cursor and it comes down onto the board; a
-  sauce is poured out of its bottle. Held over the board, the next step shows where it will go, see-through. Food that an
-  empty hand would shape or roll rises a little under the cursor, and a click shapes the rice into nigiri or rolls the sheet up, and the roll comes over the sheet from your
-  side. The dishes lie facing you, rolls across in front of you. A finished roll is cut as on the cutting board: the
-  next cut is a dashed line, the knife (on your cursor, or offered from your inventory) stands on it, and each click
-  cuts one; at the last one the roll falls into its pieces, which come to you. A right click takes the last step back, rice into a bowl of yours. A recipe picked in the book is
-  laid up from your inventory and rolled, and Shift makes as many as you have for. What is left on your cursor after a
-  step goes back into your inventory when the next step has no use for it (the rest of the rice once a nigiri is to be
-  shaped), and stays when it does. Sneak to use the board as before.
-- Youkai's Feasts' small iron pot, short iron pot and stockpot are stations, empty too: open an empty one with an empty
-  hand and let a water bucket go over it (a water bottle for the two small ones). Click with food on your cursor and it comes down into the soup with a splash and floats there; soy sauce and cream are poured from their
-  bottle and bowl. Take the stockpot's ladle by its handle and stir: what floats goes round after it. The soup is drawn
-  as in Farmer's Delight's pot, in its own colour, and simmers over the fire. Your inventory shows lit only what the
-  pot still takes, and Shift puts in as many as it takes. A right click on the soup takes the last thing back out. The
-  recipe book lists the dishes of that pot with their time, and a dish picked there goes in from your inventory. While it
-  cooks, the badge shows the dish, whether the fire under it is lit and the seconds left; when it is done you hear a chime,
-  and the pot of the dish stands there as before. Sneak to use the pot as before.
-- Youkai's Feasts' steamer is a station, opened from its pot, any of its racks or its lid. The lid comes off with a puff
-  of steam and is set down beside the steamer, and the top rack is open. Food on your cursor goes onto the place you let
-  it go over, which shows it see-through first; Shift lays it on every free place of the open rack. Any other rack is
-  outlined under your cursor, and a click opens that rack: the racks over it are lifted off together and set down on the
-  lid, and you look into it. Click a rack on that stack to go back up, or turn the mouse wheel to go a rack at a time. A
-  rack from your inventory goes on top, the lid goes back on, a water bucket is poured into the pot. Click a thing to
-  take it, Shift to take everything that is done on the open rack, and the right button takes back what you laid
-  last. Steam rises through the open rack, a thing that is done glints, and the badge shows what steams there, whether
-  the pot has heat and water and the seconds left. When the last thing on the steamer is done you hear a chime, also when
-  you are only passing by. The recipe book has its recipes, and one picked there is laid from your inventory. When you
-  leave, the racks and the lid go back on. Sneak to use the steamer as before.
-- Youkai's Feasts' fermentation tank is a station. Click its lid to take it off and put it back on; things go in only
-  with it off, and it ferments only with it on, as before. Pour a bucket or a bottle in at the opening, and drop up to
-  eight things in, one of each kind a place; they float on the liquid or lie on the bottom. Under the lid it bubbles,
-  and the badge shows what it makes and the time left. When it is done the tank lifts its lid itself with a chime, the
-  sake or wine is there in the tank, and tea leaves or natto lie where they were put. A bottle on your cursor is dipped
-  into the drink where you click; with an empty hand a bottle from your inventory is offered over it, and a click dips
-  it. The recipe book has its recipes, and one picked there goes in from your inventory. When you leave, the lid goes
-  back on. Sneak to use the tank as before.
-- Youkai's Feasts' squares on the right of the screen while you look at one of its blocks (what it takes next, what lies
-  in it and its progress) are hidden. Set `youkai_hints` to `true` in the config to see them again.
-- [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s grill is a station. Two skewers lie over its
-  fire: lay them from your hand, the stack you let go over the grill or a recipe in its book. When a skewer's lower side
-  is done it smokes round its edge; click it and it turns over, once, as Barbeque's Delight allows. Clicked earlier it
-  only twitches. Click a skewer with a powder and it is shaken over it, with a sauce and it is dabbed on, and the
-  seasoning stays on the skewer in its colour. Left on after it is done, a skewer darkens and smokes harder until it
-  burns. Sneak to use the grill as before.
-- Its ingredients basin is a station too. Put the meat in one compartment and the side in the other. A stick from your
-  inventory lies ready on the rim: click it and the pieces hop onto it one after another, the side coming from the other
-  compartment, so nothing has to be held in the off hand. Shift makes as many skewers as there is food for, and a
-  recipe picked in its book fills the compartments from your inventory.
-- [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell)'s alchemist pot is a pot station: its stick
-  stirs, things float and boil in it, and it cooks its own recipes first and Farmer's Delight's after. A scroll of
-  [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) clicked on the pot hangs open over
-  its back rim, and so does one in your hand when you open it; click it to take it back. Its school shows on the pot: a
-  fire scroll burns under it like a campfire and heats it, ice frosts the rim, lightning crackles over the liquid, holy
-  light rises from it, gluttony makes it boil harder. A dish that needs a school waits for its scroll: the scroll blinks
-  on the badge, and the book lists it with the dish. Picking such a dish in the book hangs a matching scroll from your
-  inventory. Sneaking keeps the pot's own menu.
-- [Chopper's Delight](https://www.curseforge.com/minecraft/mc-mods/choppers-delight)'s decorated cutting board, the one
-  with a banner pattern, works like every other board now: click it to cut, put dishes together and stick a knife in.
-  Its banner pattern stays on it while you work.
-- [Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s dungeon stove is a station like
-  Farmer's Delight's stove: lay food on its grill, turn each piece at the half and take it off when it is done.
-- Every station's recipe book can be made bigger or smaller and moved a little. Take it by its top right brass corner and
-  pull: the corner across stays where it is and the book grows or shrinks with your hand; the corner lifts towards you
-  under the cursor to show it can be taken. Take it by its cover or an empty bit of a page and it goes with your hand. Wherever
-  it hangs it faces you and stays on the screen. A right click on its cover puts it back as it was. Its size and place
-  are the same at every station and kept in `config/handson_delight-book.properties` between games.
+- [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven is a station: lay the food on its tray, shut
+  the door and watch it bake through the grate.
+- Cultural Delights' vat is a station: pour, drop the ingredients in, close the lid and draw the drink with a bottle.
+- [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle is a station: lift the lid, pour
+  the water in, drop the leaves in and pour the tea from the spout. `kettle_time` in the config sets how long it brews.
+- [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts): its kettle, cuisine
+  board, iron pots, stockpot, steamer and fermentation tank are stations.
+- Youkai's Feasts' hint squares beside its blocks are hidden; `youkai_hints=true` in the config brings them back.
+- [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s grill and ingredients basin are stations: turn and season the skewers, thread them
+  from the basin.
+- [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell)'s alchemist pot is a station, and a scroll of
+  [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) hung on it unlocks its dishes.
+- [Chopper's Delight](https://www.curseforge.com/minecraft/mc-mods/choppers-delight)'s decorated cutting board works like any other board.
+- [Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s dungeon stove is a station.
+- The recipe book can be resized and moved; a right click on its cover puts it back.
 
 ### Changed
-- The recipe book opens almost twice as fast.
-- A recipe clicked in a station's book is only picked now: its page opens on the right so you can read what it needs.
-  Click it again to lay it out from your inventory (with Shift as many as you have for). Before, the first click already
-  took the food out of your inventory.
-- The mouse wheel over a recipe book's list turns its pages.
-- Every station's recipe book names the dish or the ingredient under the cursor, as a slot does.
-- The book opens again at the recipe you picked last, at that station or at one like it, as long as what lies in the
-  station is on the way to it; before, it opened at the first recipe that fitted, or the first of all. While you work, the
-  dishes keep their places in the list: a dish you were making no longer jumped to another page.
+- The recipe book opens almost twice as fast and opens at the recipe you picked last.
+- The first click on a recipe in the book shows its page, the second lays it out from your inventory.
+- The mouse wheel turns the book's pages, and its items show their names under the cursor.
 
 ### Fixed
-- Raw chicken could stay whole on the cutting board after its cuts in modpacks with
-  [PizzaCraft](https://modrinth.com/mod/pizzacraft), which cuts it into more pieces than Farmer's Delight does. Your game
-  and the server could pick different recipes for it, so the board drew two cuts while the server waited for a third. Both
-  now pick the same one, for chicken and anything else two mods cut.
-- A dish with more ingredients than the recipe book's page has room for (seven and more on the cutting board) ran off the
-  bottom of the page. A bar beside them now scrolls them a row at a time: drag its grip, click beside it, or turn the mouse
-  wheel over the page.
-- The items drawn in the recipe books no longer turn darker as you look round or stand at the station from
-  another side: they are lit as in your inventory.
-- Food thrown into [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg ferments when its recipe wants
-  two or three of the same thing: three beef for jerky, two fish for kippers, two sea pickles, two cocoa beans. They
-  lay together in one stack, and the keg found no recipe in them. Food thrown in before the liquid is laid out again
-  once it is poured.
-- Food thrown into the cooking pot together cooks the dish it makes again. Two of the same ingredient (two sugars for a
-  candy cane) lie together in the pot, and some dishes never started or the pot offered another dish of the same food.
-  When the food in the pot makes more than one dish, the pot cooks the one that uses it up, and a dish picked in the
-  book stays the one it cooks.
-- The stations' books no longer list dishes nobody can make: an addon recipe asking for an ingredient no item is never
-  cooked, but sat in the book looking complete.
-- [Christmas Delight](https://modrinth.com/mod/christmas-delight)'s milk dishes (eggnog, hot chocolate, log cake and
-  four more) cook with Farmer's Delight's milk bottle or a milk bucket. They ask for milk by a tag nothing filled, so
-  they could not be cooked at all.
-- Farmer's Respite's kettle on a stove or a campfire shows its tray again, drawn with Farmer's Delight's own: its own
-  model asked for tray textures Farmer's Delight no longer has. With the lid off, its opening is open.
-- Cutting a pumpkin, a melon or another block on the cutting board, the knife hung inside it instead of over it, and
-  stood off the line the cursor pointed at, so the line was hard to hit. The knife now stands over the top of what it
-  cuts, right under the cursor.
-- The cutting board opens from whichever side you stand at, facing you, with the food in the middle of the board
-  beside its handle. Before, the camera always went round to the side the board was placed from.
-- Dungeons Delight's monster pot is full of its green ooze again, as it is in the world, instead of plain water. What
-  cooks in it only shades the ooze.
-- At Miner's Delight's copper pot, milk, an egg or sugar that went in comes back out with a click on the soup, as at
-  Farmer's Delight's pot, and they are poured, cracked and shaken in by hand there too.
-- Clicking the keg's tap with an empty hand no longer takes an empty bucket from your inventory and draws the keg's
-  liquid into it: only a mug or bottle is offered. A bucket on your cursor still fills, and shows as one drink, not four.
-- On some computers (seen on a Mac) a block beside the station could cover the recipe book. The book is now drawn over
-  everything there too, only without smoothing its edges
-  ([#9](https://github.com/Pocky-l/handson-delight/issues/9)).
-
-- A glass bottle or a stick can be laid on the cutting board again in modpacks where an addon also cuts something with
-  it ([Fright's Delight](https://modrinth.com/mod/frights-delight) cuts with a bottle), so melon juice, bottled drinks,
-  skewers and popsicles are built by hand. Held over what it cuts, it still cuts.
-- The dish picked in the cutting board's book is the one made, also when another addon's dish takes the same
-  ingredients.
-- The cutting board makes each dish exactly as the modpack's recipe has it. A KubeJS or
-  [CraftTweaker](https://modrinth.com/mod/crafttweaker) script that removes or changes a recipe no longer leaves the board
-  and its book on the old recipe.
-- Players who join without the mod keep Farmer's Delight's sandwiches and the other board dishes in their recipe book.
-  They lost them at every login, and with `doLimitedCrafting` could no longer craft them.
-- Another mod's stand-in player can craft the board's dishes in a crafting table, as automation can.
-- With a station turned off in `config/handson_delight.properties`, its pot, kettle, oven or vat keeps its own look.
-- Food that changes its look by its components or a custom model is cut and coloured at the stations as it looks.
-- A resource pack that retextures white concrete no longer shows through the recipe book.
-- A water bottle used in a dish at the cutting board gives back its empty glass bottle, as a water bucket gives back its
-  bucket (#27).
-- With [InvMove](https://modrinth.com/mod/invmove), switching to the next station with the movement keys no longer walks
-  you away (#27).
-- The board's last cut no longer loses its pieces when the knife from your inventory breaks on it and its slot was the
-  only room left.
-- Youkai's Feasts' pots and cuisine board give back the bottle or bowl of the last item put in from the inventory, even
-  with no other room.
-- A player whose own config turns the cutting board's station off crafts the board's dishes in the grid on a server that
-  has the board, and keeps them in the recipe book and recipe viewers, instead of losing them.
-- A stove or skillet opened with something it won't take (an egg at the grill, a full grill or pan) leaves it in your
-  hand instead of bouncing it back.
-- At the steamer, the other button takes back only what you laid, not another cook's food, and a feast block comes off
-  its rack by a click on any quarter of it.
-- Shift with a dish picked at the cuisine board no longer leaves the board bare or half laid when a step needs more than
-  one item.
-- A skewer taken off the grill, or food taken off the steamer, no longer shows again for a moment.
-- A basin recipe picked in the book no longer fills the side's compartment with a second kind of a tag ingredient.
-- The alchemist pot's badge shows the scroll of the school the dish waits for.
-- A poured liquid or a cracked egg stays sunk in the pot after F3+T or a resource pack change, and the bowl offered over
-  the soup is drawn again.
-- The recipe book keeps the scroll of the picked recipe's ingredients when the cursor crosses the list; after a reload
-  that removes the picked recipe it shows the first one, and the ribbon that closes the book is always there.
-- The board's book forgets dishes from another server or from before a reload.
-- A chop drawn at the board stays open while another player or a hopper changes the board.
-- The fermentation tank shows the time left in seconds, not rounded up to "2 min".
-- Shift + click on a cup or bucket in the inventory fills or pours it at the kettles and kegs.
-- Sets saved when a batch ended just after its cook left stay in the pot instead of going to whoever opens it next.
-- The cutting board, cuisine board, basin, stove, skillet and recipe book cost less each frame.
+- Raw chicken stayed whole on the cutting board with [PizzaCraft](https://modrinth.com/mod/pizzacraft).
+- [Christmas Delight](https://modrinth.com/mod/christmas-delight)'s milk dishes could not be cooked at all.
+- KubeJS and [CraftTweaker](https://modrinth.com/mod/crafttweaker) recipe changes reach the cutting board.
+- [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg and the cooking pot missed recipes that need two of the same item.
+- Long ingredient lists ran off the book's page; they scroll now.
+- The recipe book was hidden behind nearby blocks on some Macs ([#9](https://github.com/Pocky-l/handson-delight/issues/9)).
+- A water bottle used at the cutting board gives back its glass, and [InvMove](https://modrinth.com/mod/invmove) no longer walks you away
+  from a station ([#27](https://github.com/Pocky-l/handson-delight/issues/27)).
+- Players without the mod lost the cutting board's dishes from their recipe book on join.
+- The cutting board opens facing you from any side, and the knife stands right under the cursor.
+- Many smaller fixes at the stations, and they cost less each frame.
 
 ## [1.4.1+1.21.1] - 2026-11-14
 ### New

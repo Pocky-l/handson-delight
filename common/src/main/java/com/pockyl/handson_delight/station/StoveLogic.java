@@ -28,14 +28,17 @@ public final class StoveLogic implements StationLogic {
                 return Grill.PLACES;
             }
 
+            // The station shows six places; a smaller addon stove leaves the ones it lacks empty.
             @Override
             public ItemStack get(int index) {
-                return Platform.INSTANCE.getItem(stove, index);
+                return index < StoveCooking.places(stove) ? Platform.INSTANCE.getItem(stove, index) : ItemStack.EMPTY;
             }
 
             @Override
             public void set(int index, ItemStack stack) {
-                Platform.INSTANCE.setItem(stove, index, stack);
+                if (index < StoveCooking.places(stove)) {
+                    Platform.INSTANCE.setItem(stove, index, stack);
+                }
             }
         });
     }
@@ -119,7 +122,8 @@ public final class StoveLogic implements StationLogic {
         StationState state = station.state();
         Grill grill = StoveCooking.grill(stove);
         CompoundTag data = new CompoundTag();
-        for (int place = 0; place < Grill.PLACES; place++) {
+        int places = StoveCooking.places(stove);
+        for (int place = 0; place < places; place++) {
             if (!Platform.INSTANCE.getItem(stove, place).isEmpty()) {
                 data.putFloat(StoveStation.DOWN + place, steps(grill.down(place)));
                 data.putFloat(StoveStation.UP + place, steps(grill.up(place)));

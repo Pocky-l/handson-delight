@@ -1,12 +1,10 @@
 package com.pockyl.handson_delight.mixin;
 
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.RecipeBook;
 import net.minecraft.stats.ServerRecipeBook;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,8 +21,8 @@ import java.util.List;
 
 /**
  * The recipe book shows no sandwich: the crafting grid would not make it, it is put together on the cutting board. Farmer's
- * Delight's advancements still teach its recipes; they are left out here, and so are the ones a player learnt before. A player whose
- * client lacks the mod crafts them in the grid and learns them.
+ * Delight's advancements still teach its recipes; they are left out here, and so are the ones a player learnt before, once their
+ * client is known to have the mod. A player whose client lacks the mod crafts them in the grid and keeps them.
  */
 @Mixin(ServerRecipeBook.class)
 abstract class ServerRecipeBookMixin extends RecipeBook {
@@ -40,9 +38,14 @@ abstract class ServerRecipeBookMixin extends RecipeBook {
         callback.setReturnValue(addRecipes(recipes.stream().filter(recipe -> !AssemblyRecipes.isMadeOnTheBoard(recipe.id())).toList(), player));
     }
 
-    @Inject(method = "fromNbt", at = @At("TAIL"))
-    private void handson$forgetTheBoards(CompoundTag tag, RecipeManager manager, CallbackInfo callback) {
-        if (!HandsOnConfig.removeCraftingRecipes()) {
+    /**
+     * Not as the book loads: the player's client is not known yet, and one without the mod would lose the dishes for good (with
+     * {@code doLimitedCrafting}, its grid then makes them no more). Both loaders know the client's channels from its configuration,
+     * before the book is first sent.
+     */
+    @Inject(method = "sendInitialRecipeBook", at = @At("HEAD"))
+    private void handson$forgetTheBoards(ServerPlayer player, CallbackInfo callback) {
+        if (!HandsOnConfig.removeCraftingRecipes() || !Platform.INSTANCE.hasThisMod(player)) {
             return;
         }
         // A plain loop: a method reference to this would name the mixin class itself, which never exists at run time.

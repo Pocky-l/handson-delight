@@ -1,14 +1,20 @@
 package com.pockyl.handson_delight.fabric;
 
+import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 
 import com.pockyl.handson_delight.gametest.BoardTests;
 import com.pockyl.handson_delight.gametest.RecipeAudit;
+import com.pockyl.handson_delight.gametest.TestPlayers;
 
 /** {@link BoardTests} on Fabric: they run when the game starts with {@code -Dfabric-api.gametest}. */
 public final class FabricBoardTests implements FabricGameTest {
+    static {
+        TestPlayers.useFakePlayers(FakePlayer::get);
+    }
+
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void burgersLeaveTheCraftingTable(GameTestHelper helper) {
         BoardTests.burgersLeaveTheCraftingTable(helper);
@@ -92,6 +98,21 @@ public final class FabricBoardTests implements FabricGameTest {
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void aKnifeIsNoLayer(GameTestHelper helper) {
         BoardTests.aKnifeIsNoLayer(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyDishIsLaidByHand(GameTestHelper helper) {
+        BoardTests.everyDishIsLaidByHand(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aToolThatIsALayerCutsOnlyWhatItCuts(GameTestHelper helper) {
+        BoardTests.aToolThatIsALayerCutsOnlyWhatItCuts(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aPickedDishWinsOverAnotherOfTheSameLayers(GameTestHelper helper) {
+        BoardTests.aPickedDishWinsOverAnotherOfTheSameLayers(helper);
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)

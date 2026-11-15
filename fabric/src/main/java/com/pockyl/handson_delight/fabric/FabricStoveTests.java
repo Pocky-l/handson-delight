@@ -4,6 +4,7 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 
+import com.pockyl.handson_delight.gametest.SmallStoveTests;
 import com.pockyl.handson_delight.gametest.StoveTests;
 
 /** {@link StoveTests} on Fabric: they run when the game starts with {@code -Dfabric-api.gametest}. */
@@ -46,5 +47,10 @@ public final class FabricStoveTests implements FabricGameTest {
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void theGrillingTimeFollowsTheConfig(GameTestHelper helper) {
         StoveTests.theGrillingTimeFollowsTheConfig(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void aStoveWithFewerPlacesGrillsOnThoseItHas(GameTestHelper helper) {
+        SmallStoveTests.aStoveWithFewerPlacesGrillsOnThoseItHas(helper);
     }
 }

@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
@@ -26,6 +27,10 @@ import java.util.List;
 @GameTestHolder(HandsOnDelight.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ModGameTests {
+    static {
+        TestPlayers.useFakePlayers(FakePlayerFactory::get);
+    }
+
     private ModGameTests() {
     }
 
@@ -352,6 +357,21 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void aKnifeIsNoLayer(GameTestHelper helper) {
         BoardTests.aKnifeIsNoLayer(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void everyDishIsLaidByHand(GameTestHelper helper) {
+        BoardTests.everyDishIsLaidByHand(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void aToolThatIsALayerCutsOnlyWhatItCuts(GameTestHelper helper) {
+        BoardTests.aToolThatIsALayerCutsOnlyWhatItCuts(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void aPickedDishWinsOverAnotherOfTheSameLayers(GameTestHelper helper) {
+        BoardTests.aPickedDishWinsOverAnotherOfTheSameLayers(helper);
     }
 
     @GameTest(template = "empty", timeoutTicks = 100)
@@ -867,6 +887,26 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void kettleTimeScalesTheBrew(GameTestHelper helper) {
         KettleTests.kettleTimeScalesTheBrew(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void cutPiecesThatDoNotFitDropOnce(GameTestHelper helper) {
+        FullInventoryTests.cutPiecesThatDoNotFitDropOnce(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void aStoveWithFewerPlacesGrillsOnThoseItHas(GameTestHelper helper) {
+        SmallStoveTests.aStoveWithFewerPlacesGrillsOnThoseItHas(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void everyDishIsTheServersRecipe(GameTestHelper helper) {
+        RecipeEditTests.everyDishIsTheServersRecipe(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aScriptsEditsReachTheBoard(GameTestHelper helper) {
+        RecipeEditTests.aScriptsEditsReachTheBoard(helper);
     }
 
     /** {@link PotTests.MealMaker}'s meal of what lies in the pot on NeoForge. */

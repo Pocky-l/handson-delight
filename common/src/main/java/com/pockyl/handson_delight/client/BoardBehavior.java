@@ -36,6 +36,7 @@ import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
+import com.pockyl.handson_delight.assembly.BoardDishes;
 import com.pockyl.handson_delight.mixin.MinecraftAccessor;
 import com.pockyl.handson_delight.station.BoardLogic;
 import com.pockyl.handson_delight.station.Cutting;
@@ -368,7 +369,7 @@ public final class BoardBehavior implements StationBehavior {
      */
     private void useHeld(StationView view, LocalPlayer player) {
         ItemStack held = player.getMainHandItem();
-        if (held.isEmpty() || !player.inventoryMenu.getCarried().isEmpty() || Cutting.isTool(view.level(), held)) {
+        if (held.isEmpty() || !player.inventoryMenu.getCarried().isEmpty() || isTool(view, held)) {
             return;
         }
         CompoundTag how = new CompoundTag();
@@ -1286,7 +1287,7 @@ public final class BoardBehavior implements StationBehavior {
             view.sendAction(CuttingBoardStation.ACTION_CARVE, new CompoundTag());
             return true;
         }
-        if (button == 1 && Cutting.all(view.level()).stream().anyMatch(recipe -> Cutting.tool(recipe).test(stack))) {
+        if (button == 1 && isTool(view, stack)) {
             view.putAwayCarried();
             return true;
         }
@@ -1294,7 +1295,7 @@ public final class BoardBehavior implements StationBehavior {
             chop(view);
             return true;
         }
-        if (Cutting.isTool(view.level(), stack)) {
+        if (isTool(view, stack)) {
             // Nothing there for this knife to cut: it knocks on the board and stays in the hand, never a layer of a dish.
             view.playSound(SoundEvents.WOOD_HIT, "item", 0.25F, 1.6F);
             return true;
@@ -1303,6 +1304,14 @@ public final class BoardBehavior implements StationBehavior {
         how.putBoolean(CuttingBoardStation.ONE, button == 1);
         view.sendAction(CuttingBoardStation.ACTION_PLACE, how);
         return true;
+    }
+
+    /**
+     * Whether {@code stack} is the board's tool here, as the server decides it: a thing some cut is made with, over what it cuts or
+     * when no dish has it as a layer. A glass bottle an addon cuts a mould with still starts a drink.
+     */
+    private static boolean isTool(StationView view, ItemStack stack) {
+        return Cutting.isTool(view.level(), stack, view.state().getItem(CuttingBoardStation.BOARD_SLOT), BoardDishes.all());
     }
 
     /** Shift + click on food in the drawer puts the whole stack on the board, as at the pot: to be cut, or as the next layer. */

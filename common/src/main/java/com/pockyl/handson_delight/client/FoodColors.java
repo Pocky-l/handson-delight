@@ -5,7 +5,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.renderer.texture.SpriteContents;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
@@ -21,13 +20,13 @@ import java.util.Set;
 
 /** The colours food gives a broth, its pieces and its juice, read from its icon, so modded food needs no table. */
 final class FoodColors {
-    private static final Map<Item, Integer> CACHE = new HashMap<>();
+    private static final Map<ItemVoxels.Look, Integer> CACHE = new HashMap<>();
     private static final int FALLBACK = 0xB0A070;
     /** A raw egg stirred in: yolk and white. */
     private static final int EGG = 0xF2DC9A;
     private static final int HUES = 12;
-    private static final Map<Item, Integer> MAIN = new HashMap<>();
-    private static final Map<Item, Integer> BROTH = new HashMap<>();
+    private static final Map<ItemVoxels.Look, Integer> MAIN = new HashMap<>();
+    private static final Map<ItemVoxels.Look, Integer> BROTH = new HashMap<>();
     private static BakedModel readWith;
     /** Where the bowl starts on a dish's icon, as a part of its height, when it is not drawn in a bowl's own colours. */
     private static final float BOWL_TOP = 0.6F;
@@ -43,8 +42,8 @@ final class FoodColors {
     static int of(ItemStack stack) {
         forgetOnReload();
         // A liquid colours the soup with what is in its container, not the container; an egg with its yolk and white, not its shell.
-        return CACHE.computeIfAbsent(stack.getItem(), item -> KitchenLooks.isPoured(stack) ? KitchenLooks.liquidColor(stack) & 0xFFFFFF
-                : KitchenLooks.isCracked(stack) ? EGG : sample(stack));
+        return CACHE.computeIfAbsent(ItemVoxels.Look.of(stack), look -> KitchenLooks.isPoured(stack)
+                ? KitchenLooks.liquidColor(stack) & 0xFFFFFF : KitchenLooks.isCracked(stack) ? EGG : sample(stack));
     }
 
     /** Resources were reloaded (the game's fallback model is a new one): the colours read so far may be of other textures. */
@@ -59,7 +58,7 @@ final class FoodColors {
     }
 
     private static int sample(ItemStack stack) {
-        SpriteContents contents = Minecraft.getInstance().getItemRenderer().getModel(stack, null, null, 0).getParticleIcon().contents();
+        SpriteContents contents = contents(stack);
         NativeImage image = ((SpriteContentsAccessor) contents).handson$originalImage();
         long red = 0;
         long green = 0;
@@ -91,7 +90,7 @@ final class FoodColors {
      */
     static int main(ItemStack stack) {
         forgetOnReload();
-        return MAIN.computeIfAbsent(stack.getItem(), item -> sampleMain(stack, 1.0F, Set.of()));
+        return MAIN.computeIfAbsent(ItemVoxels.Look.of(stack), look -> sampleMain(stack, 1.0F, Set.of()));
     }
 
     /**
@@ -101,7 +100,7 @@ final class FoodColors {
      */
     static int broth(Level level, ItemStack meal) {
         forgetOnReload();
-        return BROTH.computeIfAbsent(meal.getItem(), item -> {
+        return BROTH.computeIfAbsent(ItemVoxels.Look.of(meal), look -> {
             Set<Integer> container = colours(container(level, meal));
             return container.isEmpty() || !drawsAny(meal, container) ? sampleMain(meal, container.isEmpty() ? 1.0F : BOWL_TOP, Set.of())
                     : sampleMain(meal, 1.0F, container);
@@ -124,7 +123,7 @@ final class FoodColors {
     }
 
     private static SpriteContents contents(ItemStack stack) {
-        return Minecraft.getInstance().getItemRenderer().getModel(stack, null, null, 0).getParticleIcon().contents();
+        return ItemVoxels.model(stack).getParticleIcon().contents();
     }
 
     /** The colours of the visible pixels of an icon, as {@link NativeImage} keeps them without their alpha. */

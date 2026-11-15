@@ -22,6 +22,7 @@ import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.KitchenTags;
+import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 
@@ -206,6 +207,17 @@ public final class Cutting {
     /** Whether {@code item} is what some cutting recipe cuts with: a knife, an axe, an addon's rolling pin. */
     public static boolean isTool(Level level, ItemStack item) {
         return !item.isEmpty() && everything(level).stream().anyMatch(recipe -> tool(recipe).test(item));
+    }
+
+    /**
+     * Whether {@code item} on the cursor is the board's tool, never laid down: a thing some cut is made with that cuts {@code onBoard},
+     * or that goes into none of {@code dishes} as a layer. An addon cutting a mould with a glass bottle (Fright's Delight) or a pod with
+     * a stick (Immortaler's Delight) leaves the bottle and the stick the first layers of drinks and skewers; a knife is no layer and
+     * knocks. The server passes its dishes, a client those its server sent: both decide alike.
+     */
+    public static boolean isTool(Level level, ItemStack item, ItemStack onBoard, List<AssemblyRecipes.Assembly> dishes) {
+        return isTool(level, item) && (findWith(level, onBoard, item).isPresent()
+                || dishes.stream().noneMatch(dish -> dish.ingredients().stream().anyMatch(ingredient -> ingredient.test(item))));
     }
 
     /**

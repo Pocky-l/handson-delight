@@ -43,6 +43,15 @@ public final class StoveCooking {
         return ((StoveTop) stove).handson$grill();
     }
 
+    /**
+     * The places this stove has, at most the grill's six: an addon's stove sizes its top itself. Its slots can be fewer than its
+     * cooking counts: Farmer's Delight takes the slot count saved with the stove when it loads.
+     */
+    public static int places(AbstractStoveBlockEntity stove) {
+        int counts = Math.min(Grill.PLACES, ((StoveTop) stove).handson$progress().length);
+        return (int) Math.min(counts, stove.streamItems().count());
+    }
+
     /** Ticks one side of a piece takes, for a recipe Farmer's Delight's stove cooks in {@code ticks}, {@code times} as long as usual. */
     public static int sideTicks(int ticks, float times) {
         return Math.max(1, Math.round(ticks * times / PACE / 2.0F));
@@ -74,7 +83,8 @@ public final class StoveCooking {
         int[] times = ((StoveTop) stove).handson$times();
         boolean lit = isLit(stove);
         boolean changed = false;
-        for (int place = 0; place < Grill.PLACES; place++) {
+        int places = places(stove);
+        for (int place = 0; place < places; place++) {
             ItemStack stack = Platform.INSTANCE.getItem(stove, place);
             if (stack.isEmpty()) {
                 if (grill.byHand(place) || grill.down(place) > 0.0F || grill.up(place) > 0.0F) {
@@ -121,7 +131,8 @@ public final class StoveCooking {
     public static void handToFarmersDelight(AbstractStoveBlockEntity stove) {
         Grill grill = grill(stove);
         boolean changed = false;
-        for (int place = 0; place < Grill.PLACES; place++) {
+        int places = places(stove);
+        for (int place = 0; place < places; place++) {
             if (grill.byHand(place) && !Platform.INSTANCE.getItem(stove, place).isEmpty()) {
                 handOver(stove, place);
                 changed = true;
@@ -148,7 +159,8 @@ public final class StoveCooking {
     public static int[] savedTimes(AbstractStoveBlockEntity stove) {
         int[] times = ((StoveTop) stove).handson$times().clone();
         Grill grill = grill(stove);
-        for (int place = 0; place < Math.min(times.length, Grill.PLACES); place++) {
+        int places = Math.min(times.length, places(stove));
+        for (int place = 0; place < places; place++) {
             if (grill.byHand(place)) {
                 times[place] = farmersDelightsTime(stove, place);
             }
@@ -183,8 +195,9 @@ public final class StoveCooking {
         if (!any) {
             return;
         }
-        ItemStack[] before = new ItemStack[Grill.PLACES];
-        for (int place = 0; place < Grill.PLACES; place++) {
+        int places = places(stove);
+        ItemStack[] before = new ItemStack[places];
+        for (int place = 0; place < places; place++) {
             before[place] = Platform.INSTANCE.getItem(stove, place).copy();
         }
         BEFORE.set(before);
@@ -205,7 +218,7 @@ public final class StoveCooking {
         List<CaughtDrops.Drop> drops = new ArrayList<>(CaughtDrops.end());
         Level level = stove.getLevel();
         boolean[] now = ((StoveTop) stove).handson$cookingNow();
-        for (int place = 0; place < Grill.PLACES; place++) {
+        for (int place = 0; place < before.length; place++) {
             if (!now[place] || before[place].isEmpty() || !Platform.INSTANCE.getItem(stove, place).isEmpty()) {
                 continue;
             }
@@ -245,7 +258,8 @@ public final class StoveCooking {
     private static void finishLeft(AbstractStoveBlockEntity stove) {
         Level level = stove.getLevel();
         boolean[] now = ((StoveTop) stove).handson$cookingNow();
-        for (int place = 0; place < Grill.PLACES; place++) {
+        int places = places(stove);
+        for (int place = 0; place < places; place++) {
             if (!now[place]) {
                 continue;
             }
@@ -283,7 +297,8 @@ public final class StoveCooking {
         }
         Grill grill = grill(stove);
         int laid = 0;
-        for (int at = 0; at < Grill.PLACES && !carried.isEmpty(); at++) {
+        int places = places(stove);
+        for (int at = 0; at < places && !carried.isEmpty(); at++) {
             if (place >= 0 && at != place || !Platform.INSTANCE.getItem(stove, at).isEmpty()) {
                 continue;
             }
@@ -304,7 +319,7 @@ public final class StoveCooking {
     public static boolean turn(AbstractStoveBlockEntity stove, int place) {
         Level level = stove.getLevel();
         Grill grill = grill(stove);
-        ItemStack stack = place >= 0 && place < Grill.PLACES ? Platform.INSTANCE.getItem(stove, place) : ItemStack.EMPTY;
+        ItemStack stack = place >= 0 && place < places(stove) ? Platform.INSTANCE.getItem(stove, place) : ItemStack.EMPTY;
         if (level == null || stack.isEmpty() || SkilletCooking.recipe(level, stack).isEmpty()
                 || level.getGameTime() - grill.turnedAt(place) < TURN_GAP) {
             return false;
@@ -321,7 +336,7 @@ public final class StoveCooking {
 
     /** The piece on {@code place} back to the cook, raw, half done or done. */
     public static ItemStack take(AbstractStoveBlockEntity stove, int place) {
-        if (place < 0 || place >= Grill.PLACES) {
+        if (place < 0 || place >= places(stove)) {
             return ItemStack.EMPTY;
         }
         ItemStack taken = Platform.INSTANCE.getItem(stove, place).copy();

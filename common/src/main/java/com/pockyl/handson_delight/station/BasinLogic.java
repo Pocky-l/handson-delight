@@ -159,8 +159,9 @@ public final class BasinLogic implements StationLogic {
         // The sticks' slot first: the skewers would otherwise go into it while it is empty, and be put back over.
         putBack(player, slot, tool);
         for (int i = 0; i < made; i++) {
-            if (!player.getInventory().add(result.copy())) {
-                player.drop(result.copy(), false);
+            ItemStack given = result.copy();
+            if (!player.getInventory().add(given)) {
+                player.drop(given, false);
             }
         }
         CompoundTag data = new CompoundTag();

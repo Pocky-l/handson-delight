@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.neoforge;
 
+import net.minecraft.network.Connection;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -18,8 +19,10 @@ final class NeoForgeNetwork {
                 .playToClient(BoardDishes.Payload.TYPE, BoardDishes.Payload.CODEC, (payload, context) -> BoardDishes.receive(payload));
     }
 
+    /** Whether the client has the channel; false for a connection without a network channel (another mod's mock player). */
     static boolean present(ServerPlayer player) {
-        return player.connection.hasChannel(BoardDishes.Payload.TYPE);
+        Connection connection = player.connection.getConnection();
+        return connection != null && connection.channel() != null && player.connection.hasChannel(BoardDishes.Payload.TYPE);
     }
 
     static void send(ServerPlayer player) {

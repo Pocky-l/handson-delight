@@ -22,7 +22,7 @@
       "com.pockyl.handson_delight.fabric.FabricSkilletTests",
       "com.pockyl.handson_delight.fabric.FabricStoveTests", "com.pockyl.handson_delight.fabric.FabricKegTests",
       "com.pockyl.handson_delight.fabric.FabricOvenTests",
-      "com.pockyl.handson_delight.fabric.FabricVatTests"]
+      "com.pockyl.handson_delight.fabric.FabricVatTests", "com.pockyl.handson_delight.fabric.FabricRecipeEditTests"]
   },
   "mixins": ["handson_delight.mixins.json"],
   "depends": {

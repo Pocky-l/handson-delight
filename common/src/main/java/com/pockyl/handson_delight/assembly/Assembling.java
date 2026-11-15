@@ -1,6 +1,7 @@
 package com.pockyl.handson_delight.assembly;
 
 import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
@@ -27,12 +28,30 @@ public final class Assembling {
      * instead of trying in vain.
      */
     public static Optional<AssemblyRecipes.Assembly> dishOf(List<ItemStack> layers, Level level) {
-        for (AssemblyRecipes.Assembly dish : AssemblyRecipes.all()) {
-            if (AssemblyRecipes.assign(dish, layers, true) != null && make(dish, layers, level, 1).rounds() > 0) {
+        return dishOf(layers, level, null);
+    }
+
+    /**
+     * {@link #dishOf(List, Level)}, the dish {@code picked} in the book first (null: none): it wins over another dish of the same layers
+     * (Ender's Delight's and Vanilla Delights' chorus pies are one craft).
+     */
+    public static Optional<AssemblyRecipes.Assembly> dishOf(List<ItemStack> layers, Level level, ResourceLocation picked) {
+        List<AssemblyRecipes.Assembly> all = AssemblyRecipes.all();
+        for (AssemblyRecipes.Assembly dish : all) {
+            if (dish.id().equals(picked) && makes(dish, layers, level)) {
+                return Optional.of(dish);
+            }
+        }
+        for (AssemblyRecipes.Assembly dish : all) {
+            if (makes(dish, layers, level)) {
                 return Optional.of(dish);
             }
         }
         return Optional.empty();
+    }
+
+    private static boolean makes(AssemblyRecipes.Assembly dish, List<ItemStack> layers, Level level) {
+        return AssemblyRecipes.assign(dish, layers, true) != null && make(dish, layers, level, 1).rounds() > 0;
     }
 
     /** Up to {@code most} rounds of {@code dish} from {@code layers} (bottom first, not changed). */

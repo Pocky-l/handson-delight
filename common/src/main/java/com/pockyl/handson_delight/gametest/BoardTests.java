@@ -140,7 +140,7 @@ public final class BoardTests {
      */
     public static void burgersLeaveTheCraftingTable(GameTestHelper helper) {
         Level level = helper.getLevel();
-        ServerPlayer cook = TestPlayers.serverPlayer(helper, "cook");
+        ServerPlayer cook = TestPlayers.withTheMod(helper, "cook");
         CraftingMenu table = new CraftingMenu(0, cook.getInventory(), ContainerLevelAccess.create(level, helper.absolutePos(BlockPos.ZERO)));
         for (int slot = 0; slot < 5; slot++) {
             table.getSlot(1 + slot).set(burger().get(slot));
@@ -184,7 +184,7 @@ public final class BoardTests {
 
     /** What a player's crafting table shows as its result with {@code grid} (slot, stack) in it. */
     private static ItemStack tableMakes(GameTestHelper helper, Map<Integer, ItemStack> grid) {
-        ServerPlayer cook = TestPlayers.serverPlayer(helper, "cook");
+        ServerPlayer cook = TestPlayers.withTheMod(helper, "cook");
         CraftingMenu table = new CraftingMenu(0, cook.getInventory(),
                 ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(BlockPos.ZERO)));
         grid.forEach((slot, stack) -> table.getSlot(1 + slot).set(stack));
@@ -661,8 +661,9 @@ public final class BoardTests {
                 }
                 for (int i = 0; i < dish.ingredients().size(); i++) {
                     ItemStack[] next = dish.ingredients().get(i).getItems();
+                    // A next layer that cuts what lies there is its tool: it cuts.
                     if (i == dish.base() || next.length == 0 || ItemStack.isSameItemSameComponents(next[0], base)
-                            || Cutting.isTool(helper.getLevel(), next[0])) {
+                            || Cutting.findWith(helper.getLevel(), base, next[0]).isPresent()) {
                         continue;
                     }
                     Board setup = board(helper);
@@ -693,6 +694,127 @@ public final class BoardTests {
         setup.place();
         helper.assertTrue(setup.layers() == 1, "the bowl alone lies there");
         helper.assertTrue(setup.cook.inventoryMenu.getCarried().is(setup.knife.getItem()), "the knife stays in the hand");
+        helper.succeed();
+    }
+
+    /**
+     * One item of each of {@code dish}'s ingredients, laid in the order a cook lays them: what goes down first, then the rest, the
+     * same item as the first one last (it would join the pile to be cut). Null when an ingredient lists nothing.
+     */
+    private static List<ItemStack> layersOf(AssemblyRecipes.Assembly dish) {
+        ItemStack[] first = dish.ingredients().get(dish.base()).getItems();
+        if (first.length == 0) {
+            return null;
+        }
+        List<ItemStack> order = new ArrayList<>(List.of(first[0].copyWithCount(1)));
+        List<ItemStack> same = new ArrayList<>();
+        for (int i = 0; i < dish.ingredients().size(); i++) {
+            ItemStack[] items = dish.ingredients().get(i).getItems();
+            if (items.length == 0) {
+                return null;
+            }
+            if (i != dish.base()) {
+                (ItemStack.isSameItemSameComponents(items[0], first[0]) ? same : order).add(items[0].copyWithCount(1));
+            }
+        }
+        order.addAll(same);
+        return order;
+    }
+
+    /**
+     * Every dish is laid by hand, layer after layer, even when an addon cuts something with one of its layers: Fright's Delight
+     * (-Paddons) cuts a mould with a glass bottle, and melon juice and every bottled drink could only be laid from the book.
+     */
+    public static void everyDishIsLaidByHand(GameTestHelper helper) {
+        Level level = helper.getLevel();
+        Board setup = board(helper);
+        List<ResourceLocation> failed = new ArrayList<>();
+        for (AssemblyRecipes.Assembly dish : AssemblyRecipes.all()) {
+            List<ItemStack> order = layersOf(dish);
+            // A second layer that cuts the first lying there cuts it: the dish starts from the book.
+            if (order == null || order.size() < 2 || Cutting.findWith(level, order.get(0), order.get(1)).isPresent()
+                    || Assembling.make(dish, order, level, 1).rounds() == 0) {
+                continue;
+            }
+            for (int i = 0; i < 2 * CuttingBoardStation.MOST_LAYERS && (setup.layers() > 0 || !setup.onBoard().isEmpty()); i++) {
+                setup.act(CuttingBoardStation.ACTION_TAKE, new CompoundTag());
+            }
+            setup.cook.getInventory().clearContent();
+            order.forEach(layer -> {
+                setup.carry(layer.copy());
+                setup.place();
+            });
+            setup.carry(ItemStack.EMPTY);
+            setup.finishIfItWaits();
+            // Another dish of the same layers may be made: then it lies there.
+            if (setup.layers() > 0 || !AssemblyRecipes.isDish(setup.onBoard().getItem())) {
+                failed.add(dish.id());
+            }
+        }
+        helper.assertTrue(failed.isEmpty(), "laid by hand: " + failed);
+        helper.succeed();
+    }
+
+    /**
+     * A thing some cut is made with that is also a layer of a dish (Fright's Delight's glass bottle, Immortaler's Delight's stick) is
+     * the tool over what it cuts, never laid on it; on a bare board it is laid when a dish starts from it.
+     */
+    public static void aToolThatIsALayerCutsOnlyWhatItCuts(GameTestHelper helper) {
+        Level level = helper.getLevel();
+        for (CuttingBoardRecipe recipe : Cutting.all(level)) {
+            ItemStack[] inputs = recipe.getIngredients().get(0).getItems();
+            for (ItemStack tool : Cutting.tool(recipe).getItems()) {
+                if (inputs.length == 0 || !AssemblyRecipes.isBase(tool) || !Cutting.recipesFor(level, tool).isEmpty()) {
+                    continue;
+                }
+                Board setup = board(helper);
+                setup.carry(inputs[0].copyWithCount(1));
+                setup.place();
+                setup.carry(tool.copyWithCount(1));
+                setup.place();
+                helper.assertTrue(setup.layers() == 0 && ItemStack.isSameItemSameComponents(setup.onBoard(), inputs[0])
+                        && setup.cook.inventoryMenu.getCarried().is(tool.getItem()), tool.getItem() + " is the tool over " + inputs[0].getItem());
+                setup.act(CuttingBoardStation.ACTION_TAKE, new CompoundTag());
+                setup.carry(tool.copyWithCount(1));
+                setup.place();
+                helper.assertTrue(setup.layers() == 1 && setup.cook.inventoryMenu.getCarried().isEmpty(),
+                        tool.getItem() + " is laid on the bare board, as the first layer of a dish");
+                helper.succeed();
+                return;
+            }
+        }
+        // Farmer's Delight cuts with nothing a dish starts from; Fright's Delight (-Paddons) cuts a mould with a glass bottle.
+        helper.succeed();
+    }
+
+    /**
+     * The dish picked in the book is the one made, though another dish takes the same layers: Vintage Delight's and Delightful's
+     * peanut butter and jam sandwiches (-Paddons=wide), Ender's Delight's and Vanilla Delights' chorus pies are the same craft.
+     */
+    public static void aPickedDishWinsOverAnotherOfTheSameLayers(GameTestHelper helper) {
+        Level level = helper.getLevel();
+        for (AssemblyRecipes.Assembly dish : AssemblyRecipes.all()) {
+            List<ItemStack> order = layersOf(dish);
+            if (order == null || Assembling.make(dish, order, level, 1).rounds() == 0) {
+                continue;
+            }
+            Optional<AssemblyRecipes.Assembly> first = Assembling.dishOf(order, level);
+            if (first.isEmpty() || first.get().result().is(dish.result().getItem())) {
+                continue;
+            }
+            Board setup = board(helper);
+            for (int slot = 0; slot < order.size(); slot++) {
+                setup.cook.getInventory().setItem(slot, order.get(slot).copy());
+            }
+            CompoundTag pick = new CompoundTag();
+            pick.putString(CuttingBoardStation.DISH, dish.id().toString());
+            setup.act(CuttingBoardStation.ACTION_PICK, pick);
+            helper.assertTrue(setup.layers() == 0 && setup.onBoard().is(dish.result().getItem()),
+                    dish.id() + " is made, not " + first.get().id() + " of the same layers");
+            helper.succeed();
+            return;
+        }
+        // Farmer's Delight alone has no two dishes of the same layers.
         helper.succeed();
     }
 

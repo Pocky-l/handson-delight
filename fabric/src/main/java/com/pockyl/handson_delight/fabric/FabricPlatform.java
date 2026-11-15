@@ -114,9 +114,8 @@ public final class FabricPlatform implements Platform {
     /** The client names the channels it listens on while it configures, before it joins the world. */
     @Override
     public boolean hasThisMod(ServerPlayer player) {
-        // No connection, or one that goes nowhere (game tests): no client.
-        return player instanceof FakePlayer || player.connection == null || player.connection.getRemoteAddress() == null
-                || ServerPlayNetworking.canSend(player, BoardDishes.Payload.TYPE);
+        // A connection that goes nowhere (another mod's mock player) names no channel: no client with the mod.
+        return player instanceof FakePlayer || player.connection == null || ServerPlayNetworking.canSend(player, BoardDishes.Payload.TYPE);
     }
 
     @Override

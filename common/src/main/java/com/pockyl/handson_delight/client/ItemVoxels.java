@@ -28,11 +28,24 @@ import java.util.Optional;
  * pixels on either side of a cut move apart, along a line at any angle. The icon's top lies away from the viewer, its left on the viewer's left (+x).
  */
 final class ItemVoxels {
-    private static final Map<Item, Optional<Icon>> ICONS = new HashMap<>();
+    private static final Map<Look, Optional<Icon>> ICONS = new HashMap<>();
     /** The model the game falls back on when the icons were read: a new one after every resource reload. */
     private static BakedModel readWith;
 
     private ItemVoxels() {
+    }
+
+    /** What an icon is read for: the item and the model its stack shows, another one for a variant by NBT or CustomModelData. */
+    record Look(Item item, BakedModel model) {
+        static Look of(ItemStack stack) {
+            return new Look(stack.getItem(), ItemVoxels.model(stack));
+        }
+    }
+
+    /** The model a stack shows in the hotbar, with the client's level and player as the game asks for it there. */
+    static BakedModel model(ItemStack stack) {
+        Minecraft minecraft = Minecraft.getInstance();
+        return minecraft.getItemRenderer().getModel(stack, minecraft.level, minecraft.player, 0);
     }
 
     /** The pixels of an item's flat icon: the sprite of the block atlas they come from, and which of them are solid. */
@@ -228,11 +241,10 @@ final class ItemVoxels {
             readWith = missing;
             ICONS.clear();
         }
-        return ICONS.computeIfAbsent(stack.getItem(), item -> read(stack));
+        return ICONS.computeIfAbsent(Look.of(stack), look -> read(stack, look.model()));
     }
 
-    private static Optional<Icon> read(ItemStack stack) {
-        BakedModel model = Minecraft.getInstance().getItemRenderer().getModel(stack, null, null, 0);
+    private static Optional<Icon> read(ItemStack stack, BakedModel model) {
         TextureAtlasSprite sprite = model.getParticleIcon();
         if (model.isGui3d()) {
             // A block lies as a block. Food that a resource pack (3D items) gave a model of its own still has its flat texture in

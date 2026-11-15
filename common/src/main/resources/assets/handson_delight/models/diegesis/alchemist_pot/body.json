@@ -1,4 +1,9 @@
 {
+  "__comment": "Cut out, as Farmer's Spell's own alchemist_pot: its handle straps sample clear texels of its texture (not in this mod, so the linter cannot read its alpha).",
+  "__lint_allow": [
+    "T009"
+  ],
+  "render_type": "minecraft:cutout",
   "textures": {
     "particle": "farmers_spell:block/alchemist_pot",
     "pot": "farmers_spell:block/alchemist_pot"

@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.texture.SpriteContents;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -136,6 +137,8 @@ public final class YoukaiPotBehavior implements StationBehavior {
     private static final float WATER_MOTTLE = 0.1F;
     private static final float SOUP_MOTTLE = 0.2F;
     private static final Map<ResourceLocation, Integer> SOUP_COLOURS = new HashMap<>();
+    /** The model the game falls back on when the soup colours were read: a new one after every resource reload. */
+    private static BakedModel soupColoursReadWith;
 
     private final Size size;
     private final RecipeBook book;
@@ -682,6 +685,12 @@ public final class YoukaiPotBehavior implements StationBehavior {
     private static int soupColour(StationView view, ResourceLocation soup) {
         if (WATER.equals(soup.getPath())) {
             return WATER_ALPHA << 24 | blend(BiomeColors.getAverageWaterColor(view.level(), view.pos()), WATER_IN_IRON, 0.5F) & 0xFFFFFF;
+        }
+        BakedModel missing = Minecraft.getInstance().getModelManager().getMissingModel();
+        if (missing != soupColoursReadWith) {
+            // Resources were reloaded: a resource pack may paint the soups otherwise now.
+            soupColoursReadWith = missing;
+            SOUP_COLOURS.clear();
         }
         return SOUP_COLOURS.computeIfAbsent(soup, id -> SOUP_ALPHA << 24 | textureColour(id.withPrefix("block/bowl/soup/")));
     }

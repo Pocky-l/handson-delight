@@ -1,5 +1,11 @@
 {
+  "__comment": "Cut out, as Youkai's Feasts' own kettle_tray: its grate texture (not in this mod, so the linter cannot read its alpha) has holes. The legs keep Youkai's own half-texel end UVs.",
+  "__lint_allow": [
+    "T009",
+    "G002"
+  ],
   "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
   "textures": {
     "particle": "youkaisfeasts:block/utensil/cooking_pot_tray_side",
     "tray_side": "youkaisfeasts:block/utensil/cooking_pot_tray_side",

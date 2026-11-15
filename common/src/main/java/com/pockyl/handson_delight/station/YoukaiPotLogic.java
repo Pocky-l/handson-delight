@@ -228,8 +228,10 @@ public final class YoukaiPotLogic implements StationLogic {
             }
             return;
         }
-        if (!player.getInventory().add(back.copy())) {
-            player.drop(back.copy(), false);
+        // What does not fit drops, and only that: the inventory keeps the part it took.
+        ItemStack given = back.copy();
+        if (!player.getInventory().add(given)) {
+            player.drop(given, false);
         }
         CompoundTag data = new CompoundTag();
         data.put(YoukaiPotStation.STACK, back.saveOptional(station.level().registryAccess()));

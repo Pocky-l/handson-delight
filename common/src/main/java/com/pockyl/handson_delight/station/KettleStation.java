@@ -151,6 +151,7 @@ public final class KettleStation {
         }
         KitchenKettle kettle = KitchenKettle.of(player.level().getBlockEntity(pos));
         ItemStack held = player.getMainHandItem();
-        return kettle == null || !kettle.handson$canServe(held) && !kettle.handson$canPour(held);
+        // No kettle of ours: a version of the addon its station does not fit, which keeps its own use.
+        return kettle != null && !kettle.handson$canServe(held) && !kettle.handson$canPour(held);
     }
 }

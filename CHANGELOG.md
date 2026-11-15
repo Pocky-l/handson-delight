@@ -141,6 +141,21 @@
 - Dungeons Delight's monster pot is full of its green ooze again, as it is in the world, instead of plain water. What
   cooks in it only shades the ooze.
 
+- A glass bottle or a stick can be laid on the cutting board again in modpacks where an addon also cuts something with
+  it ([Fright's Delight](https://modrinth.com/mod/frights-delight) cuts with a bottle), so melon juice, bottled drinks,
+  skewers and popsicles are built by hand. Held over what it cuts, it still cuts.
+- The dish picked in the cutting board's book is the one made, also when another addon's dish takes the same
+  ingredients.
+- The cutting board makes each dish exactly as the modpack's recipe has it. A KubeJS or
+  [CraftTweaker](https://modrinth.com/mod/crafttweaker) script that removes or changes a recipe no longer leaves the board
+  and its book on the old recipe.
+- Players who join without the mod keep Farmer's Delight's sandwiches and the other board dishes in their recipe book.
+  They lost them at every login, and with `doLimitedCrafting` could no longer craft them.
+- Another mod's stand-in player can craft the board's dishes in a crafting table, as automation can.
+- With a station turned off in `config/handson_delight.properties`, its pot, kettle, oven or vat keeps its own look.
+- Food that changes its look by its components or a custom model is cut and coloured at the stations as it looks.
+- A resource pack that retextures white concrete no longer shows through the recipe book.
+
 ## [1.4.1+1.21.1] - 2026-11-14
 ### New
 - Modpacks can put any craft together on the cutting board: add its result to the item tag

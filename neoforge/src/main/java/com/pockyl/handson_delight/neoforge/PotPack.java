@@ -7,17 +7,23 @@ import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PathPackResources;
 import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackCompatibility;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.resources.IoSupplier;
+import net.minecraft.world.flag.FeatureFlagSet;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 
+import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /**
  * The cooking pot in the world is this mod's pot: its body without Farmer's Delight's spoon, which the station moves, and with a
@@ -34,17 +40,24 @@ import java.util.Set;
  * Vanilla Delight dyes the pot: it empties the block's models and draws the pot from its block entity with its own models, one
  * per colour and support, which are Farmer's Delight's pot again. This mod's versions of them (its pot in Vanilla Delight's
  * colours) come in the same pack, so the dye stays and the spoon and floor are this mod's.
+ * <p>
+ * The files lie outside the mod's own {@code assets}, so only this pack shows them, and it shows each only while its station is on:
+ * a pot whose station a modpack turned off is the other mod's pot again, with its own spoon, since no station draws one.
  */
 final class PotPack {
-    private static final Set<ResourceLocation> STATES = Set.of(
-            ResourceLocation.fromNamespaceAndPath("farmersdelight", "blockstates/cooking_pot.json"),
-            ResourceLocation.fromNamespaceAndPath("minersdelight", "blockstates/copper_pot.json"),
-            ResourceLocation.fromNamespaceAndPath("dungeonsdelight", "blockstates/monster_pot.json"),
-            ResourceLocation.fromNamespaceAndPath("culturaldelights", "blockstates/oven.json"),
-            ResourceLocation.fromNamespaceAndPath("culturaldelights", "blockstates/vat.json"),
-            ResourceLocation.fromNamespaceAndPath("farmersrespite", "blockstates/kettle.json"),
-            ResourceLocation.fromNamespaceAndPath("farmers_spell", "blockstates/alchemist_pot.json"),
-            ResourceLocation.fromNamespaceAndPath("youkaisfeasts", "blockstates/kettle.json"));
+    private static final String ID = HandsOnDelight.MOD_ID + "_pot";
+    /** The folder of the mod's files that holds the pack's {@code assets}. */
+    private static final String FOLDER = "pot_pack";
+    /** Each block state file and the station that wants it. */
+    private static final Map<ResourceLocation, BooleanSupplier> STATES = Map.of(
+            ResourceLocation.fromNamespaceAndPath("farmersdelight", "blockstates/cooking_pot.json"), HandsOnConfig::cookingPot,
+            ResourceLocation.fromNamespaceAndPath("minersdelight", "blockstates/copper_pot.json"), HandsOnConfig::cookingPot,
+            ResourceLocation.fromNamespaceAndPath("dungeonsdelight", "blockstates/monster_pot.json"), HandsOnConfig::cookingPot,
+            ResourceLocation.fromNamespaceAndPath("culturaldelights", "blockstates/oven.json"), HandsOnConfig::oven,
+            ResourceLocation.fromNamespaceAndPath("culturaldelights", "blockstates/vat.json"), HandsOnConfig::vat,
+            ResourceLocation.fromNamespaceAndPath("farmersrespite", "blockstates/kettle.json"), HandsOnConfig::kettle,
+            ResourceLocation.fromNamespaceAndPath("farmers_spell", "blockstates/alchemist_pot.json"), HandsOnConfig::cookingPot,
+            ResourceLocation.fromNamespaceAndPath("youkaisfeasts", "blockstates/kettle.json"), HandsOnConfig::kettle);
     private static final String DYED_NAMESPACE = "vanilladelight";
     private static final String DYED_MODELS = "models/block/cooking_pot_";
     private static final Set<String> NAMESPACES = Set.of("farmersdelight", "minersdelight", "dungeonsdelight", "culturaldelights", "farmersrespite",
@@ -54,11 +67,11 @@ final class PotPack {
     }
 
     static void add(AddPackFindersEvent event) {
-        if (event.getPackType() != PackType.CLIENT_RESOURCES) {
+        if (event.getPackType() != PackType.CLIENT_RESOURCES || STATES.values().stream().noneMatch(BooleanSupplier::getAsBoolean)) {
             return;
         }
-        Path root = ModList.get().getModFileById(HandsOnDelight.MOD_ID).getFile().getSecureJar().getRootPath();
-        PackLocationInfo location = new PackLocationInfo(HandsOnDelight.MOD_ID + "_pot", Component.literal("Hands-On Delight: cooking pot"),
+        Path root = ModList.get().getModFileById(HandsOnDelight.MOD_ID).getFile().getSecureJar().getRootPath().resolve(FOLDER);
+        PackLocationInfo location = new PackLocationInfo(ID, Component.literal("Hands-On Delight: cooking pot"),
                 PackSource.BUILT_IN, Optional.empty());
         Pack.ResourcesSupplier resources = new Pack.ResourcesSupplier() {
             @Override
@@ -71,14 +84,13 @@ final class PotPack {
                 return new OnlyThePot(info, root);
             }
         };
-        Pack pack = Pack.readMetaAndCreate(location, resources, PackType.CLIENT_RESOURCES,
-                new PackSelectionConfig(true, Pack.Position.TOP, true));
-        if (pack != null) {
-            event.addRepositorySource(consumer -> consumer.accept(pack.hidden()));
-        }
+        // The folder has no pack.mcmeta of its own: the pack's metadata is made here.
+        Pack.Metadata metadata = new Pack.Metadata(location.title(), PackCompatibility.COMPATIBLE, FeatureFlagSet.of(), List.of());
+        Pack pack = new Pack(location, resources, metadata, new PackSelectionConfig(true, Pack.Position.TOP, true));
+        event.addRepositorySource(consumer -> consumer.accept(pack.hidden()));
     }
 
-    /** The mod's files, of which only the pots' block states and the dyed pots' models are shown. */
+    /** The pack's files, of which only the block states and dyed pots' models of stations that are on are shown. */
     private static final class OnlyThePot extends PathPackResources {
         OnlyThePot(PackLocationInfo info, Path root) {
             super(info, root);
@@ -106,7 +118,12 @@ final class PotPack {
         }
 
         private static boolean shown(ResourceLocation location) {
-            return STATES.contains(location) || DYED_NAMESPACE.equals(location.getNamespace()) && location.getPath().startsWith(DYED_MODELS);
+            BooleanSupplier station = STATES.get(location);
+            if (station != null) {
+                return station.getAsBoolean();
+            }
+            return HandsOnConfig.cookingPot() && DYED_NAMESPACE.equals(location.getNamespace())
+                    && location.getPath().startsWith(DYED_MODELS);
         }
     }
 }

@@ -186,8 +186,9 @@ public final class BoardLogic implements StationLogic {
         StationState state = station.state();
         List<ItemStack> layers = layers(state);
         ItemStack onBoard = board.handson$stored();
-        // The knife cuts; it is never a layer of a dish, nor something to be cut.
-        if (Cutting.isTool(station.level(), carried)) {
+        // The knife cuts; it is never a layer of a dish, nor something to be cut. What a cut is made with and a dish is made of (a
+        // glass bottle) is a tool only over what it cuts.
+        if (Cutting.isTool(station.level(), carried, onBoard, AssemblyRecipes.all())) {
             return;
         }
         boolean cuttable = !Cutting.recipesFor(station.level(), carried).isEmpty();
@@ -300,7 +301,7 @@ public final class BoardLogic implements StationLogic {
      * also the start of a bigger one waits for a click on the stack or a layer more: nothing is made that the cook did not mean.
      */
     private void finishIfWanted(StationContext station, Player player, List<ItemStack> layers) {
-        Optional<AssemblyRecipes.Assembly> dish = Assembling.dishOf(layers, station.level());
+        Optional<AssemblyRecipes.Assembly> dish = Assembling.dishOf(layers, station.level(), picked);
         if (dish.isPresent() && (dish.get().id().equals(picked) || !AssemblyRecipes.canGrow(layers))) {
             assemble(station, player);
         }
@@ -525,7 +526,7 @@ public final class BoardLogic implements StationLogic {
     private void assemble(StationContext station, Player player) {
         StationState state = station.state();
         List<ItemStack> layers = layers(state);
-        Optional<AssemblyRecipes.Assembly> dish = Assembling.dishOf(layers, station.level());
+        Optional<AssemblyRecipes.Assembly> dish = Assembling.dishOf(layers, station.level(), picked);
         Assembling.Made made = dish.map(it -> Assembling.make(it, layers, station.level(), CuttingBoardStation.BATCH)).orElse(null);
         if (made == null || made.rounds() == 0) {
             refuse(station);
@@ -747,7 +748,7 @@ public final class BoardLogic implements StationLogic {
             data.put(CuttingBoardStation.ANGLES, how);
         }
         // Only a dish the layers really make: the cook's click finishes it, and takes the top layer off when there is none.
-        Assembling.dishOf(layers(state), station.level()).ifPresent(dish -> data.putString(CuttingBoardStation.DISH,
+        Assembling.dishOf(layers(state), station.level(), picked).ifPresent(dish -> data.putString(CuttingBoardStation.DISH,
                 BuiltInRegistries.ITEM.getKey(dish.result().getItem()).toString()));
         if (!data.equals(state.data())) {
             state.setData(data);

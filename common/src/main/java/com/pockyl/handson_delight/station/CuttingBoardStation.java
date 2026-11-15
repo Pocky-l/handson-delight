@@ -151,6 +151,7 @@ public final class CuttingBoardStation {
      * board: it comes out by a click, or by itself for what comes to be cut.
      */
     public static boolean opens(Player player, BlockPos pos, BlockState state) {
-        return !player.isSecondaryUseActive();
+        // No board of ours: a version of the addon its station does not fit, which keeps its own use.
+        return !player.isSecondaryUseActive() && KitchenBoard.of(player.level().getBlockEntity(pos)) != null;
     }
 }

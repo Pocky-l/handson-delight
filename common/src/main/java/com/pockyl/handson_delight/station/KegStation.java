@@ -153,6 +153,7 @@ public final class KegStation {
         }
         KitchenKeg keg = KitchenKeg.of(player.level().getBlockEntity(pos));
         ItemStack held = player.getMainHandItem();
-        return keg == null || !keg.handson$canTap(held) && !keg.handson$canPour(held);
+        // No keg of ours: a version of the addon its station does not fit, which keeps its own use.
+        return keg != null && !keg.handson$canTap(held) && !keg.handson$canPour(held);
     }
 }

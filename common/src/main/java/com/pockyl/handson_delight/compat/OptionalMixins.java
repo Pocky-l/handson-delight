@@ -1,6 +1,7 @@
 package com.pockyl.handson_delight.compat;
 
 import org.objectweb.asm.tree.ClassNode;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.service.MixinService;
@@ -12,15 +13,18 @@ import java.util.Set;
 /**
  * Applies the mixins into other mods' classes only where that mod is installed. Mixin looks a target class up before it skips a
  * missing one, and logs an error for each it cannot find; this asks first, quietly, so a game without the addon stoves or the keg
- * starts with a clean log, and one without an addon whose station is opened. Every other mixin applies as always.
+ * starts with a clean log. Every other mixin applies as always. Chopper's Delight's board mixin also needs the member it reaches
+ * into, which versions before 1.2.0 (NeoForge) and 1.1.0 (Fabric) lack: left out there, their board keeps its own use. The NeoForge
+ * mixins into addons' own stations ask more ({@code AddonMixins}).
  */
 public final class OptionalMixins implements IMixinConfigPlugin {
     private static final String PACKAGE = "com.pockyl.handson_delight.mixin.";
     private static final Set<String> OPTIONAL = Set.of(PACKAGE + "AddonStoveSmokeMixin", PACKAGE + "KegMixin", PACKAGE + "OvenMixin",
             PACKAGE + "VatMixin", PACKAGE + "VatUprightMixin", PACKAGE + "VatSparksMixin", PACKAGE + "GrillSmokeMixin",
             PACKAGE + "GrillSizzleMixin", PACKAGE + "DecoratedBoardMixin", PACKAGE + "DecoratedBoardContentMixin");
-    /** The NeoForge mixins into addons' own stations (Miner's Delight's copper pot, Dungeons Delight's monster pot). */
-    private static final String ADDON_STATIONS = "com.pockyl.handson_delight.neoforge.mixin.";
+    private static final String CHOPPERS_BOARD = PACKAGE + "DecoratedBoardMixin";
+    /** {@code clearContent} of Chopper's board, as the jar names it: Mojang's name (NeoForge, Fabric's dev runs) or Fabric's. */
+    private static final Set<String> CLEAR_CONTENT = Set.of("clearContent", "method_5448");
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -33,16 +37,28 @@ public final class OptionalMixins implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return !OPTIONAL.contains(mixinClassName) && !mixinClassName.startsWith(ADDON_STATIONS) || isPresent(targetClassName);
+        if (!OPTIONAL.contains(mixinClassName)) {
+            return true;
+        }
+        ClassNode target = classNode(targetClassName);
+        if (target == null) {
+            return false;
+        }
+        if (CHOPPERS_BOARD.equals(mixinClassName) && target.methods.stream().noneMatch(method -> CLEAR_CONTENT.contains(method.name))) {
+            LoggerFactory.getLogger(OptionalMixins.class).warn("This version of choppersdelight is older than its station needs: "
+                    + "DecoratedBoardMixin is left out");
+            return false;
+        }
+        return true;
     }
 
-    private static boolean isPresent(String className) {
+    /** The class's bytecode as its jar has it, without loading it; null when no mod has it. */
+    public static ClassNode classNode(String className) {
         try {
             // The lookup Mixin makes for a target itself (ModLauncher serves no untransformed bytecode), minus its log line.
-            MixinService.getService().getBytecodeProvider().getClassNode(className.replace('.', '/'));
-            return true;
+            return MixinService.getService().getBytecodeProvider().getClassNode(className.replace('.', '/'));
         } catch (ClassNotFoundException | IOException e) {
-            return false;
+            return null;
         }
     }
 

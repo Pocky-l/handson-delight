@@ -118,9 +118,7 @@ public final class NeoForgePlatform implements Platform {
 
     @Override
     public boolean hasThisMod(ServerPlayer player) {
-        // No connection, or one that goes nowhere (game tests): no client.
-        return player instanceof FakePlayer || player.connection == null || player.connection.getConnection().channel() == null
-                || NeoForgeNetwork.present(player);
+        return player instanceof FakePlayer || player.connection == null || NeoForgeNetwork.present(player);
     }
 
     @Override

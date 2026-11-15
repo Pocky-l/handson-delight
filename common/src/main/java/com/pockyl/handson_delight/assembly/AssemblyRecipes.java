@@ -27,6 +27,7 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.block.Block;
@@ -38,10 +39,13 @@ import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.KitchenTags;
+import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -83,14 +87,15 @@ public final class AssemblyRecipes {
 
     /** Every recipe that may be put together, as the recipe manager loaded it; the tags choose among them once they are bound. */
     private static volatile List<Assembly> candidates = List.of();
+    /** The ids of the recipes {@link #collect} found: the rule looks at them, so none is read again as a tagged craft. */
+    private static volatile Set<ResourceLocation> collected = Set.of();
     /**
-     * The shaped and shapeless crafts the rule does not look at, also those of a type built on them (KubeJS writes its own), as the recipe manager loaded them: those whose result is tagged
-     * {@link #ASSEMBLED} are put together too, once the tags are bound. Only the recipes are kept; the few that are taken get their
-     * JSON written anew ({@link #fromCraft}).
+     * The server's recipe manager the candidates were read from. A script may change its recipes after they loaded (CraftTweaker
+     * removes and replaces recipes then): the dishes are chosen from its recipes as they are when the dishes are chosen.
      */
-    private static volatile List<RecipeHolder<?>> others = List.of();
-    /** The registries the recipes were loaded with, to read {@link #others}. */
-    private static volatile HolderLookup.Provider othersRegistries;
+    private static volatile WeakReference<RecipeManager> server = new WeakReference<>(null);
+    /** The registries the recipes were loaded with, to read the server's recipes. */
+    private static volatile HolderLookup.Provider serverRegistries;
     private static volatile Chosen chosen;
 
     private AssemblyRecipes() {
@@ -235,6 +240,11 @@ public final class AssemblyRecipes {
         public boolean isBlock() {
             return result.getItem() instanceof BlockItem;
         }
+
+        /** The same dish made by {@code made}, the server's own recipe, whose code then runs on the board (KubeJS's ingredient actions). */
+        private Assembly madeBy(CraftingRecipe made) {
+            return made == recipe ? this : new Assembly(id, made, ingredients, slots, base, kind, result, json);
+        }
     }
 
     /** The recipes chosen among the candidates, and the list the clients get. */
@@ -273,14 +283,33 @@ public final class AssemblyRecipes {
             synchronized (AssemblyRecipes.class) {
                 now = chosen;
                 if (now == null) {
-                    List<Assembly> from = new ArrayList<>(candidates);
-                    from.addAll(tagged());
-                    now = choose(from);
+                    now = choose(current());
                     chosen = now;
                 }
             }
         }
         return now;
+    }
+
+    /**
+     * The candidates and the tagged crafts, as the server has its recipes now: a script may have removed or changed some of them after
+     * they loaded ({@link #server}).
+     */
+    private static List<Assembly> current() {
+        RecipeManager manager = server.get();
+        Map<ResourceLocation, RecipeHolder<?>> recipes = manager == null ? Map.of() : ((RecipeManagerAccessor) manager).handson$byName();
+        cutting = recipes.values().stream().map(RecipeHolder::value).filter(CuttingBoardRecipe.class::isInstance)
+                .map(CuttingBoardRecipe.class::cast).toList();
+        List<Assembly> from = new ArrayList<>();
+        for (Assembly candidate : candidates) {
+            try {
+                asLoaded(Optional.of(candidate), recipes.get(candidate.id()), serverRegistries).ifPresent(from::add);
+            } catch (RuntimeException broken) {
+                HandsOnDelight.LOGGER.warn("Could not read the recipe {} for the cutting board", candidate.id(), broken);
+            }
+        }
+        from.addAll(tagged(recipes.values()));
+        return from;
     }
 
     /** The tags may have changed: the recipes are chosen again when next asked. */
@@ -425,38 +454,44 @@ public final class AssemblyRecipes {
         });
     }
 
-    /** Reads the recipes {@link #collect} found, after the recipe manager has read its own: only those it {@code loaded}. */
-    public static void load(Map<ResourceLocation, JsonObject> taken, Map<ResourceLocation, RecipeHolder<?>> loaded,
-            HolderLookup.Provider registries, ResourceManager resources) {
+    /**
+     * Reads the recipes {@link #collect} found, after the {@code manager} has read its own: only those it loaded, as it loaded them.
+     */
+    public static void load(Map<ResourceLocation, JsonObject> taken, RecipeManager manager, HolderLookup.Provider registries,
+            ResourceManager resources) {
+        Map<ResourceLocation, RecipeHolder<?>> loaded = ((RecipeManagerAccessor) manager).handson$byName();
         List<Assembly> read = new ArrayList<>();
         cutting = loaded.values().stream().map(RecipeHolder::value).filter(CuttingBoardRecipe.class::isInstance).map(CuttingBoardRecipe.class::cast).toList();
         taken.forEach((id, json) -> {
-            if (!loaded.containsKey(id)) {
+            RecipeHolder<?> holder = loaded.get(id);
+            if (holder == null) {
                 return;
             }
             try {
-                parse(id, json, null, registries).ifPresent(read::add);
+                asLoaded(parse(id, json, null, registries), holder, registries).ifPresent(read::add);
             } catch (RuntimeException broken) {
                 HandsOnDelight.LOGGER.error("Could not read the recipe {} for the cutting board", id, broken);
             }
         });
         candidates = List.copyOf(read);
-        others = loaded.values().stream()
-                .filter(holder -> !taken.containsKey(holder.id())
-                        && (holder.value() instanceof ShapedRecipe || holder.value() instanceof ShapelessRecipe))
-                .toList();
-        othersRegistries = registries;
+        collected = Set.copyOf(taken.keySet());
+        server = new WeakReference<>(manager);
+        serverRegistries = registries;
         ModestMeals.load(resources, loaded);
         chosen = null;
         HandsOnDelight.LOGGER.info("{} crafting recipes of Farmer's Delight may be put together on the cutting board", read.size());
     }
 
-    /** The crafts of {@link #others} whose result is tagged {@link #ASSEMBLED}, read as the board reads a recipe of its own. */
-    private static List<Assembly> tagged() {
+    /**
+     * The shaped and shapeless crafts among {@code recipes} that the rule does not look at, also those of a type built on them (KubeJS
+     * writes its own), whose result is tagged {@link #ASSEMBLED}, read as the board reads a recipe of its own.
+     */
+    private static List<Assembly> tagged(Collection<RecipeHolder<?>> recipes) {
         List<Assembly> found = new ArrayList<>();
-        HolderLookup.Provider registries = othersRegistries;
-        for (RecipeHolder<?> holder : others) {
-            if (!holder.value().getResultItem(registries).is(ASSEMBLED)) {
+        HolderLookup.Provider registries = serverRegistries;
+        for (RecipeHolder<?> holder : recipes) {
+            boolean plain = holder.value() instanceof ShapedRecipe || holder.value() instanceof ShapelessRecipe;
+            if (!plain || collected.contains(holder.id()) || !holder.value().getResultItem(registries).is(ASSEMBLED)) {
                 continue;
             }
             try {
@@ -473,7 +508,7 @@ public final class AssemblyRecipes {
     /**
      * A shaped or shapeless craft as the board reads it, from the recipe the manager loaded: its JSON is written anew by the recipe's
      * own codec, so a recipe made by a script (KubeJS, which has crafting types of its own) reads as one from a datapack, and the
-     * board makes the dish through the recipe as its type does. Empty when the board could not lay it.
+     * board makes the dish through that recipe, as its type does. Empty when the board could not lay it.
      */
     public static Optional<Assembly> fromCraft(RecipeHolder<?> holder, HolderLookup.Provider registries) {
         if (!holder.value().getResultItem(registries).getComponentsPatch().isEmpty()) {
@@ -482,7 +517,50 @@ public final class AssemblyRecipes {
         JsonElement json = Recipe.CODEC.encodeStart(registries.createSerializationContext(JsonOps.INSTANCE), holder.value())
                 .getOrThrow(JsonParseException::new);
         return json.isJsonObject() ? plain(json.getAsJsonObject()).flatMap(recipe -> parse(holder.id(), recipe, null, registries))
+                .map(dish -> holder.value() instanceof CraftingRecipe crafting ? dish.madeBy(crafting) : dish) : Optional.empty();
+    }
+
+    /**
+     * {@code read}, the dish of a recipe's JSON, as the server has that recipe now ({@code live}): the board makes exactly the recipe
+     * the server has, or none. A script may change a recipe apart from the JSON read: KubeJS adds a recipe removed and added anew under
+     * its id, CraftTweaker removes and replaces recipes once the recipe manager has loaded. A recipe changed so is read anew from what
+     * the server has.
+     */
+    private static Optional<Assembly> asLoaded(Optional<Assembly> read, RecipeHolder<?> live, HolderLookup.Provider registries) {
+        if (read.isEmpty() || live == null || !(live.value() instanceof CraftingRecipe crafting)) {
+            return Optional.empty();
+        }
+        Assembly dish = read.get();
+        return dish.recipe() == crafting || sameAsFarAsKnown(dish.recipe(), crafting, registries) ? Optional.of(dish.madeBy(crafting))
+                : readAnew(live, registries);
+    }
+
+    /** A recipe whose JSON the board did not read, read from the recipe itself when it is a shaped or shapeless craft. */
+    private static Optional<Assembly> readAnew(RecipeHolder<?> recipe, HolderLookup.Provider registries) {
+        return recipe.value() instanceof ShapedRecipe || recipe.value() instanceof ShapelessRecipe ? fromCraft(recipe, registries)
                 : Optional.empty();
+    }
+
+    /** {@link #same}, or, when an ingredient of another mod cannot be written to compare, whether both are of one class. */
+    private static boolean sameAsFarAsKnown(CraftingRecipe read, CraftingRecipe loaded, HolderLookup.Provider registries) {
+        try {
+            return same(read, loaded, registries);
+        } catch (RuntimeException unwritten) {
+            return read.getClass() == loaded.getClass();
+        }
+    }
+
+    private static boolean same(CraftingRecipe read, CraftingRecipe loaded, HolderLookup.Provider registries) {
+        ItemStack result = read.getResultItem(registries);
+        ItemStack other = loaded.getResultItem(registries);
+        DynamicOps<JsonElement> ops = registries.createSerializationContext(JsonOps.INSTANCE);
+        return read.getClass() == loaded.getClass() && ItemStack.isSameItemSameComponents(result, other)
+                && result.getCount() == other.getCount() && written(read.getIngredients(), ops).equals(written(loaded.getIngredients(), ops));
+    }
+
+    private static List<JsonElement> written(List<Ingredient> ingredients, DynamicOps<JsonElement> ops) {
+        return ingredients.stream().map(ingredient -> Ingredient.CODEC.encodeStart(ops, ingredient).getOrThrow(JsonParseException::new))
+                .toList();
     }
 
     /** The recipe as the board reads it, when it is one the board could make: else empty. */

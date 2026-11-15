@@ -125,6 +125,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void aFloodOfStrokesFillsNoFaster(GameTestHelper helper) {
+        PotTests.aFloodOfStrokesFillsNoFaster(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void theBookFillsThePot(GameTestHelper helper) {
         PotTests.theBookFillsThePot(helper);
     }
@@ -137,6 +142,11 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void theSetsSavedGoBack(GameTestHelper helper) {
         PotTests.theSetsSavedGoBack(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 450)
+    public static void theSetsSavedStayWhenTheCookLeft(GameTestHelper helper) {
+        PotTests.theSetsSavedStayWhenTheCookLeft(helper);
     }
 
     @GameTest(template = "empty", timeoutTicks = 500)
@@ -292,6 +302,11 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void aTaggedCraftOfAnyModComesToTheBoard(GameTestHelper helper) {
         BoardTests.aTaggedCraftOfAnyModComesToTheBoard(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aPouredWaterBottleLeavesItsBottle(GameTestHelper helper) {
+        BoardTests.aPouredWaterBottleLeavesItsBottle(helper);
     }
 
     @GameTest(template = "empty")
@@ -889,6 +904,11 @@ public final class ModGameTests {
         KettleTests.theLidIsTheBlocksOwn(helper);
     }
 
+    @GameTest(template = "empty")
+    public static void aBucketFromTheInventoryPoursIntoTheKettle(GameTestHelper helper) {
+        KettleTests.aBucketFromTheInventoryPoursIn(helper);
+    }
+
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void greenTeaBrewsAndIsPouredFromTheSpout(GameTestHelper helper) {
         KettleTests.greenTeaBrewsAndIsPouredFromTheSpout(helper);
@@ -922,6 +942,26 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void aScriptsEditsReachTheBoard(GameTestHelper helper) {
         RecipeEditTests.aScriptsEditsReachTheBoard(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aKnifeThatBreaksOnTheLastCutLeavesThePieces(GameTestHelper helper) {
+        FullInventoryTests.aKnifeThatBreaksOnTheLastCutLeavesThePieces(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aYoukaiPotGivesTheContainerBackIntoTheEmptiedSlot(GameTestHelper helper) {
+        FullInventoryTests.aYoukaiPotGivesTheContainerBackIntoTheEmptiedSlot(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theCuisineBoardGivesTheContainerBackIntoTheEmptiedSlot(GameTestHelper helper) {
+        FullInventoryTests.theCuisineBoardGivesTheContainerBackIntoTheEmptiedSlot(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void youkaiSteamerTakesBackEachCooksOwn(GameTestHelper helper) {
+        YoukaiSteamerTests.youkaiSteamerTakesBackEachCooksOwn(helper);
     }
 
     /** {@link PotTests.MealMaker}'s meal of what lies in the pot on NeoForge. */

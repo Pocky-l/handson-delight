@@ -60,6 +60,8 @@ public final class PotCooking {
     private boolean handFed;
     /** Sets of ingredients the last batch did not need, the stack of the meal being full: they go back to the cook. */
     private int setsSaved;
+    /** When the last batch saved them: they are given only to the cook still at the pot then, never to whoever opens it later. */
+    private long savedAt;
     /** The part of a bonus serving the batches before earned, carried on to the next. Saved with the pot. */
     private float bonusCarried;
     /** Containers emptied into the pot while a cook is at it, for the station to hand over. */
@@ -95,7 +97,7 @@ public final class PotCooking {
 
     /** Sets of ingredients the last batch saved, once: they are the cook's again. */
     public int takeSaved() {
-        int taken = setsSaved;
+        int taken = level() != null && level().getGameTime() - savedAt <= HERE ? setsSaved : 0;
         setsSaved = 0;
         return taken;
     }
@@ -296,6 +298,7 @@ public final class PotCooking {
         // A full stack needed fewer sets than the batch had: the stars saved the rest, for the cook at the station. With the cook gone
         // they stay in the pot and cook next, and nobody opening it later is handed what then lies there.
         setsSaved = here() ? Math.max(0, left - cooked) : 0;
+        savedAt = level().getGameTime();
         float earned = bonusCarried + cooked * PotLogic.bonusRate(grade) - (servings - cooked);
         bonusCarried = Mth.clamp(earned, 0.0F, 0.999F);
         pot.handson$setCookTime(0);

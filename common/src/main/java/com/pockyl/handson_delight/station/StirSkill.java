@@ -20,7 +20,10 @@ public final class StirSkill {
     /** A stroke is judged over this many ticks; a longer stop starts the next one afresh. */
     private static final int WINDOW = 5;
     private static final int BREAK = 12;
-    /** Ticks the cook's clock may run ahead of the server's between two strokes: the network bunches them. */
+    /**
+     * Ticks the cook's clock may run ahead of the server's in one of its ticks: the network bunches strokes. Strokes that arrive in
+     * the same tick share it, so a flood of them does not fill the stars any faster.
+     */
     private static final float SLACK = 10.0F;
     /** From this part of the spoon's reach a round counts as wide, from the other one fully. */
     private static final float NARROW = 0.3F;
@@ -44,6 +47,8 @@ public final class StirSkill {
     private double lastAt = Double.NaN;
     private double lastAtRaw;
     private long lastAtServer;
+    /** How far the cook's clock may still go on in the server's tick {@link #lastAtServer}. */
+    private double allowance;
     private float turned;
     private float wideness;
     private int steps;
@@ -79,8 +84,14 @@ public final class StirSkill {
         double clock;
         if (Float.isNaN(at) || Double.isNaN(lastAt) || now - lastMove > BREAK) {
             clock = Double.isNaN(lastAt) ? now : lastAt + (now - lastAtServer);
+            allowance = SLACK;
         } else {
-            clock = lastAt + Mth.clamp(at - lastAtRaw, 0.0, (now - lastAtServer) + SLACK);
+            if (now != lastAtServer) {
+                allowance = (now - lastAtServer) + SLACK;
+            }
+            double step = Mth.clamp(at - lastAtRaw, 0.0, allowance);
+            allowance -= step;
+            clock = lastAt + step;
         }
         lastAtRaw = Float.isNaN(at) ? clock : at;
         lastAt = clock;

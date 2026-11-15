@@ -14,7 +14,10 @@ import com.pockyl.diegesis.api.station.StationLogic;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * The steamer's actions at the station: things on and off its racks, a rack opened, a rack, the lid or water added, a recipe from
@@ -24,8 +27,8 @@ public final class SteamerLogic implements StationLogic {
     /** How many things the cook laid are remembered to come back off one by one. */
     private static final int REMEMBERED = 72;
 
-    /** Where the cook laid things, the last one first: rack and place. */
-    private final Deque<int[]> laid = new ArrayDeque<>();
+    /** Where each cook laid things, the last one first: rack and place. One cook's take-back never takes another's. */
+    private final Map<UUID, Deque<int[]>> laid = new HashMap<>();
 
     public SteamerLogic(StationContext station) {
     }
@@ -52,6 +55,7 @@ public final class SteamerLogic implements StationLogic {
             station.state().setControl(SteamerStation.OPEN, SteamerStation.TOP);
             laid.clear();
         }
+        laid.remove(player.getUUID());
     }
 
     /** The last cook gone, the racks go back on the tower. */
@@ -124,7 +128,7 @@ public final class SteamerLogic implements StationLogic {
             }
             if (on) {
                 went.add(laid(station, at, target, one));
-                remember(at, target);
+                remember(player, at, target);
                 if (!all) {
                     break;
                 }
@@ -149,16 +153,27 @@ public final class SteamerLogic implements StationLogic {
         return one;
     }
 
-    private void remember(int rack, int place) {
-        laid.removeIf(it -> it[0] == rack && it[1] == place);
-        laid.push(new int[] {rack, place});
-        while (laid.size() > REMEMBERED) {
-            laid.removeLast();
+    private void remember(Player player, int rack, int place) {
+        forget(rack, place);
+        Deque<int[]> own = laid.computeIfAbsent(player.getUUID(), cook -> new ArrayDeque<>());
+        own.push(new int[] {rack, place});
+        while (own.size() > REMEMBERED) {
+            own.removeLast();
         }
+    }
+
+    /** Nobody takes back what lay on {@code place} of {@code rack} any more: it came off, or another cook laid something there. */
+    private void forget(int rack, int place) {
+        laid.values().forEach(own -> own.removeIf(it -> it[0] == rack && it[1] == place));
     }
 
     /** What lies on {@code place} of {@code rack} comes off to the cook; with {@code all} everything on that rack that is done. */
     private void take(StationContext station, SteamerTower tower, Player player, int rack, int place, boolean all) {
+        // A feast block lies on the first place of its rack and covers all four: a click on any quarter takes it.
+        if (!all && place != 0 && rack >= 0 && rack < tower.racks() && tower.item(rack, place).isEmpty()
+                && tower.blockOf(rack).handson$clearance(tower.item(rack, 0)) >= 0.0F) {
+            place = 0;
+        }
         ListTag went = new ListTag();
         for (int at = 0; at < tower.racks(); at++) {
             for (int spot = 0; spot < KitchenSteamer.PLACES; spot++) {
@@ -169,9 +184,7 @@ public final class SteamerLogic implements StationLogic {
                 ItemStack taken = tower.blockOf(at).handson$take(tower.localOf(at), spot, player);
                 if (!taken.isEmpty()) {
                     went.add(laid(station, at, spot, taken));
-                    int a = at;
-                    int b = spot;
-                    laid.removeIf(it -> it[0] == a && it[1] == b);
+                    forget(at, spot);
                 }
             }
         }
@@ -184,8 +197,9 @@ public final class SteamerLogic implements StationLogic {
 
     /** The last thing the cook laid that is still there comes back off. */
     private void back(StationContext station, SteamerTower tower, Player player) {
-        while (!laid.isEmpty()) {
-            int[] last = laid.pop();
+        Deque<int[]> own = laid.getOrDefault(player.getUUID(), new ArrayDeque<>());
+        while (!own.isEmpty()) {
+            int[] last = own.pop();
             if (last[0] < tower.racks() && !tower.item(last[0], last[1]).isEmpty()) {
                 take(station, tower, player, last[0], last[1], false);
                 return;

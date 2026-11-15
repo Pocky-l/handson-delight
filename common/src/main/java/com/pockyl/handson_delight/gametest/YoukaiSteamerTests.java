@@ -164,6 +164,44 @@ public final class YoukaiSteamerTests {
         helper.succeed();
     }
 
+    /**
+     * Two cooks at one steamer: the other button takes back only what that cook laid, the other cook's potato stays. A feast block
+     * comes off its rack by a click on any quarter of it.
+     */
+    public static void youkaiSteamerTakesBackEachCooksOwn(GameTestHelper helper) {
+        Setup setup = steamer(helper);
+        if (setup == null) {
+            return;
+        }
+        Player other = helper.makeMockPlayer(GameType.CREATIVE);
+        other.getAbilities().instabuild = false;
+        setup.station.users.add(other);
+        setup.logic.onOpen(setup.station, other);
+        setup.carrying(new ItemStack(SteamerStation.RACK_BLOCK.get(), 2), SteamerStation.ACTION_RACK, none());
+        setup.act(SteamerStation.ACTION_RACK, none());
+        CompoundTag on = new CompoundTag();
+        on.putInt(SteamerStation.RACK, 1);
+        on.putInt(SteamerStation.PLACE, 1);
+        setup.carrying(new ItemStack(Items.POTATO), SteamerStation.ACTION_PUT, on);
+        helper.assertTrue(setup.tower().item(1, 1).is(Items.POTATO), "the first cook laid a potato");
+        setup.logic.onCustomAction(setup.station, other, SteamerStation.ACTION_BACK, none());
+        helper.assertTrue(setup.tower().item(1, 1).is(Items.POTATO) && other.getInventory().countItem(Items.POTATO) == 0,
+                "the other cook laid nothing: their take-back leaves the potato");
+        setup.act(SteamerStation.ACTION_BACK, none());
+        helper.assertTrue(setup.tower().item(1, 1).isEmpty() && setup.player.getInventory().countItem(Items.POTATO) == 1,
+                "the first cook takes their potato back");
+        CompoundTag feast = new CompoundTag();
+        feast.putInt(SteamerStation.RACK, 0);
+        feast.putInt(SteamerStation.PLACE, 0);
+        setup.carrying(new ItemStack(feasts("raw_tutu_congee")), SteamerStation.ACTION_PUT, feast);
+        helper.assertTrue(setup.tower().item(0, 0).is(feasts("raw_tutu_congee")), "a feast block fills the lower rack");
+        feast.putInt(SteamerStation.PLACE, 2);
+        setup.logic.onCustomAction(setup.station, other, SteamerStation.ACTION_TAKE, feast);
+        helper.assertTrue(setup.tower().isEmpty(0) && other.getInventory().countItem(feasts("raw_tutu_congee")) == 1,
+                "a click on another quarter of the rack takes the feast block");
+        helper.succeed();
+    }
+
     /** A rack block or the lid opens the station at the pot under it; racks on anything else are no station; the tower hides as one. */
     public static void youkaiSteamerIsOneTower(GameTestHelper helper) {
         Setup setup = steamer(helper);

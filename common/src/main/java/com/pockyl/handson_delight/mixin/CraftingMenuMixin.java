@@ -22,8 +22,8 @@ import java.util.Optional;
 /**
  * A sandwich is put together on the cutting board, by hand: a player's crafting table and inventory grid do not make it (both go
  * through this method). Automation crafts with grids of its own (Create's crafters, AE2's assemblers, Refined Storage) and goes on
- * making it, as without this mod. So does a player whose client lacks the mod: it cannot open the board, the crafting table stays
- * theirs.
+ * making it, as without this mod. So does a player whose client lacks the mod, or has the board's station off: it cannot open the
+ * board, the crafting table stays theirs.
  */
 @Mixin(CraftingMenu.class)
 abstract class CraftingMenuMixin {
@@ -32,7 +32,7 @@ abstract class CraftingMenuMixin {
             AbstractContainerMenu menu, Level level, Player player, CraftingContainer grid, ResultContainer result,
             RecipeHolder<CraftingRecipe> last) {
         if (found.isPresent() && HandsOnConfig.removeCraftingRecipes() && AssemblyRecipes.isMadeOnTheBoard(found.get().id())
-                && !(player instanceof ServerPlayer server && !Platform.INSTANCE.hasThisMod(server))) {
+                && !(player instanceof ServerPlayer server && !Platform.INSTANCE.hasBoard(server))) {
             return Optional.empty();
         }
         return found;

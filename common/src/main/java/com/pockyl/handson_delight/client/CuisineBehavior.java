@@ -135,6 +135,20 @@ public final class CuisineBehavior implements StationBehavior {
     private int askedMark = -1;
     private float askedAt;
     /**
+     * Each frame asks which knife cuts the dish and how many marks it has, which goes through the cutting recipes: worked out again
+     * only when the dish or the cursor's stack changes, the knife from the inventory once a tick.
+     */
+    private long knifeTick = Long.MIN_VALUE;
+    private ItemStack knifeFor = ItemStack.EMPTY;
+    private ItemStack knifeCarried = ItemStack.EMPTY;
+    private boolean carriedCuts;
+    private int knifeSlot = -1;
+    private ItemStack plannedFor = ItemStack.EMPTY;
+    private int plannedMarks;
+    /** What the drawer lights, by kind of stack; asked again once what lies on the board changes. */
+    private final UsableCache usable = new UsableCache();
+    private List<ItemStack> usableOn = List.of();
+    /**
      * A stack put on from the cursor: once the board has it, what is left on the cursor goes back into the inventory unless the
      * next step wants it, so the cursor does not cover the board. What lay there before, and when it was sent.
      */
@@ -180,8 +194,10 @@ public final class CuisineBehavior implements StationBehavior {
         if (board == null) {
             return;
         }
-        view.setInventoryFilter(stack -> board.handson$takes(stack) > 0 || CuisineBoardStation.isStep(board, stack)
-                || Cutting.isTool(view.level(), stack));
+        usable.clear();
+        usableOn = board.handson$contents();
+        view.setInventoryFilter(stack -> usable.test(stack, it -> board.handson$takes(it) > 0 || CuisineBoardStation.isStep(board, it)
+                || Cutting.isTool(view.level(), it)));
         // What the cook came with is meant for the board: the next step goes on. A knife stays in its slot, offered over the dish.
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
@@ -206,6 +222,12 @@ public final class CuisineBehavior implements StationBehavior {
             return;
         }
         putAway(view, board);
+        List<ItemStack> on = board.handson$contents();
+        if (!sameStacks(on, usableOn)) {
+            // Another step is next: what the board takes has changed.
+            usableOn = on;
+            usable.clear();
+        }
         if (clock >= busyUntil && steps.isEmpty() && !cutting && !sameStacks(board.handson$contents(), shown)) {
             // Changed by somebody's own click on the board, or a step not shown: drawn as it is, what came on popping up.
             showContents(view, board.handson$contents(), true);
@@ -394,12 +416,21 @@ public final class CuisineBehavior implements StationBehavior {
         if (!striking) {
             knife = ItemStack.EMPTY;
             offered = false;
-            if (ready && !carried.isEmpty() && CuisineBoardStation.cuts(view.level(), board, carried)) {
-                knife = carried;
-            } else if (ready && carried.isEmpty()) {
-                int slot = Cutting.toolSlot(view.level(), finished, player.getInventory());
-                knife = slot >= 0 ? player.getInventory().getItem(slot) : ItemStack.EMPTY;
-                offered = !knife.isEmpty();
+            if (ready) {
+                long tick = view.level().getGameTime();
+                if (tick != knifeTick || !ItemStack.matches(finished, knifeFor) || !ItemStack.matches(carried, knifeCarried)) {
+                    knifeTick = tick;
+                    knifeFor = finished.copy();
+                    knifeCarried = carried.copy();
+                    carriedCuts = !carried.isEmpty() && CuisineBoardStation.cuts(view.level(), board, carried);
+                    knifeSlot = carried.isEmpty() ? Cutting.toolSlot(view.level(), finished, player.getInventory()) : -1;
+                }
+                if (carriedCuts) {
+                    knife = carried;
+                } else if (carried.isEmpty()) {
+                    knife = knifeSlot >= 0 ? player.getInventory().getItem(knifeSlot) : ItemStack.EMPTY;
+                    offered = !knife.isEmpty();
+                }
             }
         }
         Optional<Vector3f> over = knife.isEmpty() ? Optional.empty() : overDish(view);
@@ -442,8 +473,15 @@ public final class CuisineBehavior implements StationBehavior {
     }
 
     /** How many marks the finished dish is cut at, as the board would cut it, and how many are cut. */
-    private static int markCount(StationView view, ItemStack finished) {
-        return finished.isEmpty() ? 0 : Cutting.plan(view.level(), finished).marks();
+    private int markCount(StationView view, ItemStack finished) {
+        if (finished.isEmpty()) {
+            return 0;
+        }
+        if (!ItemStack.matches(finished, plannedFor)) {
+            plannedFor = finished.copy();
+            plannedMarks = Cutting.plan(view.level(), finished).marks();
+        }
+        return plannedMarks;
     }
 
     /** The next mark to cut, or -1 without a knife that cuts the dish lying there. */

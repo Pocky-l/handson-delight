@@ -52,7 +52,8 @@ public final class KettleStation {
 
     /**
      * A custom action: the stack on the cursor is used at {@link #AT}: {@link #MOUTH} pours it in, {@link #SPOUT} fills it with the
-     * drink. {@link #ALL}: the whole stack, or every serving; {@link #FROM_INVENTORY}: the hand is empty, a cup comes from the inventory.
+     * drink. {@link #ALL}: the whole stack, or every serving; {@link #FROM_INVENTORY}: the hand is empty, a cup comes from the inventory;
+     * {@link #FROM}: the stack in that inventory slot instead of the cursor's (Shift + click in the inventory).
      */
     public static final String ACTION_USE = "use";
     public static final String AT = "at";
@@ -60,6 +61,7 @@ public final class KettleStation {
     public static final String SPOUT = "spout";
     public static final String ALL = "all";
     public static final String FROM_INVENTORY = "from_inventory";
+    public static final String FROM = "from";
     /** A custom action: a recipe picked in the book; its ingredients go in from the inventory. Data: {@link #DISH}. */
     public static final String ACTION_FILL = "fill";
     public static final String DISH = "dish";

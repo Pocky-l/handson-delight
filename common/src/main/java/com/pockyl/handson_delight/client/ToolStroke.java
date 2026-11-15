@@ -98,9 +98,9 @@ enum ToolStroke {
         if (worked.isEmpty()) {
             return CUT;
         }
-        Optional<CuttingBoardRecipe> recipe = tool.isEmpty() ? Optional.empty() : Cutting.findWith(level, worked, tool);
+        List<CuttingBoardRecipe> found = Cutting.recipesFor(level, worked);
+        Optional<CuttingBoardRecipe> recipe = Cutting.findWith(found, tool);
         if (recipe.isEmpty()) {
-            List<CuttingBoardRecipe> found = Cutting.recipesFor(level, worked);
             recipe = found.isEmpty() ? Optional.empty() : Optional.of(found.get(0));
         }
         return recipe.map(ToolStroke::of).orElse(CUT);

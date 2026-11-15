@@ -419,6 +419,22 @@ public final class PotBehavior implements StationBehavior {
         if (scroll != null) {
             scroll.ready(view);
         }
+        // A rebuilt scene (F3+T, a resource pack change) has fresh nodes: what is in the pot is laid in again as it is when the pot is
+        // first seen, so a poured liquid or a cracked egg stays sunk, and the container offered over the soup gets its look again.
+        for (int i = 0; i < SLOTS; i++) {
+            if (going[i] != null) {
+                going[i].stop();
+                going[i] = null;
+            }
+        }
+        if (dip != null) {
+            dip.stop();
+            dip = null;
+        }
+        java.util.Arrays.fill(shown, ItemStack.EMPTY);
+        java.util.Arrays.fill(meltAge, Float.NaN);
+        offeredItem = null;
+        forMeal = null;
         refresh(view, true);
     }
 

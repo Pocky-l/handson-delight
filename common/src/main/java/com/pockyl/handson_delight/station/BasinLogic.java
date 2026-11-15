@@ -218,12 +218,17 @@ public final class BasinLogic implements StationLogic {
         }
         Inventory inventory = player.getInventory();
         int target = -1;
+        for (int place = 0; place < KitchenBasin.PLACES && target < 0; place++) {
+            target = place != not && !basin.getItem(place).isEmpty() && wanted.test(basin.getItem(place)) ? place : -1;
+        }
         for (int slot = 0; slot < inventory.items.size(); slot++) {
             ItemStack stack = inventory.items.get(slot);
             if (!wanted.test(stack)) {
                 continue;
             }
-            int place = compartmentFor(stack, not);
+            // One compartment holds what the recipe wants: another kind of a tag waits, or it would take the side's compartment.
+            int place = target < 0 ? compartmentFor(stack, not)
+                    : ItemStack.isSameItemSameComponents(basin.getItem(target), stack) ? target : -1;
             if (place < 0) {
                 continue;
             }

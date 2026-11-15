@@ -59,7 +59,8 @@ public final class KegStation {
 
     /**
      * A custom action: the stack on the cursor is used at {@link #AT}: {@link #MOUTH} pours it in, {@link #TAP} fills it with the
-     * drink. {@link #ALL}: the whole stack; {@link #FROM_INVENTORY}: the hand is empty, a container comes from the inventory.
+     * drink. {@link #ALL}: the whole stack; {@link #FROM_INVENTORY}: the hand is empty, a container comes from the inventory;
+     * {@link #FROM}: the stack in that inventory slot instead of the cursor's (Shift + click in the inventory).
      */
     public static final String ACTION_USE = "use";
     public static final String AT = "at";
@@ -67,6 +68,7 @@ public final class KegStation {
     public static final String TAP = "tap";
     public static final String ALL = "all";
     public static final String FROM_INVENTORY = "from_inventory";
+    public static final String FROM = "from";
     /** A custom action: a recipe picked in the book; its ingredients go in from the inventory. Data: {@link #DISH}. */
     public static final String ACTION_FILL = "fill";
     public static final String DISH = "dish";

@@ -13,7 +13,6 @@ import net.minecraft.world.item.crafting.CampfireCookingRecipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import vectorwing.farmersdelight.common.block.SkilletBlock;
 import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
 
@@ -118,13 +117,10 @@ public final class SkilletCooking {
 
     /** The stack on the cursor goes into the pan, one of it or as much as fits; false when the pan will not have it. */
     public static boolean place(SkilletBlockEntity skillet, Player player, ItemStack carried, boolean one) {
-        Level level = skillet.getLevel();
-        ItemStack inPan = skillet.getStoredStack();
-        BlockState state = skillet.getBlockState();
-        if (carried.isEmpty() || state.getValue(SkilletBlock.WATERLOGGED) || recipe(level, carried).isEmpty()
-                || !inPan.isEmpty() && !ItemStack.isSameItemSameComponents(inPan, carried)) {
+        if (!takes(skillet, carried)) {
             return false;
         }
+        ItemStack inPan = skillet.getStoredStack();
         int moved = Math.min(one ? 1 : carried.getCount(), Math.min(BATCH, carried.getMaxStackSize()) - inPan.getCount());
         if (moved <= 0) {
             return false;
@@ -134,6 +130,18 @@ public final class SkilletCooking {
         carried.shrink(moved);
         send(skillet, true);
         return true;
+    }
+
+    /**
+     * Whether the pan would take some of {@code stack} now: it fries it, the pan is dry and holds nothing else, and there is room. Opened
+     * by use with anything else, the skillet leaves it in the hand.
+     */
+    public static boolean takes(SkilletBlockEntity skillet, ItemStack stack) {
+        ItemStack inPan = skillet.getStoredStack();
+        if (stack.isEmpty() || skillet.getBlockState().getValue(SkilletBlock.WATERLOGGED) || recipe(skillet.getLevel(), stack).isEmpty()) {
+            return false;
+        }
+        return inPan.isEmpty() || ItemStack.isSameItemSameComponents(inPan, stack) && inPan.getCount() < Math.min(BATCH, stack.getMaxStackSize());
     }
 
     /** The cook tosses the pan: the food turns over. False while the last toss is still in the air, or with nothing in the pan. */

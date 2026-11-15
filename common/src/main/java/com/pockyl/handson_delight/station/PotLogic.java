@@ -222,8 +222,31 @@ public final class PotLogic implements StationLogic {
             inPot.add(pot.handson$getItem(i));
         }
         ResourceLocation found = pot.handson$findRecipe(station.level(), inPot).map(RecipeHolder::id).orElse(null);
-        PotRecipes.Choice choice = PotRecipes.choose(pot.handson$recipes(station.level()), kinds, pot.handson$slots(), wanted, found,
-                !station.users().isEmpty());
+        boolean overflow = !station.users().isEmpty();
+        List<RecipeHolder<CookingPotRecipe>> recipes = pot.handson$recipes(station.level());
+        PotRecipes.Choice choice;
+        if (scrolls == null) {
+            choice = PotRecipes.choose(recipes, kinds, pot.handson$slots(), wanted, found, overflow);
+        } else {
+            // The alchemist pot: a recipe of a school only under its scroll, and the pot's own recipes before Farmer's Delight's, as it
+            // looks them up when it cooks.
+            ResourceLocation school = scrolls.handson$school();
+            List<RecipeHolder<CookingPotRecipe>> allowed = recipes.stream().filter(recipe -> scrolls.handson$schoolFor(recipe.value()) == null
+                    || scrolls.handson$schoolFor(recipe.value()).equals(school)).toList();
+            List<RecipeHolder<CookingPotRecipe>> own = allowed.stream().filter(recipe -> scrolls.handson$isOwnRecipe(recipe.value())).toList();
+            List<RecipeHolder<CookingPotRecipe>> others = allowed.stream().filter(recipe -> !scrolls.handson$isOwnRecipe(recipe.value())).toList();
+            // Food some recipe holds whole wins over food handed back, whichever list it is in.
+            choice = PotRecipes.choose(own, kinds, pot.handson$slots(), wanted, found, false);
+            if (choice == null) {
+                choice = PotRecipes.choose(others, kinds, pot.handson$slots(), wanted, found, false);
+            }
+            if (choice == null && overflow) {
+                choice = PotRecipes.choose(own, kinds, pot.handson$slots(), wanted, found, true);
+            }
+            if (choice == null && overflow) {
+                choice = PotRecipes.choose(others, kinds, pot.handson$slots(), wanted, found, true);
+            }
+        }
         if (choice != null) {
             List<ItemStack> rest = lay(pot, kinds, choice.parts());
             if (!rest.isEmpty()) {
@@ -508,6 +531,8 @@ public final class PotLogic implements StationLogic {
         // Copies only: a stack changed where it lies is not seen as changed.
         ItemStack rest = offered.copyWithCount(offered.getCount() - 1);
         scrolls.handson$setScroll(offered.copyWithCount(1));
+        // Another school may want the food laid out for another dish.
+        unsorted = true;
         ItemStack back = rest.isEmpty() ? before : rest;
         if (fromHand) {
             player.setItemInHand(InteractionHand.MAIN_HAND, back);

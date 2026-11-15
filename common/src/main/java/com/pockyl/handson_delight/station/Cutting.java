@@ -204,14 +204,16 @@ public final class Cutting {
      * one.
      */
     public static int toolSlot(Level level, ItemStack item, Inventory inventory) {
-        if (findWith(level, item, inventory.getSelected()).isPresent()) {
+        // The item's cuts are looked up once, not once a slot: the board offers the knife every frame.
+        List<CuttingBoardRecipe> recipes = recipesFor(level, item);
+        if (findWith(recipes, inventory.getSelected()).isPresent()) {
             return inventory.selected;
         }
-        if (findWith(level, item, inventory.getItem(Inventory.SLOT_OFFHAND)).isPresent()) {
+        if (findWith(recipes, inventory.getItem(Inventory.SLOT_OFFHAND)).isPresent()) {
             return Inventory.SLOT_OFFHAND;
         }
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
-            if (findWith(level, item, inventory.getItem(slot)).isPresent()) {
+            if (findWith(recipes, inventory.getItem(slot)).isPresent()) {
                 return slot;
             }
         }
@@ -251,6 +253,11 @@ public final class Cutting {
     }
 
     public static Optional<CuttingBoardRecipe> findWith(Level level, ItemStack item, ItemStack tool) {
-        return tool.isEmpty() ? Optional.empty() : recipesFor(level, item).stream().filter(recipe -> tool(recipe).test(tool)).findFirst();
+        return tool.isEmpty() ? Optional.empty() : findWith(recipesFor(level, item), tool);
+    }
+
+    /** The first of an item's {@code recipes} ({@link #recipesFor}) that {@code tool} cuts. */
+    public static Optional<CuttingBoardRecipe> findWith(List<CuttingBoardRecipe> recipes, ItemStack tool) {
+        return tool.isEmpty() ? Optional.empty() : recipes.stream().filter(recipe -> tool(recipe).test(tool)).findFirst();
     }
 }

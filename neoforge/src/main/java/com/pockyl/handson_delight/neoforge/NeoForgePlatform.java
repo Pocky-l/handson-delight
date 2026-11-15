@@ -122,6 +122,11 @@ public final class NeoForgePlatform implements Platform {
     }
 
     @Override
+    public boolean hasBoard(ServerPlayer player) {
+        return player instanceof FakePlayer || player.connection == null || NeoForgeNetwork.hasBoard(player);
+    }
+
+    @Override
     public Path configDir() {
         return FMLPaths.CONFIGDIR.get();
     }

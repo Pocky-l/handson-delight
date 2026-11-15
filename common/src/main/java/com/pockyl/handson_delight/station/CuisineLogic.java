@@ -238,7 +238,7 @@ public final class CuisineLogic implements StationLogic {
             }
             made++;
             done = 0;
-            if (!all || made >= MOST || !hasSet(player, dish)) {
+            if (!all || made >= MOST || !hasSet(player, dish, board.handson$contents())) {
                 break;
             }
             // Another dish to make: this one goes to the cook, and the board starts again.
@@ -295,21 +295,27 @@ public final class CuisineLogic implements StationLogic {
         return -1;
     }
 
-    /** Whether the inventory holds one of each step of {@code dish}, each from a stack not counted for another step already. */
-    private static boolean hasSet(Player player, KitchenCuisine.Dish dish) {
+    /**
+     * Whether the inventory holds each step of {@code dish} as many times as it went onto the board for the dish lying there,
+     * {@code laid} (the first step from the bare board may take several, a roll its pieces), each from one stack not counted for
+     * another step already: the board takes a step from a single stack.
+     */
+    private static boolean hasSet(Player player, KitchenCuisine.Dish dish, List<ItemStack> laid) {
         List<ItemStack> left = new ArrayList<>();
         for (ItemStack stack : player.getInventory().items) {
             left.add(stack.copy());
         }
-        for (Ingredient step : dish.steps()) {
+        for (int i = 0; i < dish.steps().size(); i++) {
+            Ingredient step = dish.steps().get(i);
             if (step.isEmpty()) {
                 continue;
             }
-            ItemStack found = left.stream().filter(stack -> !stack.isEmpty() && step.test(stack)).findFirst().orElse(null);
+            int need = i < laid.size() && step.test(laid.get(i)) ? Math.max(1, laid.get(i).getCount()) : 1;
+            ItemStack found = left.stream().filter(stack -> step.test(stack) && stack.getCount() >= need).findFirst().orElse(null);
             if (found == null) {
                 return false;
             }
-            found.shrink(1);
+            found.shrink(need);
         }
         return true;
     }
@@ -392,10 +398,16 @@ public final class CuisineLogic implements StationLogic {
         return from >= 0 ? player.getInventory().getItem(from) : player.inventoryMenu.getCarried();
     }
 
+    /**
+     * What is left of the stack goes back where it came from. A slot it left empty keeps what came into it meanwhile: the bottle or
+     * bowl the last one gave back.
+     */
     private static void putBack(Player player, int from, ItemStack left) {
         ItemStack kept = left.isEmpty() ? ItemStack.EMPTY : left;
         if (from >= 0) {
-            player.getInventory().setItem(from, kept);
+            if (!left.isEmpty() || player.getInventory().getItem(from) == left) {
+                player.getInventory().setItem(from, kept);
+            }
         } else {
             player.inventoryMenu.setCarried(kept);
         }

@@ -148,7 +148,8 @@ public final class KettleLogic implements StationLogic {
             if (spout && data.getBoolean(KettleStation.FROM_INVENTORY)) {
                 serveFromInventory(station, player, data.getBoolean(KettleStation.ALL));
             } else {
-                useCarried(station, player, spout, data.getBoolean(KettleStation.ALL));
+                useCarried(station, player, spout, data.getBoolean(KettleStation.ALL),
+                        data.contains(KettleStation.FROM) ? data.getInt(KettleStation.FROM) : -1);
             }
         } else if (KettleStation.ACTION_FILL.equals(action)) {
             ResourceLocation id = ResourceLocation.tryParse(data.getString(KettleStation.DISH));
@@ -160,9 +161,15 @@ public final class KettleLogic implements StationLogic {
         refresh(station);
     }
 
-    /** The stack on the cursor at the opening (poured in) or at the spout (filled); whatever comes back goes to the hand or the inventory. */
-    private void useCarried(StationContext station, Player player, boolean spout, boolean all) {
-        ItemStack carried = player.inventoryMenu.getCarried();
+    /**
+     * The stack on the cursor, or the one in inventory slot {@code from}, at the opening (poured in) or at the spout (filled); whatever
+     * comes back goes where it was, then to the inventory.
+     */
+    private void useCarried(StationContext station, Player player, boolean spout, boolean all, int from) {
+        if (from >= Inventory.INVENTORY_SIZE) {
+            return;
+        }
+        ItemStack carried = from >= 0 ? player.getInventory().getItem(from) : player.inventoryMenu.getCarried();
         if (spout ? !kettle.handson$canServe(carried) : !kettle.handson$canPour(carried)) {
             return;
         }
@@ -173,18 +180,27 @@ public final class KettleLogic implements StationLogic {
         boolean handFree = carried.isEmpty();
         for (ItemStack stack : back) {
             if (handFree) {
-                // The last one stays in the hand, as a bowl at the pot.
-                player.inventoryMenu.setCarried(stack);
+                // The last one stays in the hand, as a bowl at the pot, or in the slot it came from.
+                putBack(player, from, stack);
                 handFree = false;
             } else if (!player.getInventory().add(stack)) {
                 player.drop(stack, false);
             }
         }
         if (handFree) {
-            player.inventoryMenu.setCarried(ItemStack.EMPTY);
+            putBack(player, from, ItemStack.EMPTY);
         }
         station.effect(spout ? KettleStation.EFFECT_SERVED : KettleStation.EFFECT_POURED, spout ? KettleStation.SPOUT : KettleStation.MOUTH,
                 used(spout ? before : kettle.handson$fluid(), Math.abs(kettle.handson$amount() - amount), vessel, back.size()));
+    }
+
+    /** {@code stack} into inventory slot {@code from}, or onto the cursor for -1. */
+    static void putBack(Player player, int from, ItemStack stack) {
+        if (from >= 0) {
+            player.getInventory().setItem(from, stack);
+        } else {
+            player.inventoryMenu.setCarried(stack);
+        }
     }
 
     /** Uses {@code stack} on the kettle once, or with {@code all} for as long as it still fills or pours, one at a time. */

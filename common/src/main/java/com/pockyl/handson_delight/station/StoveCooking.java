@@ -291,8 +291,7 @@ public final class StoveCooking {
      * that place. Returns how many went on. What would run through the bars (an egg cracked open) goes into a skillet, not here.
      */
     public static int place(AbstractStoveBlockEntity stove, ItemStack carried, int place) {
-        Level level = stove.getLevel();
-        if (carried.isEmpty() || level == null || isCovered(stove) || !canGrill(level, carried)) {
+        if (!takes(stove, carried)) {
             return 0;
         }
         Grill grill = grill(stove);
@@ -349,6 +348,24 @@ public final class StoveCooking {
     }
 
     /** Whether the grill takes {@code stack}: campfire food that stays on the bars. */
+    /**
+     * Whether the grill would take some of {@code stack} now: it grills it, nothing stands on the stove and a place is free. Opened by use
+     * with anything else, the stove leaves it in the hand.
+     */
+    public static boolean takes(AbstractStoveBlockEntity stove, ItemStack stack) {
+        Level level = stove.getLevel();
+        if (stack.isEmpty() || level == null || isCovered(stove) || !canGrill(level, stack)) {
+            return false;
+        }
+        int places = places(stove);
+        for (int at = 0; at < places; at++) {
+            if (Platform.INSTANCE.getItem(stove, at).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean canGrill(Level level, ItemStack stack) {
         return !stack.is(KitchenTags.NOT_ON_GRILL) && SkilletCooking.recipe(level, stack).isPresent();
     }

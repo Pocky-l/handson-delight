@@ -10,6 +10,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Vector3f;
+import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
 import com.pockyl.diegesis.api.client.DiegesisParticles;
 import com.pockyl.diegesis.api.client.NodeView;
@@ -63,6 +64,9 @@ public final class StoveBehavior implements StationBehavior {
     private final Map<Item, Boolean> usable = new HashMap<>();
     private final RandomSource random = RandomSource.create();
     private final ItemStack[] shown = new ItemStack[Grill.PLACES];
+    /** The stacks {@link #shownDone} was asked for: asked every frame, it would search the campfire's recipes each time. */
+    private final ItemStack[] doneFor = new ItemStack[Grill.PLACES];
+    private final boolean[] shownDone = new boolean[Grill.PLACES];
     /** The look each piece shows, by how far its top is done; held while it is in the air after a turn. */
     private final float[] shownUp = new float[Grill.PLACES];
     private final float[] heldUntil = new float[Grill.PLACES];
@@ -101,8 +105,11 @@ public final class StoveBehavior implements StationBehavior {
         view.setInventoryFilter(stack -> usable.computeIfAbsent(stack.getItem(),
                 item -> StoveCooking.canGrill(view.level(), stack)));
         // A right click with food lays it on the grill, as Farmer's Delight's stove takes it: never slower than without the station.
+        // What the grill will not take now (an egg, a full grill) stays in the hand, unrefused.
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
+        if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()
+                && view.level().getBlockEntity(view.pos()) instanceof AbstractStoveBlockEntity stove
+                && StoveCooking.takes(stove, player.getMainHandItem())) {
             onInventoryShiftClick(view, player.getInventory().selected, player.getMainHandItem());
         }
     }
@@ -266,7 +273,7 @@ public final class StoveBehavior implements StationBehavior {
         List<Integer> cooking = new ArrayList<>();
         List<Integer> waiting = new ArrayList<>();
         for (int place = 0; place < Grill.PLACES; place++) {
-            if (shown[place].isEmpty() || StoveCooking.isDone(view.level(), shown[place]) || clock - turnedAt[place] < FLIGHT) {
+            if (shown[place].isEmpty() || isShownDone(view, place) || clock - turnedAt[place] < FLIGHT) {
                 continue;
             }
             boolean waits = data.getBoolean(StoveStation.BY_HAND + place) && data.getFloat(StoveStation.DOWN + place) >= 1.0F
@@ -433,6 +440,15 @@ public final class StoveBehavior implements StationBehavior {
             }
         }
         return best;
+    }
+
+    /** Whether the piece shown on {@code place} is done, looked up once for each stack shown. */
+    private boolean isShownDone(StationView view, int place) {
+        if (doneFor[place] != shown[place]) {
+            doneFor[place] = shown[place];
+            shownDone[place] = StoveCooking.isDone(view.level(), shown[place]);
+        }
+        return shownDone[place];
     }
 
     /** Shift + click on food in the inventory lays the stack on the grill, as at the board and the pan. */

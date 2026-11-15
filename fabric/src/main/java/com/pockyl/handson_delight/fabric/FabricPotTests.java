@@ -106,6 +106,11 @@ public final class FabricPotTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aFloodOfStrokesFillsNoFaster(GameTestHelper helper) {
+        PotTests.aFloodOfStrokesFillsNoFaster(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void theBookFillsThePot(GameTestHelper helper) {
         PotTests.theBookFillsThePot(helper);
     }
@@ -118,6 +123,11 @@ public final class FabricPotTests implements FabricGameTest {
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 400)
     public void theSetsSavedGoBack(GameTestHelper helper) {
         PotTests.theSetsSavedGoBack(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 450)
+    public void theSetsSavedStayWhenTheCookLeft(GameTestHelper helper) {
+        PotTests.theSetsSavedStayWhenTheCookLeft(helper);
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 500)

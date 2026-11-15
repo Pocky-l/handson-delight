@@ -131,11 +131,10 @@ public final class BoardLogic implements StationLogic {
 
     @Override
     public void onOpen(StationContext station, Player player) {
-        if (!AssemblyRecipes.book().isEmpty()) {
-            CompoundTag book = new CompoundTag();
-            book.put(CuttingBoardStation.BOOK, AssemblyRecipes.book());
-            station.effect(CuttingBoardStation.EFFECT_BOOK, "surface", book);
-        }
+        // An empty book too: dishes a reload took away, or another server's, leave the board's book.
+        CompoundTag book = new CompoundTag();
+        book.put(CuttingBoardStation.BOOK, AssemblyRecipes.book());
+        station.effect(CuttingBoardStation.EFFECT_BOOK, "surface", book);
     }
 
     /** The marks and the dish picked start over when the last cook leaves; another one may still be cutting. */
@@ -478,19 +477,22 @@ public final class BoardLogic implements StationLogic {
         // The next item of the stack comes with marks of its own.
         restart(station);
         int done = 0;
+        List<ItemStack> pieces = new ArrayList<>();
         while (done < CuttingBoardStation.BATCH && !board.handson$stored().isEmpty() && !tool.isEmpty()) {
             List<ItemStack> results = CaughtDrops.catching(done > 0, () -> board.handson$cut(knife, player));
             if (results == null) {
                 break;
             }
-            results.forEach(result -> give(player, result));
+            pieces.addAll(results);
             done++;
         }
+        // The tool's slot first: a knife that broke still lies there empty, and the pieces would go into it and be written over.
         if (toolSlot < 0) {
             player.inventoryMenu.setCarried(tool.isEmpty() ? ItemStack.EMPTY : tool);
         } else {
             player.getInventory().setItem(toolSlot, tool.isEmpty() ? ItemStack.EMPTY : tool);
         }
+        pieces.forEach(piece -> give(player, piece));
         if (done == 0) {
             refuse(station);
             return;

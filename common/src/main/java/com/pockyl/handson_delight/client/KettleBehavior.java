@@ -347,6 +347,31 @@ public final class KettleBehavior implements StationBehavior {
     }
 
     /**
+     * Shift + click on a cup in the inventory fills it, or all of the stack, at the spout; on a bucket or a drink, it is poured in
+     * while the lid is off. Leaves and the rest go into the kettle's slots as usual.
+     */
+    @Override
+    public boolean onInventoryShiftClick(StationView view, int slot, ItemStack stack) {
+        KitchenKettle kettle = kettle(view);
+        if (kettle == null || !kettle.handson$isVessel(stack)) {
+            return false;
+        }
+        boolean spout = kettle.handson$canServe(stack);
+        if (!spout && !(kettle.handson$canPour(stack) && isLidOff(view))) {
+            return false;
+        }
+        if (spout) {
+            pourOut(view, stack, false, true);
+        }
+        CompoundTag how = new CompoundTag();
+        how.putString(KettleStation.AT, spout ? KettleStation.SPOUT : KettleStation.MOUTH);
+        how.putBoolean(KettleStation.ALL, true);
+        how.putInt(KettleStation.FROM, slot);
+        view.sendAction(KettleStation.ACTION_USE, how);
+        return true;
+    }
+
+    /**
      * Whether the lid is off: the kettle block's own state (or the station's, for a kettle whose block has none), or as the cook
      * clicked it until the kettle says so too.
      */

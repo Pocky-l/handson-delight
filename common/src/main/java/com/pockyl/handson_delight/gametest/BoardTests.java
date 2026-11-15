@@ -28,11 +28,15 @@ import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -239,6 +243,29 @@ public final class BoardTests {
             helper.assertTrue(!AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.parse("minecraft:mushroom_stew")),
                     "an untagged vanilla dish stays in the crafting table");
         }
+        helper.succeed();
+    }
+
+    /**
+     * A craft with a water bottle (Delightful's dough of flour and water) leaves the cook the empty bottle, as one with a water bucket
+     * leaves the bucket, though the crafting table keeps it: water is poured, the glass stays in the hand.
+     */
+    public static void aPouredWaterBottleLeavesItsBottle(GameTestHelper helper) {
+        ItemStack water = PotionContents.createItemStack(Items.POTION, Potions.WATER);
+        Item dough = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("wheat_dough"));
+        ShapelessRecipe craft = new ShapelessRecipe("", CraftingBookCategory.MISC, new ItemStack(dough, 3), NonNullList.of(Ingredient.EMPTY,
+                Ingredient.of(Items.WHEAT), Ingredient.of(Items.WHEAT), Ingredient.of(Items.WHEAT), Ingredient.of(water)));
+        AssemblyRecipes.Assembly dish = AssemblyRecipes.fromCraft(new RecipeHolder<>(HandsOnDelight.id("test_dough_from_water_bottle"), craft),
+                helper.getLevel().registryAccess()).orElseThrow();
+        List<ItemStack> layers = new ArrayList<>();
+        layers.add(new ItemStack(Items.WHEAT));
+        layers.add(new ItemStack(Items.WHEAT));
+        layers.add(water.copy());
+        layers.add(new ItemStack(Items.WHEAT));
+        Assembling.Made made = Assembling.make(dish, layers, helper.getLevel(), 1);
+        helper.assertTrue(made.rounds() == 1 && made.dishes().size() == 1 && made.dishes().get(0).is(dough), "the dough is made");
+        helper.assertTrue(made.leftovers().size() == 1 && made.leftovers().get(0).is(Items.GLASS_BOTTLE)
+                && made.layers().stream().allMatch(ItemStack::isEmpty), "the water is poured in and its bottle goes back to the cook");
         helper.succeed();
     }
 

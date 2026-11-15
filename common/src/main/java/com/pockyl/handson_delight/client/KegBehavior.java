@@ -380,6 +380,33 @@ public final class KegBehavior implements StationBehavior {
         return true;
     }
 
+    /**
+     * Shift + click on a container in the inventory fills it, or all of the stack, at the tap (dipped into a tank); on a bucket or a
+     * drink, it is poured in while the lid is off. Ingredients go into the keg's slots as usual.
+     */
+    @Override
+    public boolean onInventoryShiftClick(StationView view, int slot, ItemStack stack) {
+        KitchenKeg keg = keg(view);
+        if (keg == null || !keg.handson$isVessel(stack)) {
+            return false;
+        }
+        boolean tap = keg.handson$canTap(stack);
+        if (!tap && !(keg.handson$canPour(stack) && isLidOff(view))) {
+            return false;
+        }
+        if (tap && hasTap()) {
+            draw(view, stack, false, true);
+        } else if (tap) {
+            view.playSound(SoundEvents.BOTTLE_FILL, "drink", 0.6F, 1.0F);
+        }
+        CompoundTag how = new CompoundTag();
+        how.putString(KegStation.AT, tap ? KegStation.TAP : KegStation.MOUTH);
+        how.putBoolean(KegStation.ALL, true);
+        how.putInt(KegStation.FROM, slot);
+        view.sendAction(KegStation.ACTION_USE, how);
+        return true;
+    }
+
     /** Whether the lid is off: as the cook clicked it, until the keg says so too. */
     private boolean isLidOff(StationView view) {
         boolean off = view.state().getControl(KegStation.LID) > 0.5F;
@@ -691,7 +718,7 @@ public final class KegBehavior implements StationBehavior {
                     : drink.getHoverName();
             int left = view.state().data().getInt(KegStation.LEFT);
             node.setTooltip(left > 0 && view.state().getControl(KegStation.PROGRESS) > 0.0F
-                    ? Component.translatable("handson_delight.keg.fermenting", name, Math.max(1, Math.round(left / 1200.0F)))
+                    ? fermenting(name, Math.max(1, Mth.ceil(left / 20.0F)))
                     : Component.translatable("handson_delight.keg.holds", name, keg.handson$amount()));
         });
     }
@@ -1074,9 +1101,8 @@ public final class KegBehavior implements StationBehavior {
         }
     }
 
-    /** The icon of what ferments or waits, with its name and the minutes left on hover. */
+    /** The icon of what ferments or waits, with its name and the time left on hover. */
     private void preview(StationView view, boolean shown, int seconds) {
-        int minutes = seconds > 0 ? Math.max(1, Mth.ceil(seconds / 60.0F)) : 0;
         view.node("preview").ifPresent(node -> {
             node.setVisible(shown);
             if (!shown) {
@@ -1086,9 +1112,17 @@ public final class KegBehavior implements StationBehavior {
                 shownDish = dish.getItem();
                 node.setVisual(Visual.ofItem(shownDish).withAnchor(ICON_MIDDLE));
             }
-            node.setTooltip(minutes > 0 ? Component.translatable("handson_delight.keg.fermenting", dish.getHoverName(), minutes)
-                    : dish.getHoverName());
+            node.setTooltip(seconds > 0 ? fermenting(dish.getHoverName(), seconds) : dish.getHoverName());
         });
+    }
+
+    /**
+     * "{@code name} in so many minutes", in seconds under two minutes, as the kettle tells it: the fermentation tank's minute and a half
+     * would read as two minutes.
+     */
+    private static Component fermenting(Component name, int seconds) {
+        return seconds >= 120 ? Component.translatable("handson_delight.keg.fermenting", name, Mth.ceil(seconds / 60.0F))
+                : Component.translatable("handson_delight.pot.cooking", name, seconds);
     }
 
 }

@@ -184,7 +184,7 @@ public final class YoukaiPotLogic implements StationLogic {
                 new BlockHitResult(Vec3.atCenterOf(station.pos()), Direction.UP, station.pos(), false));
         ItemStack after = player.getMainHandItem();
         player.setItemInHand(InteractionHand.MAIN_HAND, inHand);
-        putBack(player, from, after);
+        putBack(player, from, held, after);
         lookUp(station);
         if (pot == null) {
             refused(station, poured);
@@ -326,9 +326,20 @@ public final class YoukaiPotLogic implements StationLogic {
     }
 
     private static void putBack(Player player, int from, ItemStack left) {
+        putBack(player, from, left, left);
+    }
+
+    /**
+     * What is left of {@code taken} goes back where it came from. A slot it left empty keeps what came into it meanwhile: the bottle
+     * or bowl the last one gave back.
+     */
+    private static void putBack(Player player, int from, ItemStack taken, ItemStack left) {
         ItemStack kept = left.isEmpty() ? ItemStack.EMPTY : left;
         if (from >= 0) {
-            player.getInventory().setItem(from, kept);
+            ItemStack now = player.getInventory().getItem(from);
+            if (!left.isEmpty() || now == taken || now.isEmpty()) {
+                player.getInventory().setItem(from, kept);
+            }
         } else {
             player.inventoryMenu.setCarried(kept);
         }

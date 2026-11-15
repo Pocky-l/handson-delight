@@ -187,7 +187,9 @@ public final class SkilletTests {
         helper.assertTrue(pan.skillet.getStoredStack().isEmpty(), "a stick is no food for the pan");
         helper.assertTrue(pan.cook.inventoryMenu.getCarried().getCount() == 3, "it stays in the hand");
         pan.cook.inventoryMenu.setCarried(ItemStack.EMPTY);
+        helper.assertTrue(SkilletCooking.takes(pan.skillet, new ItemStack(Items.CHICKEN)), "opened by use with chicken, it goes in");
         pan.place(Items.CHICKEN, 3);
+        helper.assertFalse(SkilletCooking.takes(pan.skillet, new ItemStack(Items.BEEF)), "opened by use with other food, it stays in the hand");
         pan.cook.inventoryMenu.setCarried(new ItemStack(Items.BEEF));
         pan.act(SkilletStation.ACTION_PLACE, new CompoundTag());
         helper.assertTrue(pan.skillet.getStoredStack().is(Items.CHICKEN) && pan.cook.inventoryMenu.getCarried().is(Items.BEEF),
@@ -205,6 +207,8 @@ public final class SkilletTests {
         helper.assertTrue(pan.skillet.getStoredStack().isEmpty(), "taken out");
         helper.assertTrue(pan.cook.getInventory().countItem(Items.CHICKEN) == 5, "all of it, into the inventory");
         helper.assertFalse(pan.frying().byHand(), "the pan starts over");
+        pan.place(Items.CHICKEN, SkilletCooking.BATCH);
+        helper.assertFalse(SkilletCooking.takes(pan.skillet, new ItemStack(Items.CHICKEN)), "opened by use at a full pan, it stays in the hand");
         helper.succeed();
     }
 

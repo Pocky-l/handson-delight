@@ -166,6 +166,35 @@
 - With a station turned off in `config/handson_delight.properties`, its pot, kettle, oven or vat keeps its own look.
 - Food that changes its look by its components or a custom model is cut and coloured at the stations as it looks.
 - A resource pack that retextures white concrete no longer shows through the recipe book.
+- A water bottle used in a dish at the cutting board gives back its empty glass bottle, as a water bucket gives back its
+  bucket (#27).
+- With [InvMove](https://modrinth.com/mod/invmove), switching to the next station with the movement keys no longer walks
+  you away (#27).
+- The board's last cut no longer loses its pieces when the knife from your inventory breaks on it and its slot was the
+  only room left.
+- Youkai's Feasts' pots and cuisine board give back the bottle or bowl of the last item put in from the inventory, even
+  with no other room.
+- A player whose own config turns the cutting board's station off crafts the board's dishes in the grid on a server that
+  has the board, and keeps them in the recipe book and recipe viewers, instead of losing them.
+- A stove or skillet opened with something it won't take (an egg at the grill, a full grill or pan) leaves it in your
+  hand instead of bouncing it back.
+- At the steamer, the other button takes back only what you laid, not another cook's food, and a feast block comes off
+  its rack by a click on any quarter of it.
+- Shift with a dish picked at the cuisine board no longer leaves the board bare or half laid when a step needs more than
+  one item.
+- A skewer taken off the grill, or food taken off the steamer, no longer shows again for a moment.
+- A basin recipe picked in the book no longer fills the side's compartment with a second kind of a tag ingredient.
+- The alchemist pot's badge shows the scroll of the school the dish waits for.
+- A poured liquid or a cracked egg stays sunk in the pot after F3+T or a resource pack change, and the bowl offered over
+  the soup is drawn again.
+- The recipe book keeps the scroll of the picked recipe's ingredients when the cursor crosses the list; after a reload
+  that removes the picked recipe it shows the first one, and the ribbon that closes the book is always there.
+- The board's book forgets dishes from another server or from before a reload.
+- A chop drawn at the board stays open while another player or a hopper changes the board.
+- The fermentation tank shows the time left in seconds, not rounded up to "2 min".
+- Shift + click on a cup or bucket in the inventory fills or pours it at the kettles and kegs.
+- Sets saved when a batch ended just after its cook left stay in the pot instead of going to whoever opens it next.
+- The cutting board, cuisine board, basin, stove, skillet and recipe book cost less each frame.
 
 ## [1.4.1+1.21.1] - 2026-11-14
 ### New

@@ -1,6 +1,7 @@
 package com.pockyl.handson_delight.client;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 
 import com.pockyl.diegesis.api.client.DiegesisClient;
@@ -8,6 +9,7 @@ import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.client.LiquidLook;
 import com.pockyl.diegesis.api.client.ParticleStyle;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.assembly.BoardDishes;
 import com.pockyl.handson_delight.station.BasinStation;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
@@ -106,6 +108,15 @@ public final class HandsOnDelightClient {
         // Sugar, cocoa and the like shaken out over a pot: fine grains that fall straight and are gone in the soup.
         DiegesisClient.registerParticle(GRAIN, ParticleStyle.builder(ResourceLocation.withDefaultNamespace("generic_0")).color(0xFFFFFFFF)
                 .size(0.28F, 0.42F).life(0.35F, 0.6F).gravity(55.0F).drag(0.2F).pop().build());
+    }
+
+    /**
+     * The player left the server: what it told this client of its board dishes is forgotten. The next server may not have the mod (its
+     * sandwiches are crafted), or has other dishes, and a book kept from this one would list dishes it cannot make.
+     */
+    public static void loggedOut() {
+        BoardDishes.clear();
+        BoardBook.received(new ListTag());
     }
 
     /** Whether a scene stands in for the block at {@code pos} on this client. */

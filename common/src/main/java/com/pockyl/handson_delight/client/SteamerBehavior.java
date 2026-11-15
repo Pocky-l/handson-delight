@@ -91,6 +91,8 @@ public final class SteamerBehavior implements StationBehavior {
     private static final float NEXT = 0.12F;
     private static final float FLY_FROM = 7.0F;
     private static final float AWAY_TIME = 0.3F;
+    /** How long a thing just taken stays gone while the steamer still shows it: the effect comes before the block's own update. */
+    private static final float LEAVING_TIME = 1.0F;
     /** A new rack comes down onto the tower from this high. */
     private static final float RACK_DROP = 6.0F;
     private static final float RACK_DROP_TIME = 0.25F;
@@ -126,6 +128,9 @@ public final class SteamerBehavior implements StationBehavior {
     private final RandomSource random = RandomSource.create();
     private final ItemStack[][] shown = new ItemStack[RACKS][PLACES];
     private final boolean[][] previewing = new boolean[RACKS][PLACES];
+    /** What each place gave the cook a moment ago, and until when. */
+    private final ItemStack[][] leaving = new ItemStack[RACKS][PLACES];
+    private final float[][] leavingUntil = new float[RACKS][PLACES];
     /** Until when the thing on a place is still on its way there: the code leaves its position alone meanwhile. */
     private final float[][] flyingUntil = new float[RACKS][PLACES];
     private final float[] droppedAt = new float[RACKS];
@@ -160,6 +165,9 @@ public final class SteamerBehavior implements StationBehavior {
 
     private void clear() {
         for (ItemStack[] rack : shown) {
+            Arrays.fill(rack, ItemStack.EMPTY);
+        }
+        for (ItemStack[] rack : leaving) {
             Arrays.fill(rack, ItemStack.EMPTY);
         }
         for (float[] rack : flyingUntil) {
@@ -553,7 +561,7 @@ public final class SteamerBehavior implements StationBehavior {
         float world = worldTurn(view);
         boolean anyGhost = false;
         for (int rack = 0; rack < tower.racks() && rack < RACKS; rack++) {
-            ItemStack first = tower.item(rack, 0);
+            ItemStack first = there(tower, rack, 0);
             float clearance = pot.handson$clearance(first);
             feast(view, rack, clearance >= 0.0F ? first : ItemStack.EMPTY, clearance, world);
             for (int place = 0; place < PLACES; place++) {
@@ -561,7 +569,7 @@ public final class SteamerBehavior implements StationBehavior {
                 if (node == null) {
                     continue;
                 }
-                ItemStack now = clearance >= 0.0F ? ItemStack.EMPTY : tower.item(rack, place);
+                ItemStack now = clearance >= 0.0F ? ItemStack.EMPTY : there(tower, rack, place);
                 boolean ghost = rack == open && now.isEmpty() && clearance < 0.0F && !carried.isEmpty() && node.isHovered()
                         && pot.handson$takes(carried);
                 ItemStack look = ghost ? carried : now;
@@ -611,6 +619,18 @@ public final class SteamerBehavior implements StationBehavior {
         }
         // Over a free place the stack shows where it goes, see-through: the one on the cursor would cover it.
         view.setCarriedHidden(anyGhost);
+    }
+
+    /** What lies on {@code place} of {@code rack}; nothing while the steamer still has the thing just taken, which would come back. */
+    private ItemStack there(SteamerTower tower, int rack, int place) {
+        ItemStack now = tower.item(rack, place);
+        if (!leaving[rack][place].isEmpty()) {
+            if (clock < leavingUntil[rack][place] && ItemStack.isSameItemSameComponents(now, leaving[rack][place])) {
+                return ItemStack.EMPTY;
+            }
+            leaving[rack][place] = ItemStack.EMPTY;
+        }
+        return now;
     }
 
     /** Where a thing lies on its place, from the middle of the rack, for a place turned {@code yaw} degrees. */
@@ -912,6 +932,8 @@ public final class SteamerBehavior implements StationBehavior {
             }));
             view.node("place_" + rack + "_" + place).ifPresent(node -> node.setVisible(false));
             shown[rack][place] = ItemStack.EMPTY;
+            leaving[rack][place] = stack.copy();
+            leavingUntil[rack][place] = clock + LEAVING_TIME;
         }
         view.playSound(SoundEvents.ITEM_PICKUP, "pot", 0.3F, 1.5F);
     }

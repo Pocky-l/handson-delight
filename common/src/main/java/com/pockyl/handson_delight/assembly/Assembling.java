@@ -3,6 +3,7 @@ package com.pockyl.handson_delight.assembly;
 import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.Optional;
 /**
  * A dish made of the layers on the board by its own recipe, round after round as the crafting table would make it: each round takes
  * an item of every layer, and what the recipe leaves of it (a bucket, a bottle) goes back onto that layer when it is the same thing
- * (FD's dough keeps its water) or to the cook.
+ * (FD's dough keeps its water) or to the cook. A potion poured out leaves its bottle too, though the crafting table keeps it.
  */
 public final class Assembling {
     private Assembling() {
@@ -74,7 +75,7 @@ public final class Assembling {
             NonNullList<ItemStack> remainders = dish.recipe().getRemainingItems(grid.input());
             for (int layer = 0; layer < left.size(); layer++) {
                 ItemStack stack = left.get(layer);
-                ItemStack remainder = grid.remainder(remainders, AssemblyGrid.slot(dish, taken, layer));
+                ItemStack remainder = leftOf(stack, grid.remainder(remainders, AssemblyGrid.slot(dish, taken, layer)));
                 stack.shrink(1);
                 if (remainder.isEmpty()) {
                     continue;
@@ -100,6 +101,14 @@ public final class Assembling {
             }
         }
         return new Made(dishes, left, leftovers, rounds);
+    }
+
+    /**
+     * What making the dish leaves of {@code layer}: what its recipe says, and a potion's glass bottle the crafting table keeps. Water
+     * poured from a bottle into the dough leaves the empty bottle with the cook, as a water bucket leaves its bucket.
+     */
+    private static ItemStack leftOf(ItemStack layer, ItemStack remainder) {
+        return remainder.isEmpty() && layer.is(Items.POTION) ? new ItemStack(Items.GLASS_BOTTLE) : remainder;
     }
 
     /** Adds {@code stack} to the first stack it joins, else as a new one. */

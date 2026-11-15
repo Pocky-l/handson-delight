@@ -236,6 +236,8 @@ public final class BoardBehavior implements StationBehavior {
      */
     private int overMark = -1;
     private int pendingChops;
+    /** The marks the server had cut when its state last came: each one more answers a chop drawn before. */
+    private int answeredMarks;
     /** When the last chop was drawn before the server's word: with no word for {@link #PENDING_WAIT} it is forgotten. */
     private float pendingSince;
     private int drawnMarks = -1;
@@ -388,7 +390,14 @@ public final class BoardBehavior implements StationBehavior {
 
     @Override
     public void onStateChanged(StationView view, StationState.Changes changes) {
-        pendingChops = 0;
+        // A chop drawn at once waits for its own mark only: another cook's layer or a hopper changing the board leaves it drawn.
+        int marks = view.state().data().getInt(CuttingBoardStation.MARKS);
+        if (changes.slots().contains(CuttingBoardStation.BOARD_SLOT) || marks < answeredMarks) {
+            pendingChops = 0;
+        } else if (marks > answeredMarks) {
+            pendingChops = Math.max(0, pendingChops - (marks - answeredMarks));
+        }
+        answeredMarks = marks;
         refresh(view);
     }
 

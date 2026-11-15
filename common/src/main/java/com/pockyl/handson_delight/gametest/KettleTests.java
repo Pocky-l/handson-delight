@@ -119,6 +119,25 @@ public final class KettleTests {
         helper.succeed();
     }
 
+    /** Shift + click on a water bucket in the inventory pours it in; the empty bucket stays in its slot, the hand stays empty. */
+    public static void aBucketFromTheInventoryPoursIn(GameTestHelper helper) {
+        Setup setup = kettle(helper, false);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        lid(setup, player, true);
+        player.getInventory().setItem(7, new ItemStack(Items.WATER_BUCKET));
+        CompoundTag from = at(KettleStation.MOUTH, true);
+        from.putInt(KettleStation.FROM, 7);
+        setup.logic.onCustomAction(setup.station, player, KettleStation.ACTION_USE, from);
+        helper.assertTrue(setup.kettle.handson$fluid() == Fluids.WATER && setup.kettle.handson$amount() == 1000,
+                "the water goes in, got " + setup.kettle.handson$amount());
+        helper.assertTrue(player.getInventory().getItem(7).is(Items.BUCKET) && player.inventoryMenu.getCarried().isEmpty(),
+                "the empty bucket stays in its slot");
+        helper.succeed();
+    }
+
     /**
      * Green tea: the book fills the leaves from the inventory and takes the lid off, the kettle brews it over the campfire, and the
      * tea is poured out of the spout into bottles, one a click, or every serving from the inventory with shift.

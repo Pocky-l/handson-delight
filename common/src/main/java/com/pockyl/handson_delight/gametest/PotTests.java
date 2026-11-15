@@ -564,6 +564,43 @@ public final class PotTests {
         });
     }
 
+    /**
+     * A batch that ends just after its cook closed the pot keeps the sets it saved in the pot: the cook opening it again later (or
+     * anybody) is not handed what lies there then.
+     */
+    public static void theSetsSavedStayWhenTheCookLeft(GameTestHelper helper) {
+        Setup setup = pot(helper);
+        ServerPlayer cook = TestPlayers.serverPlayer(helper, "cook");
+        cook.awardStat(Stats.ITEM_CRAFTED.get(fd("beef_stew")), 40);
+        setup.station.users.add(cook);
+        Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 12));
+        CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
+        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
+        fill(setup.pot, 6);
+        for (int tick = 0; tick < 340; tick += 1) {
+            double angle = tick * Math.PI / 10.0;
+            int at = tick;
+            helper.runAfterDelay(tick, () -> {
+                if (at % 2 == 0) {
+                    setup.logic.onCustomAction(setup.station, cook, CookingPotStation.ACTION_STIR, spoonAt(angle));
+                }
+                // The cook closes the pot the moment the batch is done, before the station hands out what it saved.
+                if (setup.pot.getMeal().getCount() < 16) {
+                    setup.logic.tick(setup.station);
+                }
+            });
+        }
+        helper.runAfterDelay(400, () -> {
+            helper.assertTrue(setup.pot.getMeal().getCount() == 16, "the stack is full, got " + setup.pot.getMeal());
+            setup.logic.tick(setup.station);
+            helper.assertTrue(cook.getInventory().countItem(Items.BEEF) == 0, "the cook opening it again later is handed nothing");
+            helper.assertTrue(Platform.INSTANCE.getItem(setup.pot, 0).getCount() == 3, "the saved set stays in the pot, left "
+                    + Platform.INSTANCE.getItem(setup.pot, 0));
+            helper.succeed();
+        });
+    }
+
     /** Milk poured into the pot leaves its bottle: with the cook at the station it goes to them, not onto the floor. */
     public static void theEmptiedContainerGoesToTheCook(GameTestHelper helper) {
         Setup setup = pot(helper);
@@ -681,6 +718,20 @@ public final class PotTests {
             bunched.move(arrived, tick, (float) Math.cos(angle) * 0.9F, (float) Math.sin(angle) * 0.9F, true, 3);
         }
         helper.assertTrue(bunched.grade(199) == 3, "steady rounds that arrive in bunches earn three stars, got " + bunched.stars(199));
+        helper.succeed();
+    }
+
+    /**
+     * A modified client sending a flood of strokes in one tick, each saying its clock went on, fills the stars no faster than the
+     * strokes of one: those in the same tick share the slack the network gets.
+     */
+    public static void aFloodOfStrokesFillsNoFaster(GameTestHelper helper) {
+        StirSkill flood = new StirSkill();
+        for (int stroke = 0; stroke <= 200; stroke++) {
+            double angle = stroke * 0.6;
+            flood.move(100, stroke * 2.0F, (float) Math.cos(angle) * 0.9F, (float) Math.sin(angle) * 0.9F, true, 3);
+        }
+        helper.assertTrue(flood.grade(100) == 0, "two hundred strokes in one tick earn no star, got " + flood.stars(100));
         helper.succeed();
     }
 

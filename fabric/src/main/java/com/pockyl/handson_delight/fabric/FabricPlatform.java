@@ -119,6 +119,12 @@ public final class FabricPlatform implements Platform {
     }
 
     @Override
+    public boolean hasBoard(ServerPlayer player) {
+        return player instanceof FakePlayer || player.connection == null || ServerPlayNetworking.canSend(player, BoardDishes.Payload.TYPE)
+                && !ServerPlayNetworking.canSend(player, BoardDishes.NoBoard.TYPE);
+    }
+
+    @Override
     public void sendBoardDishes(ServerPlayer player) {
         if (player.connection != null && ServerPlayNetworking.canSend(player, BoardDishes.Payload.TYPE)) {
             ServerPlayNetworking.send(player, BoardDishes.payload());

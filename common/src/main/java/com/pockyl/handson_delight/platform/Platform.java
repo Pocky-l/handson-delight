@@ -72,6 +72,13 @@ public interface Platform {
      */
     boolean hasThisMod(ServerPlayer player);
 
+    /**
+     * Whether the player's client works at the cutting board's station: it has this mod with that station on. A client whose own
+     * config turns the station off cuts on Farmer's Delight's board and crafts the board's dishes in its grid, as one without the mod
+     * does ({@link com.pockyl.handson_delight.assembly.BoardDishes#NO_BOARD}).
+     */
+    boolean hasBoard(ServerPlayer player);
+
     /** Whether the mod {@code modId} is loaded. */
     boolean isLoaded(String modId);
 

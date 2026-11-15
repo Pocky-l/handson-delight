@@ -45,6 +45,7 @@ import com.pockyl.handson_delight.station.PotLogic;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -213,6 +214,9 @@ final class RecipeBook implements NodePainter {
     /** The first row of ingredients shown when they take more rows than the page has, and the dish it is for. */
     private int firstRow;
     private Object rowsFor;
+    /** The first row the picked dish was scrolled to, and that dish: the cursor crossing the list shows others a moment. */
+    private int pickedRow;
+    private Object pickedRowFor;
     /** The bar beside the ingredients as drawn last (right page units), null when they all fit: its rows and where its grip is. */
     private Bar bar;
     /** Where on the grip the player holds it, units from its top; negative while it is not held. */
@@ -612,17 +616,22 @@ final class RecipeBook implements NodePainter {
         }
         if ((keepOrder || cursorX >= 0.0F) && !entries.isEmpty()) {
             // Under the cursor the list keeps its order: a dish never moves away from where the player points.
-            List<Object> before = entries.stream().map(entry -> entry.page().key()).toList();
-            found.sort(Comparator.comparingInt(entry -> {
-                int at = before.indexOf(entry.page().key());
-                return at < 0 ? Integer.MAX_VALUE : at;
-            }));
+            // Looked up by key: read again every second, a modpack's book of a thousand dishes is no list to search in a sort.
+            Map<Object, Integer> before = new HashMap<>();
+            for (int i = 0; i < entries.size(); i++) {
+                before.putIfAbsent(entries.get(i).page().key(), i);
+            }
+            found.sort(Comparator.comparingInt(entry -> before.getOrDefault(entry.page().key(), Integer.MAX_VALUE)));
         } else {
-            found.sort(Comparator.comparingInt(Entry::missing).thenComparing(entry -> entry.dish().getHoverName().getString()));
+            Map<Entry, String> names = new IdentityHashMap<>();
+            found.forEach(entry -> names.put(entry, entry.dish().getHoverName().getString()));
+            found.sort(Comparator.comparingInt(Entry::missing).thenComparing(names::get));
         }
         if (picked != null) {
             Object kept = picked.page().key();
-            picked = found.stream().filter(entry -> entry.page().key().equals(kept)).findFirst().orElse(null);
+            // A reload (a datapack, a script) that took the picked recipe away leaves the first one on the right page, not a blank one.
+            picked = found.stream().filter(entry -> entry.page().key().equals(kept)).findFirst()
+                    .orElse(found.isEmpty() ? null : found.get(0));
         }
         entries = found;
         keepOrder = true;
@@ -1340,9 +1349,14 @@ final class RecipeBook implements NodePainter {
             }
             drawList(canvas, listPage);
         } else {
+            // The ribbon closes the book: it is there also while no dish is shown.
+            canvas.ribbon(onRibbon());
             Entry shown = hovered != null ? hovered : picked;
             if (shown != null) {
                 drawDish(canvas, shown);
+            } else {
+                drawn.clear();
+                bar = null;
             }
         }
         poseStack.popPose();
@@ -1386,7 +1400,6 @@ final class RecipeBook implements NodePainter {
         Font font = Minecraft.getInstance().font;
         float middle = RIGHT_MIDDLE;
         drawn.clear();
-        canvas.ribbon(onRibbon());
         canvas.item(entry.dish(), middle - DISH_SIZE / 2.0F, 3.0F, DISH_SIZE);
         drawn.add(new Drawn(middle - DISH_SIZE / 2.0F, 3.0F, DISH_SIZE, entry.dish()));
         float line = 25.0F;
@@ -1419,8 +1432,12 @@ final class RecipeBook implements NodePainter {
         boolean withFoot = rows <= overFoot || overFoot >= 2;
         int shown = withFoot ? Math.min(rows, overFoot) : Math.max(1, Math.min(rows, Mth.floor((PAGE_FOOT - top + PITCH - WELL_SIZE) / PITCH)));
         if (!Objects.equals(rowsFor, entry.page().key())) {
+            if (picked != null && Objects.equals(rowsFor, picked.page().key())) {
+                pickedRowFor = rowsFor;
+                pickedRow = firstRow;
+            }
             rowsFor = entry.page().key();
-            firstRow = 0;
+            firstRow = Objects.equals(pickedRowFor, rowsFor) ? pickedRow : 0;
         }
         firstRow = Mth.clamp(firstRow, 0, rows - shown);
         if (shown < rows) {

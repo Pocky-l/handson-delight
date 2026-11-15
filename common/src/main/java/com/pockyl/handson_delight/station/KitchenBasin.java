@@ -7,17 +7,21 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.WeakHashMap;
 
 /**
  * Barbeque's Delight's ingredients basin, as the station sees it: two compartments of one stack each. A skewer is made of a stick,
@@ -28,6 +32,12 @@ public final class KitchenBasin {
     private static final String ENTITY = "com.mao.barbequesdelight.content.block.BasinBlockEntity";
     public static final int PLACES = 2;
     public static final ResourceLocation SKEWERING = ResourceLocation.fromNamespaceAndPath(KitchenGrill.MOD_ID, "skewering");
+
+    /**
+     * The recipes per recipe manager (the client's and the server's of a single-player game are two), read again when its map of
+     * recipes is a new one: the drawer and the stick on the rim ask for every inventory slot, and each recipe is read by reflection.
+     */
+    private static final Map<RecipeManager, Read> READ = new WeakHashMap<>();
 
     private static Class<?> entityClass;
     private static Field itemsField;
@@ -142,8 +152,24 @@ public final class KitchenBasin {
         }
     }
 
+    private record Read(Map<?, ?> from, List<Skewering> recipes) {
+    }
+
     /** Every skewering recipe of the basin, in the recipe manager's order; empty without Barbeque's Delight. */
     public static List<Skewering> recipes(Level level) {
+        RecipeManager manager = level.getRecipeManager();
+        Map<?, ?> from = ((RecipeManagerAccessor) manager).handson$byName();
+        synchronized (READ) {
+            Read read = READ.get(manager);
+            if (read == null || read.from() != from) {
+                read = new Read(from, List.copyOf(read(level)));
+                READ.put(manager, read);
+            }
+            return read.recipes();
+        }
+    }
+
+    private static List<Skewering> read(Level level) {
         List<Skewering> recipes = new ArrayList<>();
         Optional<RecipeType<?>> type = BuiltInRegistries.RECIPE_TYPE.getOptional(SKEWERING);
         if (type.isEmpty()) {

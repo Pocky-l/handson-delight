@@ -12,5 +12,6 @@ public final class HandsOnDelightFabric implements ModInitializer {
     public void onInitialize() {
         HandsOnDelight.init();
         PayloadTypeRegistry.playS2C().register(BoardDishes.Payload.TYPE, BoardDishes.Payload.CODEC);
+        PayloadTypeRegistry.playS2C().register(BoardDishes.NoBoard.TYPE, BoardDishes.NoBoard.CODEC);
     }
 }

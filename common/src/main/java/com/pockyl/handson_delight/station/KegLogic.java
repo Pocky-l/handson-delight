@@ -229,7 +229,8 @@ public final class KegLogic implements StationLogic {
             if (tap && data.getBoolean(KegStation.FROM_INVENTORY)) {
                 tapFromInventory(station, player, data.getBoolean(KegStation.ALL));
             } else {
-                useCarried(station, player, tap, data.getBoolean(KegStation.ALL));
+                useCarried(station, player, tap, data.getBoolean(KegStation.ALL),
+                        data.contains(KegStation.FROM) ? data.getInt(KegStation.FROM) : -1);
             }
         } else if (KegStation.ACTION_FILL.equals(action)) {
             ResourceLocation id = ResourceLocation.tryParse(data.getString(KegStation.DISH));
@@ -240,9 +241,15 @@ public final class KegLogic implements StationLogic {
         }
     }
 
-    /** The stack on the cursor at the opening (poured in) or at the tap (filled); whatever comes back goes to the hand or the inventory. */
-    private void useCarried(StationContext station, Player player, boolean tap, boolean all) {
-        ItemStack carried = player.inventoryMenu.getCarried();
+    /**
+     * The stack on the cursor, or the one in inventory slot {@code from}, at the opening (poured in) or at the tap (filled); whatever
+     * comes back goes where it was, then to the inventory.
+     */
+    private void useCarried(StationContext station, Player player, boolean tap, boolean all, int from) {
+        if (from >= Inventory.INVENTORY_SIZE) {
+            return;
+        }
+        ItemStack carried = from >= 0 ? player.getInventory().getItem(from) : player.inventoryMenu.getCarried();
         if (tap ? !keg.handson$canTap(carried) : !keg.handson$canPour(carried)) {
             return;
         }
@@ -253,15 +260,15 @@ public final class KegLogic implements StationLogic {
         boolean handFree = carried.isEmpty();
         for (ItemStack stack : back) {
             if (handFree) {
-                // The last one stays in the hand, as a bowl at the pot.
-                player.inventoryMenu.setCarried(stack);
+                // The last one stays in the hand, as a bowl at the pot, or in the slot it came from.
+                KettleLogic.putBack(player, from, stack);
                 handFree = false;
             } else if (!player.getInventory().add(stack)) {
                 player.drop(stack, false);
             }
         }
         if (handFree) {
-            player.inventoryMenu.setCarried(ItemStack.EMPTY);
+            KettleLogic.putBack(player, from, ItemStack.EMPTY);
         }
         station.effect(tap ? KegStation.EFFECT_TAPPED : KegStation.EFFECT_POURED, tap ? KegStation.TAP : KegStation.MOUTH,
                 used(tap ? drawn : keg.handson$fluid(), Math.abs(keg.handson$amount() - before), vessel, back.size()));

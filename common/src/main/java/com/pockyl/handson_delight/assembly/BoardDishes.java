@@ -24,6 +24,11 @@ import java.util.stream.Collectors;
  */
 public final class BoardDishes {
     public static final ResourceLocation CHANNEL = HandsOnDelight.id("board_dishes");
+    /**
+     * A channel a client names when its own config turns the board's station off: it has no board to make the dishes on, so the
+     * server leaves them in its grid and its recipe book. Nothing is sent on it.
+     */
+    public static final ResourceLocation NO_BOARD = HandsOnDelight.id("no_board");
 
     /** The server's config keeps these dishes in the crafting grid as well: the viewers show both. */
     private static final String CRAFTED_TOO = "crafted_too";
@@ -45,6 +50,17 @@ public final class BoardDishes {
 
         @Override
         public Type<Payload> type() {
+            return TYPE;
+        }
+    }
+
+    /** {@link #NO_BOARD} as a packet type, so that a client can name it. Never sent. */
+    public record NoBoard() implements CustomPacketPayload {
+        public static final Type<NoBoard> TYPE = new Type<>(NO_BOARD);
+        public static final StreamCodec<FriendlyByteBuf, NoBoard> CODEC = StreamCodec.unit(new NoBoard());
+
+        @Override
+        public Type<NoBoard> type() {
             return TYPE;
         }
     }
@@ -74,6 +90,10 @@ public final class BoardDishes {
     }
 
     public static synchronized List<AssemblyRecipes.Assembly> all() {
+        if (!HandsOnConfig.cuttingBoard()) {
+            // This client cuts on Farmer's Delight's board: the server leaves it the crafting recipes, and its viewers show those.
+            return List.of();
+        }
         ListTag book = received;
         if (book != readFrom) {
             // Meals of free fillings have no page: the viewers show Modest Meals' own.
@@ -85,7 +105,7 @@ public final class BoardDishes {
 
     /** The crafting recipes a player does not make: the viewers hide them. */
     public static Set<ResourceLocation> ids() {
-        if (craftedToo) {
+        if (craftedToo || !HandsOnConfig.cuttingBoard()) {
             return Set.of();
         }
         return all().stream().map(AssemblyRecipes.Assembly::id).collect(Collectors.toUnmodifiableSet());

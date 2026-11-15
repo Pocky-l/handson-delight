@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Vector3f;
 import vectorwing.farmersdelight.common.block.SkilletBlock;
+import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
 
 import com.pockyl.diegesis.api.client.DiegesisParticles;
 import com.pockyl.diegesis.api.client.NodeView;
@@ -119,6 +120,9 @@ public final class SkilletBehavior implements StationBehavior {
     private final PanOil oil = new PanOil();
 
     private ItemStack shown = ItemStack.EMPTY;
+    /** The stack {@link #shownDone} was asked for: asked every frame, it would search the campfire's recipes each time. */
+    private ItemStack doneFor;
+    private boolean shownDone;
     private int shownPieces;
     private int shownUnders;
     /** The top's look as drawn: raw (doneness up to 1) or cooked (1). */
@@ -191,13 +195,12 @@ public final class SkilletBehavior implements StationBehavior {
         view.setInventoryFilter(stack -> usable.computeIfAbsent(stack.getItem(),
                 item -> SkilletCooking.recipe(view.level(), stack).isPresent()));
         // A right click with food puts it in the pan, as Farmer's Delight's skillet takes it: never slower than without the station.
+        // What the pan will not take now (other food in it, a full pan) stays in the hand, unrefused.
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
-            ItemStack inPan = view.state().getItem(SkilletStation.PAN_SLOT);
-            ItemStack held = player.getMainHandItem();
-            if (inPan.isEmpty() || ItemStack.isSameItemSameComponents(inPan, held)) {
-                onInventoryShiftClick(view, player.getInventory().selected, held);
-            }
+        if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()
+                && view.level().getBlockEntity(view.pos()) instanceof SkilletBlockEntity skillet
+                && SkilletCooking.takes(skillet, player.getMainHandItem())) {
+            onInventoryShiftClick(view, player.getInventory().selected, player.getMainHandItem());
         }
     }
 
@@ -521,7 +524,7 @@ public final class SkilletBehavior implements StationBehavior {
             return;
         }
         // Fuller pans seethe and spit more, up to a full layer of four pieces. Done food only simmers in its fat while it waits.
-        boolean done = SkilletCooking.isDone(view.level(), shown);
+        boolean done = isShownDone(view);
         float fullness = (0.5F + 0.5F * Math.min(1.0F, shownPieces / 4.0F)) * (done ? 0.3F : 1.0F);
         if (!inAir) {
             seethe += dt * SEETHE_RATE * fullness;
@@ -612,9 +615,18 @@ public final class SkilletBehavior implements StationBehavior {
         }
     }
 
+    /** Whether what the pan shows is done, looked up once for each stack shown. */
+    private boolean isShownDone(StationView view) {
+        if (doneFor != shown) {
+            doneFor = shown;
+            shownDone = SkilletCooking.isDone(view.level(), shown);
+        }
+        return shownDone;
+    }
+
     /** Done food waiting to be taken: the steady glow of {@link #READY_SWELL}; everything back to size once it is not. */
     private void readyGlow(StationView view, float dt) {
-        if (shown.isEmpty() || shownPieces == 0 || !SkilletCooking.isDone(view.level(), shown)) {
+        if (shown.isEmpty() || shownPieces == 0 || !isShownDone(view)) {
             if (!Float.isNaN(readySince)) {
                 readySince = Float.NaN;
                 swell(view, 1.0F);

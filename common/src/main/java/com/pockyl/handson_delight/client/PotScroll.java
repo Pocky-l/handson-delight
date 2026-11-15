@@ -61,6 +61,8 @@ final class PotScroll {
     private float effect;
     private float sparkWait;
     private Item badgeItem;
+    /** The school {@link #badgeItem} was picked for: another dish waits for another school's scroll. */
+    private ResourceLocation badgeSchool;
 
     /** What hangs there when the scene is first seen hangs already. */
     void ready(StationView view) {
@@ -69,6 +71,9 @@ final class PotScroll {
         shown = view.state().getItem(CookingPotStation.SCROLL_SLOT).copy();
         read(view);
         hangAge = Float.NaN;
+        // A rebuilt scene has a fresh badge node without the scroll's visual.
+        badgeItem = null;
+        badgeSchool = null;
     }
 
     private void read(StationView view) {
@@ -125,7 +130,9 @@ final class PotScroll {
             boolean on = shown && wanted != null && Mth.sin(time * 6.0F) > 0.0F;
             node.setVisible(on);
             ScrollPot pot = ScrollPot.of(view.level().getBlockEntity(view.pos()));
-            if (on && pot != null && badgeItem == null) {
+            if (on && pot != null && (badgeItem == null || !wanted.equals(badgeSchool))) {
+                badgeSchool = wanted;
+                badgeItem = null;
                 pot.handson$scrollsOf(wanted).stream().findFirst().ifPresent(scroll -> {
                     badgeItem = scroll.getItem();
                     node.setVisual(Visual.ofItem(badgeItem).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));

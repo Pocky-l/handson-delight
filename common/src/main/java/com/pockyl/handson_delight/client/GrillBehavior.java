@@ -55,6 +55,8 @@ public final class GrillBehavior implements StationBehavior {
     private static final float PIECE_STAGGER = 0.14F;
     private static final float PLAYER_LAND_TIME = 0.32F;
     private static final float AWAY_TIME = 0.3F;
+    /** How long a skewer just taken stays gone while the state still shows it: the effect comes before the state. */
+    private static final float LEAVING_TIME = 1.0F;
     private static final float SHIMMER_RATE = 1.6F;
     private static final float VAPOUR_RATE = 0.9F;
     private static final float SMOKE_RATE = 2.5F;
@@ -76,6 +78,9 @@ public final class GrillBehavior implements StationBehavior {
     private final RandomSource random = RandomSource.create();
     private final ItemStack[] shown = new ItemStack[KitchenGrill.PLACES];
     private final String[] shownLook = new String[KitchenGrill.PLACES];
+    /** The skewer each place gave the cook a moment ago, and until when. */
+    private final ItemStack[] leaving = new ItemStack[KitchenGrill.PLACES];
+    private final float[] leavingUntil = new float[KitchenGrill.PLACES];
     private final float[] turnedAt = new float[KitchenGrill.PLACES];
     /** Until when the skewer keeps the look it had before its turn: it is in the air, its other side comes up halfway. */
     private final float[] heldUntil = new float[KitchenGrill.PLACES];
@@ -97,6 +102,7 @@ public final class GrillBehavior implements StationBehavior {
 
     public GrillBehavior(StationView view) {
         Arrays.fill(shown, ItemStack.EMPTY);
+        Arrays.fill(leaving, ItemStack.EMPTY);
         Arrays.fill(turnedAt, -10.0F);
     }
 
@@ -104,6 +110,7 @@ public final class GrillBehavior implements StationBehavior {
     public void onSceneReady(StationView view) {
         Arrays.fill(shown, ItemStack.EMPTY);
         Arrays.fill(shownLook, null);
+        Arrays.fill(leaving, ItemStack.EMPTY);
         steps.clear();
         quiet = true;
         view.node("book_open").ifPresent(node -> node.setPainter(book));
@@ -146,13 +153,13 @@ public final class GrillBehavior implements StationBehavior {
         StationState state = view.state();
         int arriving = 0;
         for (int place = 0; place < KitchenGrill.PLACES; place++) {
-            arriving += shown[place].isEmpty() && !state.getItem(GrillStation.place(place)).isEmpty() ? 1 : 0;
+            arriving += shown[place].isEmpty() && !onGrill(state, place).isEmpty() ? 1 : 0;
         }
         boolean together = arriving > 1 && !quiet;
         int landing = 0;
         boolean lit = state.data().getBoolean(GrillStation.LIT);
         for (int place = 0; place < KitchenGrill.PLACES; place++) {
-            ItemStack now = state.getItem(GrillStation.place(place));
+            ItemStack now = onGrill(state, place);
             String look = lookKey(view, place, now);
             if (Objects.equals(look, shownLook[place]) && ItemStack.isSameItemSameComponents(now, shown[place])) {
                 continue;
@@ -191,6 +198,18 @@ public final class GrillBehavior implements StationBehavior {
             }
         }
         quiet = false;
+    }
+
+    /** The skewer the state has on {@code place}; none while it still shows the one just taken, which would come back for a moment. */
+    private ItemStack onGrill(StationState state, int place) {
+        ItemStack now = state.getItem(GrillStation.place(place));
+        if (!leaving[place].isEmpty()) {
+            if (clock < leavingUntil[place] && ItemStack.isSameItemSameComponents(now, leaving[place])) {
+                return ItemStack.EMPTY;
+            }
+            leaving[place] = ItemStack.EMPTY;
+        }
+        return now;
     }
 
     /** What the skewer on {@code place} shows, as a key: drawn again only when it changes. */
@@ -653,6 +672,8 @@ public final class GrillBehavior implements StationBehavior {
         view.node("dressing_" + place).ifPresent(node -> node.setVisible(false));
         shown[place] = ItemStack.EMPTY;
         shownLook[place] = null;
+        leaving[place] = stack.copy();
+        leavingUntil[place] = clock + LEAVING_TIME;
         view.playSound(SoundEvents.ITEM_PICKUP, "grill", 0.3F, 1.5F);
     }
 

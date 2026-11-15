@@ -178,8 +178,10 @@ public final class StoveTests {
         Top top = stove(helper);
         top.place(Items.STICK, 2);
         helper.assertTrue(top.on(0).isEmpty() && top.cook.inventoryMenu.getCarried().getCount() == 2, "no stick on the grill");
+        helper.assertTrue(StoveCooking.takes(top.stove, new ItemStack(Items.BEEF)), "opened by use with beef, it goes on the grill");
         top.place(Items.BEEF, 10);
         helper.assertTrue(top.cook.inventoryMenu.getCarried().getCount() == 10 - Grill.PLACES, "six places, six pieces");
+        helper.assertFalse(StoveCooking.takes(top.stove, new ItemStack(Items.BEEF)), "opened by use at a full grill, it stays in the hand");
         top.at(StoveStation.ACTION_TAKE, 4);
         CompoundTag one = new CompoundTag();
         one.putBoolean(StoveStation.ONE, true);
@@ -240,6 +242,7 @@ public final class StoveTests {
         top.place(Items.EGG, 3);
         helper.assertTrue(top.on(0).isEmpty() && top.cook.inventoryMenu.getCarried().getCount() == 3, "no egg on the grill");
         helper.assertTrue(top.station.effects.contains(StoveStation.EFFECT_REFUSED), "it bounces back to the hand");
+        helper.assertFalse(StoveCooking.takes(top.stove, new ItemStack(Items.EGG)), "opened by use with an egg, it stays in the hand");
         ItemStack egg = new ItemStack(Items.EGG);
         top.stove.placeFood(top.cook, egg, top.stove.getCookingRecipe(egg).orElseThrow());
         helper.assertTrue(top.on(0).is(Items.EGG) && !top.grill().byHand(0), "Farmer's Delight's right click is its own way");

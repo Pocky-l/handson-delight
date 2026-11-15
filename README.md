@@ -98,8 +98,8 @@ Addons of Farmer's Delight work too: their dishes are made on the board, their p
 the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) and
 [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) open as stations. So do
 [Miner's Delight](https://modrinth.com/mod/miners-delight)'s copper pot,
-[Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot and the cutting boards of
-[Chopper's Delight](https://modrinth.com/mod/choppers-delight), each in its own look.
+[Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot and every cutting board of
+[Chopper's Delight](https://modrinth.com/mod/choppers-delight), the decorated one too, each in its own look.
 [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s kebabs and bibimbap are put together on the
 board and keep the seasoning of their skewers.
 

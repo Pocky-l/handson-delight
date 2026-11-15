@@ -19,7 +19,8 @@
     "StoveBlockEntityMixin",
     "StoveBlockMixin",
     "PlayerListMixin",
-    "KegMixin"
+    "KegMixin",
+    "DecoratedBoardMixin"
   ],
   "client": [
     "CookingPotBlockEntityMixin",
@@ -29,7 +30,8 @@
     "StationRenderersMixin",
     "StoveSmokeMixin",
     "AddonStoveSmokeMixin",
-    "CampfireSmokeMixin"
+    "CampfireSmokeMixin",
+    "DecoratedBoardContentMixin"
   ],
   "injectors": {
     "defaultRequire": 1

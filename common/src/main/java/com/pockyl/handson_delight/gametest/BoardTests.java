@@ -1311,8 +1311,8 @@ public final class BoardTests {
     }
 
     /**
-     * Chopper's Delight's boards of every wood (-Paddons) are the board's station: what lies there is cut the same way, and a dish
-     * being put together is kept in the board. Its decorated board, drawn whole by its own renderer, keeps its own use.
+     * Chopper's Delight's boards of every wood and its decorated board (-Paddons) are the board's station: what lies there is cut the
+     * same way, and a dish being put together is kept in the board. The decorated board's renderer draws the board itself.
      */
     public static void choppersDelightsBoardsAreStations(GameTestHelper helper) {
         Block oak = BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse("choppersdelight:oak_cutting_board"));
@@ -1323,9 +1323,31 @@ public final class BoardTests {
         }
         Block decorated = BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse("choppersdelight:decorated_cutting_board"));
         helper.assertTrue(CuttingBoardStation.TYPE.matches(oak.defaultBlockState()), "the oak board opens as the station");
-        helper.assertFalse(CuttingBoardStation.TYPE.matches(decorated.defaultBlockState()), "the decorated board keeps its own use");
-        BlockPos at = new BlockPos(1, 1, 1);
-        helper.setBlock(at, oak);
+        helper.assertTrue(CuttingBoardStation.TYPE.matches(decorated.defaultBlockState()), "the decorated board opens as the station");
+        ChoppersCut oakCut = cutAtChoppersBoard(helper, oak, new BlockPos(1, 1, 1));
+        ChoppersCut decoratedCut = cutAtChoppersBoard(helper, decorated, new BlockPos(3, 1, 1));
+        helper.assertFalse(oakCut.board().handson$rendersBoard(), "the oak board's block draws it");
+        helper.assertTrue(decoratedCut.board().handson$rendersBoard(), "the decorated board's renderer draws it");
+        helper.runAfterDelay(4, () -> {
+            for (ChoppersCut cut : List.of(oakCut, decoratedCut)) {
+                KitchenBoard board = cut.board();
+                helper.assertTrue(board.handson$stored().isEmpty() && cut.cook().getInventory().countItem(fd("cabbage_leaf")) == 4,
+                        "one cut halves both, the leaves go to the cook");
+                board.handson$layers().set(0, new ItemStack(Items.BREAD));
+                CompoundTag saved = board.handson$blockEntity().saveWithoutMetadata(helper.getLevel().registryAccess());
+                helper.assertTrue(saved.contains(HandsOnDelight.MOD_ID + ":layers"), "a dish being put together is saved with the board");
+                board.handson$layers().clear();
+            }
+            helper.succeed();
+        });
+    }
+
+    private record ChoppersCut(KitchenBoard board, Player cook) {
+    }
+
+    /** Lays two cabbages on a board of {@code block} at {@code at} and cuts them once with a knife from the cook's inventory. */
+    private static ChoppersCut cutAtChoppersBoard(GameTestHelper helper, Block block, BlockPos at) {
+        helper.setBlock(at, block);
         Station station = new Station(helper.getLevel(), helper.absolutePos(at));
         BoardLogic logic = new BoardLogic(station);
         KitchenBoard board = KitchenBoard.of(helper.getLevel().getBlockEntity(station.pos()));
@@ -1340,14 +1362,6 @@ public final class BoardTests {
         chop.putInt(CuttingBoardStation.MARK, 0);
         chop.putFloat(CuttingBoardStation.AT, 10.0F);
         logic.onCustomAction(station, cook, CuttingBoardStation.ACTION_CHOP, chop);
-        helper.runAfterDelay(4, () -> {
-            helper.assertTrue(board.handson$stored().isEmpty() && cook.getInventory().countItem(fd("cabbage_leaf")) == 4,
-                    "one cut halves both, the leaves go to the cook");
-            board.handson$layers().set(0, new ItemStack(Items.BREAD));
-            CompoundTag saved = board.handson$blockEntity().saveWithoutMetadata(helper.getLevel().registryAccess());
-            helper.assertTrue(saved.contains(HandsOnDelight.MOD_ID + ":layers"), "a dish being put together is saved with the board");
-            board.handson$layers().clear();
-            helper.succeed();
-        });
+        return new ChoppersCut(board, cook);
     }
 }

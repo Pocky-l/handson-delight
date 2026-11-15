@@ -1,7 +1,6 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -123,17 +122,14 @@ public final class CuttingBoardStation {
             .build();
 
     /**
-     * Boards of other mods that work as Farmer's Delight's (Chopper's Delight's of every wood): the same station, each in its own
-     * look, as the block stays the world's. Chopper's Delight's decorated board is not one: its own renderer draws the whole board and
-     * its banner, and the station hides a board's renderer.
+     * Boards of other mods that work as Farmer's Delight's (Chopper's Delight's of every wood and its decorated board): the same
+     * station, each in its own look, as the block stays the world's.
      */
     public static final TagKey<Block> BOARDS = TagKey.create(Registries.BLOCK, HandsOnDelight.id("cutting_boards"));
-    private static final ResourceLocation DECORATED = ResourceLocation.fromNamespaceAndPath("choppersdelight", "decorated_cutting_board");
 
     public static final StationType TYPE = Diegesis.station(ID)
             .block(FarmersDelightContent.CUTTING_BOARD)
             .tag(BOARDS)
-            .when(state -> !DECORATED.equals(BuiltInRegistries.BLOCK.getKey(state.getBlock())))
             .schema(SCHEMA)
             .logic(BoardLogic::new)
             .orientation(StationType.Orientation.BLOCK)

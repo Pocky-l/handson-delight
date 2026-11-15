@@ -20,7 +20,8 @@ import com.pockyl.handson_delight.station.KitchenBoard;
  * turn over; the block's own renderer would draw it a second time in the same place. It is stopped here, at the dispatcher, and
  * not in Farmer's Delight's renderers: another mod can register a renderer of its own for these blocks, and addon stoves built on
  * Farmer's Delight's class bring theirs (End's Delight, My Nether's Delight). A knife carved into the board stays drawn: the scene
- * leaves it alone. Farmer's Delight gives the cooking pot no renderer; a mod that draws the pot's body from one (Vanilla
+ * leaves it alone. A board whose renderer draws the board itself (Chopper's Delight's decorated one) keeps it: only what lies on
+ * it is stopped, in that renderer. Farmer's Delight gives the cooking pot no renderer; a mod that draws the pot's body from one (Vanilla
  * Delights' dyed pots) is stopped too, and the pot's scene calls that renderer itself before its soup ({@code PotBody}). Only
  * while the scene is drawn: a station is kept a little farther away than its scene is drawn.
  */
@@ -31,7 +32,7 @@ abstract class StationRenderersMixin {
             CallbackInfo callback) {
         boolean drawnByScene = blockEntity instanceof AbstractStoveBlockEntity || blockEntity instanceof SkilletBlockEntity
                 || blockEntity instanceof CookingPotBlockEntity
-                || blockEntity instanceof KitchenBoard board && !board.handson$isCarving();
+                || blockEntity instanceof KitchenBoard board && !board.handson$isCarving() && !board.handson$rendersBoard();
         if (drawnByScene && HandsOnDelightClient.isSceneDrawn(blockEntity.getBlockPos())) {
             callback.cancel();
         }

@@ -30,6 +30,8 @@ dependencies {
     // Brewin' and Chewin's keg is a station: the common mixin into it compiles against its NeoForge jar, in Mojang names like this
     // project. Its keg classes are the same in the Fabric jar, which Loom 1.14 cannot read (built with Loom 1.16, class tweaker v2).
     compileOnly "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_version}"
+    // Chopper's Delight's decorated board, the same way: its NeoForge jar in Mojang names, the same classes as the Fabric one.
+    compileOnly "maven.modrinth:choppers-delight:${choppers_delight_version}"
 }
 
 loom {

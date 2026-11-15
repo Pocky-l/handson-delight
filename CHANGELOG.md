@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.4.2+1.21.1] - Unreleased
+### New
+- [Chopper's Delight](https://www.curseforge.com/minecraft/mc-mods/choppers-delight)'s decorated cutting board, the one
+  with a banner pattern, works like every other board now: click it to cut, put dishes together and stick a knife in.
+  Its banner pattern stays on it while you work.
+
+### Fixed
+- Cutting a pumpkin, a melon or another block on the cutting board, the knife hung inside it instead of over it, and
+  stood off the line the cursor pointed at, so the line was hard to hit. The knife now stands over the top of what it
+  cuts, right under the cursor.
+
 ## [1.4.1+1.21.1] - 2026-11-14
 ### New
 - Modpacks can put any craft together on the cutting board: add its result to the item tag

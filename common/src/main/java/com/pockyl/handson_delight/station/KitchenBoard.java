@@ -6,7 +6,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * A cutting board that works as Farmer's Delight's: one slot for what lies on it, a tool stuck into it, Farmer's Delight's cutting
- * recipes. Farmer's Delight's own board and the boards other mods copy from it (Chopper's Delight's boards of every wood) are mixed
+ * recipes. Farmer's Delight's own board and the boards other mods copy from it (Chopper's Delight's boards of every wood and its
+ * decorated board) are mixed
  * into, so that the station works the same at all of them.
  */
 public interface KitchenBoard extends BoardLayers {
@@ -30,6 +31,14 @@ public interface KitchenBoard extends BoardLayers {
     boolean handson$cut(ItemStack tool, Player player);
 
     BlockEntity handson$blockEntity();
+
+    /**
+     * Whether the block entity's renderer draws the board itself, its block having no model (Chopper's Delight's decorated board, its
+     * banner pattern on it): a scene then hides only what lies on the board, not the renderer.
+     */
+    default boolean handson$rendersBoard() {
+        return false;
+    }
 
     /** The board of a block entity, or null for anything else. */
     static KitchenBoard of(BlockEntity entity) {

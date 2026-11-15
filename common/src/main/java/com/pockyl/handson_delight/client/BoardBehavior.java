@@ -62,8 +62,11 @@ public final class BoardBehavior implements StationBehavior {
     private static final float GAP_TIME = 0.12F;
     /** Where the knife can cut: this far from the middle of the item along z. */
     private static final float REACH = 4.0F;
-    /** The knife over the item, ready; at rest at the board's near edge; how long a chop takes down and up. */
-    private static final float HOVER = 3.0F;
+    /**
+     * The knife over the item, ready, this far over its top (a pumpkin stands taller than the knife hung over a flat item, which
+     * left the knife inside it); at rest at the board's near edge; how long a chop takes down and up.
+     */
+    private static final float HOVER = 2.4F;
     private static final float REST_HEIGHT = 4.0F;
     private static final float REST_Z = -6.0F;
     private static final float CHOP_DOWN = 0.05F;
@@ -793,7 +796,7 @@ public final class BoardBehavior implements StationBehavior {
         node.setVisible(drawn);
         view.setCarriedHidden(drawn || bouncing > 0.0F);
         if (!drawn) {
-            knifeY = HOVER + REST_HEIGHT;
+            knifeY = itemHeight() + HOVER + REST_HEIGHT;
             return;
         }
         if (tool.get().getItem() != knife) {
@@ -804,7 +807,7 @@ public final class BoardBehavior implements StationBehavior {
         node.setTint(offered() && Float.isNaN(chopAge) ? OFFERED : 0xFFFFFFFF);
         float wantX = knifeX;
         float wantZ = knifeZ;
-        float wantY = HOVER;
+        float wantY = itemHeight() + HOVER;
         int next = nextMark(view);
         if (next >= 0) {
             knifeAngle = mark(view, shownItem, next).angle();
@@ -1143,9 +1146,12 @@ public final class BoardBehavior implements StationBehavior {
         return Math.round((MARK_COLOR >>> 24) * amount) << 24 | MARK_COLOR & 0xFFFFFF;
     }
 
-    /** Where on the item the cursor points, node pixels from its middle (y unused), while it is over the item. */
-    private static Optional<Vector3f> overItem(StationView view) {
-        return view.cursorOn(TOP)
+    /**
+     * Where on the item the cursor points, node pixels from its middle (y unused), while it is over the item. Read on the item's
+     * top, where its marks are drawn: read on the board, the knife over a block stood off the line the cursor pointed at.
+     */
+    private Optional<Vector3f> overItem(StationView view) {
+        return view.cursorOn(TOP + itemHeight())
                 .filter(point -> Math.abs(point.x - MIDDLE_X) < ITEM_SIZE / 2.0F + 1.0F
                         && Math.abs(point.z - MIDDLE_Z) < ITEM_SIZE / 2.0F + 1.0F)
                 .map(point -> new Vector3f(Mth.clamp(point.x - MIDDLE_X, -REACH, REACH), 0.0F, Mth.clamp(point.z - MIDDLE_Z, -REACH, REACH)));

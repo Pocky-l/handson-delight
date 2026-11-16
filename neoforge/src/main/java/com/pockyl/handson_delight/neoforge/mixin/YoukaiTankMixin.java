@@ -224,6 +224,11 @@ abstract class YoukaiTankMixin implements KitchenKeg {
     }
 
     @Override
+    public boolean handson$holdsMany(ItemStack stack) {
+        return stack.is(net.minecraft.world.item.Items.BUCKET) || YoukaiFluids.isFlask(stack);
+    }
+
+    @Override
     public boolean handson$canTap(ItemStack stack) {
         return YoukaiFluids.canServe(handson$tank(), stack);
     }

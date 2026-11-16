@@ -88,6 +88,14 @@ public interface KitchenKeg {
     /** Whether {@code stack} can be filled from the tap now: a container the keg's drink is poured into, with enough left. */
     boolean handson$canTap(ItemStack stack);
 
+    /**
+     * Whether {@code stack} takes more than a serving when it is filled: a bucket, Youkai's Feasts' flask. It is filled when the cook
+     * brings it, never offered to an empty hand.
+     */
+    default boolean handson$holdsMany(ItemStack stack) {
+        return stack.is(net.minecraft.world.item.Items.BUCKET);
+    }
+
     /** Whether {@code stack} holds something that pours into the keg now: a bucket, a bottle, a drink of the same. */
     boolean handson$canPour(ItemStack stack);
 

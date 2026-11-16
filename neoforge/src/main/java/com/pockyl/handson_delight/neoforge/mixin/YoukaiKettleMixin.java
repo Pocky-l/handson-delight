@@ -202,6 +202,11 @@ abstract class YoukaiKettleMixin implements KitchenKettle {
 
     /** Its drink into the drink's container (a bottle of tea); out of plain water, an empty bucket or the like, as its own clicks do. */
     @Override
+    public boolean handson$holdsMany(ItemStack stack) {
+        return stack.is(net.minecraft.world.item.Items.BUCKET) || YoukaiFluids.isFlask(stack);
+    }
+
+    @Override
     public boolean handson$canServe(ItemStack stack) {
         return YoukaiFluids.canServe(handson$tank(), stack);
     }

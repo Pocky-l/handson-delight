@@ -810,6 +810,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void youkaiFlaskOfSoySauceIsAStep(GameTestHelper helper) {
+        YoukaiBoardTests.youkaiFlaskOfSoySauceIsAStep(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void youkaiBoardTakesTheLastStepBack(GameTestHelper helper) {
         YoukaiBoardTests.youkaiBoardTakesTheLastStepBack(helper);
     }
@@ -877,6 +882,11 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void youkaiTeaLeavesTurnBlack(GameTestHelper helper) {
         YoukaiTankTests.youkaiTeaLeavesTurnBlack(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void youkaiFlaskIsFilledAtTheTank(GameTestHelper helper) {
+        YoukaiTankTests.youkaiFlaskIsFilledAtTheTank(helper);
     }
 
     @GameTest(template = "empty")

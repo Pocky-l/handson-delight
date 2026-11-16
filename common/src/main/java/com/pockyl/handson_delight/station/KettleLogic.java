@@ -8,7 +8,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
@@ -286,7 +285,7 @@ public final class KettleLogic implements StationLogic {
     }
 
     private static boolean offerable(KitchenKettle kettle, ItemStack stack) {
-        return !stack.is(Items.BUCKET) && kettle.handson$canServe(stack);
+        return !kettle.handson$holdsMany(stack) && kettle.handson$canServe(stack);
     }
 
     /**

@@ -186,6 +186,29 @@ public final class YoukaiBoardTests {
         helper.succeed();
     }
 
+    /** A flask of soy sauce is the soy sauce of a dish, from the book too, a serving drained from it as its board takes it (GH #33). */
+    public static void youkaiFlaskOfSoySauceIsAStep(GameTestHelper helper) {
+        Setup setup = board(helper);
+        if (setup == null) {
+            return;
+        }
+        Player player = cook(helper);
+        player.getInventory().setItem(0, new ItemStack(Items.DRIED_KELP, 3));
+        player.getInventory().setItem(1, new ItemStack(farmers("cooked_rice"), 3));
+        player.getInventory().setItem(2, new ItemStack(feasts("soy_sauce_flask")));
+        player.getInventory().setItem(3, new ItemStack(feasts("cucumber_slice"), 3));
+        helper.assertTrue(setup.board.handson$asStep(new ItemStack(feasts("soy_sauce_flask"))).is(feasts("soy_sauce_bottle")),
+                "a flask of soy sauce counts as its bottles");
+        fill(setup, player, "youkaisfeasts:cuisine_ordered/kappa_maki", false);
+        ItemStack finished = setup.board.handson$finished();
+        helper.assertTrue(finished.is(feasts("kappa_maki")), "the book made a kappa maki with the flask, got " + finished
+                + " on " + setup.board.handson$contents());
+        ItemStack flask = player.getInventory().getItem(2);
+        helper.assertTrue(!flask.isEmpty() && player.getInventory().countItem(Items.GLASS_BOTTLE) == 0,
+                "the flask stays with the cook, drained by a serving, got " + flask);
+        helper.succeed();
+    }
+
     /**
      * The last step comes back: a hand step undone gives nothing; rice goes back into a bowl of the cook's, and without a bowl it
      * stays on the board.

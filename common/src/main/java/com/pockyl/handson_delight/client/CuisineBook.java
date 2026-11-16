@@ -92,6 +92,12 @@ final class CuisineBook implements RecipeBook.Source {
         return behavior.shown().stream().filter(stack -> !stack.isEmpty()).toList();
     }
 
+    @Override
+    public ItemStack asIngredient(StationView view, ItemStack stack) {
+        KitchenCuisine board = CuisineBehavior.board(view);
+        return board == null || stack.isEmpty() ? stack : board.handson$asStep(stack);
+    }
+
     /** The book opens at the dish what lies on the board is the start of. */
     @Override
     public Object current(StationView view) {

@@ -39,6 +39,14 @@ public interface KitchenCuisine {
     /** How many of {@code stack} the board takes as its next step (its first step may take several), 0 when it takes none. */
     int handson$takes(ItemStack stack);
 
+    /**
+     * What {@code stack} is as a step: Youkai's Feasts' flask of soy sauce or mayonnaise is as many bottles of it as it holds servings,
+     * as its board reads it. Anything else is itself.
+     */
+    default ItemStack handson$asStep(ItemStack stack) {
+        return stack;
+    }
+
     /** Whether the board's next step can be done by hand: rice shaped into nigiri, a sheet rolled up, a bamboo tube closed. */
     boolean handson$byHand();
 

@@ -6,6 +6,9 @@
   a fried egg no longer goes on cooking into an omelette ([#33](https://github.com/Pocky-l/handson-delight/issues/33)).
 - A full cooking pot, keg or kettle takes what its dish still needs: a second stack of tomatoes that filled both vegetable
   slots makes room for the carrots ([#34](https://github.com/Pocky-l/handson-delight/issues/34)).
+- [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)' flask is filled at its
+  fermentation tank and kettle with wine, soy sauce or tea. A flask of soy sauce or mayonnaise is the sauce of a dish at its
+  cuisine board, from the recipe book too ([#33](https://github.com/Pocky-l/handson-delight/issues/33)).
 - The cutting board takes what a dish needs in any order: a bowl, bread or a tortilla laid after the rest slides in under it.
   Dishes of other mods no longer need their first ingredient first.
 - [JEI](https://modrinth.com/mod/jei) showed the dishes made on the cutting board in the crafting table as well.

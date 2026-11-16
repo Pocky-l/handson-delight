@@ -100,6 +100,11 @@ abstract class YoukaiCuisineBoardMixin implements KitchenCuisine {
     }
 
     @Override
+    public ItemStack handson$asStep(ItemStack stack) {
+        return SlipBottleItem.isSlipContainer(stack) ? SlipBottleItem.getContentStack(stack) : stack;
+    }
+
+    @Override
     public int handson$takes(ItemStack stack) {
         Level level = handson$level();
         if (level == null || stack.isEmpty()) {

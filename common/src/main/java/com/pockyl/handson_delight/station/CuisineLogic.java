@@ -238,7 +238,7 @@ public final class CuisineLogic implements StationLogic {
             }
             made++;
             done = 0;
-            if (!all || made >= MOST || !hasSet(player, dish, board.handson$contents())) {
+            if (!all || made >= MOST || !hasSet(board, player, dish, board.handson$contents())) {
                 break;
             }
             // Another dish to make: this one goes to the cook, and the board starts again.
@@ -288,7 +288,7 @@ public final class CuisineLogic implements StationLogic {
     private int slotFor(Inventory inventory, Ingredient step) {
         for (int slot = 0; slot < inventory.items.size(); slot++) {
             ItemStack stack = inventory.items.get(slot);
-            if (!stack.isEmpty() && step.test(stack) && board.handson$takes(stack) > 0) {
+            if (!stack.isEmpty() && step.test(board.handson$asStep(stack)) && board.handson$takes(stack) > 0) {
                 return slot;
             }
         }
@@ -300,10 +300,11 @@ public final class CuisineLogic implements StationLogic {
      * {@code laid} (the first step from the bare board may take several, a roll its pieces), each from one stack not counted for
      * another step already: the board takes a step from a single stack.
      */
-    private static boolean hasSet(Player player, KitchenCuisine.Dish dish, List<ItemStack> laid) {
+    private static boolean hasSet(KitchenCuisine board, Player player, KitchenCuisine.Dish dish, List<ItemStack> laid) {
         List<ItemStack> left = new ArrayList<>();
         for (ItemStack stack : player.getInventory().items) {
-            left.add(stack.copy());
+            // A flask of soy sauce counts as the bottles it gives: each set takes one more serving of it.
+            left.add(board.handson$asStep(stack).copy());
         }
         for (int i = 0; i < dish.steps().size(); i++) {
             Ingredient step = dish.steps().get(i);

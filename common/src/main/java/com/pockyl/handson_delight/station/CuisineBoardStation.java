@@ -125,8 +125,9 @@ public final class CuisineBoardStation {
 
     /** Whether {@code stack} is a step of any dish of the board. */
     public static boolean isStep(KitchenCuisine board, ItemStack stack) {
-        return !stack.isEmpty() && board.handson$dishes().stream()
-                .anyMatch(dish -> dish.steps().stream().anyMatch(step -> !step.isEmpty() && step.test(stack)));
+        ItemStack step = stack.isEmpty() ? stack : board.handson$asStep(stack);
+        return !step.isEmpty() && board.handson$dishes().stream()
+                .anyMatch(dish -> dish.steps().stream().anyMatch(each -> !each.isEmpty() && each.test(step)));
     }
 
     /** Whether {@code tool} cuts what lies finished on the board. */

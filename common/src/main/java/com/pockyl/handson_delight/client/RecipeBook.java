@@ -360,6 +360,14 @@ final class RecipeBook implements NodePainter {
 
         List<ItemStack> inStation(StationView view);
 
+        /**
+         * What a stack the player has counts as for the pages: by default itself; Youkai's Feasts' flask of soy sauce at its board is the
+         * bottles of it that it holds.
+         */
+        default ItemStack asIngredient(StationView view, ItemStack stack) {
+            return stack;
+        }
+
         /** The player picked a page by a click. */
         default void picked(StationView view, Page page) {
         }
@@ -644,9 +652,9 @@ final class RecipeBook implements NodePainter {
         var player = Minecraft.getInstance().player;
         if (player != null) {
             for (int i = 0; i < Inventory.INVENTORY_SIZE; i++) {
-                pool.add(player.getInventory().getItem(i));
+                pool.add(source.asIngredient(view, player.getInventory().getItem(i)));
             }
-            pool.add(player.inventoryMenu.getCarried());
+            pool.add(source.asIngredient(view, player.inventoryMenu.getCarried()));
         }
         pool.addAll(source.inStation(view));
         pool.removeIf(ItemStack::isEmpty);

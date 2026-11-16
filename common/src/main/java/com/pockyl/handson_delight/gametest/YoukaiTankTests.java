@@ -200,6 +200,40 @@ public final class YoukaiTankTests {
         });
     }
 
+    /**
+     * Its flask holds any liquid, a whole tank of it (GH #33): a flask of soy sauce pours in, an empty flask brought in the hand is
+     * filled, and an empty hand is never offered one, which would take the whole tank.
+     */
+    public static void youkaiFlaskIsFilledAtTheTank(GameTestHelper helper) {
+        Setup setup = tank(helper);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer();
+        player.getAbilities().instabuild = false;
+        lid(setup, player, true);
+        player.inventoryMenu.setCarried(new ItemStack(feasts("soy_sauce_flask")));
+        use(setup, player, KegStation.MOUTH, false);
+        helper.assertTrue(BuiltInRegistries.FLUID.getKey(setup.tank.handson$fluid()).toString().equals("youkaisfeasts:soy_sauce")
+                && setup.tank.handson$amount() == 1000, "a flask of soy sauce pours in, got " + setup.tank.handson$amount() + " of "
+                + BuiltInRegistries.FLUID.getKey(setup.tank.handson$fluid()));
+        player.inventoryMenu.setCarried(ItemStack.EMPTY);
+        player.getInventory().clearContent();
+        player.getInventory().setItem(3, new ItemStack(feasts("sake_bottle")));
+        use(setup, player, KegStation.TAP, true);
+        helper.assertTrue(setup.tank.handson$amount() == 1000, "an empty hand is not offered the flask");
+        ItemStack flask = new ItemStack(feasts("sake_bottle"));
+        helper.assertTrue(setup.tank.handson$canTap(flask), "an empty flask is filled with soy sauce");
+        player.getInventory().clearContent();
+        player.inventoryMenu.setCarried(flask);
+        use(setup, player, KegStation.TAP, false);
+        helper.assertTrue(setup.tank.handson$amount() == 0, "the flask took the tank, " + setup.tank.handson$amount() + " left");
+        // A full flask of soy sauce is its own soy sauce flask.
+        helper.assertTrue(player.getInventory().countItem(feasts("soy_sauce_flask")) + (player.inventoryMenu.getCarried()
+                .is(feasts("soy_sauce_flask")) ? 1 : 0) == 1, "the cook has a flask of soy sauce");
+        helper.succeed();
+    }
+
     /** White tea leaves, three of them, all turn black under the lid, and are taken out where they lay. */
     public static void youkaiTeaLeavesTurnBlack(GameTestHelper helper) {
         Setup setup = tank(helper);

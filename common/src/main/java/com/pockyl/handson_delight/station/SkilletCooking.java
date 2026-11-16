@@ -10,7 +10,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CampfireCookingRecipe;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import vectorwing.farmersdelight.common.block.SkilletBlock;
@@ -24,7 +26,11 @@ import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Frying by hand. Food put into the skillet at the station fries on the side that lies on the pan; once that side is done it waits
@@ -51,7 +57,41 @@ public final class SkilletCooking {
         if (level == null || stack.isEmpty()) {
             return Optional.empty();
         }
-        return level.getRecipeManager().getRecipeFor(RecipeType.CAMPFIRE_COOKING, new SingleRecipeInput(stack.copyWithCount(1)), level);
+        RecipeManager recipes = level.getRecipeManager();
+        if (!stack.getComponentsPatch().isEmpty()) {
+            // A recipe could match on the components: no shortcut.
+            return find(recipes, level, stack);
+        }
+        // Every piece on a stove or in a skillet asks every tick, and a done piece left lying there has no recipe: without this each
+        // tick searched all campfire recipes for it. A reload replaces the manager's recipes (on the client in the same manager), so
+        // the results start over then.
+        Collection<RecipeHolder<?>> current = recipes.getRecipes();
+        Found entry;
+        synchronized (FOUND) {
+            entry = FOUND.get(recipes);
+            if (entry == null || entry.recipes() != current) {
+                entry = new Found(current, new ConcurrentHashMap<>());
+                FOUND.put(recipes, entry);
+            }
+        }
+        Map<Item, Optional<RecipeHolder<CampfireCookingRecipe>>> byItem = entry.byItem();
+        Optional<RecipeHolder<CampfireCookingRecipe>> found = byItem.get(stack.getItem());
+        if (found == null) {
+            found = find(recipes, level, stack);
+            byItem.put(stack.getItem(), found);
+        }
+        return found;
+    }
+
+    /** Campfire recipe results by item, for the recipes a manager held then. */
+    private record Found(Collection<RecipeHolder<?>> recipes, Map<Item, Optional<RecipeHolder<CampfireCookingRecipe>>> byItem) {
+    }
+
+    /** For each recipe manager: the client's and the server's are not the same. */
+    private static final Map<RecipeManager, Found> FOUND = new WeakHashMap<>();
+
+    private static Optional<RecipeHolder<CampfireCookingRecipe>> find(RecipeManager recipes, Level level, ItemStack stack) {
+        return recipes.getRecipeFor(RecipeType.CAMPFIRE_COOKING, new SingleRecipeInput(stack.copyWithCount(1)), level);
     }
 
     /**

@@ -209,7 +209,7 @@ public final class YoukaiTankTests {
         if (setup == null) {
             return;
         }
-        Player player = helper.makeMockPlayer();
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         player.getAbilities().instabuild = false;
         lid(setup, player, true);
         player.inventoryMenu.setCarried(new ItemStack(feasts("soy_sauce_flask")));

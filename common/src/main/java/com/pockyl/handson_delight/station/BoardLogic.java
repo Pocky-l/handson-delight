@@ -245,6 +245,17 @@ public final class BoardLogic implements StationLogic {
         }
         if (!layers.isEmpty() || onBoard.isEmpty() && !cuttable && AssemblyRecipes.isIngredient(carried)) {
             int at = layers.size() >= CuttingBoardStation.MOST_LAYERS ? -1 : placement(layers, carried);
+            int base = at < 0 && layers.size() < CuttingBoardStation.MOST_LAYERS ? rebased(layers, carried) : -1;
+            if (base > 0) {
+                // A layer laid on top earlier is the base of the dish this one completes: it goes to the bottom.
+                ItemStack moved = layers.get(base);
+                for (int i = base; i > 0; i--) {
+                    state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, i), layers.get(i - 1));
+                }
+                state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, 0), moved);
+                layers = layers(state);
+                at = layers.size();
+            }
             if (at < 0) {
                 refuse(station, byUse ? ItemStack.EMPTY : carried, byUse);
                 return;
@@ -347,6 +358,29 @@ public final class BoardLogic implements StationLogic {
         List<ItemStack> next = new ArrayList<>(layers);
         next.add(one);
         return AssemblyRecipes.fits(next) ? layers.size() : -1;
+    }
+
+    /**
+     * Which layer above the first goes to the bottom so that {@code item} fits on top: a dough laid on My Nether's Delight's ghast
+     * dough went under it, the base of another dough dish, and its sourdough's last dough then fits only with the ghast dough at the
+     * bottom again. -1 for none.
+     */
+    private static int rebased(List<ItemStack> layers, ItemStack item) {
+        ItemStack one = item.copyWithCount(1);
+        for (int base = 1; base < layers.size(); base++) {
+            List<ItemStack> next = new ArrayList<>(layers.size() + 1);
+            next.add(layers.get(base).copyWithCount(1));
+            for (int i = 0; i < layers.size(); i++) {
+                if (i != base) {
+                    next.add(layers.get(i).copyWithCount(1));
+                }
+            }
+            next.add(one);
+            if (AssemblyRecipes.fits(next)) {
+                return base;
+            }
+        }
+        return -1;
     }
 
     /** {@code put} becomes layer {@code at}; the layers from there up move one higher. */

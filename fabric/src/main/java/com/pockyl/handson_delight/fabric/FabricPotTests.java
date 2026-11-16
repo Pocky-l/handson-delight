@@ -106,6 +106,11 @@ public final class FabricPotTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aScriptedEvenHandEarnsNoStars(GameTestHelper helper) {
+        PotTests.aScriptedEvenHandEarnsNoStars(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void aFloodOfStrokesFillsNoFaster(GameTestHelper helper) {
         PotTests.aFloodOfStrokesFillsNoFaster(helper);
     }

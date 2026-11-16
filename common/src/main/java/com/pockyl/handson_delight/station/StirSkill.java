@@ -8,6 +8,11 @@ import net.minecraft.util.Mth;
  * stops. Only the stars the cook has opened by cooking the dish before can fill. The stars when a batch is done decide its bonus
  * servings. The pace is judged by the cook's own clock, sent with every stroke: on a server the strokes come in bunched by the
  * network, and a slow server ticks fewer times a second than the hand turns. The server's ticks still say when the spoon stopped.
+ * <p>
+ * A hand never turns quite evenly: from one stroke to the next its pace and how far it got wobble by several parts in a hundred.
+ * Strokes that keep both nearly exact, as a script or a replay sends them, are mechanical and earn no stars. This only sees what
+ * the client sends, so a script that adds noise of its own still passes; it keeps a plain macro from cooking every dish with a
+ * bonus.
  */
 public final class StirSkill {
     public static final float MOST = 3.0F;
@@ -35,6 +40,9 @@ public final class StirSkill {
     private static final float FASTEST = 22.0F;
     /** Quality from which the stirring is worth all three stars: nobody stirs perfectly. */
     private static final float ENOUGH = 0.8F;
+    /** Strokes looked at for an even hand, and how little they may vary (standard deviation over mean) before it is mechanical. */
+    private static final int SAMPLES = 24;
+    private static final float MECHANICAL = 0.02F;
 
     private float stars;
     private int open = 1;
@@ -56,6 +64,10 @@ public final class StirSkill {
     /** Which way the rounds go, and how fast the last strokes went, radians a second. */
     private float way;
     private float pace = Float.NaN;
+    /** The last strokes: how far each turned, radians, and how fast, radians a tick (NaN: no clock of the cook's). */
+    private final float[] angles = new float[SAMPLES];
+    private final float[] rates = new float[SAMPLES];
+    private int samples;
 
     public float stars(long now) {
         long idle = now - Math.max(lastMove + GRACE, settled);
@@ -81,6 +93,7 @@ public final class StirSkill {
      */
     public void move(long now, float at, float x, float z, boolean cooking, int open) {
         // In doubles: a server's clock counts far past what a float keeps to the tick.
+        double before = lastAt;
         double clock;
         if (Float.isNaN(at) || Double.isNaN(lastAt) || now - lastMove > BREAK) {
             clock = Double.isNaN(lastAt) ? now : lastAt + (now - lastAtServer);
@@ -102,6 +115,7 @@ public final class StirSkill {
         if (now - lastMove > BREAK) {
             startStroke(clock);
             pace = Float.NaN;
+            samples = 0;
         } else {
             float radius = Math.min((float) Math.hypot(x, z), (float) Math.hypot(lastX, lastZ));
             if (radius > 0.15F) {
@@ -110,6 +124,9 @@ public final class StirSkill {
                     shook = true;
                 }
                 turned += step;
+                if (Math.abs(step) > 1.0e-3F) {
+                    sample(Math.abs(step), Float.isNaN(at) || !(clock > before) ? Float.NaN : (float) (Math.abs(step) / (clock - before)));
+                }
             }
             wideness += Mth.clamp((radius - NARROW) / (WIDE - NARROW), 0.0F, 1.0F);
             steps++;
@@ -130,7 +147,7 @@ public final class StirSkill {
         float change = Float.isNaN(pace) || speed <= 0.0F ? 0.0F : Math.abs((float) Math.log(speed / pace));
         float steady = 1.0F - Math.max(0.0F, change - 0.2F) / 0.9F;
         boolean oneWay = !shook && (way == 0.0F || Math.signum(turned) == way);
-        float quality = oneWay ? Mth.clamp(pacing, 0.0F, 1.0F) * Mth.clamp(steady, 0.0F, 1.0F) * wideness / steps : 0.0F;
+        float quality = oneWay && !mechanical() ? Mth.clamp(pacing, 0.0F, 1.0F) * Mth.clamp(steady, 0.0F, 1.0F) * wideness / steps : 0.0F;
         if (cooking) {
             float worth = Math.min(open, MOST * Math.min(1.0F, quality / ENOUGH));
             stars = worth > stars ? Math.min(worth, stars + RISE * seconds) : Math.max(worth, stars - FALL * seconds);
@@ -140,6 +157,35 @@ public final class StirSkill {
         }
         pace = Float.isNaN(pace) ? speed : Mth.lerp(0.4F, pace, speed);
         startStroke(now);
+    }
+
+    private void sample(float angle, float rate) {
+        int slot = samples % SAMPLES;
+        angles[slot] = angle;
+        rates[slot] = rate;
+        samples++;
+    }
+
+    /** Whether the last strokes turned too evenly for a hand: in how far each went, or in how fast by the cook's clock. */
+    private boolean mechanical() {
+        return samples >= SAMPLES && (spread(angles) < MECHANICAL || spread(rates) < MECHANICAL);
+    }
+
+    /** Standard deviation over mean; infinite when a value is missing. */
+    private static float spread(float[] values) {
+        double sum = 0.0;
+        for (float value : values) {
+            if (Float.isNaN(value)) {
+                return Float.POSITIVE_INFINITY;
+            }
+            sum += value;
+        }
+        double mean = sum / values.length;
+        double squares = 0.0;
+        for (float value : values) {
+            squares += (value - mean) * (value - mean);
+        }
+        return mean <= 0.0 ? Float.POSITIVE_INFINITY : (float) (Math.sqrt(squares / values.length) / mean);
     }
 
     private void startStroke(double now) {

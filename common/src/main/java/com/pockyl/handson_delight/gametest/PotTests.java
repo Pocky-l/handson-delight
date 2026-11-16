@@ -360,6 +360,14 @@ public final class PotTests {
     }
 
     /** The spoon at {@code angle} round the pot, most of the way out. */
+    /**
+     * Where a steady hand has the spoon at {@code tick}: wide rounds of two seconds, never quite even (a hand's pace wobbles by a few
+     * parts in a hundred; exactly even rounds are a script's, which earns no stars).
+     */
+    private static double handAngle(int tick) {
+        return tick * Math.PI / 10.0 + 0.06 * Math.sin(tick * 0.37) + 0.03 * Math.sin(tick * 0.91);
+    }
+
     private static CompoundTag spoonAt(double angle) {
         CompoundTag where = new CompoundTag();
         where.putFloat(CookingPotStation.STIR_X, (float) (Math.cos(angle) * 0.9));
@@ -483,7 +491,7 @@ public final class PotTests {
         player.awardStat(Stats.ITEM_CRAFTED.get(fd("beef_stew")), made);
         fill(setup.pot, 2);
         for (int tick = 0; tick < 240; tick += 2) {
-            double angle = tick * Math.PI / 10.0;
+            double angle = handAngle(tick);
             helper.runAfterDelay(tick, () -> setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_STIR, spoonAt(angle)));
         }
     }
@@ -547,7 +555,7 @@ public final class PotTests {
         setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
         fill(setup.pot, 6);
         for (int tick = 0; tick < 340; tick += 2) {
-            double angle = tick * Math.PI / 10.0;
+            double angle = handAngle(tick);
             helper.runAfterDelay(tick, () -> {
                 setup.logic.onCustomAction(setup.station, cook, CookingPotStation.ACTION_STIR, spoonAt(angle));
                 setup.logic.tick(setup.station);
@@ -579,7 +587,7 @@ public final class PotTests {
         setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
         fill(setup.pot, 6);
         for (int tick = 0; tick < 340; tick += 1) {
-            double angle = tick * Math.PI / 10.0;
+            double angle = handAngle(tick);
             int at = tick;
             helper.runAfterDelay(tick, () -> {
                 if (at % 2 == 0) {
@@ -611,7 +619,7 @@ public final class PotTests {
         Platform.INSTANCE.setItem(setup.pot, 2, new ItemStack(Items.COCOA_BEANS));
         Platform.INSTANCE.setItem(setup.pot, 3, new ItemStack(Items.COCOA_BEANS));
         for (int tick = 0; tick < 400; tick++) {
-            double angle = tick * Math.PI / 10.0;
+            double angle = handAngle(tick);
             helper.runAfterDelay(tick, () -> {
                 setup.logic.onCustomAction(setup.station, cook, CookingPotStation.ACTION_STIR, spoonAt(angle));
                 setup.logic.tick(setup.station);
@@ -693,7 +701,7 @@ public final class PotTests {
         StirSkill middle = new StirSkill();
         StirSkill cold = new StirSkill();
         for (int tick = 0; tick <= 200; tick += 2) {
-            double angle = tick * Math.PI / 10.0;
+            double angle = handAngle(tick);
             rounds.move(tick, (float) Math.cos(angle) * 0.9F, (float) Math.sin(angle) * 0.9F, true, 3);
             double back = Math.sin(tick * Math.PI / 6.0);
             shaking.move(tick, (float) Math.cos(back) * 0.9F, (float) Math.sin(back) * 0.9F, true, 3);
@@ -713,11 +721,29 @@ public final class PotTests {
     public static void theCooksClockJudgesThePace(GameTestHelper helper) {
         StirSkill bunched = new StirSkill();
         for (int tick = 0; tick <= 200; tick += 2) {
-            double angle = tick * Math.PI / 10.0;
+            double angle = handAngle(tick);
             long arrived = tick / 6 * 6 + 1;
             bunched.move(arrived, tick, (float) Math.cos(angle) * 0.9F, (float) Math.sin(angle) * 0.9F, true, 3);
         }
         helper.assertTrue(bunched.grade(199) == 3, "steady rounds that arrive in bunches earn three stars, got " + bunched.stars(199));
+        helper.succeed();
+    }
+
+    /** Rounds turned exactly evenly, stroke after stroke, as a script sends them, earn no stars; a hand's earn three. */
+    public static void aScriptedEvenHandEarnsNoStars(GameTestHelper helper) {
+        StirSkill script = new StirSkill();
+        StirSkill scriptWithClock = new StirSkill();
+        StirSkill hand = new StirSkill();
+        for (int tick = 0; tick <= 200; tick += 2) {
+            double even = tick * Math.PI / 10.0;
+            script.move(tick, (float) Math.cos(even) * 0.9F, (float) Math.sin(even) * 0.9F, true, 3);
+            scriptWithClock.move(tick, tick, (float) Math.cos(even) * 0.9F, (float) Math.sin(even) * 0.9F, true, 3);
+            double angle = handAngle(tick);
+            hand.move(tick, tick, (float) Math.cos(angle) * 0.9F, (float) Math.sin(angle) * 0.9F, true, 3);
+        }
+        helper.assertTrue(script.grade(200) == 0, "exactly even rounds earn no star, got " + script.stars(200));
+        helper.assertTrue(scriptWithClock.grade(200) == 0, "nor with the cook's clock, got " + scriptWithClock.stars(200));
+        helper.assertTrue(hand.grade(200) == 3, "a hand's rounds earn three, got " + hand.stars(200));
         helper.succeed();
     }
 

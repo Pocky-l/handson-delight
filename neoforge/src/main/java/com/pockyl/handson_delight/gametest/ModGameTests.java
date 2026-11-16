@@ -125,6 +125,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void aScriptedEvenHandEarnsNoStars(GameTestHelper helper) {
+        PotTests.aScriptedEvenHandEarnsNoStars(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void aFloodOfStrokesFillsNoFaster(GameTestHelper helper) {
         PotTests.aFloodOfStrokesFillsNoFaster(helper);
     }

@@ -1,6 +1,7 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -32,6 +33,9 @@ public final class CookingPotStation {
     public static final ResourceLocation COPPER_ID = HandsOnDelight.id("copper_pot");
     public static final ResourceLocation MONSTER_ID = HandsOnDelight.id("monster_pot");
     public static final ResourceLocation ALCHEMIST_ID = HandsOnDelight.id("alchemist_pot");
+
+    /** Brazilian Delight: a milk bucket on Farmer's Delight's pot in the world makes its milk pot, the way to its heavy cream. */
+    private static final String BRAZILIAN_DELIGHT = "braziliandelight";
 
     public static final String INGREDIENTS = "ingredients";
     public static final String MEAL = "meal";
@@ -158,13 +162,31 @@ public final class CookingPotStation {
         return stack.is(Items.BOWL) || stack.is(Items.GLASS_BOTTLE);
     }
 
-    /** Sneaking keeps the pot's handle toggle; a bowl in the hand keeps its quick serving. */
+    /**
+     * Sneaking keeps the pot's handle toggle; a bowl in the hand keeps its quick serving; a bucket Brazilian Delight turns the pot
+     * into its milk or heavy cream pot with keeps that.
+     */
     private static boolean opens(Player player, BlockPos pos, BlockState state) {
         if (player.isSecondaryUseActive()) {
             return false;
         }
         ItemStack held = player.getMainHandItem();
+        if (state.is(FarmersDelightContent.COOKING_POT.get()) && isBrazilianPotBucket(held)) {
+            return false;
+        }
         KitchenPot pot = KitchenPot.of(player.level().getBlockEntity(pos));
         return pot == null || pot.handson$meal().isEmpty() || !pot.handson$isContainerValid(held);
+    }
+
+    /**
+     * A milk or heavy cream bucket while Brazilian Delight is there: its use of Farmer's Delight's pot (cancelled at the head for these
+     * two) pours it in and makes the pot its milk pot, which sets into heavy cream; the station would have taken that click (CurseForge
+     * #8726636).
+     */
+    private static boolean isBrazilianPotBucket(ItemStack held) {
+        if (!Platform.INSTANCE.isLoaded(BRAZILIAN_DELIGHT)) {
+            return false;
+        }
+        return held.is(Items.MILK_BUCKET) || BuiltInRegistries.ITEM.getKey(held.getItem()).equals(ResourceLocation.fromNamespaceAndPath(BRAZILIAN_DELIGHT, "heavy_cream_bucket"));
     }
 }

@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.station;
 
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.FloatTag;
@@ -12,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
+import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.state.SlotStorage;
@@ -20,6 +22,7 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
 import com.pockyl.handson_delight.assembly.Assembling;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
+import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -131,10 +134,48 @@ public final class BoardLogic implements StationLogic {
 
     @Override
     public void onOpen(StationContext station, Player player) {
+        gatherStacked(station, player);
         // An empty book too: dishes a reload took away, or another server's, leave the board's book.
         CompoundTag book = new CompoundTag();
         book.put(CuttingBoardStation.BOOK, AssemblyRecipes.book());
         station.effect(CuttingBoardStation.EFFECT_BOOK, "surface", book);
+    }
+
+    /**
+     * What was stacked on the board's item in the world, in Culinary Compat's own slots, becomes the station's layers, bottom first: a
+     * dish cut together, as that mod cuts it. Left in its slots, the station would not show it, and every cut of the knife would be
+     * Culinary Compat's cut of all of it together, which fails ("That doesn't seem right..."). With layers already laid, it goes to the
+     * cook's inventory instead.
+     */
+    private void gatherStacked(StationContext station, Player player) {
+        if (station.level().isClientSide() || !(board.handson$blockEntity() instanceof CuttingBoardBlockEntity fdBoard)) {
+            return;
+        }
+        List<ItemStack> stacked = Platform.INSTANCE.takeStackedOnBoard(fdBoard);
+        if (stacked.isEmpty()) {
+            return;
+        }
+        NonNullList<ItemStack> layers = board.handson$layers();
+        ItemStack base = board.handson$isCarving() ? ItemStack.EMPTY : board.handson$stored();
+        boolean free = layers.stream().allMatch(ItemStack::isEmpty) && stacked.size() + (base.isEmpty() ? 0 : 1) <= layers.size();
+        if (!free) {
+            for (ItemStack stack : stacked) {
+                if (!player.getInventory().add(stack)) {
+                    player.drop(stack, false);
+                }
+            }
+            return;
+        }
+        List<ItemStack> all = new ArrayList<>();
+        if (!base.isEmpty()) {
+            all.add(base.copy());
+            setOnBoard(ItemStack.EMPTY);
+        }
+        all.addAll(stacked);
+        for (int i = 0; i < all.size(); i++) {
+            layers.set(i, all.get(i));
+        }
+        board.handson$layersChanged();
     }
 
     /** The marks and the dish picked start over when the last cook leaves; another one may still be cutting. */

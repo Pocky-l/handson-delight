@@ -30,7 +30,8 @@
     "AlchemistPotQuietMixin",
     "AlchemistPotSteamMixin",
     "YoukaiPotSoupMixin",
-    "YoukaiHintsMixin"
+    "YoukaiHintsMixin",
+    "NoBoardRegisterMixin"
   ],
   "injectors": {
     "defaultRequire": 1

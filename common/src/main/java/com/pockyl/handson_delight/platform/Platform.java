@@ -44,6 +44,14 @@ public interface Platform {
 
     void setItem(CuttingBoardBlockEntity board, ItemStack stack);
 
+    /**
+     * Takes off the board what lies on its item in slots of another mod (Culinary Compat stacks things on Farmer's Delight's board in
+     * the world, in 8 slots of its own, and cuts them together with the item), bottom first; empty without such slots.
+     */
+    default List<ItemStack> takeStackedOnBoard(CuttingBoardBlockEntity board) {
+        return List.of();
+    }
+
     /** What lies in a skillet: its one slot holds a stack ({@code getStoredStack} reads it in every build). */
     void setItem(SkilletBlockEntity skillet, ItemStack stack);
 

@@ -61,6 +61,8 @@ public final class KettleLogic implements StationLogic {
 
     @Override
     public void onOpen(StationContext station, Player player) {
+        // The client asks its copy of the kettle what may pour in and out: it must be the server's.
+        ClientCopy.resend(kettle.handson$blockEntity(), player);
         refresh(station);
     }
 

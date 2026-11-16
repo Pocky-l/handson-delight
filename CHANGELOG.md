@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1+1.21.1] - Unreleased
+### Fixed
+- [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle could keep 250 mB that would not pour out or let a new batch in ([#31](https://github.com/Pocky-l/handson-delight/issues/31)).
+- A milk bucket on the cooking pot makes [Brazilian Delight](https://modrinth.com/mod/braziliandelight)'s milk pot again, so its heavy cream can be made.
+- In a LAN game, a guest who turned the cutting board off can craft its dishes in the crafting grid again.
+- Switching quickly between neighbouring stations no longer breaks the recipe book or keeps turning its pages.
+
 ## [1.5.0+1.21.1] - 2026-11-15
 ### New
 - [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven is a station: lay the food on its tray, shut

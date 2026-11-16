@@ -21,7 +21,7 @@ final class NeoForgeNetwork {
         PayloadRegistrar registrar = event.registrar(VERSION).optional();
         registrar.playToClient(BoardDishes.Payload.TYPE, BoardDishes.Payload.CODEC, (payload, context) -> BoardDishes.receive(payload));
         // BoardDishes.NO_BOARD: a dedicated server always has it, to see which clients name it; a game client has it only with the
-        // board's station off. A game whose board is on has none: its own server and the players of a LAN game count as having it.
+        // board's station off, and names it to any server (NoBoardRegisterMixin), so the host of a LAN game sees it too.
         if (FMLEnvironment.dist.isDedicatedServer() || !HandsOnConfig.cuttingBoard()) {
             registrar.playToClient(BoardDishes.NoBoard.TYPE, BoardDishes.NoBoard.CODEC, (payload, context) -> {
             });

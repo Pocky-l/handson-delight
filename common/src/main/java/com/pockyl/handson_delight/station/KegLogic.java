@@ -93,6 +93,8 @@ public final class KegLogic implements StationLogic {
         if (!station.level().isClientSide() && keg.handson$feelsWarmth()) {
             keg.handson$feelTemperature();
         }
+        // The client asks its copy of the keg what may be tapped and poured: it must be the server's.
+        ClientCopy.resend(keg.handson$blockEntity(), player);
         refresh(station);
     }
 

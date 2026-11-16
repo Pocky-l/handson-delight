@@ -688,6 +688,18 @@ final class RecipeBook implements NodePainter {
             return;
         }
         Handoff passing = handoff;
+        float flight = DiegesisClient.goingOver();
+        if (leaving != null && !leaving.taken && isWorkedAt(view) && flight >= 1.0F) {
+            // The player came back before the next station took the book (A, D, A pressed quickly): it is this station's again. Left to
+            // go stale, it would shut here, at the station the player is at.
+            if (handoff == leaving) {
+                handoff = null;
+            }
+            wanted = leaving.wanted;
+            leaving = null;
+            arrivingFrom = null;
+            arrivingHeld = false;
+        }
         if (leaving != null) {
             if (leaving.taken || leaving.isStale()) {
                 if (handoff == leaving) {
@@ -702,7 +714,6 @@ final class RecipeBook implements NodePainter {
         } else if (passing != null && !passing.taken && !passing.isStale() && isWorkedAt(view)) {
             arrive(view, node, passing);
         }
-        float flight = DiegesisClient.goingOver();
         if (arrivingFrom != null && !arrivingHeld && leaving == null && flight < 1.0F && !isWorkedAt(view)) {
             // The player went on before the book got here (the station was not theirs yet, so it was not shut).
             passOn(node);
@@ -711,14 +722,20 @@ final class RecipeBook implements NodePainter {
             arrivingFrom = null;
         }
         float appear = appear(view);
-        node.setVisible((view.isFocused() || leaving != null || arrivingFrom != null || isWorkedAt(view)) && appear > SPECK);
+        boolean involved = view.isFocused() || leaving != null || arrivingFrom != null || isWorkedAt(view);
+        node.setVisible(involved && appear > SPECK);
         if (!node.isVisible() && leaving == null) {
             open = 0.0F;
+        }
+        if (!involved) {
+            // A station the player passed by (quick A and D) keeps no open book: it would open from shut every frame, its page turning
+            // on and on.
+            wanted = false;
         }
         time += dt;
         // It comes in shut, growing with the camera, and opens once the camera is there: the covers swing out before the eyes.
         boolean opening = wanted && appear >= OPEN_FROM;
-        if (opening && open <= 0.0F) {
+        if (opening && open <= 0.0F && node.isVisible()) {
             turnSound();
         }
         open = Mth.clamp(open + (opening ? dt : -dt) / OPEN_TIME, 0.0F, 1.0F);

@@ -158,6 +158,22 @@ public final class KegLogic implements StationLogic {
         }
     }
 
+    /** How {@code kinds} lie for the drink they make in this keg ({@link #arrange}), or null. */
+    private int[] partsWith(List<ItemStack> kinds) {
+        StationRecipes.Candidate<KitchenKeg.Fermenting> found = StationRecipes.reads(candidates(true), inKeg());
+        StationRecipes.Choice<KitchenKeg.Fermenting> choice = StationRecipes.choose(candidates(false), kinds, keg.handson$ingredients(), wanted,
+                found == null ? null : found.id(), true);
+        return choice == null ? null : choice.parts();
+    }
+
+    private List<ItemStack> inKeg() {
+        List<ItemStack> inKeg = new java.util.ArrayList<>();
+        for (int i = 0; i < ingredients.size(); i++) {
+            inKeg.add(ingredients.get(i));
+        }
+        return inKeg;
+    }
+
     /**
      * The keg's recipes for the liquid it holds, as Brewin' and Chewin' reads them: of that base, or of none while it is empty. Without
      * {@code exact}, an empty keg takes any: its liquid may be poured in after the food.
@@ -220,7 +236,13 @@ public final class KegLogic implements StationLogic {
 
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
-        if (KegStation.ACTION_LID.equals(action)) {
+        if (StationRecipes.ACTION_OFFER.equals(action)) {
+            // A stack clicked onto a keg whose slots hold other food: in, when the food still makes a drink with it.
+            if (keg.handson$perSlot() > 1 && StationRecipes.offerCarried(station, this, player, KegStation.INGREDIENTS, ingredients,
+                    data.getBoolean(StationRecipes.ONE), this::partsWith)) {
+                unsorted = true;
+            }
+        } else if (KegStation.ACTION_LID.equals(action)) {
             setLid(station, data.getBoolean(KegStation.OPEN));
         } else if (KegStation.ACTION_USE.equals(action)) {
             boolean tap = KegStation.TAP.equals(data.getString(KegStation.AT));

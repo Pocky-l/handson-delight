@@ -75,6 +75,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void aFullPotTakesWhatItsDishStillReads(GameTestHelper helper) {
+        PotTests.aFullPotTakesWhatItsDishStillReads(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void theFullerDishOnceItsLastIngredientIsIn(GameTestHelper helper) {
         PotTests.theFullerDishOnceItsLastIngredientIsIn(helper);
     }

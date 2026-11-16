@@ -2,10 +2,15 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
+import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.state.SlotStorage;
+import com.pockyl.diegesis.api.state.StationSchema;
+import com.pockyl.diegesis.api.station.StationContext;
+import com.pockyl.diegesis.api.station.StationLogic;
 import com.pockyl.handson_delight.Cookable;
 
 import java.util.ArrayList;
@@ -24,6 +29,14 @@ import java.util.function.Function;
 public final class StationRecipes {
     private StationRecipes() {
     }
+
+    /**
+     * Sent by a station's view when a stack is clicked onto a group of slots that has no place for it, every slot holding other food:
+     * the logic answers with {@link #offer}. Data: {@link #ONE}.
+     */
+    public static final String ACTION_OFFER = "offer";
+    /** Data of {@link #ACTION_OFFER}: one of the stack, not the whole stack. */
+    public static final String ONE = "one";
 
     /** A recipe of a station as this reads it: its id and its ingredients, one slot each, with the station's own recipe object. */
     public record Candidate<T>(T recipe, ResourceLocation id, List<Ingredient> ingredients) {
@@ -55,6 +68,69 @@ public final class StationRecipes {
             add(kinds, slots.get(i));
         }
         return kinds;
+    }
+
+    /**
+     * {@code offered} goes into {@code slots} that have no place for it, when with what lies there the food still makes a dish
+     * ({@code choose} gives each kind's slots, or null) that keeps all of what lay there. The food is laid out anew for that dish: a kind
+     * that two tags of the dish read gives a slot up to the new one (a second stack of tomatoes over both vegetables, then carrots,
+     * GH #34). How the food lies inside is never seen, so the station takes what the cook means to cook. Returns how many of
+     * {@code offered} went in, at most what its slots hold; none when no such dish.
+     */
+    public static int offer(SlotStorage slots, ItemStack offered, Function<List<ItemStack>, int[]> choose, int perSlot) {
+        if (offered.isEmpty()) {
+            return 0;
+        }
+        List<ItemStack> kinds = kinds(slots);
+        List<ItemStack> with = new ArrayList<>();
+        for (ItemStack kind : kinds) {
+            with.add(kind.copy());
+        }
+        add(with, offered);
+        int[] parts = choose.apply(with);
+        if (parts == null || parts.length != with.size()) {
+            return 0;
+        }
+        int at = -1;
+        for (int kind = 0; kind < with.size(); kind++) {
+            int held = Math.min(with.get(kind).getCount(), parts[kind] * hold(with.get(kind), perSlot));
+            int had = kind < kinds.size() ? kinds.get(kind).getCount() : 0;
+            if (held < had) {
+                return 0;
+            }
+            if (ItemStack.isSameItemSameComponents(with.get(kind), offered)) {
+                at = kind;
+            }
+        }
+        int had = at < kinds.size() ? kinds.get(at).getCount() : 0;
+        int taken = Math.min(with.get(at).getCount(), parts[at] * hold(with.get(at), perSlot)) - had;
+        if (taken <= 0) {
+            return 0;
+        }
+        with.set(at, with.get(at).copyWithCount(had + taken));
+        lay(slots, with, parts, perSlot);
+        return taken;
+    }
+
+    /**
+     * {@link #offer} of the stack on {@code player}'s cursor (one of it with {@code one}) to the station's slot {@code group}, held by
+     * {@code slots}: only what the group and the logic take ({@code mayPlace}). Returns whether some went in.
+     */
+    public static boolean offerCarried(StationContext station, StationLogic logic, Player player, String group, SlotStorage slots,
+            boolean one, Function<List<ItemStack>, int[]> choose) {
+        ItemStack carried = player.inventoryMenu.getCarried();
+        StationSchema.SlotGroup slotGroup = station.type().schema().slotGroups().get(group);
+        if (carried.isEmpty() || slotGroup == null || !slotGroup.rules().accepts().test(carried)
+                || !logic.mayPlace(station, player, new SlotRef(group, 0), carried)) {
+            return false;
+        }
+        int taken = offer(slots, carried.copyWithCount(one ? 1 : carried.getCount()), choose, slotGroup.rules().limitFor(carried));
+        if (taken <= 0) {
+            return false;
+        }
+        carried.shrink(taken);
+        player.inventoryMenu.setCarried(carried.isEmpty() ? ItemStack.EMPTY : carried);
+        return true;
     }
 
     /** Counts {@code stack} into {@code kinds}; a count may grow past a stack. */

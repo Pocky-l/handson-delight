@@ -4,6 +4,8 @@
 ### Fixed
 - Food fried in the skillet or grilled on the stove waits as it is: with [More Delight](https://modrinth.com/mod/more-delight)
   a fried egg no longer goes on cooking into an omelette ([#33](https://github.com/Pocky-l/handson-delight/issues/33)).
+- A full cooking pot, keg or kettle takes what its dish still needs: a second stack of tomatoes that filled both vegetable
+  slots makes room for the carrots ([#34](https://github.com/Pocky-l/handson-delight/issues/34)).
 - The cutting board takes what a dish needs in any order: a bowl, bread or a tortilla laid after the rest slides in under it.
   Dishes of other mods no longer need their first ingredient first.
 - [JEI](https://modrinth.com/mod/jei) showed the dishes made on the cutting board in the crafting table as well.

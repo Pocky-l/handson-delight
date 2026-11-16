@@ -366,7 +366,7 @@ public final class KegBehavior implements StationBehavior {
         boolean tap = (hasTap() ? "tap".equals(node) : atOpening) && keg.handson$canTap(stack);
         boolean pour = !tap && atOpening && keg.handson$canPour(stack);
         if (!tap && !pour) {
-            return false;
+            return "mouth".equals(node) && FullZone.offer(view, KegStation.INGREDIENTS, stack, button);
         }
         if (tap && hasTap()) {
             draw(view, stack, true, shift);

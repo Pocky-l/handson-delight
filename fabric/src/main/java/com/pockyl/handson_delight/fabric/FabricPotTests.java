@@ -56,6 +56,11 @@ public final class FabricPotTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aFullPotTakesWhatItsDishStillReads(GameTestHelper helper) {
+        PotTests.aFullPotTakesWhatItsDishStillReads(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void theFullerDishOnceItsLastIngredientIsIn(GameTestHelper helper) {
         PotTests.theFullerDishOnceItsLastIngredientIsIn(helper);
     }

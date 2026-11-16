@@ -222,7 +222,17 @@ public final class PotLogic implements StationLogic {
             inPot.add(pot.handson$getItem(i));
         }
         ResourceLocation found = pot.handson$findRecipe(station.level(), inPot).map(RecipeHolder::id).orElse(null);
-        boolean overflow = !station.users().isEmpty();
+        PotRecipes.Choice choice = choose(station, kinds, found, !station.users().isEmpty());
+        if (choice != null) {
+            List<ItemStack> rest = lay(pot, kinds, choice.parts());
+            if (!rest.isEmpty()) {
+                handBack(station, rest);
+            }
+        }
+    }
+
+    /** The dish {@code kinds} make in this pot ({@link PotRecipes#choose}), with the alchemist pot's scroll; null for none. */
+    private PotRecipes.Choice choose(StationContext station, List<ItemStack> kinds, ResourceLocation found, boolean overflow) {
         List<RecipeHolder<CookingPotRecipe>> recipes = pot.handson$recipes(station.level());
         PotRecipes.Choice choice;
         if (scrolls == null) {
@@ -247,11 +257,26 @@ public final class PotLogic implements StationLogic {
                 choice = PotRecipes.choose(others, kinds, pot.handson$slots(), wanted, found, true);
             }
         }
-        if (choice != null) {
-            List<ItemStack> rest = lay(pot, kinds, choice.parts());
-            if (!rest.isEmpty()) {
-                handBack(station, rest);
-            }
+        return choice;
+    }
+
+    /**
+     * The stack on the cursor, clicked onto a pot whose six slots hold other food: in it goes when the food still makes a dish with it
+     * ({@link StationRecipes#offer}), else it stays in the hand.
+     */
+    private void offer(StationContext station, Player player, boolean one) {
+        List<ItemStack> inPot = new ArrayList<>();
+        for (int i = 0; i < pot.handson$slots(); i++) {
+            inPot.add(pot.handson$getItem(i));
+        }
+        ResourceLocation found = pot.handson$findRecipe(station.level(), inPot).map(RecipeHolder::id).orElse(null);
+        if (StationRecipes.offerCarried(station, this, player, CookingPotStation.INGREDIENTS, storage(pot, 0, pot.handson$slots()), one,
+                kinds -> {
+                    PotRecipes.Choice choice = choose(station, kinds, found, true);
+                    return choice == null ? null : choice.parts();
+                })) {
+            cooking.feedByHand();
+            unsorted = true;
         }
     }
 
@@ -485,7 +510,9 @@ public final class PotLogic implements StationLogic {
 
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
-        if (CookingPotStation.ACTION_SCOOP.equals(action)) {
+        if (StationRecipes.ACTION_OFFER.equals(action)) {
+            offer(station, player, data.getBoolean(StationRecipes.ONE));
+        } else if (CookingPotStation.ACTION_SCOOP.equals(action)) {
             if (data.getBoolean(CookingPotStation.FROM_INVENTORY)) {
                 scoopFromInventory(station, player, data.getBoolean(CookingPotStation.SCOOP_ALL));
             } else {

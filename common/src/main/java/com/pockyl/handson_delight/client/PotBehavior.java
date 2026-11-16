@@ -524,7 +524,8 @@ public final class PotBehavior implements StationBehavior {
             return true;
         }
         if ("preview".equals(node) || !canScoop(view, stack)) {
-            return false;
+            // A pot whose six slots hold other food may still take it: a dish that reads it in place of some of them.
+            return "mouth".equals(node) && FullZone.offer(view, CookingPotStation.INGREDIENTS, stack, button);
         }
         CompoundTag how = new CompoundTag();
         how.putBoolean(CookingPotStation.SCOOP_ALL, shift);

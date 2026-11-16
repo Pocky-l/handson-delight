@@ -139,7 +139,23 @@ public final class KettleLogic implements StationLogic {
 
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
-        if (KettleStation.ACTION_LID.equals(action)) {
+        if (StationRecipes.ACTION_OFFER.equals(action)) {
+            // A stack clicked onto a kettle whose slots hold other leaves: in, when they still brew a tea with it.
+            if (kettle.handson$perSlot() > 1) {
+                StationRecipes.offerCarried(station, this, player, KettleStation.INGREDIENTS, ingredients, data.getBoolean(StationRecipes.ONE),
+                        kinds -> {
+                            List<StationRecipes.Candidate<KitchenKettle.Brewing>> candidates = candidates();
+                            List<ItemStack> inKettle = new ArrayList<>();
+                            for (int i = 0; i < ingredients.size(); i++) {
+                                inKettle.add(ingredients.get(i));
+                            }
+                            StationRecipes.Candidate<KitchenKettle.Brewing> found = StationRecipes.reads(candidates, inKettle);
+                            StationRecipes.Choice<KitchenKettle.Brewing> choice = StationRecipes.choose(candidates, kinds,
+                                    kettle.handson$ingredients(), wanted, found == null ? null : found.id(), true);
+                            return choice == null ? null : choice.parts();
+                        });
+            }
+        } else if (KettleStation.ACTION_LID.equals(action)) {
             kettle.handson$setOpen(data.getBoolean(KettleStation.OPEN));
         } else if (KettleStation.ACTION_USE.equals(action)) {
             boolean spout = KettleStation.SPOUT.equals(data.getString(KettleStation.AT));

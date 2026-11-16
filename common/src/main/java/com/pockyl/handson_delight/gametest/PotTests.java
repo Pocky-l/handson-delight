@@ -46,6 +46,7 @@ import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.KitchenPot;
 import com.pockyl.handson_delight.station.PotLogic;
 import com.pockyl.handson_delight.station.PotRecipes;
+import com.pockyl.handson_delight.station.StationRecipes;
 import com.pockyl.handson_delight.station.StirSkill;
 
 import java.util.ArrayList;
@@ -218,6 +219,50 @@ public final class PotTests {
         throwIn(setup, 1, new ItemStack(Items.RED_DYE));
         helper.assertTrue(makes(helper, setup.pot, "test_cane_half"), "the half as before, got " + made(helper, setup.pot));
         empty(setup.pot);
+        helper.succeed();
+    }
+
+    /**
+     * A dish of tomato, rice, apple, sugar and two vegetables, a tomato being one (GH #34): two stacks of tomatoes lie over the tomato
+     * and both vegetables, so all six slots are full. Carrots clicked onto the pot still go in, the tomatoes giving a vegetable's slot up;
+     * what no dish of the pot reads stays in the hand.
+     */
+    public static void aFullPotTakesWhatItsDishStillReads(GameTestHelper helper) {
+        Ingredient vegetable = Ingredient.of(Items.COPPER_INGOT, Items.QUARTZ);
+        addRecipe(helper, "full_pot", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, Ingredient.of(Items.COPPER_INGOT),
+                Ingredient.of(Items.IRON_NUGGET), Ingredient.of(Items.GOLD_NUGGET), Ingredient.of(Items.LAPIS_LAZULI), vegetable, vegetable);
+        Setup setup = pot(helper);
+        Player cook = helper.makeMockPlayer(GameType.SURVIVAL);
+        setup.station.users.add(cook);
+        throwIn(setup, 0, new ItemStack(Items.COPPER_INGOT, 64));
+        throwIn(setup, 1, new ItemStack(Items.COPPER_INGOT, 64));
+        throwIn(setup, 2, new ItemStack(Items.IRON_NUGGET, 64));
+        throwIn(setup, 3, new ItemStack(Items.GOLD_NUGGET, 64));
+        throwIn(setup, 4, new ItemStack(Items.LAPIS_LAZULI, 64));
+        boolean full = true;
+        for (int slot = 0; slot < 6; slot++) {
+            full &= !Platform.INSTANCE.getItem(setup.pot, slot).isEmpty();
+        }
+        helper.assertTrue(full && makes(helper, setup.pot, "test_full_pot"), "the copper lies over three slots, the pot is full");
+        CompoundTag one = new CompoundTag();
+        cook.inventoryMenu.setCarried(new ItemStack(Items.STICK, 5));
+        setup.logic.onCustomAction(setup.station, cook, StationRecipes.ACTION_OFFER, one);
+        helper.assertTrue(cook.inventoryMenu.getCarried().getCount() == 5, "a stick no dish reads stays in the hand");
+        cook.inventoryMenu.setCarried(new ItemStack(Items.QUARTZ, 64));
+        setup.logic.onCustomAction(setup.station, cook, StationRecipes.ACTION_OFFER, one);
+        setup.logic.tick(setup.station);
+        int copper = 0;
+        int quartz = 0;
+        int copperSlots = 0;
+        for (int slot = 0; slot < 6; slot++) {
+            ItemStack there = Platform.INSTANCE.getItem(setup.pot, slot);
+            copper += there.is(Items.COPPER_INGOT) ? there.getCount() : 0;
+            copperSlots += there.is(Items.COPPER_INGOT) ? 1 : 0;
+            quartz += there.is(Items.QUARTZ) ? there.getCount() : 0;
+        }
+        helper.assertTrue(cook.inventoryMenu.getCarried().isEmpty() && quartz == 64, "the carrots go in, got " + quartz);
+        helper.assertTrue(copper == 128 && copperSlots == 2, "the tomatoes give a slot up and none comes out, got " + copper);
+        helper.assertTrue(makes(helper, setup.pot, "test_full_pot"), "the same dish, got " + made(helper, setup.pot));
         helper.succeed();
     }
 

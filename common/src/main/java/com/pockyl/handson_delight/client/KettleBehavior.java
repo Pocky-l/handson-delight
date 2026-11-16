@@ -334,7 +334,7 @@ public final class KettleBehavior implements StationBehavior {
         boolean spout = "spout".equals(node) && kettle.handson$canServe(stack);
         boolean in = ("mouth".equals(node) || "drink".equals(node)) && kettle.handson$canPour(stack);
         if (!spout && !in) {
-            return false;
+            return "mouth".equals(node) && kettle.handson$perSlot() > 1 && FullZone.offer(view, KettleStation.INGREDIENTS, stack, button);
         }
         if (spout) {
             pourOut(view, stack, true, shift);

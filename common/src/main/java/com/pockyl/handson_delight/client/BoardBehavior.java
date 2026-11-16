@@ -165,6 +165,8 @@ public final class BoardBehavior implements StationBehavior {
      * bounces back to the hand. Seconds and pixels.
      */
     private static final float LAND_TIME = 0.2F;
+    /** The stack lifting by a layer as a base goes in under it. */
+    private static final float UNDER_LIFT_TIME = 0.16F;
     private static final float LAND_HOP = 0.8F;
     private static final float SETTLE_TIME = 0.12F;
     private static final float SETTLE_HOP = 0.25F;
@@ -439,6 +441,7 @@ public final class BoardBehavior implements StationBehavior {
             });
         }
         List<ItemStack> layers = BoardLogic.layers(state);
+        liftForABase(view, layers);
         // Several layers at once (a dish picked in the book) come from the player one after the other, not all at
         // once and not out of the book; one put down by hand lands from the hand.
         int arriving = 0;
@@ -503,6 +506,40 @@ public final class BoardBehavior implements StationBehavior {
         whole = nowWhole;
         quiet = false;
         drawWear(view);
+    }
+
+    /**
+     * A base laid after the filling (bread under the patty) slides in under the stack: what lay there lifts by one layer as it comes,
+     * and the base arrives at the bottom like any layer.
+     */
+    private void liftForABase(StationView view, List<ItemStack> layers) {
+        int shown = 0;
+        while (shown < CuttingBoardStation.MOST_LAYERS && !shownLayers[shown].isEmpty()) {
+            shown++;
+        }
+        if (quiet || !Float.isNaN(melting) || shown == 0 || layers.size() <= shown || ItemStack.matches(layers.get(0), shownLayers[0])) {
+            return;
+        }
+        for (int i = 0; i < shown; i++) {
+            if (!ItemStack.matches(layers.get(i + 1), shownLayers[i])) {
+                return;
+            }
+        }
+        for (int i = shown; i >= 1; i--) {
+            ItemStack layer = layers.get(i);
+            shownLayers[i] = layer.copy();
+            int index = i;
+            view.node("layer_" + i).ifPresent(node -> {
+                node.setVisible(true);
+                dress(node, index, layer, layers);
+                // Where it lay, a layer lower, then up by one.
+                node.rotateTo(0.0F, turn(index - 1), 0.0F, 0.0F);
+                node.moveTo(jitterX(index - 1), -LAYER_STEP, jitterZ(index - 1), 0.0F);
+                node.rotateTo(0.0F, turn(index), 0.0F, UNDER_LIFT_TIME);
+                node.moveTo(jitterX(index), 0.0F, jitterZ(index), UNDER_LIFT_TIME);
+            });
+        }
+        shownLayers[0] = ItemStack.EMPTY;
     }
 
     /**

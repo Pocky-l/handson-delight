@@ -740,17 +740,39 @@ public final class AssemblyRecipes {
         return all().stream().anyMatch(dish -> dish.result().is(item));
     }
 
-    /** Whether {@code item} starts a dish: it is what goes down first in one. */
-    public static boolean isBase(ItemStack item) {
+    /** Whether {@code item} goes into some dish: any of its ingredients may go down first. */
+    public static boolean isIngredient(ItemStack item) {
         for (Assembly assembly : all()) {
-            if (assembly.ingredients().get(assembly.base()).test(item)) {
+            for (Ingredient ingredient : assembly.ingredients()) {
+                if (ingredient.test(item)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether {@code item} slides in under {@code layers}: it is the base by name (a bowl, bread, a tortilla) of a dish that the
+     * layers are part of and that has no base yet. Laid later, such a base still ends up under the stack, as the dish is built.
+     */
+    public static boolean goesUnder(List<ItemStack> layers, ItemStack item) {
+        if (layers.isEmpty()) {
+            return false;
+        }
+        List<ItemStack> under = new ArrayList<>(layers.size() + 1);
+        under.add(item);
+        under.addAll(layers);
+        for (Assembly assembly : all()) {
+            if (assembly.kind() != Base.FIRST && assembly.ingredients().get(assembly.base()).test(item)
+                    && assign(assembly, layers, false) != null && assign(assembly, under, false) != null) {
                 return true;
             }
         }
         return false;
     }
 
-    /** Whether what lies on the board, the base first, is all part of some dish. */
+    /** Whether what lies on the board, in any order but a base by name at the bottom, is all part of some dish. */
     public static boolean fits(List<ItemStack> layers) {
         for (Assembly assembly : all()) {
             if (assign(assembly, layers, false) != null) {
@@ -781,33 +803,31 @@ public final class AssemblyRecipes {
     }
 
     /**
-     * Which ingredient each layer takes, the first one the base; {@code all}: every ingredient is taken. Null when the layers do not
-     * go into the dish.
+     * Which ingredient each layer takes; {@code all}: every ingredient is taken. The layers go on in any order, as the recipe's own
+     * crafting grid takes them; only a base by name (a bowl, bread, a tortilla: {@link Base}) lies at the bottom, so no layer above
+     * the first takes it. Null when the layers do not go into the dish.
      */
     public static int[] assign(Assembly assembly, List<ItemStack> layers, boolean all) {
         List<Ingredient> ingredients = assembly.ingredients();
         if (layers.isEmpty() || layers.size() > ingredients.size() || all && layers.size() != ingredients.size()) {
             return null;
         }
-        if (!ingredients.get(assembly.base()).test(layers.get(0))) {
-            return null;
-        }
         int[] taken = new int[layers.size()];
-        taken[0] = assembly.base();
         boolean[] used = new boolean[ingredients.size()];
-        used[assembly.base()] = true;
-        return assign(ingredients, layers, 1, used, taken) ? taken : null;
+        int bottomOnly = assembly.kind() == Base.FIRST ? -1 : assembly.base();
+        return assign(ingredients, layers, 0, used, taken, bottomOnly) ? taken : null;
     }
 
-    private static boolean assign(List<Ingredient> ingredients, List<ItemStack> layers, int next, boolean[] used, int[] taken) {
+    private static boolean assign(List<Ingredient> ingredients, List<ItemStack> layers, int next, boolean[] used, int[] taken,
+            int bottomOnly) {
         if (next == layers.size()) {
             return true;
         }
         for (int i = 0; i < ingredients.size(); i++) {
-            if (!used[i] && ingredients.get(i).test(layers.get(next))) {
+            if (!used[i] && (i != bottomOnly || next == 0) && ingredients.get(i).test(layers.get(next))) {
                 used[i] = true;
                 taken[next] = i;
-                if (assign(ingredients, layers, next + 1, used, taken)) {
+                if (assign(ingredients, layers, next + 1, used, taken, bottomOnly)) {
                     return true;
                 }
                 used[i] = false;

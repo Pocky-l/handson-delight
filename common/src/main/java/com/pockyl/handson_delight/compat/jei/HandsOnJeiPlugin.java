@@ -49,11 +49,14 @@ public final class HandsOnJeiPlugin implements IModPlugin {
     @Override
     public void onRuntimeAvailable(IJeiRuntime runtime) {
         RecipeManager recipes = Minecraft.getInstance().getConnection().getRecipeManager();
+        // JEI keeps hidden recipes by identity: it is handed the very holders it shows, never copies.
         List<RecipeHolder<CraftingRecipe>> crafting = new ArrayList<>();
         for (ResourceLocation id : BoardDishes.ids()) {
             recipes.byKey(id).ifPresent(holder -> {
-                if (holder.value() instanceof CraftingRecipe recipe) {
-                    crafting.add(new RecipeHolder<>(holder.id(), recipe));
+                if (holder.value() instanceof CraftingRecipe) {
+                    @SuppressWarnings("unchecked")
+                    RecipeHolder<CraftingRecipe> craft = (RecipeHolder<CraftingRecipe>) (RecipeHolder<?>) holder;
+                    crafting.add(craft);
                 }
             });
         }

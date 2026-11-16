@@ -120,6 +120,11 @@ public final class FabricBoardTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void anOrderTheBookDoesNotUseMakesTheDish(GameTestHelper helper) {
+        BoardTests.anOrderTheBookDoesNotUseMakesTheDish(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void aToolThatIsALayerCutsOnlyWhatItCuts(GameTestHelper helper) {
         BoardTests.aToolThatIsALayerCutsOnlyWhatItCuts(helper);
     }

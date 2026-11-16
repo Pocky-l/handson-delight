@@ -233,31 +233,30 @@ public final class BoardLogic implements StationLogic {
         }
         boolean cuttable = !Cutting.recipesFor(station.level(), carried).isEmpty();
         // Food the knife cuts lies down to be cut, even when a dish could start from it: the dish starts when its next layer goes
-        // on top (below). Anything else that starts a dish begins the layers.
+        // on top or under it (below). Anything else a dish takes begins the layers, in whatever order the cook lays them.
         if (layers.isEmpty() && !onBoard.isEmpty() && !ItemStack.isSameItemSameComponents(onBoard, carried)
-                && AssemblyRecipes.fits(List.of(onBoard.copyWithCount(1), carried.copyWithCount(1)))) {
+                && placement(List.of(onBoard.copyWithCount(1)), carried) >= 0) {
             layers = startDish(station, player, onBoard);
             onBoard = ItemStack.EMPTY;
         } else if (layers.isEmpty() && !onBoard.isEmpty() && !ItemStack.isSameItemSameComponents(onBoard, carried) && isDone(station.level())
-                && (cuttable || AssemblyRecipes.isBase(carried))) {
+                && (cuttable || AssemblyRecipes.isIngredient(carried))) {
             clear(station, player, onBoard);
             onBoard = ItemStack.EMPTY;
         }
-        if (!layers.isEmpty() || onBoard.isEmpty() && !cuttable && AssemblyRecipes.isBase(carried)) {
-            List<ItemStack> next = new ArrayList<>(layers);
-            next.add(carried.copyWithCount(1));
-            if (layers.size() >= CuttingBoardStation.MOST_LAYERS || !AssemblyRecipes.fits(next)) {
+        if (!layers.isEmpty() || onBoard.isEmpty() && !cuttable && AssemblyRecipes.isIngredient(carried)) {
+            int at = layers.size() >= CuttingBoardStation.MOST_LAYERS ? -1 : placement(layers, carried);
+            if (at < 0) {
                 refuse(station, byUse ? ItemStack.EMPTY : carried, byUse);
                 return;
             }
-            // A batch: the bread sets how many, every layer after it as many as the hand has, up to that.
+            // A batch: the first layer sets how many, every layer after it as many as the hand has, up to that.
             int batch = layers.isEmpty() ? CuttingBoardStation.BATCH : layers.get(0).getCount();
-            state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, layers.size()), carried.split(one ? 1 : Math.min(carried.getCount(), batch)));
+            putLayer(state, layers, at, carried.split(one ? 1 : Math.min(carried.getCount(), batch)));
             putBack(player, from, carried);
             CompoundTag where = new CompoundTag();
-            where.putInt(CuttingBoardStation.AT, layers.size());
+            where.putInt(CuttingBoardStation.AT, at);
             station.effect(CuttingBoardStation.EFFECT_PLACED, "surface", where);
-            finishIfWanted(station, player, next);
+            finishIfWanted(station, player, layers(state));
             return;
         }
         boolean fits = onBoard.isEmpty() ? cuttable : ItemStack.isSameItemSameComponents(onBoard, carried) && !board.handson$isCarving();
@@ -334,6 +333,28 @@ public final class BoardLogic implements StationLogic {
             give(player, rest);
         }
         return List.of(base);
+    }
+
+    /**
+     * Where {@code item} goes among {@code layers}: under them when it is the base a dish of theirs still lacks (bread laid after
+     * the filling), else on top; -1 when no dish takes it with them.
+     */
+    private static int placement(List<ItemStack> layers, ItemStack item) {
+        ItemStack one = item.copyWithCount(1);
+        if (AssemblyRecipes.goesUnder(layers, one)) {
+            return 0;
+        }
+        List<ItemStack> next = new ArrayList<>(layers);
+        next.add(one);
+        return AssemblyRecipes.fits(next) ? layers.size() : -1;
+    }
+
+    /** {@code put} becomes layer {@code at}; the layers from there up move one higher. */
+    private static void putLayer(StationState state, List<ItemStack> layers, int at, ItemStack put) {
+        for (int i = layers.size(); i > at; i--) {
+            state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, i), layers.get(i - 1));
+        }
+        state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, at), put);
     }
 
     /**
@@ -455,8 +476,15 @@ public final class BoardLogic implements StationLogic {
         } else if (layers.isEmpty() && !onBoard.isEmpty()) {
             clear(station, player, onBoard);
         }
+        // A base by name the cook did not lay first slides in under what lies there; the rest goes on top.
+        boolean under = !layers.isEmpty() && dish.kind() != AssemblyRecipes.Base.FIRST && missing.get(0) == dish.base();
         for (int m = 0; m < missing.size(); m++) {
-            state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, layers.size() + m), kinds[m].copyWithCount(counts[m]));
+            ItemStack layer = kinds[m].copyWithCount(counts[m]);
+            if (m == 0 && under) {
+                putLayer(state, layers, 0, layer);
+            } else {
+                state.setItem(SlotRef.of(CuttingBoardStation.LAYERS, layers.size() + m), layer);
+            }
         }
         CompoundTag where = new CompoundTag();
         where.putInt(CuttingBoardStation.AT, layers.size() + missing.size() - 1);

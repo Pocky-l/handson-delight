@@ -2,6 +2,9 @@
 
 ## [1.5.1+1.21.1] - Unreleased
 ### Fixed
+- The cutting board takes what a dish needs in any order: a bowl, bread or a tortilla laid after the rest slides in under it.
+  Dishes of other mods no longer need their first ingredient first.
+- [JEI](https://modrinth.com/mod/jei) showed the dishes made on the cutting board in the crafting table as well.
 - [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle could keep 250 mB that would not pour out or let a new batch in ([#31](https://github.com/Pocky-l/handson-delight/issues/31)).
 - A milk bucket on the cooking pot makes [Brazilian Delight](https://modrinth.com/mod/braziliandelight)'s milk pot again, so its heavy cream can be made.
 - In a LAN game, a guest who turned the cutting board off can craft its dishes in the crafting grid again.

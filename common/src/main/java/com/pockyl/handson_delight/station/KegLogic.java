@@ -292,15 +292,27 @@ public final class KegLogic implements StationLogic {
      */
     private List<ItemStack> useWhile(ItemStack stack, boolean tap, boolean all, boolean creative) {
         List<ItemStack> back = new java.util.ArrayList<>();
+        int uses = 0;
         do {
+            int count = stack.getCount();
+            int amount = keg.handson$amount();
+            int returned = back.size();
             for (ItemStack got : keg.handson$use(stack, 1, creative && !tap)) {
                 if (got != stack) {
                     back.add(got);
                 }
             }
-        } while (all && !stack.isEmpty() && (tap ? keg.handson$canTap(stack) : keg.handson$canPour(stack)));
+            // Stops when a use changed nothing: Brewin' and Chewin' leaves everything as it is while its own output slot is full
+            // (or holds another drink), which the checks below don't see, and the loop would never end on the server thread.
+            if (stack.getCount() == count && keg.handson$amount() == amount && back.size() == returned) {
+                break;
+            }
+        } while (all && ++uses < MAX_USES && !stack.isEmpty() && (tap ? keg.handson$canTap(stack) : keg.handson$canPour(stack)));
         return back;
     }
+
+    /** At most this many uses for one click with {@code all}: far more than a stack of containers or a full keg needs. */
+    private static final int MAX_USES = 256;
 
     /** An empty hand at the tap: a container from the inventory is filled, or all of them; the drinks go to the inventory. */
     private void tapFromInventory(StationContext station, Player player, boolean all) {

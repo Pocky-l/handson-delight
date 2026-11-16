@@ -81,6 +81,10 @@ public final class SkilletCooking {
         if (!frying.byHand() || level == null) {
             return false;
         }
+        if (frying.ready()) {
+            // Done and the cook's: what the campfire would make of it next (a fried egg into an omelette) is not made by itself.
+            return true;
+        }
         if (!HandsOnConfig.skillet()) {
             // The station was turned off: nobody can toss this any more, Farmer's Delight cooks it its way.
             ((FryingPan) skillet).handson$farmersDelightsTime(skilletTicks(level, stack, ((FryingPan) skillet).handson$fireAspect()));
@@ -138,7 +142,8 @@ public final class SkilletCooking {
      */
     public static boolean takes(SkilletBlockEntity skillet, ItemStack stack) {
         ItemStack inPan = skillet.getStoredStack();
-        if (stack.isEmpty() || skillet.getBlockState().getValue(SkilletBlock.WATERLOGGED) || recipe(skillet.getLevel(), stack).isEmpty()) {
+        if (stack.isEmpty() || skillet.getBlockState().getValue(SkilletBlock.WATERLOGGED) || frying(skillet).ready()
+                || recipe(skillet.getLevel(), stack).isEmpty()) {
             return false;
         }
         return inPan.isEmpty() || ItemStack.isSameItemSameComponents(inPan, stack) && inPan.getCount() < Math.min(BATCH, stack.getMaxStackSize());
@@ -148,7 +153,7 @@ public final class SkilletCooking {
     public static boolean turn(SkilletBlockEntity skillet, Player player) {
         Level level = skillet.getLevel();
         Frying frying = frying(skillet);
-        if (level == null || skillet.getStoredStack().isEmpty() || level.getGameTime() - frying.turnedAt() < TURN_GAP
+        if (level == null || skillet.getStoredStack().isEmpty() || frying.ready() || level.getGameTime() - frying.turnedAt() < TURN_GAP
                 || recipe(level, skillet.getStoredStack()).isEmpty()) {
             return false;
         }
@@ -176,9 +181,12 @@ public final class SkilletCooking {
         return stack.is(KitchenTags.ONE_SIDED);
     }
 
-    /** Whether {@code stack} in the pan is done: nothing the campfire makes of it any more. */
-    public static boolean isDone(Level level, ItemStack stack) {
-        return !stack.isEmpty() && recipe(level, stack).isEmpty();
+    /**
+     * Whether {@code stack} in the pan is done: fried at the station and waiting for the cook ({@code ready}), or nothing the campfire
+     * makes of it any more.
+     */
+    public static boolean isDone(Level level, ItemStack stack, boolean ready) {
+        return !stack.isEmpty() && (ready || recipe(level, stack).isEmpty());
     }
 
     /**
@@ -212,9 +220,9 @@ public final class SkilletCooking {
         Optional<StationContext> station = level instanceof ServerLevel server ? Diegesis.activeStation(server, skillet.getBlockPos())
                 : Optional.empty();
         if (left.isEmpty() && done.size() == 1 && done.get(0).getCount() <= done.get(0).getMaxStackSize()) {
-            // Still the cook's (byHand): Farmer's Delight's own cooking stays out of a pan of finished food.
+            // Still the cook's (byHand): Farmer's Delight's own cooking stays out of a pan of finished food, and so does the station's.
             Platform.INSTANCE.setItem(skillet, done.get(0));
-            frying.reset();
+            frying.serve();
             CompoundTag ready = new CompoundTag();
             ready.put(SkilletStation.STACK, done.get(0).saveOptional(level.registryAccess()));
             ready.putBoolean(SkilletStation.IN_PAN, true);

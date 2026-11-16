@@ -615,11 +615,20 @@ public final class SkilletBehavior implements StationBehavior {
         }
     }
 
-    /** Whether what the pan shows is done, looked up once for each stack shown. */
+    /**
+     * Whether what the pan shows is done: fried at the station and waiting, or nothing the campfire makes of it; the recipe looked up
+     * once for each stack shown.
+     */
     private boolean isShownDone(StationView view) {
+        if (shown.isEmpty()) {
+            return false;
+        }
+        if (view.state().data().getBoolean(SkilletStation.READY)) {
+            return true;
+        }
         if (doneFor != shown) {
             doneFor = shown;
-            shownDone = SkilletCooking.isDone(view.level(), shown);
+            shownDone = SkilletCooking.isDone(view.level(), shown, false);
         }
         return shownDone;
     }
@@ -720,7 +729,7 @@ public final class SkilletBehavior implements StationBehavior {
         } else if (event instanceof SceneEvent.Click click && "food".equals(click.node()) && !shown.isEmpty()) {
             // The food itself is what a player clicks when it smokes for turning: it turns, as by the handle. The other button takes
             // it back, raw or half done: a way to start over. Done food is taken by either button.
-            if (click.button() == 1 || SkilletCooking.isDone(view.level(), shown)) {
+            if (click.button() == 1 || isShownDone(view)) {
                 view.sendAction(SkilletStation.ACTION_TAKE, new CompoundTag());
             } else {
                 toss(view, 0.4F);

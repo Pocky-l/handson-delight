@@ -33,6 +33,8 @@ public final class SkilletStation {
     public static final String UP = "up";
     public static final String BATCH = "batch";
     public static final String BY_HAND = "by_hand";
+    /** Fried at the station and waiting for the cook: done, whatever the campfire would make of it next. */
+    public static final String READY = "ready";
     public static final String HEATED = "heated";
 
     /**

@@ -43,6 +43,8 @@ public final class StoveStation {
     public static final String DOWN = "down";
     public static final String UP = "up";
     public static final String BY_HAND = "by_hand";
+    /** Grilled at the station and waiting for the cook: done, whatever the fire would make of it next. */
+    public static final String READY = "ready";
     public static final String LIT = "lit";
 
     /**

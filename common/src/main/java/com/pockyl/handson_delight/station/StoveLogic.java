@@ -128,6 +128,7 @@ public final class StoveLogic implements StationLogic {
                 data.putFloat(StoveStation.DOWN + place, steps(grill.down(place)));
                 data.putFloat(StoveStation.UP + place, steps(grill.up(place)));
                 data.putBoolean(StoveStation.BY_HAND + place, grill.byHand(place));
+                data.putBoolean(StoveStation.READY + place, grill.ready(place));
             }
         }
         data.putBoolean(StoveStation.LIT, StoveCooking.isLit(stove));

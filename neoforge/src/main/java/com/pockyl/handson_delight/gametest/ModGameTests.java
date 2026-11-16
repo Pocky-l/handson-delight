@@ -514,6 +514,11 @@ public final class ModGameTests {
         SkilletTests.anEggFriesWithoutATurn(helper);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void friedFoodFriesNoFurther(GameTestHelper helper) {
+        SkilletTests.friedFoodFriesNoFurther(helper);
+    }
+
     @GameTest(template = "empty")
     public static void everyStoveOfTheTagIsAStation(GameTestHelper helper) {
         StoveTests.everyStoveOfTheTagIsAStation(helper);

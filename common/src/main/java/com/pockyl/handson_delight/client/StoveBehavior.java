@@ -350,7 +350,7 @@ public final class StoveBehavior implements StationBehavior {
         }
         // The piece itself is what the cook clicks when it smokes: it turns. The other button takes it back, raw or half done, a way to
         // start over; done, either takes it.
-        if (click.button() == 1 || StoveCooking.isDone(view.level(), shown[place])) {
+        if (click.button() == 1 || isShownDone(view, place)) {
             CompoundTag at = new CompoundTag();
             at.putInt(StoveStation.PLACE, place);
             view.sendAction(StoveStation.ACTION_TAKE, at);
@@ -444,9 +444,15 @@ public final class StoveBehavior implements StationBehavior {
 
     /** Whether the piece shown on {@code place} is done, looked up once for each stack shown. */
     private boolean isShownDone(StationView view, int place) {
+        if (shown[place].isEmpty()) {
+            return false;
+        }
+        if (view.state().data().getBoolean(StoveStation.READY + place)) {
+            return true;
+        }
         if (doneFor[place] != shown[place]) {
             doneFor[place] = shown[place];
-            shownDone[place] = StoveCooking.isDone(view.level(), shown[place]);
+            shownDone[place] = StoveCooking.isDone(view.level(), shown[place], false);
         }
         return shownDone[place];
     }

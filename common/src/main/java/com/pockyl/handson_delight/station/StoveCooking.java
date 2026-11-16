@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CampfireCookingRecipe;
@@ -106,7 +107,7 @@ public final class StoveCooking {
             progress[place] = 0;
             times[place] = Integer.MAX_VALUE;
             Optional<CampfireCookingRecipe> recipe = SkilletCooking.recipe(level, stack);
-            if (!lit || recipe.isEmpty() || grill.waits(place)) {
+            if (!lit || recipe.isEmpty() || grill.waits(place) || grill.ready(place)) {
                 continue;
             }
             if (SkilletCooking.isOneSided(stack)) {
@@ -146,6 +147,11 @@ public final class StoveCooking {
      * it keeps the station's cooking time; with the station turned off that is Farmer's Delight's.
      */
     private static void handOver(AbstractStoveBlockEntity stove, int place) {
+        if (grill(stove).ready(place)) {
+            // Done already: it comes off the grill as Farmer's Delight's food does, instead of cooking on into what the fire makes of it.
+            popOff(stove, place);
+            return;
+        }
         int time = farmersDelightsTime(stove, place);
         ((StoveTop) stove).handson$times()[place] = time <= 1 ? time : HandsOnConfig.scaled(time, HandsOnConfig.stoveTime());
         grill(stove).farmersDelightsWay(place);
@@ -173,7 +179,7 @@ public final class StoveCooking {
         Level level = stove.getLevel();
         ItemStack stack = Platform.INSTANCE.getItem(stove, place);
         Grill grill = grill(stove);
-        if (level == null || stack.isEmpty() || grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
+        if (level == null || stack.isEmpty() || grill.ready(place) || grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
             return 1;
         }
         return SkilletCooking.recipe(level, stack).map(CampfireCookingRecipe::getCookingTime).filter(time -> time > 0).orElse(1);
@@ -319,7 +325,7 @@ public final class StoveCooking {
         Level level = stove.getLevel();
         Grill grill = grill(stove);
         ItemStack stack = place >= 0 && place < places(stove) ? Platform.INSTANCE.getItem(stove, place) : ItemStack.EMPTY;
-        if (level == null || stack.isEmpty() || SkilletCooking.recipe(level, stack).isEmpty()
+        if (level == null || stack.isEmpty() || grill.ready(place) || SkilletCooking.recipe(level, stack).isEmpty()
                 || level.getGameTime() - grill.turnedAt(place) < TURN_GAP) {
             return false;
         }
@@ -388,9 +394,24 @@ public final class StoveCooking {
         return kept.isEmpty() ? Ingredient.EMPTY : Ingredient.of(kept.stream());
     }
 
-    /** Whether {@code stack} on the grill is done: nothing the fire makes of it any more. */
-    public static boolean isDone(Level level, ItemStack stack) {
-        return SkilletCooking.isDone(level, stack);
+    /**
+     * Whether {@code stack} on the grill is done: grilled at the station and waiting ({@code ready}), or nothing the fire makes of it
+     * any more.
+     */
+    public static boolean isDone(Level level, ItemStack stack, boolean ready) {
+        return SkilletCooking.isDone(level, stack, ready);
+    }
+
+    /** The piece on {@code place} jumps off the grill, as Farmer's Delight's stove throws what it has cooked. */
+    private static void popOff(AbstractStoveBlockEntity stove, int place) {
+        Level level = stove.getLevel();
+        ItemStack done = Platform.INSTANCE.getItem(stove, place).copy();
+        Platform.INSTANCE.setItem(stove, place, ItemStack.EMPTY);
+        grill(stove).farmersDelightsWay(place);
+        if (level != null && !done.isEmpty()) {
+            BlockPos pos = stove.getBlockPos();
+            level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, done, 0.0, 0.1, 0.0));
+        }
     }
 
     private static void effect(AbstractStoveBlockEntity stove, ResourceLocation effect, CompoundTag data) {

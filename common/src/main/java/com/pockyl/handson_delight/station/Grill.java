@@ -20,6 +20,11 @@ public final class Grill {
     private final float[] down = new float[PLACES];
     private final float[] up = new float[PLACES];
     private final boolean[] byHand = new boolean[PLACES];
+    /**
+     * Grilled at the station and waiting for the cook: it grills no further, even when the fire makes something else of it (More
+     * Delight's fried egg into an omelette), as Farmer's Delight's stove throws its food off once it is cooked.
+     */
+    private final boolean[] ready = new boolean[PLACES];
     private final long[] turnedAt = new long[PLACES];
     /** The doneness last sent to the clients, in steps: they hear of every step, not of every tick. */
     private int sent = -1;
@@ -41,6 +46,10 @@ public final class Grill {
         return byHand[place];
     }
 
+    public boolean ready(int place) {
+        return ready[place];
+    }
+
     /** The side on the grill is done: nothing goes on until the piece is turned. */
     public boolean waits(int place) {
         return byHand[place] && down[place] >= 1.0F && up[place] < 1.0F;
@@ -57,6 +66,7 @@ public final class Grill {
     /** Back to Farmer's Delight's own cooking, from raw: food put on with its right click, or a place left empty. */
     public void farmersDelightsWay(int place) {
         byHand[place] = false;
+        ready[place] = false;
         down[place] = 0.0F;
         up[place] = 0.0F;
     }
@@ -78,17 +88,18 @@ public final class Grill {
         turnedAt[place] = now;
     }
 
-    /** Done on both sides: the piece became what the fire makes of it and starts over as that. */
+    /** Done on both sides: the piece became what the fire makes of it and waits as that for the cook. */
     void done(int place) {
         down[place] = 0.0F;
         up[place] = 0.0F;
+        ready[place] = true;
     }
 
     /** Whether the clients should hear of the grill again: a piece got a step further, or something else changed. */
     boolean dueToSend() {
         int now = 0;
         for (int place = 0; place < PLACES; place++) {
-            now = now * 31 + (Mth.floor(down[place] * STEPS) * (STEPS + 1) + Mth.floor(up[place] * STEPS)) * 2 + (byHand[place] ? 1 : 0);
+            now = now * 31 + (Mth.floor(down[place] * STEPS) * (STEPS + 1) + Mth.floor(up[place] * STEPS)) * 4 + (byHand[place] ? 1 : 0) + (ready[place] ? 2 : 0);
         }
         if (now == sent) {
             return false;
@@ -102,8 +113,9 @@ public final class Grill {
         boolean any = false;
         for (int place = 0; place < PLACES; place++) {
             CompoundTag one = new CompoundTag();
-            if (byHand[place] || down[place] > 0.0F || up[place] > 0.0F) {
+            if (byHand[place] || ready[place] || down[place] > 0.0F || up[place] > 0.0F) {
                 one.putBoolean("by_hand", byHand[place]);
+                one.putBoolean("ready", ready[place]);
                 one.putFloat("down", down[place]);
                 one.putFloat("up", up[place]);
                 any = true;
@@ -120,6 +132,7 @@ public final class Grill {
         for (int place = 0; place < PLACES; place++) {
             CompoundTag one = place < places.size() ? places.getCompound(place) : new CompoundTag();
             byHand[place] = one.getBoolean("by_hand");
+            ready[place] = one.getBoolean("ready");
             down[place] = one.getFloat("down");
             up[place] = one.getFloat("up");
         }

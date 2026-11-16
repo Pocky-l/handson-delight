@@ -97,6 +97,9 @@ public final class StoveTests {
         });
         helper.runAfterDelay(2 * BEEF_SIDE + 25, () -> {
             helper.assertTrue(top.on(0).is(Items.COOKED_BEEF), "turned once, it is done and waits on the grill");
+            helper.assertTrue(top.grill().ready(0) && top.grill().down(0) == 0.0F, "ready for the cook, it grills no further");
+            top.at(StoveStation.ACTION_TURN, 0);
+            helper.assertTrue(top.grill().ready(0) && top.grill().down(0) == 0.0F, "a click does not start it over");
             helper.assertTrue(top.on(1).is(Items.BEEF) && top.grill().waits(1), "the others still wait to be turned");
             top.at(StoveStation.ACTION_TAKE, 0);
             helper.assertTrue(top.cook.getInventory().countItem(Items.COOKED_BEEF) == 1 && top.on(0).isEmpty(), "taken");

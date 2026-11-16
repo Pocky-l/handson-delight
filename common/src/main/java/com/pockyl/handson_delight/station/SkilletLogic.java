@@ -132,6 +132,7 @@ public final class SkilletLogic implements StationLogic {
             data.putFloat(SkilletStation.UP, steps(frying.up()));
             data.putInt(SkilletStation.BATCH, Math.max(1, Math.min(skillet.getStoredStack().getCount(), SkilletCooking.BATCH)));
             data.putBoolean(SkilletStation.BY_HAND, frying.byHand());
+            data.putBoolean(SkilletStation.READY, frying.ready());
         }
         data.putBoolean(SkilletStation.HEATED, skillet.isHeated());
         if (!data.equals(state.data())) {

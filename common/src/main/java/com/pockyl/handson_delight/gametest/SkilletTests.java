@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.gametest;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +23,7 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnConfig;
+import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.Frying;
 import com.pockyl.handson_delight.station.SkilletCooking;
 import com.pockyl.handson_delight.station.SkilletLogic;
@@ -122,6 +124,43 @@ public final class SkilletTests {
         helper.runAfterDelay(2 * TWO_BEEF_SIDE + 10, () -> {
             ItemStack inPan = pan.skillet.getStoredStack();
             helper.assertTrue(inPan.getCount() == 2 && !inPan.is(Items.EGG), "done in the time of both sides, never tossed, got " + inPan);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Fried food waits in the pan as it is, even when the campfire makes something else of it: with More Delight a fried egg cooks into
+     * an omelette, and an egg fried at the station must stay a fried egg (GH #33). Without More Delight it checks the same on a steak.
+     */
+    public static void friedFoodFriesNoFurther(GameTestHelper helper) {
+        Pan pan = pan(helper);
+        boolean moreDelight = Platform.INSTANCE.isLoaded("moredelight");
+        pan.place(moreDelight ? Items.EGG : Items.BEEF, 2);
+        int done = moreDelight ? 2 * TWO_BEEF_SIDE + 10 : TWO_BEEF_SIDE + 10;
+        if (!moreDelight) {
+            helper.runAfterDelay(done, pan::toss);
+            done = 2 * TWO_BEEF_SIDE + 25;
+        }
+        int ready = done;
+        helper.runAfterDelay(ready, () -> {
+            ItemStack inPan = pan.skillet.getStoredStack();
+            helper.assertTrue(inPan.getCount() == 2 && !inPan.is(Items.EGG) && !inPan.is(Items.BEEF), "fried, got " + inPan);
+            helper.assertTrue(pan.frying().ready(), "it waits for the cook");
+            helper.assertTrue(SkilletCooking.isDone(helper.getLevel(), inPan, pan.frying().ready()), "and is done");
+        });
+        int next = moreDelight ? 2 * SkilletCooking.sideTicks(SkilletCooking.skilletTicks(helper.getLevel(),
+                new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("fried_egg"))), 0), 2, 1.0F) : 40;
+        helper.runAfterDelay(ready + next + 20, () -> {
+            ItemStack inPan = pan.skillet.getStoredStack();
+            helper.assertTrue(inPan.getCount() == 2 && (!moreDelight || inPan.is(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("fried_egg")))),
+                    "past what the next recipe would take, it is still what was fried, got " + inPan);
+            helper.assertTrue(pan.frying().down() == 0.0F && pan.frying().up() == 0.0F, "and fries no further");
+            pan.toss();
+            helper.assertTrue(pan.frying().ready() && pan.frying().down() == 0.0F, "a toss does not start it over");
+            pan.place(inPan.getItem(), 1);
+            helper.assertTrue(pan.skillet.getStoredStack().getCount() == 2, "nothing more goes into a pan of done food");
+            pan.act(SkilletStation.ACTION_TAKE, new CompoundTag());
+            helper.assertTrue(pan.skillet.getStoredStack().isEmpty() && !pan.frying().ready(), "taken, the pan starts over");
             helper.succeed();
         });
     }

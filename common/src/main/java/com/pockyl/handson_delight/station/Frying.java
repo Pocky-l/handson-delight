@@ -21,6 +21,11 @@ public final class Frying {
     private int batch;
     /** Put in or turned at the station: the food fries in halves and waits to be turned. Else Farmer's Delight cooks it its way. */
     private boolean byHand;
+    /**
+     * Fried at the station and waiting in the pan for the cook: it fries no further, even when the campfire makes something else of it
+     * (More Delight's fried egg into an omelette), as Farmer's Delight's skillet throws its food out once it is cooked.
+     */
+    private boolean ready;
     /** Who turned it last: the food goes to them when it is done, while they are still at the pan. Not saved. */
     private UUID cook;
     private long turnedAt = Long.MIN_VALUE / 2;
@@ -41,6 +46,10 @@ public final class Frying {
 
     public boolean byHand() {
         return byHand;
+    }
+
+    public boolean ready() {
+        return ready;
     }
 
     /** The side on the pan is done: nothing goes on until the food is turned. */
@@ -66,6 +75,7 @@ public final class Frying {
     /** Back to Farmer's Delight's own cooking, from raw: food put in with its right click, or an emptied pan. */
     public void farmersDelightsWay() {
         byHand = false;
+        ready = false;
         reset();
     }
 
@@ -73,6 +83,12 @@ public final class Frying {
         down = 0.0F;
         up = 0.0F;
         batch = 0;
+    }
+
+    /** Both sides are done: what lies in the pan now is the cook's, to be taken. */
+    void serve() {
+        reset();
+        ready = true;
     }
 
     void fry(float amount) {
@@ -117,12 +133,13 @@ public final class Frying {
 
     private int state() {
         int steps = Mth.floor(down * STEPS) * (STEPS + 1) + Mth.floor(up * STEPS);
-        return (steps * 31 + batch) * 2 + (byHand ? 1 : 0);
+        return ((steps * 31 + batch) * 2 + (byHand ? 1 : 0)) * 2 + (ready ? 1 : 0);
     }
 
     public void save(CompoundTag tag) {
-        if (byHand || down > 0.0F || up > 0.0F) {
+        if (byHand || ready || down > 0.0F || up > 0.0F) {
             tag.putBoolean("by_hand", byHand);
+            tag.putBoolean("ready", ready);
             tag.putFloat("down", down);
             tag.putFloat("up", up);
             tag.putInt("batch", batch);
@@ -131,6 +148,7 @@ public final class Frying {
 
     public void load(CompoundTag tag) {
         byHand = tag.getBoolean("by_hand");
+        ready = tag.getBoolean("ready");
         down = tag.getFloat("down");
         up = tag.getFloat("up");
         batch = tag.getInt("batch");

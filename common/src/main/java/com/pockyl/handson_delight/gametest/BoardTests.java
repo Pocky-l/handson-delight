@@ -1288,6 +1288,21 @@ public final class BoardTests {
     }
 
     /**
+     * Food that makes no dish with {@code lying} on the board, so it bounces back from it: a cabbage on beef, unless a pack has a dish of
+     * both (Pam's Food Extended's surf and turf takes any meat and any vegetable, -Pculinary). Empty when every candidate fits.
+     */
+    private static ItemStack foodWithoutADish(Item lying) {
+        ItemStack under = new ItemStack(lying);
+        for (Item candidate : List.of(fd("cabbage"), Items.BEEF, Items.SUGAR, Items.EGG, Items.APPLE, Items.HONEY_BOTTLE, Items.BREAD)) {
+            ItemStack food = new ItemStack(candidate);
+            if (candidate != lying && !AssemblyRecipes.fits(List.of(under, food)) && !AssemblyRecipes.fits(List.of(food, under))) {
+                return food;
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /**
      * Food put down where something lies that is no work in hand, a dish made before or a block put there without the station, sends
      * that to the cook and takes its place. Food waiting to be cut stays, and other food bounces back from it.
      */
@@ -1298,11 +1313,14 @@ public final class BoardTests {
         setup.place();
         helper.assertTrue(setup.onBoard().is(Items.BEEF) && setup.onBoard().getCount() == 3, "the beef lies there to be cut");
         helper.assertTrue(setup.cook.getInventory().countItem(fd("hamburger")) == 2, "the burgers went to the cook");
-        setup.carry(new ItemStack(fd("cabbage")));
-        setup.place();
-        helper.assertTrue(setup.onBoard().is(Items.BEEF) && setup.cook.inventoryMenu.getCarried().is(fd("cabbage")),
-                "beef waiting to be cut stays, the cabbage stays in the hand");
-        helper.assertTrue(setup.station.effects.contains(CuttingBoardStation.EFFECT_REFUSED), "it bounced back");
+        ItemStack bounced = foodWithoutADish(Items.BEEF);
+        if (!bounced.isEmpty()) {
+            setup.carry(bounced.copy());
+            setup.place();
+            helper.assertTrue(setup.onBoard().is(Items.BEEF) && setup.cook.inventoryMenu.getCarried().is(bounced.getItem()),
+                    "beef waiting to be cut stays, the " + bounced.getItem() + " stays in the hand");
+            helper.assertTrue(setup.station.effects.contains(CuttingBoardStation.EFFECT_REFUSED), "it bounced back");
+        }
         Board other = board(helper, new BlockPos(3, 1, 1));
         Platform.INSTANCE.setItem(other.board, new ItemStack(Items.COBBLESTONE));
         other.carry(new ItemStack(fd("cabbage")));
@@ -1326,9 +1344,15 @@ public final class BoardTests {
         setup.act(CuttingBoardStation.ACTION_PLACE, byUse(1));
         helper.assertTrue(setup.onBoard().is(fd("cabbage")) && setup.onBoard().getCount() == 4 && inventory.getItem(1).isEmpty(),
                 "food goes down whole");
-        inventory.setItem(2, new ItemStack(Items.BEEF, 2));
+        ItemStack other = foodWithoutADish(fd("cabbage"));
+        if (other.isEmpty()) {
+            helper.succeed();
+            return;
+        }
+        inventory.setItem(2, other.copyWithCount(2));
         setup.act(CuttingBoardStation.ACTION_PLACE, byUse(2));
-        helper.assertTrue(inventory.getItem(2).getCount() == 2 && setup.onBoard().is(fd("cabbage")), "other food stays in the hand");
+        helper.assertTrue(inventory.getItem(2).getCount() == 2 && setup.onBoard().is(fd("cabbage")), "other food stays in the hand: "
+                + other.getItem());
         helper.assertFalse(setup.station.effects.contains(CuttingBoardStation.EFFECT_REFUSED), "without a word");
         helper.succeed();
     }

@@ -32,7 +32,12 @@ abstract class PlayerListMixin {
         Platform.INSTANCE.sendBoardDishes(player);
     }
 
-    @Inject(method = "reloadResources", at = @At("HEAD"))
+    /**
+     * After a reload, just before the tags go out: after NeoForge's datapack sync, where a mod may set the recipes anew, so the
+     * viewers get the dishes as they are then.
+     */
+    @Inject(method = "reloadResources", at = @At(value = "NEW",
+            target = "net/minecraft/network/protocol/common/ClientboundUpdateTagsPacket"))
     private void handson$boardDishesOnReload(CallbackInfo callback) {
         // The tags were bound again after the recipes loaded: the board's dishes are chosen with the new ones.
         AssemblyRecipes.tagsChanged();

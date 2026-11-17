@@ -106,8 +106,12 @@ public final class StoveCooking {
             // Farmer's Delight would pop it off once its count reaches its time: neither ever comes.
             progress[place] = 0;
             times[place] = Integer.MAX_VALUE;
+            if (!lit || grill.waits(place) || grill.ready(place)) {
+                continue;
+            }
+            // Only now: a lookup searches every campfire recipe, and this runs for each piece every tick.
             Optional<CampfireCookingRecipe> recipe = SkilletCooking.recipe(level, stack);
-            if (!lit || recipe.isEmpty() || grill.waits(place) || grill.ready(place)) {
+            if (recipe.isEmpty()) {
                 continue;
             }
             if (SkilletCooking.isOneSided(stack)) {

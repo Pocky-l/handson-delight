@@ -37,6 +37,7 @@ import com.pockyl.handson_delight.station.StoveLogic;
 import com.pockyl.handson_delight.station.StoveStation;
 import com.pockyl.handson_delight.station.StoveTop;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -237,6 +238,29 @@ public final class StoveTests {
             top.cook.setItemInHand(InteractionHand.MAIN_HAND, held);
             helper.assertFalse(StoveStation.opens(top.cook, pos, state), held + " keeps the stove's own use");
         }
+        helper.succeed();
+    }
+
+    /**
+     * Every campfire recipe the game has, each thing it takes that the grill keeps (no eggs), goes onto a free place at the station:
+     * the stove's book lists exactly those, so a page whose food the grill refused could not be made.
+     */
+    public static void everyCampfireFoodGoesOnTheGrill(GameTestHelper helper) {
+        Top top = stove(helper);
+        Level level = helper.getLevel();
+        List<String> refused = new ArrayList<>();
+        for (RecipeHolder<CampfireCookingRecipe> holder : level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {
+            CampfireCookingRecipe recipe = holder.value();
+            if (recipe.getIngredients().isEmpty() || recipe.getResultItem(level.registryAccess()).isEmpty()) {
+                continue;
+            }
+            for (ItemStack food : StoveCooking.grillable(recipe.getIngredients().get(0)).getItems()) {
+                if (!food.isEmpty() && !food.is(Items.BARRIER) && !StoveCooking.takes(top.stove, food.copyWithCount(1))) {
+                    refused.add(holder.id() + " (" + food.getItem() + ")");
+                }
+            }
+        }
+        helper.assertTrue(refused.isEmpty(), refused.size() + " refused by the grill: " + refused);
         helper.succeed();
     }
 

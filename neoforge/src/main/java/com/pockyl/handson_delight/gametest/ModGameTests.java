@@ -510,6 +510,16 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void everyCampfireFoodGoesOnTheGrill(GameTestHelper helper) {
+        StoveTests.everyCampfireFoodGoesOnTheGrill(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void everyCampfireFoodGoesInThePan(GameTestHelper helper) {
+        SkilletTests.everyCampfireFoodGoesInThePan(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void anEggStaysOffTheGrill(GameTestHelper helper) {
         StoveTests.anEggStaysOffTheGrill(helper);
     }

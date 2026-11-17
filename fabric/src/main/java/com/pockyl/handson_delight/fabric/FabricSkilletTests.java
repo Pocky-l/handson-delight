@@ -23,6 +23,11 @@ public final class FabricSkilletTests implements FabricGameTest {
         SkilletTests.anEggFriesWithoutATurn(helper);
     }
 
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyCampfireFoodGoesInThePan(GameTestHelper helper) {
+        SkilletTests.everyCampfireFoodGoesInThePan(helper);
+    }
+
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 600)
     public void friedFoodFriesNoFurther(GameTestHelper helper) {
         SkilletTests.friedFoodFriesNoFurther(helper);

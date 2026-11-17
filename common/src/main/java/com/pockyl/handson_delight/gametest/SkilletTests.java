@@ -11,6 +11,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.CampfireCookingRecipe;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -29,6 +32,7 @@ import com.pockyl.handson_delight.station.SkilletCooking;
 import com.pockyl.handson_delight.station.SkilletLogic;
 import com.pockyl.handson_delight.station.SkilletStation;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -108,6 +112,33 @@ public final class SkilletTests {
                     && pan.cook.inventoryMenu.getCarried().getCount() == 20 - SkilletCooking.BATCH, "a batch at most goes in");
             helper.succeed();
         });
+    }
+
+    /**
+     * Every campfire recipe the game has, each thing it takes, goes into the pan at the station: the skillet's book lists every campfire
+     * recipe, so a page whose food the pan refused would be one the cook cannot make (the stage 3 audit of the Culinary Compat plan).
+     */
+    public static void everyCampfireFoodGoesInThePan(GameTestHelper helper) {
+        Pan pan = pan(helper);
+        Level level = helper.getLevel();
+        List<String> refused = new ArrayList<>();
+        for (RecipeHolder<CampfireCookingRecipe> holder : level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {
+            CampfireCookingRecipe recipe = holder.value();
+            if (recipe.getIngredients().isEmpty() || recipe.getResultItem(level.registryAccess()).isEmpty()) {
+                continue;
+            }
+            for (ItemStack food : recipe.getIngredients().get(0).getItems()) {
+                if (food.isEmpty() || food.is(Items.BARRIER)) {
+                    continue;
+                }
+                if (!SkilletCooking.takes(pan.skillet, food.copyWithCount(1))
+                        || SkilletCooking.recipe(level, food).map(found -> found.getResultItem(level.registryAccess()).isEmpty()).orElse(true)) {
+                    refused.add(holder.id() + " (" + food.getItem() + ")");
+                }
+            }
+        }
+        helper.assertTrue(refused.isEmpty(), refused.size() + " refused by the pan: " + refused);
+        helper.succeed();
     }
 
     /** An egg fries sunny side up: through from below in the time both sides of a steak take, never waiting for a toss. */

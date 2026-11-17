@@ -35,6 +35,11 @@ public final class FabricStoveTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void everyCampfireFoodGoesOnTheGrill(GameTestHelper helper) {
+        StoveTests.everyCampfireFoodGoesOnTheGrill(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void everyStoveOfTheTagIsAStation(GameTestHelper helper) {
         StoveTests.everyStoveOfTheTagIsAStation(helper);
     }

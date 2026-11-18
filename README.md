@@ -195,6 +195,47 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 [![Create Aeronautics](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/create-aeronautics.png)](https://modrinth.com/mod/create-aeronautics) ✅ **[Create Aeronautics](https://modrinth.com/mod/create-aeronautics)** (optional) - the stations open on its flying ships and stay with the ship as it flies and turns
 
+<!-- stations:start -->
+### Station compatibility
+
+Every station opens in the world on its own block. A dash means the mod has no build for that version.
+
+| Mod | Stations | 1.20.1 | 1.21.1 |
+|---|---|:---:|:---:|
+| [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight) | cooking pot, cutting board, skillet, stove | ✅ | ✅ |
+| [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin) | keg | ✅ | ✅ |
+| [Cultural Delights](https://modrinth.com/mod/cultural-delights) | oven, vat | - | ✅ |
+| [Extra Delight](https://modrinth.com/mod/extradelight) | mixing bowl, vat, melting pot, oven | - | ✅ |
+| [Farmer's Respite](https://modrinth.com/mod/farmers-respite) | kettle | ✅ | ✅ |
+| [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts) | kettle, cuisine board, pots, steamer, fermentation tank | ✅ | ✅ |
+| [Miner's Delight](https://modrinth.com/mod/miners-delight) | copper pot | ✅ | ✅ |
+
+<details><summary><b>All other mods and the planned ones</b></summary>
+
+| Mod | Stations | 1.20.1 | 1.21.1 |
+|---|---|:---:|:---:|
+| [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge) | grill, ingredients basin, kebabs on the board | ✅ | ✅ |
+| [Chopper's Delight](https://modrinth.com/mod/choppers-delight) | cutting boards of every wood | ✅ | ✅ |
+| [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads) | oven | ✅ | ✅ |
+| [Dungeons Delight](https://modrinth.com/mod/dungeons_delight) | monster pot, dungeon stove | ✅ | ✅ |
+| [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) | end stove | ✅ | ✅ |
+| [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell) | alchemist pot | ✅ | ✅ |
+| [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest) | keg, big keg, cask | ✅ | ✅ |
+| [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) | nether stove | ✅ | ✅ |
+| [Nether's Delight](https://modrinth.com/mod/nethers-delight) | blackstone stove | ✅ | - |
+| [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees) | chopping block | - | ✅ |
+| [Trail&Tales Delight](https://modrinth.com/mod/trailtales-delight) | mud stove | ✅ | ✅ |
+| [Twilight's Flavor & Delight](https://modrinth.com/mod/twilight-delight) | maze stove | ✅ | ✅ |
+| [Youkai's Homecoming](https://modrinth.com/mod/youkaishomecoming) | the same stations as Youkai's Feasts | ✅ | - |
+| [Cuisine Delight](https://modrinth.com/mod/cuisine-delight) | cuisine skillet | *planned* | *planned* |
+| [Ender's Delight](https://modrinth.com/mod/enders-delight) | endstone stove | *planned* | *planned* |
+| [Immortalers Delight](https://modrinth.com/mod/immortalers-delight) | enchantal cooler, ancient stove | *planned* | *planned* |
+| [Ube's Delight](https://modrinth.com/mod/ubes-delight) | baking mat | *planned* | *planned* |
+| [Vintage Delight](https://modrinth.com/mod/vintage-delight) | fermenting jar | *planned* | *planned* |
+
+</details>
+<!-- stations:end -->
+
 Addons of Farmer's Delight work too: their dishes are made on the board, their pies and cakes are cut in wedges, and
 the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) and
 [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) open as stations. So do

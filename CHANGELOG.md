@@ -1,69 +1,30 @@
 # Changelog
 
-## [1.5.1+1.21.1] - Unreleased
+## [1.6.0+1.21.1] - Unreleased
 ### New
-- [Extra Delight](https://modrinth.com/mod/extradelight)'s mixing bowl is a station: drop the food in, pour the milk and
-  oil, crack the eggs over the rim, then take your spoon or whisk by its handle and stir. Each circle round the bowl is a
-  stir, and a whole bowlful is mixed at once. When it is done, a bowl or bottle from your inventory dips in for it. A
-  right click with an egg cracks it for its white, as the bowl's own click does. `mixing_bowl` in the config turns it off.
-- [Extra Delight](https://modrinth.com/mod/extradelight)'s vat is a station: pour the brine in, drop the vegetables in,
-  shake in the salt or yeast when its stage comes. The lid comes off and goes back on as each stage wants it, and what
-  is made waits in the vat until you draw it into jars or bowls.
-- [Extra Delight](https://modrinth.com/mod/extradelight)'s melting pot is a station: drop chocolate into the double
-  boiler, watch it melt into the syrup going round in it and fill a bottle from it.
-- [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block, the stump of a felled tree, is
-  a station: food is cut along its marks as on the cutting board, and an axe splits the log standing on it like a pie,
-  three blows on three dashed lines through its middle, until it falls apart into wedges and planks. After 32 cuts of
-  food the stump is too dirty for more, as in Sable Trees.
-  `chopping_block=false` in the config keeps its own use.
-- Search the recipe book: click the magnifying glass over the right page and type a dish's name or a mod id.
-- A switch over the right page shows only what you can make now; it is kept for each station.
-- A "Made lately" tab keeps the last dishes you made from the book, in the same places.
-- Click a thing that goes in to see its own recipe, when the book has one.
-- [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)' oven is a station: its door drops, the rack
-  slides out, and raw food let go over it fills the free places. Fuel goes in over the rack or at its controls, each
-  piece browns as it bakes, and what is done waits on the open door. A skillet or a pot clicked on its top stands upright on
-  a burner, other tools lie flat there. Its book has Farmer's Delight's campfire dishes too, which it bakes on this
-  version. Sneak for its own menu; hoppers work as before. `oven` in the config turns it off.
-- [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest)'s keg is a station
-  ([#28](https://github.com/Pocky-l/handson-delight/issues/28)): its lid comes off, juice, water, milk or brine is poured
-  in and what ferments dropped in, and under the lid it turns to wine, beer, cheese or pickles a portion at a time, the
-  colour moving to the drink's. Its wine is drawn into a bottle at the tap, an empty bucket or bottle at the opening takes
-  back what has not fermented, and the book puts in as many of each as a recipe takes. Sneak for its own menu. Eight kegs
-  built into a big keg are one station, opened from any of its blocks: a lid in the middle of its top over 8000 mB, its one
-  tap in front. Its tortilla is made on the cutting board, as Farmer's Delight's dishes are.
-- Hearth and Harvest's cask is a station: lift its lid by the handle, lay in the bottles to age, the salt and meat for
-  jerky or the cheese, and put the lid back on to seal it. A wine ages a bottle at a time into its next vintage, faster in
-  the dark, and what is done waits before the cask, taken without breaking the seal. The book shows each recipe's time
-  where the cask stands. Sneak for its own seal; `cask` in the config turns it off.
+- [Extra Delight](https://modrinth.com/mod/extradelight)'s mixing bowl, vat and melting pot are stations: stir with the spoon, age in stages under the lid, melt chocolate.
+- [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block is a station: food is cut along its marks and an axe splits a log like a pie.
+- [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)'s oven is a station: food bakes on its rack, fuel goes in at the fire, and it bakes Farmer's Delight's campfire dishes too.
+- [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest)'s keg, big keg and cask are stations: drinks ferment under the lid and age sealed in the cask ([#28](https://github.com/Pocky-l/handson-delight/issues/28)).
+- The recipe book can be searched, shows only what you can make now on a switch, and keeps a tab of the dishes made lately.
+- A click on a thing that goes in opens its own recipe, when the book has one.
 
 ### Changed
-- The book's pages turn with Page Up and Page Down, Home and End, or a click on either half of the page's foot, which goes
-  round from the last page to the first. Hold the click to leaf through, faster and faster; quick clicks are never lost.
-- The foot shows the page out of how many ("3/12"), and each tab opens on the page you left it at.
-- Dishes you can make now come first, then the rest, each by name, so a dish keeps its place.
-- Tabs are named under the cursor, and a tab with nothing in it is hidden.
-- The right page keeps the last dish you pointed at while you go over to read it; a click on the dish at its head picks it
-  and makes it, as on the list. The ribbon that shuts the book is easier to hit.
+- The book's pages turn with Page Up and Page Down, Home and End, or a held click on either half of the page's foot.
+- The book's foot shows the page out of how many, each tab opens where you left it, and dishes you can make come first.
+- Tabs are named under the cursor, and an empty tab is hidden.
 
 ### Fixed
-- Shift-using a keg's tap no longer hangs the server when [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s
-  own output slot is full. Thanks to LeDok ([#39](https://github.com/Pocky-l/handson-delight/pull/39)).
-- Food fried in the skillet or grilled on the stove waits as it is: with [More Delight](https://modrinth.com/mod/more-delight)
-  a fried egg no longer goes on cooking into an omelette ([#33](https://github.com/Pocky-l/handson-delight/issues/33)).
-- A full cooking pot, keg or kettle takes what its dish still needs: a second stack of tomatoes that filled both vegetable
-  slots makes room for the carrots ([#34](https://github.com/Pocky-l/handson-delight/issues/34)).
-- [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)' flask is filled at its
-  fermentation tank and kettle with wine, soy sauce or tea. A flask of soy sauce or mayonnaise is the sauce of a dish at its
-  cuisine board, from the recipe book too ([#33](https://github.com/Pocky-l/handson-delight/issues/33)).
-- The cutting board takes what a dish needs in any order: a bowl, bread or a tortilla laid after the rest slides in under it.
-  Dishes of other mods no longer need their first ingredient first, [My Nether's Delight](https://modrinth.com/mod/my-nethers-delight)'s
-  ghast sourdough among them.
-- [JEI](https://modrinth.com/mod/jei) showed the dishes made on the cutting board in the crafting table as well.
-- [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle could keep 250 mB that would not pour out or let a new batch in ([#31](https://github.com/Pocky-l/handson-delight/issues/31)).
-- A milk bucket on the cooking pot makes [Brazilian Delight](https://modrinth.com/mod/braziliandelight)'s milk pot again, so its heavy cream can be made.
+- A keg's tap no longer hangs the server when [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s output slot is full. Thanks to LeDok ([#39](https://github.com/Pocky-l/handson-delight/pull/39)).
+- [More Delight](https://modrinth.com/mod/more-delight)'s fried egg no longer cooks on into an omelette in the skillet or on the stove ([#33](https://github.com/Pocky-l/handson-delight/issues/33)).
+- A full cooking pot, keg or kettle takes what its dish still needs ([#34](https://github.com/Pocky-l/handson-delight/issues/34)).
+- [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)' flask fills at its tank and kettle, and its sauce flasks work at its cuisine board ([#33](https://github.com/Pocky-l/handson-delight/issues/33)).
+- The cutting board takes what a dish needs in any order.
+- [JEI](https://modrinth.com/mod/jei) showed the cutting board's dishes in the crafting table as well.
+- [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle could keep 250 mB that would not pour out ([#31](https://github.com/Pocky-l/handson-delight/issues/31)).
+- A milk bucket on the cooking pot makes [Brazilian Delight](https://modrinth.com/mod/braziliandelight)'s milk pot again.
 - In a LAN game, a guest who turned the cutting board off can craft its dishes in the crafting grid again.
-- Switching quickly between neighbouring stations no longer breaks the recipe book or keeps turning its pages.
+- Switching quickly between neighbouring stations no longer breaks the recipe book.
 
 ## [1.5.0+1.21.1] - 2026-11-15
 ### New

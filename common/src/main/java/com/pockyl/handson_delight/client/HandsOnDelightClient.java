@@ -13,6 +13,7 @@ import com.pockyl.handson_delight.assembly.BoardDishes;
 import com.pockyl.handson_delight.station.BasinStation;
 import com.pockyl.handson_delight.station.BowlStation;
 import com.pockyl.handson_delight.station.CookingPotStation;
+import com.pockyl.handson_delight.station.ChoppingBlockStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 import com.pockyl.handson_delight.station.CuisineBoardStation;
 import com.pockyl.handson_delight.station.GrillStation;
@@ -81,6 +82,7 @@ public final class HandsOnDelightClient {
         // What is mixed in the bowl: thick, nearly opaque; its colour is set by the scene.
         DiegesisClient.registerLiquid(BowlStation.BATTER_LIQUID, LiquidLook.of(0xF0E8D8B8).thick(0.8F));
         DiegesisClient.registerBehavior(CuttingBoardStation.ID, BoardBehavior::new);
+        DiegesisClient.registerBehavior(ChoppingBlockStation.ID, view -> new BoardBehavior(view, true));
         DiegesisClient.registerBehavior(SkilletStation.ID, SkilletBehavior::new);
         DiegesisClient.registerBehavior(StoveStation.ID, StoveBehavior::new);
         DiegesisClient.registerLiquid(HandsOnDelight.id("broth"), LiquidLook.of(0xE0B0A070).thick(0.6F));

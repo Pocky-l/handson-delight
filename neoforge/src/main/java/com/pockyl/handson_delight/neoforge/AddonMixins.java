@@ -15,9 +15,9 @@ import java.util.Set;
 /**
  * Applies the mixins into addons' own blocks only where they fit. The addon must be there under its own mod id: Youkai's Homecoming
  * ships classes of the same names as Youkai's Feasts, older and different. And its version must have what the mixin reaches into:
- * Youkai's Feasts before 1.0.4 lacks the drinks its kettle and fermentation tank stations pour. A mixin that does not fit stops the
- * game at start, or the station at its first use; left out, the addon's block keeps its own use. Asked before any class loads, from
- * the bytecode alone.
+ * Youkai's Feasts before 1.0.4 lacks the drinks its kettle and fermentation tank stations pour, Sable Trees before 0.5.0 the cut on
+ * its stump. A mixin that does not fit stops the game at start, or the station at its first use; left out, the addon's block keeps
+ * its own use. Asked before any class loads, from the bytecode alone.
  */
 public final class AddonMixins implements IMixinConfigPlugin {
     private static final String PACKAGE = "com.pockyl.handson_delight.neoforge.mixin.";
@@ -25,6 +25,9 @@ public final class AddonMixins implements IMixinConfigPlugin {
     private static final String EXTRA_DELIGHT = "extradelight";
     /** Youkai's Feasts' drinks as fluids, which its kettle and fermentation tank stations pour and tap: from 1.0.4 on. */
     private static final String YOUKAI_DRINKS = "dev.xkmc.youkaishomecoming.content.item.fluid.IYHFluidItem";
+    private static final String SABLE_TREES = "sabletrees";
+    /** Sable Trees' cut of Farmer's Delight's recipes on its stump, with the count of food cut there: from 0.5.0 on. */
+    private static final String SABLE_TREES_CUT = "com.snissac.sabletrees.block.ChoppingBlock$CuttingBoard";
 
     /** What a mixin needs besides its target: the mod, and another class of the mod (null for none). */
     private record Needs(String modId, String otherClass) {
@@ -46,7 +49,12 @@ public final class AddonMixins implements IMixinConfigPlugin {
             Map.entry("YoukaiPotSoupMixin", Needs.mod(YOUKAI)),
             Map.entry("YoukaiHintsMixin", Needs.mod(YOUKAI)),
             Map.entry("MixingBowlMixin", Needs.mod(EXTRA_DELIGHT)),
-            Map.entry("MeltingPotMixin", Needs.mod(EXTRA_DELIGHT)));
+            Map.entry("MeltingPotMixin", Needs.mod(EXTRA_DELIGHT)),
+            Map.entry("ChoppingBlockEntityMixin", new Needs(SABLE_TREES, SABLE_TREES_CUT)),
+            Map.entry("ChoppingBlockAccess", new Needs(SABLE_TREES, SABLE_TREES_CUT)),
+            Map.entry("StumpCutMixin", new Needs(SABLE_TREES, SABLE_TREES_CUT)),
+            Map.entry("StumpSplitMixin", new Needs(SABLE_TREES, SABLE_TREES_CUT)),
+            Map.entry("StumpContentMixin", new Needs(SABLE_TREES, SABLE_TREES_CUT)));
 
     @Override
     public void onLoad(String mixinPackage) {

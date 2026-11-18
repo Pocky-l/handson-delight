@@ -116,6 +116,11 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 - **Fermentation tank** of [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts).
   Its lid comes off with a click, liquids are poured in and things dropped in, and it ferments under the lid with the
   badge counting down. The drink is dipped out with a bottle, and the book puts its recipes in from your inventory.
+- **Chopping block** of [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees), the stump a felled tree
+  leaves. Food laid on it is cut along its marks as on the board. A log stands on it one at a time and is split like a
+  pie: the axe comes down from high above on each of three dashed lines through its middle, the cuts open, and with the
+  third the wedges fall apart and the planks come to you, half as many again as the crafting table gives. Its dirt
+  grows with the food cut on it, and after 32 cuts it takes no more food.
 - **Grill** of [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge). Two skewers lie over its fire.
   One smokes when its lower side is done: click it to turn it over, once. Click a skewer with a powder to shake it over
   or with a sauce to dab it on, and the seasoning stays on it. A skewer left on after it is done darkens, smokes and
@@ -183,6 +188,8 @@ its [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellb
 [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s kebabs and bibimbap are put together on the
 board and keep the seasoning of their skewers. [Extra Delight](https://modrinth.com/mod/extradelight)'s vat opens as a
 station too, in each of its looks.
+[Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block opens as a station of its own,
+for cutting food and splitting logs.
 
 Hoppers, pipes and drops use the blocks' own inventories. A pot fed by automation cooks by itself, as in Farmer's Delight.
 
@@ -201,6 +208,7 @@ which each player sets in their own file.
 | `kettle` | `true` | The kettles of Farmer's Respite and Youkai's Feasts as stations. Off, each is used as before |
 | `grill`, `basin` | `true` | Barbeque's Delight's grill and ingredients basin as stations. Off, they are used as before |
 | `cuisine_board` | `true` | Youkai's Feasts' cuisine board as a station. Off, it is used as before |
+| `chopping_block` | `true` | Sable Trees' chopping block (a tree's stump) as a station. Off, it is used as before |
 | `youkai_pots` | `true` | Youkai's Feasts' small iron pot, short iron pot and stockpot as stations. Off, they are used as before. They keep their own cooking times |
 | `youkai_steamer` | `true` | Youkai's Feasts' steamer as a station. Off, it is used as before. It keeps its own steaming times |
 | `youkai_tank` | `true` | Youkai's Feasts' fermentation tank as a station. Off, it is used as before. It keeps its own fermenting times |

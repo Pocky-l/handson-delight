@@ -24,7 +24,11 @@
     "EdVatMixin",
     "EdVatRecipeMixin",
     "EdVatBlockMixin",
-    "MeltingPotMixin"
+    "MeltingPotMixin",
+    "ChoppingBlockEntityMixin",
+    "ChoppingBlockAccess",
+    "StumpCutMixin",
+    "StumpSplitMixin"
   ],
   "client": [
     "CopperPotQuietMixin",
@@ -36,7 +40,8 @@
     "AlchemistPotSteamMixin",
     "YoukaiPotSoupMixin",
     "YoukaiHintsMixin",
-    "NoBoardRegisterMixin"
+    "NoBoardRegisterMixin",
+    "StumpContentMixin"
   ],
   "injectors": {
     "defaultRequire": 1

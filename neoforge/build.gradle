@@ -47,6 +47,19 @@ neoForge {
     }
 }
 
+// Sable Trees is on CurseForge only: its jar comes from the Curse Maven, nothing else does.
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Curse Maven'
+                url = 'https://cursemaven.com'
+            }
+        }
+        filter { includeGroup('curse.maven') }
+    }
+}
+
 // Dependencies added to localRuntime are available in dev runs but are not published as dependencies.
 configurations {
     runtimeClasspath.extendsFrom localRuntime
@@ -77,10 +90,10 @@ dependencies {
     // Youkai's Feasts' kettle, cuisine board and pots are stations too: compiled against it only (its drinks; its blocks are reached
     // by name, as their classes build on the L2 libraries nested in its jar).
     compileOnly "maven.modrinth:gensokyo-delight-youkais-feasts:${youkais_feasts_version}"
-    // Extra Delight's mixing bowl is a station too: compiled against it only.
-    // Extra Delight's vat is a station too: compiled against it only.
-    // Extra Delight's melting pot is a station too: compiled against it only.
+    // Extra Delight's mixing bowl, vat and melting pot are stations too: compiled against it only.
     compileOnly "maven.modrinth:extradelight:${extra_delight_version}"
+    // Sable Trees' chopping block (the stump of a felled tree) is a board station too: compiled against it only.
+    compileOnly "curse.maven:sable-trees-1744089:${sable_trees_version}"
 }
 
 // -Pmeals runs only the game tests of Modest Meals' meals at the board, with Modest Meals: it makes Farmer's Delight's burgers,
@@ -132,7 +145,10 @@ if (providers.gradleProperty('addons').isPresent()) {
                 'runiclib:tk5EQpUG',              // RunicLib 5.0.7, needed by Dungeons Delight
                 "choppers-delight:${choppers_delight_version}",      // Chopper's Delight 1.2.2: cutting boards of every wood, Farmer's Delight's own block
                 "farmers-respite-unofficial-port:${farmers_respite_version}", // Farmer's Respite Unofficial Port 3.0.1: its kettle
+                'sable:fg9dTRz9',                 // Sable 2.0.6+mc1.21.1, needed by Sable Trees
         ].each { localRuntime "maven.modrinth:${it}" }
+        // Sable Trees 0.5.1 (CurseForge only): its chopping block.
+        localRuntime "curse.maven:sable-trees-1744089:${sable_trees_version}"
         // -Paddons=wide adds the next most downloaded addons that need no other mods: more food, own crafts and tags. Vintage
         // Delight, in the 1.20.1 list, has no NeoForge 1.21.1 build.
         if (providers.gradleProperty('addons').get() == 'wide') {

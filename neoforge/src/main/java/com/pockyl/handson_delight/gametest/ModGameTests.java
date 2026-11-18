@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link YoukaiTankTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
+ * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link YoukaiTankTests}, {@link StumpTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
  * and {@link RecipeAudit} on NeoForge.
  */
 @GameTestHolder(HandsOnDelight.MOD_ID)
@@ -837,6 +837,26 @@ public final class ModGameTests {
     @GameTest(template = "empty")
     public static void youkaiBookMakesSeveralDishes(GameTestHelper helper) {
         YoukaiBoardTests.youkaiBookMakesSeveralDishes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void stumpCutsFoodLikeTheBoard(GameTestHelper helper) {
+        StumpTests.stumpCutsFoodLikeTheBoard(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void stumpTakesNoFoodAfterThirtyTwoCuts(GameTestHelper helper) {
+        StumpTests.stumpTakesNoFoodAfterThirtyTwoCuts(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void stumpSplitsALogWithTheAxe(GameTestHelper helper) {
+        StumpTests.stumpSplitsALogWithTheAxe(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void stumpStationIsQuietWithoutSableTrees(GameTestHelper helper) {
+        StumpTests.stumpStationIsQuietWithoutSableTrees(helper);
     }
 
     @GameTest(template = "empty")

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 
 import com.pockyl.handson_delight.station.BasinStation;
 import com.pockyl.handson_delight.station.BowlStation;
+import com.pockyl.handson_delight.station.ChoppingBlockStation;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 import com.pockyl.handson_delight.station.EdVatStation;
@@ -70,6 +71,9 @@ public final class HandsOnDelight {
         }
         if (HandsOnConfig.cuisineBoard()) {
             CuisineBoardStation.register();
+        }
+        if (HandsOnConfig.choppingBlock()) {
+            ChoppingBlockStation.register();
         }
         if (HandsOnConfig.youkaiPots()) {
             YoukaiPotStation.register();

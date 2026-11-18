@@ -11,6 +11,11 @@
   is made waits in the vat until you draw it into jars or bowls.
 - [Extra Delight](https://modrinth.com/mod/extradelight)'s melting pot is a station: drop chocolate into the double
   boiler, watch it melt into the syrup going round in it and fill a bottle from it.
+- [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block, the stump of a felled tree, is
+  a station: food is cut along its marks as on the cutting board, and an axe splits the log standing on it like a pie,
+  three blows on three dashed lines through its middle, until it falls apart into wedges and planks. After 32 cuts of
+  food the stump is too dirty for more, as in Sable Trees.
+  `chopping_block=false` in the config keeps its own use.
 
 ### Fixed
 - Shift-using a keg's tap no longer hangs the server when [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s

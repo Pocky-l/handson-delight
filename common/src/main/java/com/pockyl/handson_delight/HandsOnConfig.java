@@ -34,6 +34,8 @@ public final class HandsOnConfig {
             "grill, basin: Barbeque's Delight's grill and ingredients basin as stations, when that mod is there. Off, they are",
             "  used as before.",
             "cuisine_board: Youkai's Feasts' cuisine board as a station, when that mod is there. Off, it is used as before.",
+            "chopping_block: Sable Trees' chopping block (a tree's stump) as a station, when that mod is there. Off, it is used",
+            "  as before.",
             "youkai_pots: Youkai's Feasts' small iron pot, short iron pot and stockpot as stations, when that mod is there.",
             "  Off, they are used as before. They keep their own cooking times.",
             "youkai_steamer: Youkai's Feasts' steamer (its pot, racks and lid) as a station, when that mod is there. Off, it is",
@@ -73,6 +75,7 @@ public final class HandsOnConfig {
     private static boolean basin = true;
     private static boolean kettle = true;
     private static boolean cuisineBoard = true;
+    private static boolean choppingBlock = true;
     private static boolean youkaiPots = true;
     private static boolean youkaiSteamer = true;
     private static boolean youkaiTank = true;
@@ -115,6 +118,7 @@ public final class HandsOnConfig {
         basin = read(values, "basin", basin);
         kettle = read(values, "kettle", kettle);
         cuisineBoard = read(values, "cuisine_board", cuisineBoard);
+        choppingBlock = read(values, "chopping_block", choppingBlock);
         youkaiPots = read(values, "youkai_pots", youkaiPots);
         youkaiSteamer = read(values, "youkai_steamer", youkaiSteamer);
         youkaiTank = read(values, "youkai_tank", youkaiTank);
@@ -229,6 +233,10 @@ public final class HandsOnConfig {
 
     public static boolean cuisineBoard() {
         return cuisineBoard;
+    }
+
+    public static boolean choppingBlock() {
+        return choppingBlock;
     }
 
     public static boolean youkaiPots() {

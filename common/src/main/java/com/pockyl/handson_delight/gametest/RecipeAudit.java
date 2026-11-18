@@ -1,10 +1,13 @@
 package com.pockyl.handson_delight.gametest;
 
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CampfireCookingRecipe;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -21,6 +24,7 @@ import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
+import com.pockyl.handson_delight.station.ChoppingBlockStation;
 import com.pockyl.handson_delight.station.Cutting;
 
 import java.io.IOException;
@@ -158,6 +162,21 @@ public final class RecipeAudit {
             report.add(Cutting.id(level, recipe) + " | " + name(input) + " | " + name(Cutting.tool(recipe)) + " | "
                     + recipe.getResults().stream().map(RecipeAudit::name).collect(Collectors.joining(", ")) + " | " + station + flags(look));
         }
+
+        // A tree's stump (Sable Trees' chopping block) cuts the same, but splits every log with an axe instead of stripping it.
+        List<String> splits = new ArrayList<>();
+        for (Holder<Item> log : BuiltInRegistries.ITEM.getTagOrEmpty(ItemTags.LOGS)) {
+            ItemStack planks = ChoppingBlockStation.planks(level, new ItemStack(log));
+            if (!planks.isEmpty()) {
+                List<String> stripped = Cutting.recipesFor(level, new ItemStack(log)).stream()
+                        .map(recipe -> String.valueOf(Cutting.id(level, recipe))).toList();
+                splits.add(name(new ItemStack(log)) + " | " + name(planks)
+                        + (stripped.isEmpty() ? "" : " | instead of " + String.join(", ", stripped)));
+            }
+        }
+        splits.sort(Comparator.naturalOrder());
+        section(report, "STUMP SPLITS (" + splits.size() + ")", "log | planks | the board's cut it takes the place of");
+        report.addAll(splits);
 
         List<RecipeHolder<CampfireCookingRecipe>> campfire = new ArrayList<>(level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING));
         campfire.sort(Comparator.comparing(holder -> holder.id().toString()));

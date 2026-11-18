@@ -45,6 +45,8 @@ public final class BoardLogic implements StationLogic {
     private static final float SPOT_JITTER = 0.2F;
 
     private final KitchenBoard board;
+    /** The board when it is a tree's stump, which cuts but puts no dish together and splits logs; null for any other. */
+    private final KitchenStump stump;
     /** How many of the marks the knife has come down on, in order. */
     private int marks;
     /** Where the marks of the item lying there are, see {@link CuttingBoardStation#SPOTS}. */
@@ -59,6 +61,7 @@ public final class BoardLogic implements StationLogic {
 
     public BoardLogic(StationContext station) {
         board = (KitchenBoard) station.blockEntity();
+        stump = KitchenStump.of(board);
         station.state().bindSlots(CuttingBoardStation.BOARD, new SlotStorage() {
             @Override
             public int size() {
@@ -223,6 +226,10 @@ public final class BoardLogic implements StationLogic {
         if (carried.isEmpty()) {
             return;
         }
+        if (stump != null) {
+            placeOnStump(station, player, carried, one, from, byUse);
+            return;
+        }
         StationState state = station.state();
         List<ItemStack> layers = layers(state);
         ItemStack onBoard = board.handson$stored();
@@ -289,12 +296,54 @@ public final class BoardLogic implements StationLogic {
     }
 
     /**
+     * The stack goes onto the stump to be cut: food, or anything else a cut takes, a stack of one kind; a log one at a time, to be
+     * split. No dish is put together there, and a stump too dirty for food will not have it: it says so in its own words. A knife or
+     * an axe never lies down: it cuts.
+     */
+    private void placeOnStump(StationContext station, Player player, ItemStack carried, boolean one, int from, boolean byUse) {
+        Level level = station.level();
+        if (Cutting.isTool(level, carried) || ChoppingBlockStation.isAxe(carried)) {
+            return;
+        }
+        if (stump.handson$refuses(carried)) {
+            refuse(station, byUse ? ItemStack.EMPTY : carried, byUse);
+            stump.handson$tellDirty(player);
+            return;
+        }
+        ItemStack onBoard = board.handson$stored();
+        boolean log = ChoppingBlockStation.splits(level, carried);
+        boolean cuttable = log || !Cutting.recipesFor(level, carried).isEmpty();
+        if (cuttable && !onBoard.isEmpty() && !ItemStack.isSameItemSameComponents(onBoard, carried) && isDone(level)) {
+            clear(station, player, onBoard);
+            onBoard = ItemStack.EMPTY;
+        }
+        boolean fits = cuttable && (onBoard.isEmpty() || ItemStack.isSameItemSameComponents(onBoard, carried));
+        int room = (log ? 1 : Math.min(carried.getMaxStackSize(), board.handson$maxStack())) - onBoard.getCount();
+        int moved = Math.min(one ? 1 : carried.getCount(), room);
+        if (!fits || moved <= 0) {
+            refuse(station, byUse ? ItemStack.EMPTY : carried, byUse);
+            return;
+        }
+        ItemStack put = onBoard.isEmpty() ? carried.copyWithCount(moved) : onBoard.copyWithCount(onBoard.getCount() + moved);
+        carried.shrink(moved);
+        putBack(player, from, carried);
+        setOnBoard(put);
+        if (onBoard.isEmpty()) {
+            cutting = put.copyWithCount(1);
+            restart(station);
+        }
+        station.effect(CuttingBoardStation.EFFECT_PLACED, "surface", new CompoundTag());
+    }
+
+    /**
      * Whether what lies on the board is no work in hand, to be moved aside for new food: a tool stuck into it, or a thing no knife
-     * cuts at the station (a dish made before, a block put down without the station). Food waiting to be cut stays.
+     * cuts at the station (a dish made before, a block put down without the station). Food waiting to be cut stays, and so does a
+     * log on a stump, waiting for the axe.
      */
     private boolean isDone(Level level) {
         ItemStack onBoard = board.handson$stored();
-        return !onBoard.isEmpty() && (board.handson$isCarving() || Cutting.recipesFor(level, onBoard).isEmpty());
+        return !onBoard.isEmpty() && (board.handson$isCarving() || Cutting.recipesFor(level, onBoard).isEmpty()
+                && !(stump != null && ChoppingBlockStation.splits(level, onBoard)));
     }
 
     /** What lay on the board goes to the cook, lifted off for everybody to see; a tool stuck in comes out of the board. */
@@ -408,7 +457,7 @@ public final class BoardLogic implements StationLogic {
      */
     private void pick(StationContext station, Player player, ResourceLocation id, boolean all) {
         Optional<AssemblyRecipes.Assembly> dish = AssemblyRecipes.all().stream().filter(assembly -> assembly.id().equals(id)).findFirst();
-        if (dish.isEmpty()) {
+        if (dish.isEmpty() || stump != null) {
             return;
         }
         picked = id;
@@ -551,6 +600,15 @@ public final class BoardLogic implements StationLogic {
             return;
         }
         lastChop = now;
+        if (stump != null && stump.handson$refuses(onBoard)) {
+            refuse(station);
+            stump.handson$tellDirty(player);
+            return;
+        }
+        if (stump != null && ChoppingBlockStation.splits(level, onBoard)) {
+            blow(station, player, at, atX);
+            return;
+        }
         // The knife is the one the cook took on the cursor; with an empty hand, one from the inventory, so cutting never
         // needs a trip to the inventory.
         ItemStack tool = player.inventoryMenu.getCarried();
@@ -605,6 +663,63 @@ public final class BoardLogic implements StationLogic {
         station.effect(CuttingBoardStation.EFFECT_CHOPPED, "item", chopped);
     }
 
+    /**
+     * The axe comes down on the next mark across the log standing on the stump; the last blow splits it into planks as the stump's own
+     * axe stroke does, and they go to the cook. The blows before it only cut the log, as the knife's first marks on the board: nothing
+     * comes off before the log is split, so a cook who walks away halfway takes nothing with them. The axe is the one on the cursor,
+     * or with an empty hand one from the inventory.
+     */
+    private void blow(StationContext station, Player player, float at, float atX) {
+        ItemStack tool = player.inventoryMenu.getCarried();
+        int toolSlot = -1;
+        if (!ChoppingBlockStation.isAxe(tool)) {
+            toolSlot = tool.isEmpty() ? ChoppingBlockStation.axeSlot(player.getInventory()) : -1;
+            if (toolSlot < 0) {
+                refuse(station);
+                return;
+            }
+            tool = player.getInventory().getItem(toolSlot);
+        }
+        String axeId = BuiltInRegistries.ITEM.getKey(tool.getItem()).toString();
+        CompoundTag struck = new CompoundTag();
+        struck.putFloat(CuttingBoardStation.AT, Mth.clamp(at, 0.0F, 16.0F));
+        if (!Float.isNaN(atX)) {
+            struck.putFloat(CuttingBoardStation.AT_X, Mth.clamp(atX, 0.0F, 16.0F));
+        }
+        struck.putFloat(CuttingBoardStation.SPOT, spots[marks]);
+        struck.putFloat(CuttingBoardStation.ANGLE, angles[marks]);
+        struck.putString(CuttingBoardStation.TOOL, axeId);
+        marks++;
+        if (marks < plan.marks()) {
+            station.effect(CuttingBoardStation.EFFECT_CHOPPED, "item", struck);
+            return;
+        }
+        split(station, player, tool, toolSlot, struck);
+    }
+
+    /** The last blow: Sable Trees splits the log with {@code axe}, from the cursor or inventory slot {@code toolSlot}. */
+    private void split(StationContext station, Player player, ItemStack axe, int toolSlot, CompoundTag struck) {
+        List<ItemStack> planks = CaughtDrops.catching(false, () -> stump.handson$split(axe, player));
+        if (planks == null) {
+            // The log stays whole: its marks start over.
+            restart(station);
+            refuse(station);
+            return;
+        }
+        // The axe's slot first, as after a cut: one that broke lies there empty.
+        if (toolSlot < 0) {
+            player.inventoryMenu.setCarried(axe.isEmpty() ? ItemStack.EMPTY : axe);
+        } else {
+            player.getInventory().setItem(toolSlot, axe.isEmpty() ? ItemStack.EMPTY : axe);
+        }
+        planks.forEach(piece -> give(player, piece.copy()));
+        cutting = board.handson$stored().copyWithCount(1);
+        restart(station);
+        struck.putInt(CuttingBoardStation.COUNT, 1);
+        struck.putBoolean(CuttingBoardStation.DONE, true);
+        station.effect(CuttingBoardStation.EFFECT_CHOPPED, "item", struck);
+    }
+
     /** The top layer comes off the dish; with none, what lies to be cut goes back. */
     private void take(StationContext station, Player player) {
         StationState state = station.state();
@@ -631,7 +746,7 @@ public final class BoardLogic implements StationLogic {
     private void assemble(StationContext station, Player player) {
         StationState state = station.state();
         List<ItemStack> layers = layers(state);
-        Optional<AssemblyRecipes.Assembly> dish = Assembling.dishOf(layers, station.level(), picked);
+        Optional<AssemblyRecipes.Assembly> dish = stump != null ? Optional.empty() : Assembling.dishOf(layers, station.level(), picked);
         Assembling.Made made = dish.map(it -> Assembling.make(it, layers, station.level(), CuttingBoardStation.BATCH)).orElse(null);
         if (made == null || made.rounds() == 0) {
             refuse(station);
@@ -706,7 +821,9 @@ public final class BoardLogic implements StationLogic {
     private void restart(StationContext station) {
         marks = 0;
         ItemStack onBoard = board.handson$stored();
-        plan = onBoard.isEmpty() ? new Cutting.Plan(1, Cutting.Style.ACROSS) : Cutting.plan(station.level(), onBoard);
+        plan = onBoard.isEmpty() ? new Cutting.Plan(1, Cutting.Style.ACROSS)
+                : stump != null && ChoppingBlockStation.splits(station.level(), onBoard) ? ChoppingBlockStation.SPLIT_PLAN
+                : Cutting.plan(station.level(), onBoard);
         RandomSource random = station.level().getRandom();
         int count = plan.marks();
         // Each mark has an even share of the length and lies near the middle of it.

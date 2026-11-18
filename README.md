@@ -203,32 +203,32 @@ How much of each mod's kitchen opens as stations right in the world. A dash mean
 <details><summary><b>Every mod with stations and the planned ones</b></summary>
 
 | Mod | Stations | 1.20.1 | 1.21.1 |
-|---|:---:|:---:|:---:|
-| [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight) | 100% | ✅ | ✅ |
-| [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge) | 100% | ✅ | ✅ |
-| [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin) | 100% | ✅ | ✅ |
-| [Chopper's Delight](https://modrinth.com/mod/choppers-delight) | 100% | ✅ | ✅ |
-| [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads) | 100% | ✅ | ✅ |
-| [Cultural Delights](https://modrinth.com/mod/cultural-delights) | 100% | - | ✅ |
-| [Dungeons Delight](https://modrinth.com/mod/dungeons_delight) | 100% | ✅ | ✅ |
-| [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) | 100% | ✅ | ✅ |
-| [Extra Delight](https://modrinth.com/mod/extradelight) | 67% | - | ✅ |
-| [Farmer's Respite](https://modrinth.com/mod/farmers-respite) | 100% | ✅ | ✅ |
-| [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell) | 100% | ✅ | ✅ |
-| [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts) | 100% | ✅ | ✅ |
-| [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest) | 100% | ✅ | ✅ |
-| [Miner's Delight](https://modrinth.com/mod/miners-delight) | 100% | ✅ | ✅ |
-| [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) | 100% | ✅ | ✅ |
-| [Nether's Delight](https://modrinth.com/mod/nethers-delight) | 100% | ✅ | - |
-| [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees) | 100% | - | ✅ |
-| [Trail&Tales Delight](https://modrinth.com/mod/trailtales-delight) | 50% | ✅ | ✅ |
-| [Twilight's Flavor & Delight](https://modrinth.com/mod/twilight-delight) | 50% | ✅ | ✅ |
-| [Youkai's Homecoming](https://modrinth.com/mod/youkaishomecoming) | 83% | ✅ | - |
-| [Cuisine Delight](https://modrinth.com/mod/cuisine-delight) | *planned* | | |
-| [Ender's Delight](https://modrinth.com/mod/enders-delight) | *planned* | | |
-| [Immortalers Delight](https://modrinth.com/mod/immortalers-delight) | *planned* | | |
-| [Ube's Delight](https://modrinth.com/mod/ubes-delight) | *planned* | | |
-| [Vintage Delight](https://modrinth.com/mod/vintage-delight) | *planned* | | |
+|---|---|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/farmers-delight.png" width="20" height="20" align="top"> [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/barbeques-delight-forge.png" width="20" height="20" align="top"> [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/brewin-and-chewin.png" width="20" height="20" align="top"> [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/choppers-delight.png" width="20" height="20" align="top"> [Chopper's Delight](https://modrinth.com/mod/choppers-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/cooking-for-blockheads.png" width="20" height="20" align="top"> [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/cultural-delights.png" width="20" height="20" align="top"> [Cultural Delights](https://modrinth.com/mod/cultural-delights) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | - | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/dungeons_delight.png" width="20" height="20" align="top"> [Dungeons Delight](https://modrinth.com/mod/dungeons_delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/ends-delight.png" width="20" height="20" align="top"> [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/extradelight.png" width="20" height="20" align="top"> [Extra Delight](https://modrinth.com/mod/extradelight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-67.png" width="64" height="8"> 67% | - | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/farmers-respite.png" width="20" height="20" align="top"> [Farmer's Respite](https://modrinth.com/mod/farmers-respite) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/farmers-spell.png" width="20" height="20" align="top"> [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/gensokyo-delight-youkais-feasts.png" width="20" height="20" align="top"> [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/hearth-and-harvest.png" width="20" height="20" align="top"> [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/miners-delight.png" width="20" height="20" align="top"> [Miner's Delight](https://modrinth.com/mod/miners-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/my-nethers-delight.png" width="20" height="20" align="top"> [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/nethers-delight.png" width="20" height="20" align="top"> [Nether's Delight](https://modrinth.com/mod/nethers-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | - |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/sable-trees.png" width="20" height="20" align="top"> [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-100.png" width="64" height="8"> 100% | - | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/trailtales-delight.png" width="20" height="20" align="top"> [Trail&Tales Delight](https://modrinth.com/mod/trailtales-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-50.png" width="64" height="8"> 50% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/twilight-delight.png" width="20" height="20" align="top"> [Twilight's Flavor & Delight](https://modrinth.com/mod/twilight-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-50.png" width="64" height="8"> 50% | ✅ | ✅ |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/youkaishomecoming.png" width="20" height="20" align="top"> [Youkai's Homecoming](https://modrinth.com/mod/youkaishomecoming) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-83.png" width="64" height="8"> 83% | ✅ | - |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/cuisine-delight.png" width="20" height="20" align="top"> [Cuisine Delight](https://modrinth.com/mod/cuisine-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/enders-delight.png" width="20" height="20" align="top"> [Ender's Delight](https://modrinth.com/mod/enders-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/immortalers-delight.png" width="20" height="20" align="top"> [Immortalers Delight](https://modrinth.com/mod/immortalers-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/ubes-delight.png" width="20" height="20" align="top"> [Ube's Delight](https://modrinth.com/mod/ubes-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/vintage-delight.png" width="20" height="20" align="top"> [Vintage Delight](https://modrinth.com/mod/vintage-delight) | <img src="https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
 
 </details>
 <!-- stations:end -->

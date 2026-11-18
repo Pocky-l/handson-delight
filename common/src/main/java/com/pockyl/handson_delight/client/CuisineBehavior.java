@@ -694,6 +694,17 @@ public final class CuisineBehavior implements StationBehavior {
         view.sendAction(CuisineBoardStation.ACTION_CUT, how);
     }
 
+    /** Keys go to the book first: its search while it is typed, its page keys. */
+    @Override
+    public boolean onKey(StationView view, int keyCode, int scanCode, int modifiers) {
+        return book.key(view, keyCode, modifiers);
+    }
+
+    @Override
+    public boolean onChar(StationView view, char character, int modifiers) {
+        return book.typed(view, character);
+    }
+
     /** The wheel over the recipe book goes through its ingredients or its list. */
     @Override
     public boolean onScroll(StationView view, String node, double amount) {

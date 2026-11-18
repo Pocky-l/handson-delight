@@ -53,10 +53,11 @@ final class VatBook implements RecipeBook.Source {
     @Override
     public List<RecipeBook.Tab> tabs(StationView view) {
         List<RecipeBook.Tab> tabs = new ArrayList<>();
-        tabs.add(new RecipeBook.Tab(null, new ItemStack(VatStation.VAT.get())));
+        tabs.add(new RecipeBook.Tab(null, new ItemStack(VatStation.VAT.get()), Component.translatable("handson_delight.book.tab.all")));
         for (KitchenVat.Temperature temperature : KitchenVat.Temperature.values()) {
             ItemStack icon = temperature == KitchenVat.Temperature.NORMAL ? new ItemStack(Items.BROWN_MUSHROOM) : warmth(temperature);
-            tabs.add(new RecipeBook.Tab(temperature.serializedName(), icon));
+            tabs.add(new RecipeBook.Tab(temperature.serializedName(), icon,
+                    Component.translatable("handson_delight.book.tab.vat_" + temperature.serializedName())));
         }
         return tabs;
     }

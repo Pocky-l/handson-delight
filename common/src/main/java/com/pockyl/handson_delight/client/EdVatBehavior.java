@@ -327,6 +327,17 @@ public final class EdVatBehavior implements StationBehavior {
         }
     }
 
+    /** Keys go to the book first: its search while it is typed, its page keys. */
+    @Override
+    public boolean onKey(StationView view, int keyCode, int scanCode, int modifiers) {
+        return book.key(view, keyCode, modifiers);
+    }
+
+    @Override
+    public boolean onChar(StationView view, char character, int modifiers) {
+        return book.typed(view, character);
+    }
+
     @Override
     public boolean onScroll(StationView view, String node, double amount) {
         return "book_open".equals(node) && book.scroll(amount);

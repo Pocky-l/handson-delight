@@ -53,8 +53,8 @@ final class BowlBook implements RecipeBook.Source {
     public List<RecipeBook.Tab> tabs(StationView view) {
         ItemStack dough = BuiltInRegistries.ITEM.getOptional(FarmersDelightContent.id("wheat_dough")).map(ItemStack::new)
                 .orElse(new ItemStack(Items.SUGAR));
-        return List.of(new RecipeBook.Tab(null, new ItemStack(BowlStation.BOWL.get())), new RecipeBook.Tab(IN_BOWLS, new ItemStack(Items.BOWL)),
-                new RecipeBook.Tab(IN_BOTTLES, new ItemStack(Items.GLASS_BOTTLE)), new RecipeBook.Tab(LOOSE, dough));
+        return List.of(new RecipeBook.Tab(null, new ItemStack(BowlStation.BOWL.get()), Component.translatable("handson_delight.book.tab.all")), new RecipeBook.Tab(IN_BOWLS, new ItemStack(Items.BOWL), Component.translatable("handson_delight.book.tab.in_bowls")),
+                new RecipeBook.Tab(IN_BOTTLES, new ItemStack(Items.GLASS_BOTTLE), Component.translatable("handson_delight.book.tab.in_bottles")), new RecipeBook.Tab(LOOSE, dough, Component.translatable("handson_delight.book.tab.loose")));
     }
 
     @Override

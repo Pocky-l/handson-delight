@@ -55,8 +55,10 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   a time.
 - **Stars.** Wide, steady rounds fill up to three stars over the dish. Two stars add a serving for every four, three
   stars one for every two. A dish opens its second star after 8 servings and its third after 32.
-- **Recipe book.** It hangs beside the station and puts what you can make now first. Click a dish and its ingredients
-  go into the pot from your inventory; Shift + click puts in up to sixteen sets.
+- **Recipe book.** It hangs beside the station and puts what you can make now first. Click a dish to read it, click it
+  again and its ingredients go into the pot from your inventory; Shift + click puts in up to sixteen sets. Search it by
+  name or mod, show only what you can make now, or open the dishes you made lately. Click an ingredient to see its own
+  recipe. Pages turn with the wheel, Page Up and Page Down, or a click on the page's foot.
 - **Cutting board.** Right-click it with food to lay the food down. The knife stays in your hand or inventory and shows
   over the food: chop on the dashed marks; each cut goes through sixteen items of the stack. Food is cut across its own
   length, a kelp roll in even slices and a pie in wedges, with one cut for each piece it gives, three at most. Everything

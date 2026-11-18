@@ -69,10 +69,10 @@ final class EdVatBook implements RecipeBook.Source {
 
     @Override
     public List<RecipeBook.Tab> tabs(StationView view) {
-        return List.of(new RecipeBook.Tab(null, new ItemStack(KitchenEdVat.vat())),
-                new RecipeBook.Tab("bottle", new ItemStack(Items.GLASS_BOTTLE)),
-                new RecipeBook.Tab("bowl", new ItemStack(Items.BOWL)),
-                new RecipeBook.Tab("other", new ItemStack(Items.LILY_PAD)));
+        return List.of(new RecipeBook.Tab(null, new ItemStack(KitchenEdVat.vat()), Component.translatable("handson_delight.book.tab.all")),
+                new RecipeBook.Tab("bottle", new ItemStack(Items.GLASS_BOTTLE), Component.translatable("handson_delight.book.tab.in_bottles")),
+                new RecipeBook.Tab("bowl", new ItemStack(Items.BOWL), Component.translatable("handson_delight.book.tab.in_bowls")),
+                new RecipeBook.Tab("other", new ItemStack(Items.LILY_PAD), Component.translatable("handson_delight.book.tab.other_containers")));
     }
 
     @Override

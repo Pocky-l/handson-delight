@@ -764,6 +764,17 @@ public final class SteamerBehavior implements StationBehavior {
         }
     }
 
+    /** Keys go to the book first: its search while it is typed, its page keys. */
+    @Override
+    public boolean onKey(StationView view, int keyCode, int scanCode, int modifiers) {
+        return book.key(view, keyCode, modifiers);
+    }
+
+    @Override
+    public boolean onChar(StationView view, char character, int modifiers) {
+        return book.typed(view, character);
+    }
+
     /**
      * The wheel goes down and up the tower: down opens the rack under the open one (the racks over it lifted aside), up the one over
      * it, up to the top rack with nothing lifted. Over the open recipe book it goes through the book instead.

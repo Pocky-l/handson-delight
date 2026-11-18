@@ -16,6 +16,19 @@
   three blows on three dashed lines through its middle, until it falls apart into wedges and planks. After 32 cuts of
   food the stump is too dirty for more, as in Sable Trees.
   `chopping_block=false` in the config keeps its own use.
+- Search the recipe book: click the magnifying glass over the right page and type a dish's name or a mod id.
+- A switch over the right page shows only what you can make now; it is kept for each station.
+- A "Made lately" tab keeps the last dishes you made from the book, in the same places.
+- Click a thing that goes in to see its own recipe, when the book has one.
+
+### Changed
+- The book's pages turn with Page Up and Page Down, Home and End, or a click on either half of the page's foot, which goes
+  round from the last page to the first. Hold the click to leaf through, faster and faster; quick clicks are never lost.
+- The foot shows the page out of how many ("3/12"), and each tab opens on the page you left it at.
+- Dishes you can make now come first, then the rest, each by name, so a dish keeps its place.
+- Tabs are named under the cursor, and a tab with nothing in it is hidden.
+- The right page keeps the last dish you pointed at while you go over to read it; a click on the dish at its head picks it
+  and makes it, as on the list. The ribbon that shuts the book is easier to hit.
 
 ### Fixed
 - Shift-using a keg's tap no longer hangs the server when [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s

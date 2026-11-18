@@ -23,7 +23,8 @@
     "OvenMixin",
     "VatMixin",
     "VatUprightMixin",
-    "DecoratedBoardMixin"
+    "DecoratedBoardMixin",
+    "CfbOvenTopMixin"
   ],
   "client": [
     "CookingPotBlockEntityMixin",
@@ -37,7 +38,8 @@
     "DecoratedBoardContentMixin",
     "VatSparksMixin",
     "GrillSmokeMixin",
-    "GrillSizzleMixin"
+    "GrillSizzleMixin",
+    "CfbOvenToolsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

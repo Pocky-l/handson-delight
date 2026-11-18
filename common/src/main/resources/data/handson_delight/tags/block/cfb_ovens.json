@@ -1,0 +1,69 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "cookingforblockheads:white_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:orange_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:magenta_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:light_blue_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:yellow_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:lime_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:pink_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:gray_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:light_gray_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:cyan_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:purple_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:blue_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:brown_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:green_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:red_oven",
+      "required": false
+    },
+    {
+      "id": "cookingforblockheads:black_oven",
+      "required": false
+    }
+  ]
+}

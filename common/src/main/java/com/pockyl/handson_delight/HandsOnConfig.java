@@ -26,7 +26,8 @@ public final class HandsOnConfig {
             "Hands-On Delight. Restart the game or the server after a change.",
             "cooking_pot, cutting_board, skillet, stove: the station of that block. Off, the block works as in Farmer's Delight.",
             "keg: Brewin' and Chewin's keg as a station, when that mod is there. Off, the keg keeps its own menu.",
-            "oven, vat: Cultural Delights' oven and vat as stations, when that mod is there. Off, they keep their own menus.",
+            "oven, vat: Cultural Delights' oven and vat as stations, when that mod is there, and Cooking for Blockheads' oven,",
+            "  which keeps its own baking time (its config's ovenCookTimeMultiplier). Off, they keep their own menus.",
             "melting_pot: Extra Delight's melting pot as a station, when that mod is there. Off, it keeps its own menu. It",
             "  keeps its own melting times.",
             "kettle: the kettles of Farmer's Respite and Youkai's Feasts as stations, when those mods are there. Off, each",
@@ -194,12 +195,12 @@ public final class HandsOnConfig {
         return stove;
     }
 
-    public static boolean keg() {
-        return keg;
-    }
-
     public static boolean oven() {
         return oven;
+    }
+
+    public static boolean keg() {
+        return keg;
     }
 
     public static boolean vat() {

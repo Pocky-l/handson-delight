@@ -25,6 +25,8 @@ import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.ChoppingBlockStation;
+import com.pockyl.handson_delight.station.CfbOven;
+import com.pockyl.handson_delight.station.KitchenOven;
 import com.pockyl.handson_delight.station.Cutting;
 
 import java.io.IOException;
@@ -194,6 +196,17 @@ public final class RecipeAudit {
                     + recipe.getCookingTime() + flags(look));
         }
 
+        if (Platform.INSTANCE.isLoaded(CfbOven.MOD_ID)) {
+            List<KitchenOven.Baking> oven = CfbOven.recipesOf(level);
+            section(report, "COOKING FOR BLOCKHEADS' OVEN (" + oven.size() + ")", "id | input | result | ticks");
+            for (KitchenOven.Baking recipe : oven) {
+                report.add(recipe.id() + " | " + name(recipe.ingredients().get(0)) + " | " + name(recipe.result()) + " | " + recipe.ticks());
+            }
+            List<String> bridged = ovenBridges(oven);
+            section(report, "CULINARY COMPAT'S CAMPFIRE DISHES FOR THE OVEN (" + bridged.size() + ")", "id | input | result | baked by the oven");
+            report.addAll(bridged);
+        }
+
         section(report, "CRAFTING DISHES NOT ON THE BOARD (" + missed.size() + ")", "id -> result");
         missed.stream().sorted().forEach(report::add);
         section(report, "FOOD CRAFTS OF THEIR OWN TYPE, KEPT IN THE CRAFTING TABLE (" + ownCrafts.size() + ")", "id -> result (type)");
@@ -212,6 +225,32 @@ public final class RecipeAudit {
             return;
         }
         helper.succeed();
+    }
+
+    /**
+     * Culinary Compat's {@code campfire_oven} bridges, read by name: Farmer's Delight's campfire-only dishes it gives Cooking for
+     * Blockheads' kitchen, with whether the oven itself bakes their input.
+     */
+    @SuppressWarnings("unchecked")
+    private static List<String> ovenBridges(List<KitchenOven.Baking> oven) {
+        List<String> lines = new ArrayList<>();
+        try {
+            Class<?> bridges = Class.forName("io.github.smokahs.culinarycompat.bridges.Bridges");
+            for (Object entry : (Collection<Object>) bridges.getMethod("getAll").invoke(null)) {
+                if (!"campfire_oven".equals(entry.getClass().getMethod("source").invoke(entry))) {
+                    continue;
+                }
+                List<Ingredient> inputs = (List<Ingredient>) entry.getClass().getMethod("inputs").invoke(entry);
+                ItemStack output = (ItemStack) entry.getClass().getMethod("output").invoke(entry);
+                ItemStack input = inputs.isEmpty() || inputs.get(0).getItems().length == 0 ? ItemStack.EMPTY : inputs.get(0).getItems()[0];
+                lines.add(entry.getClass().getMethod("bridgeId").invoke(entry) + " | " + name(input) + " | " + name(output) + " | "
+                        + KitchenOven.bakingOf(oven, input).isPresent());
+            }
+        } catch (ReflectiveOperationException | RuntimeException absent) {
+            // No Culinary Compat.
+        }
+        lines.sort(Comparator.naturalOrder());
+        return lines;
     }
 
     /** The same rule as the board's: food, or a block of food put down whole. */

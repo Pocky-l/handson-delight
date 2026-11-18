@@ -146,6 +146,8 @@ if (providers.gradleProperty('addons').isPresent()) {
                 "choppers-delight:${choppers_delight_version}",      // Chopper's Delight 1.2.2: cutting boards of every wood, Farmer's Delight's own block
                 "farmers-respite-unofficial-port:${farmers_respite_version}", // Farmer's Respite Unofficial Port 3.0.1: its kettle
                 'sable:fg9dTRz9',                 // Sable 2.0.6+mc1.21.1, needed by Sable Trees
+                'cooking-for-blockheads:ZjiYlt4A', // Cooking for Blockheads 21.1.25+neoforge-1.21.1: its oven
+                'balm:gMedgtzL',                  // Balm 21.0.67+neoforge-1.21.1, needed by Cooking for Blockheads
         ].each { localRuntime "maven.modrinth:${it}" }
         // Sable Trees 0.5.1 (CurseForge only): its chopping block.
         localRuntime "curse.maven:sable-trees-1744089:${sable_trees_version}"

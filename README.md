@@ -141,6 +141,13 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   spoon or whisk stands in the bowl: click its handle and stir, each circle round the bowl is a stir, and everything in
   it goes round and turns into the mixture. A whole bowlful is mixed at once. Done, a bowl or bottle from your inventory
   dips in for it. Its book pours the liquids too.
+- **Oven** of [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads), in every colour. Its door
+  drops open and the rack slides out over it: let raw food go over the rack and it fills the free places, or click one
+  place with the right button. Coal or wood let go over the rack goes onto the fire, and an empty hand at its controls is
+  offered fuel from your inventory. Each piece browns
+  and rises as it bakes, and what is done waits on the open door with a puff of steam. The book lays its furnace food
+  from your inventory. A skillet or a pot clicked on its top stands upright on the burner, and an empty hand takes it back.
+  Sneak to open its own menu; hoppers and its heating unit work as before.
 - **A kitchen.** Rest the cursor at the edge of the screen beside another station and the camera moves over to it. A, D
   and the arrow keys do the same.
 - **For everyone.** Players nearby see the soup simmer, the spoon go round and the food land on the board.
@@ -149,8 +156,7 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 | Action | How |
 |---|---|
-| Open a station | Right-click the pot, board, skillet, stove, keg, oven, vat, grill, basin, kettle or mixing bowl |
-| Open a station | Right-click the pot, board, skillet, stove, keg, oven, vat, melting pot, grill, basin or kettle |
+| Open a station | Right-click the pot, board, skillet, stove, keg, oven, vat, melting pot, grill, basin, kettle or mixing bowl |
 | Use the block as in Farmer's Delight | Sneak + right-click |
 | Stir | Click the spoon's handle, move the mouse, click again to put it down |
 | Serve | Click the soup with a bowl |
@@ -193,6 +199,8 @@ board and keep the seasoning of their skewers. [Extra Delight](https://modrinth.
 station too, in each of its looks.
 [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block opens as a station of its own,
 for cutting food and splitting logs.
+[Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)'s oven opens as a station in each of its
+colours, its tools still standing on top.
 
 Hoppers, pipes and drops use the blocks' own inventories. A pot fed by automation cooks by itself, as in Farmer's Delight.
 
@@ -205,7 +213,7 @@ which each player sets in their own file.
 |---|---|---|
 | `cooking_pot`, `cutting_board`, `skillet`, `stove` | `true` | The station of that block. Off, the block works as in Farmer's Delight. `cooking_pot` covers the addons' pots too (copper, monster, alchemist) |
 | `keg` | `true` | Brewin' and Chewin's keg as a station. Off, the keg keeps its own menu |
-| `oven`, `vat` | `true` | Cultural Delights' oven and vat as stations. Off, they keep their own menus |
+| `oven`, `vat` | `true` | The ovens of Cultural Delights and Cooking for Blockheads, and Cultural Delights' vat, as stations. Off, they keep their own menus. Cooking for Blockheads' oven keeps its own baking time |
 | `ed_vat` | `true` | Extra Delight's vat as a station. Off, it keeps its own menu. It keeps its own aging times; on, it also ages with no jars or bowls in it and keeps what it made to be drawn into them |
 | `melting_pot` | `true` | Extra Delight's melting pot as a station. Off, it keeps its own menu. It keeps its own melting times |
 | `kettle` | `true` | The kettles of Farmer's Respite and Youkai's Feasts as stations. Off, each is used as before |

@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link YoukaiTankTests}, {@link StumpTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
+ * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link CulturalOvenTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link YoukaiTankTests}, {@link StumpTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
  * and {@link RecipeAudit} on NeoForge.
  */
 @GameTestHolder(HandsOnDelight.MOD_ID)
@@ -721,7 +721,47 @@ public final class ModGameTests {
 
     @GameTest(template = "empty")
     public static void everyLooseBakingFromItsFoodLaidOn(GameTestHelper helper) {
-        OvenTests.everyLooseBakingFromItsFoodLaidOn(helper);
+        CulturalOvenTests.everyLooseBakingFromItsFoodLaidOn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theCfbOvenReadsItsRecipes(GameTestHelper helper) {
+        OvenTests.theOvenReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theCfbOvenDoorKeepsTheRackShut(GameTestHelper helper) {
+        OvenTests.theDoorKeepsTheRackShut(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void foodBakesOnTheCfbOvenRack(GameTestHelper helper) {
+        OvenTests.foodBakesOnTheRack(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void cfbOvenFuelComesFromTheInventory(GameTestHelper helper) {
+        OvenTests.fuelComesFromTheInventory(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aPickInTheBookFillsTheCfbOvenRack(GameTestHelper helper) {
+        OvenTests.aPickInTheBookFillsTheRack(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theCfbOvenDoorShutsBehindTheLastCook(GameTestHelper helper) {
+        OvenTests.theDoorShutsBehindTheLastCook(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aSkilletStandsOnACfbOvenBurner(GameTestHelper helper) {
+        OvenTests.aSkilletStandsOnABurner(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 700)
+    public static void hoppersFeedAndEmptyTheCfbOven(GameTestHelper helper) {
+        OvenTests.hoppersFeedAndEmptyTheOven(helper);
     }
 
     @GameTest(template = "empty")
@@ -731,27 +771,27 @@ public final class ModGameTests {
 
     @GameTest(template = "empty")
     public static void theOvenReadsItsRecipes(GameTestHelper helper) {
-        OvenTests.theOvenReadsItsRecipes(helper);
+        CulturalOvenTests.theOvenReadsItsRecipes(helper);
     }
 
     @GameTest(template = "empty")
     public static void theDoorKeepsTheTrayShut(GameTestHelper helper) {
-        OvenTests.theDoorKeepsTheTrayShut(helper);
+        CulturalOvenTests.theDoorKeepsTheTrayShut(helper);
     }
 
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void breadBakesWithTheDoorShut(GameTestHelper helper) {
-        OvenTests.breadBakesWithTheDoorShut(helper);
+        CulturalOvenTests.breadBakesWithTheDoorShut(helper);
     }
 
     @GameTest(template = "empty")
     public static void aPieIsLaidOutFromTheBook(GameTestHelper helper) {
-        OvenTests.aPieIsLaidOutFromTheBook(helper);
+        CulturalOvenTests.aPieIsLaidOutFromTheBook(helper);
     }
 
     @GameTest(template = "empty")
     public static void aStackIsSharedOutForItsRecipe(GameTestHelper helper) {
-        OvenTests.aStackIsSharedOutForItsRecipe(helper);
+        CulturalOvenTests.aStackIsSharedOutForItsRecipe(helper);
     }
 
     @GameTest(template = "empty")

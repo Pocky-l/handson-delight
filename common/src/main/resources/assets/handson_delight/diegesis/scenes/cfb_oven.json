@@ -1,0 +1,758 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Cooking for Blockheads' oven, turned as the block faces (front to the north). The station hides the block while it is used and shows it here: its body without the inner board, its door dropping on its hinge at the bottom front edge as its renderer opens it, the inner board as a wire rack sliding out over the door with nine places as its renderer lays them (row 0 at the back, column 0 on the cook's left), each a window on its processing slots 7-15. What is baked waits on the open door (its output slots 4-6), the fuel burns at the back of the floor (slot 3), put in at the controls over the door or let go over the rack, tools stand on its burners (16-19), drawn by the scene in the world as well. While nobody uses it the block and its renderer are the rest of the oven. Blocks beside it stay in the picture (clear_view.blocks off): the camera's lines to the rack pass over the oven's neighbour on the cook's right, which would be left out.",
+  "work_plane": 6,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      -6.5,
+      29.5,
+      -40.0
+    ],
+    "target": [
+      7.5,
+      4.0,
+      -1.5
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "oven",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "children": [
+        {
+          "$comment": "The oven's body as its block draws it, without its inner board, which is the rack here: shown only while the station hides the block. Its colour and lit front follow the block (OvenLook).",
+          "id": "body",
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/cfb_oven/body/white_oven",
+            "lit_as_block": true
+          }
+        },
+        {
+          "$comment": "The fire at the back of the oven floor glowing on the floor and back wall while fuel burns.",
+          "id": "glow",
+          "pickable": false,
+          "hidden": true,
+          "visual": {
+            "model": "handson_delight:diegesis/cfb_oven/glow",
+            "emissive": true,
+            "translucent": true,
+            "tint": "#C0FFFFFF"
+          }
+        },
+        {
+          "id": "fuel",
+          "pos": [
+            0,
+            1.2,
+            4.0
+          ],
+          "slot": {
+            "slot": "fuel[0]",
+            "display": "hidden",
+            "size": 3.0,
+            "highlight": false
+          },
+          "children": [
+            {
+              "id": "fuel_item",
+              "pickable": false,
+              "rotation": [
+                -90,
+                0,
+                0
+              ],
+              "scale": 0.35,
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "$comment": "The oven's controls over the door: an empty hand there is offered the inventory's fuel, and fuel let go there goes onto the fire at the back of the floor (as anywhere over the rack).",
+          "id": "panel",
+          "takes_items": true,
+          "collider": {
+            "from": [
+              -7,
+              11,
+              -7.7
+            ],
+            "to": [
+              7,
+              15,
+              -6.9
+            ]
+          }
+        },
+        {
+          "$comment": "The inventory's fuel offered to an empty hand at the oven's controls, see-through in front of them.",
+          "id": "offer",
+          "pos": [
+            0,
+            13.0,
+            -10.0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": 0.3,
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "$comment": "Cooking for Blockheads' door, hinged at the oven's bottom front edge (z 0) as its renderer turns it: it drops towards the cook. What is baked waits on its inside once it is down.",
+          "id": "door",
+          "pos": [
+            0,
+            0,
+            -8
+          ],
+          "visual": {
+            "model": "handson_delight:diegesis/cfb_oven/door/white_oven_door",
+            "anchor": [
+              8,
+              0,
+              0
+            ],
+            "lit_as_block": true
+          },
+          "collider": {
+            "from": [
+              -7,
+              0,
+              -1.6
+            ],
+            "to": [
+              7,
+              11,
+              1.6
+            ]
+          },
+          "children": [
+            {
+              "id": "door_handle",
+              "pickable": false,
+              "pos": [
+                0,
+                0,
+                -16
+              ],
+              "visual": {
+                "model": "handson_delight:diegesis/cfb_oven/door_handle/white_oven_door_handle",
+                "anchor": [
+                  8,
+                  0,
+                  0
+                ],
+                "lit_as_block": true
+              }
+            },
+            {
+              "id": "served_0",
+              "pos": [
+                4.2,
+                8.5,
+                1.7
+              ],
+              "slot": {
+                "slot": "served[0]",
+                "display": "hidden",
+                "size": 3.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "dish_0",
+                  "pickable": false,
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": 0.25,
+                  "hidden": true
+                }
+              ]
+            },
+            {
+              "id": "served_1",
+              "pos": [
+                0.0,
+                8.5,
+                1.7
+              ],
+              "slot": {
+                "slot": "served[1]",
+                "display": "hidden",
+                "size": 3.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "dish_1",
+                  "pickable": false,
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": 0.25,
+                  "hidden": true
+                }
+              ]
+            },
+            {
+              "id": "served_2",
+              "pos": [
+                -4.2,
+                8.5,
+                1.7
+              ],
+              "slot": {
+                "slot": "served[2]",
+                "display": "hidden",
+                "size": 3.6,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "dish_2",
+                  "pickable": false,
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": 0.25,
+                  "hidden": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "tray",
+          "pickable": false,
+          "children": [
+            {
+              "id": "rack_model",
+              "pickable": false,
+              "visual": {
+                "model": "handson_delight:diegesis/cfb_oven/rack",
+                "lit_as_block": true
+              }
+            },
+            {
+              "id": "place_0",
+              "pos": [
+                3.84,
+                6.3,
+                3.84
+              ],
+              "slot": {
+                "slot": "ingredients[0]",
+                "display": "hidden",
+                "size": 3.0,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_0",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.3,
+                  "hidden": true
+                }
+              ],
+              "takes_items": true
+            },
+            {
+              "id": "place_1",
+              "pos": [
+                0.0,
+                6.3,
+                3.84
+              ],
+              "slot": {
+                "slot": "ingredients[1]",
+                "display": "hidden",
+                "size": 3.0,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_1",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.3,
+                  "hidden": true
+                }
+              ],
+              "takes_items": true
+            },
+            {
+              "id": "place_2",
+              "pos": [
+                -3.84,
+                6.3,
+                3.84
+              ],
+              "slot": {
+                "slot": "ingredients[2]",
+                "display": "hidden",
+                "size": 3.0,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_2",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.3,
+                  "hidden": true
+                }
+              ],
+              "takes_items": true
+            },
+            {
+              "id": "place_3",
+              "pos": [
+                3.84,
+                6.3,
+                0.0
+              ],
+              "slot": {
+                "slot": "ingredients[3]",
+                "display": "hidden",
+                "size": 3.0,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_3",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.3,
+                  "hidden": true
+                }
+              ],
+              "takes_items": true
+            },
+            {
+              "id": "place_4",
+              "pos": [
+                0.0,
+                6.3,
+                0.0
+              ],
+              "slot": {
+                "slot": "ingredients[4]",
+                "display": "hidden",
+                "size": 3.0,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_4",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.3,
+                  "hidden": true
+                }
+              ],
+              "takes_items": true
+            },
+            {
+              "id": "place_5",
+              "pos": [
+                -3.84,
+                6.3,
+                0.0
+              ],
+              "slot": {
+                "slot": "ingredients[5]",
+                "display": "hidden",
+                "size": 3.0,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_5",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.3,
+                  "hidden": true
+                }
+              ],
+              "takes_items": true
+            },
+            {
+              "id": "place_6",
+              "pos": [
+                3.84,
+                6.3,
+                -3.84
+              ],
+              "slot": {
+                "slot": "ingredients[6]",
+                "display": "hidden",
+                "size": 3.0,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_6",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.3,
+                  "hidden": true
+                }
+              ],
+              "takes_items": true
+            },
+            {
+              "id": "place_7",
+              "pos": [
+                0.0,
+                6.3,
+                -3.84
+              ],
+              "slot": {
+                "slot": "ingredients[7]",
+                "display": "hidden",
+                "size": 3.0,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_7",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.3,
+                  "hidden": true
+                }
+              ],
+              "takes_items": true
+            },
+            {
+              "id": "place_8",
+              "pos": [
+                -3.84,
+                6.3,
+                -3.84
+              ],
+              "slot": {
+                "slot": "ingredients[8]",
+                "display": "hidden",
+                "size": 3.0,
+                "highlight": true
+              },
+              "children": [
+                {
+                  "id": "food_8",
+                  "pickable": false,
+                  "rotation": [
+                    -90,
+                    0,
+                    0
+                  ],
+                  "scale": 0.3,
+                  "hidden": true
+                }
+              ],
+              "takes_items": true
+            },
+            {
+              "$comment": "Let go over the rack, a stack goes onto every free place; a right click lays one on the free place nearest the cursor.",
+              "id": "rack_zone",
+              "takes_items": true,
+              "collider": {
+                "from": [
+                  -7,
+                  4.9,
+                  -6.5
+                ],
+                "to": [
+                  7,
+                  6.0,
+                  7
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tool_0",
+      "pos": [
+        4.5,
+        15.0,
+        11.0
+      ],
+      "slot": {
+        "slot": "tools[0]",
+        "display": "hidden",
+        "size": 4.0,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "tool_item_0",
+          "pickable": false,
+          "hidden": true
+        }
+      ],
+      "$comment": "The oven's four tool places (its slots 16-19), each over a burner of its top: cookware stands on it as on a stove, anything else lies flat on it. Drawn by the scene in the world too (the oven's renderer stands them tilted, lit from inside its block): outside the oven node, so they show while the block is the oven."
+    },
+    {
+      "id": "tool_1",
+      "pos": [
+        11.5,
+        15.0,
+        11.0
+      ],
+      "slot": {
+        "slot": "tools[1]",
+        "display": "hidden",
+        "size": 4.0,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "tool_item_1",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "id": "tool_2",
+      "pos": [
+        4.5,
+        15.0,
+        4.0
+      ],
+      "slot": {
+        "slot": "tools[2]",
+        "display": "hidden",
+        "size": 4.0,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "tool_item_2",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "id": "tool_3",
+      "pos": [
+        11.5,
+        15.0,
+        4.0
+      ],
+      "slot": {
+        "slot": "tools[3]",
+        "display": "hidden",
+        "size": 4.0,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "tool_item_3",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -1.2,
+        6.5,
+        -0.5
+      ],
+      "rotation": [
+        -31.9,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -1.21,
+        6.51,
+        -0.53
+      ],
+      "rotation": [
+        -31.9,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -1.22,
+        6.53,
+        -0.55
+      ],
+      "rotation": [
+        -31.9,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "flame",
+      "pos": [
+        -1.21,
+        6.51,
+        -0.53
+      ],
+      "rotation": [
+        -31.9,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "flame_lit",
+      "pos": [
+        -1.22,
+        6.53,
+        -0.55
+      ],
+      "rotation": [
+        -31.9,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -1.25,
+        6.55,
+        -0.59
+      ],
+      "rotation": [
+        58.1,
+        20.0,
+        0
+      ],
+      "scale": 0.156,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        8.95,
+        15.98,
+        -21.89
+      ],
+      "rotation": [
+        -31.9,
+        20.0,
+        0
+      ],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -5.3,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          5.3,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ],
+  "clear_view": {
+    "blocks": false
+  }
+}

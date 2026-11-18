@@ -58,7 +58,7 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(KegStation.TANK_ID, KegBehavior::tank);
         DiegesisClient.registerLiquid(HandsOnDelight.id("drink"), LiquidLook.of(0xC0B08850));
         KegLiquids.register();
-        DiegesisClient.registerBehavior(OvenStation.ID, OvenBehavior::new);
+        DiegesisClient.registerBehavior(OvenStation.ID, OvenBehavior::cultural);
         DiegesisClient.registerBehavior(VatStation.ID, VatBehavior::new);
         DiegesisClient.registerBehavior(EdVatStation.ID, EdVatBehavior::new);
         DiegesisClient.registerBehavior(KettleStation.ID, KettleBehavior::new);
@@ -85,6 +85,7 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(ChoppingBlockStation.ID, view -> new BoardBehavior(view, true));
         DiegesisClient.registerBehavior(SkilletStation.ID, SkilletBehavior::new);
         DiegesisClient.registerBehavior(StoveStation.ID, StoveBehavior::new);
+        DiegesisClient.registerBehavior(OvenStation.CFB_ID, OvenBehavior::cfb);
         DiegesisClient.registerLiquid(HandsOnDelight.id("broth"), LiquidLook.of(0xE0B0A070).thick(0.6F));
         registerParticles();
     }

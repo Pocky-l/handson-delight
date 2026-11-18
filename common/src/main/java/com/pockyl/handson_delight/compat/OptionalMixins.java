@@ -21,7 +21,8 @@ public final class OptionalMixins implements IMixinConfigPlugin {
     private static final String PACKAGE = "com.pockyl.handson_delight.mixin.";
     private static final Set<String> OPTIONAL = Set.of(PACKAGE + "AddonStoveSmokeMixin", PACKAGE + "KegMixin", PACKAGE + "OvenMixin",
             PACKAGE + "VatMixin", PACKAGE + "VatUprightMixin", PACKAGE + "VatSparksMixin", PACKAGE + "GrillSmokeMixin",
-            PACKAGE + "GrillSizzleMixin", PACKAGE + "DecoratedBoardMixin", PACKAGE + "DecoratedBoardContentMixin");
+            PACKAGE + "GrillSizzleMixin", PACKAGE + "DecoratedBoardMixin", PACKAGE + "DecoratedBoardContentMixin",
+            PACKAGE + "CfbOvenToolsMixin", PACKAGE + "CfbOvenTopMixin");
     private static final String CHOPPERS_BOARD = PACKAGE + "DecoratedBoardMixin";
     /** {@code clearContent} of Chopper's board, as the jar names it: Mojang's name (NeoForge, Fabric's dev runs) or Fabric's. */
     private static final Set<String> CLEAR_CONTENT = Set.of("clearContent", "method_5448");

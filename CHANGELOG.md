@@ -20,6 +20,11 @@
 - A switch over the right page shows only what you can make now; it is kept for each station.
 - A "Made lately" tab keeps the last dishes you made from the book, in the same places.
 - Click a thing that goes in to see its own recipe, when the book has one.
+- [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)' oven is a station: its door drops, the rack
+  slides out, and raw food let go over it fills the free places. Fuel goes in over the rack or at its controls, each
+  piece browns as it bakes, and what is done waits on the open door. A skillet or a pot clicked on its top stands upright on
+  a burner, other tools lie flat there. Its book has Farmer's Delight's campfire dishes too, which it bakes on this
+  version. Sneak for its own menu; hoppers work as before. `oven` in the config turns it off.
 
 ### Changed
 - The book's pages turn with Page Up and Page Down, Home and End, or a click on either half of the page's foot, which goes

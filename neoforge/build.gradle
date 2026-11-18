@@ -30,7 +30,8 @@ neoForge {
             type = 'gameTestServer'
             // Own directory: in run/ it would share the folder with the dev client.
             gameDirectory = project.file('run/gametest')
-            systemProperty 'neoforge.enabledGameTestNamespaces', providers.gradleProperty('meals').isPresent() ? 'handson_meals' : project.mod_id
+            systemProperty 'neoforge.enabledGameTestNamespaces', providers.gradleProperty('meals').isPresent() ? 'handson_meals'
+                    : providers.gradleProperty('extradelight').isPresent() ? 'handson_extradelight' : project.mod_id
         }
 
         configureEach {
@@ -76,6 +77,8 @@ dependencies {
     // Youkai's Feasts' kettle, cuisine board and pots are stations too: compiled against it only (its drinks; its blocks are reached
     // by name, as their classes build on the L2 libraries nested in its jar).
     compileOnly "maven.modrinth:gensokyo-delight-youkais-feasts:${youkais_feasts_version}"
+    // Extra Delight's mixing bowl is a station too: compiled against it only.
+    compileOnly "maven.modrinth:extradelight:${extra_delight_version}"
 }
 
 // -Pmeals runs only the game tests of Modest Meals' meals at the board, with Modest Meals: it makes Farmer's Delight's burgers,
@@ -91,6 +94,18 @@ if (meals) {
     }
     sourceSets.main.java.srcDir 'src/meals/java'
     sourceSets.main.resources.srcDir 'src/meals/resources'
+}
+
+// -Pextradelight runs only the game tests of Extra Delight's stations, with Extra Delight: it overrides Farmer's Delight's stews,
+// cocoa, pies and dough and adds pot recipes of the same food (stir-fry), so 20 other tests fail with it by design. Its tests and
+// their template are in src/extradelight, under a game test namespace of their own. It goes with -Paddons=wide too.
+var extraDelight = providers.gradleProperty('extradelight').isPresent()
+if (extraDelight) {
+    dependencies {
+        localRuntime "maven.modrinth:extradelight:${extra_delight_version}" // Extra Delight 2.7.1
+    }
+    sourceSets.main.java.srcDir 'src/extradelight/java'
+    sourceSets.main.resources.srcDir 'src/extradelight/resources'
 }
 
 // -Paddons runs the game and the game tests with the most downloaded Farmer's Delight addons that have a NeoForge 1.21.1 build

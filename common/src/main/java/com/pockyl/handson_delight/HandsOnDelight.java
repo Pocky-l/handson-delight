@@ -5,6 +5,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 
 import com.pockyl.handson_delight.station.BasinStation;
+import com.pockyl.handson_delight.station.BowlStation;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 import com.pockyl.handson_delight.station.CuisineBoardStation;
@@ -70,6 +71,9 @@ public final class HandsOnDelight {
         }
         if (HandsOnConfig.youkaiSteamer()) {
             SteamerStation.register();
+        }
+        if (HandsOnConfig.mixingBowl()) {
+            BowlStation.register();
         }
     }
 

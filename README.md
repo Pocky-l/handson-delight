@@ -119,6 +119,11 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   like the cooking pot. An [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) scroll
   clicked on it hangs over its rim and its school shows on the pot: a fire scroll burns under it and heats it. Dishes
   that need a school wait for their scroll, which blinks on the badge and stands with them in the book.
+- **Mixing bowl** of [Extra Delight](https://modrinth.com/mod/extradelight). Drop the food in, pour liquids from their
+  bottles and buckets, crack eggs over the rim (a right click cracks one for its white and gives you the yolk). Your
+  spoon or whisk stands in the bowl: click its handle and stir, each circle round the bowl is a stir, and everything in
+  it goes round and turns into the mixture. A whole bowlful is mixed at once. Done, a bowl or bottle from your inventory
+  dips in for it. Its book pours the liquids too.
 - **A kitchen.** Rest the cursor at the edge of the screen beside another station and the camera moves over to it. A, D
   and the arrow keys do the same.
 - **For everyone.** Players nearby see the soup simmer, the spoon go round and the food land on the board.
@@ -127,7 +132,7 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 | Action | How |
 |---|---|
-| Open a station | Right-click the pot, board, skillet, stove, keg, oven, vat, grill, basin or kettle |
+| Open a station | Right-click the pot, board, skillet, stove, keg, oven, vat, grill, basin, kettle or mixing bowl |
 | Use the block as in Farmer's Delight | Sneak + right-click |
 | Stir | Click the spoon's handle, move the mouse, click again to put it down |
 | Serve | Click the soup with a bowl |
@@ -159,7 +164,8 @@ the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-
 [Chopper's Delight](https://modrinth.com/mod/choppers-delight), the decorated one too, each in its own look.
 [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle opens as a station too, its tray on a stove
 drawn with Farmer's Delight's own, and so does [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)'s kettle,
-its cuisine board and its three pots.
+its cuisine board and its three pots. [Extra Delight](https://modrinth.com/mod/extradelight)'s mixing bowl opens as a
+station with its own recipes, spoons and whisk.
 [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell)'s alchemist pot opens as a pot station with
 its [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) scroll.
 [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s kebabs and bibimbap are put together on the
@@ -183,6 +189,7 @@ which each player sets in their own file.
 | `youkai_pots` | `true` | Youkai's Feasts' small iron pot, short iron pot and stockpot as stations. Off, they are used as before. They keep their own cooking times |
 | `youkai_steamer` | `true` | Youkai's Feasts' steamer as a station. Off, it is used as before. It keeps its own steaming times |
 | `youkai_tank` | `true` | Youkai's Feasts' fermentation tank as a station. Off, it is used as before. It keeps its own fermenting times |
+| `mixing_bowl` | `true` | Extra Delight's mixing bowl as a station. Off, it keeps its own menu |
 | `youkai_hints` | `false` | Youkai's Feasts' squares on the right of the screen while one of its blocks is looked at (what it takes next, what lies in it). Hidden unless on |
 | `remove_crafting_recipes` | `true` | Farmer's Delight's food crafts are made on the board only |
 | `stirring_required` | `true` | Food you put into the pot waits for the spoon while you are at it |

@@ -11,6 +11,7 @@ import com.pockyl.diegesis.api.client.ParticleStyle;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.assembly.BoardDishes;
 import com.pockyl.handson_delight.station.BasinStation;
+import com.pockyl.handson_delight.station.BowlStation;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 import com.pockyl.handson_delight.station.CuisineBoardStation;
@@ -69,6 +70,9 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(YoukaiPotStation.SHORT_ID, view -> new YoukaiPotBehavior(view, YoukaiPotBehavior.Size.SHORT));
         DiegesisClient.registerBehavior(YoukaiPotStation.STOCKPOT_ID, view -> new YoukaiPotBehavior(view, YoukaiPotBehavior.Size.STOCKPOT));
         DiegesisClient.registerBehavior(SteamerStation.ID, SteamerBehavior::new);
+        DiegesisClient.registerBehavior(BowlStation.ID, BowlBehavior::new);
+        // What is mixed in the bowl: thick, nearly opaque; its colour is set by the scene.
+        DiegesisClient.registerLiquid(BowlStation.BATTER_LIQUID, LiquidLook.of(0xF0E8D8B8).thick(0.8F));
         DiegesisClient.registerBehavior(CuttingBoardStation.ID, BoardBehavior::new);
         DiegesisClient.registerBehavior(SkilletStation.ID, SkilletBehavior::new);
         DiegesisClient.registerBehavior(StoveStation.ID, StoveBehavior::new);

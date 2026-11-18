@@ -6,6 +6,7 @@
   "handson_delight.keg.holds": "%s, %s мБ",
   "handson_delight.book.minutes": "%s мин",
   "handson_delight.book.bonus": "+%s%%",
+  "handson_delight.book.stirs": "кругов: %s",
   "handson_delight.assembly": "Сборка на разделочной доске",
   "handson_delight.assembly.first": "Кладётся на доску первым",
   "tag.item.handson_delight.sliced_straight": "Еда, нарезаемая ломтиками",

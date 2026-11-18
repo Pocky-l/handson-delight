@@ -1,6 +1,12 @@
 # Changelog
 
 ## [1.5.1+1.21.1] - Unreleased
+### New
+- [Extra Delight](https://modrinth.com/mod/extradelight)'s mixing bowl is a station: drop the food in, pour the milk and
+  oil, crack the eggs over the rim, then take your spoon or whisk by its handle and stir. Each circle round the bowl is a
+  stir, and a whole bowlful is mixed at once. When it is done, a bowl or bottle from your inventory dips in for it. A
+  right click with an egg cracks it for its white, as the bowl's own click does. `mixing_bowl` in the config turns it off.
+
 ### Fixed
 - Shift-using a keg's tap no longer hangs the server when [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s
   own output slot is full. Thanks to LeDok ([#39](https://github.com/Pocky-l/handson-delight/pull/39)).

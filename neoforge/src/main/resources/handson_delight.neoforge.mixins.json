@@ -19,7 +19,8 @@
     "YoukaiPotMixin",
     "YoukaiSteamerMixin",
     "YoukaiTankMixin",
-    "YoukaiFermentRecipeAccess"
+    "YoukaiFermentRecipeAccess",
+    "MixingBowlMixin"
   ],
   "client": [
     "CopperPotQuietMixin",

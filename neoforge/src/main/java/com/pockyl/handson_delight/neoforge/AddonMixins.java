@@ -22,6 +22,7 @@ import java.util.Set;
 public final class AddonMixins implements IMixinConfigPlugin {
     private static final String PACKAGE = "com.pockyl.handson_delight.neoforge.mixin.";
     private static final String YOUKAI = "youkaisfeasts";
+    private static final String EXTRA_DELIGHT = "extradelight";
     /** Youkai's Feasts' drinks as fluids, which its kettle and fermentation tank stations pour and tap: from 1.0.4 on. */
     private static final String YOUKAI_DRINKS = "dev.xkmc.youkaishomecoming.content.item.fluid.IYHFluidItem";
 
@@ -43,7 +44,8 @@ public final class AddonMixins implements IMixinConfigPlugin {
             Map.entry("YoukaiCuisineBoardMixin", Needs.mod(YOUKAI)),
             Map.entry("YoukaiSteamerMixin", Needs.mod(YOUKAI)),
             Map.entry("YoukaiPotSoupMixin", Needs.mod(YOUKAI)),
-            Map.entry("YoukaiHintsMixin", Needs.mod(YOUKAI)));
+            Map.entry("YoukaiHintsMixin", Needs.mod(YOUKAI)),
+            Map.entry("MixingBowlMixin", Needs.mod(EXTRA_DELIGHT)));
 
     @Override
     public void onLoad(String mixinPackage) {

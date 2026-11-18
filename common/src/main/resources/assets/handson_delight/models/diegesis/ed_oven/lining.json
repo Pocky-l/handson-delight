@@ -1,0 +1,129 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "block/bricks",
+    "bricks": "block/bricks"
+  },
+  "elements": [
+    {
+      "name": "lining_back",
+      "from": [
+        4,
+        2,
+        13.98
+      ],
+      "to": [
+        12,
+        9,
+        13.98
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            7,
+            12,
+            14
+          ],
+          "texture": "#bricks"
+        }
+      }
+    },
+    {
+      "name": "lining_floor",
+      "from": [
+        4,
+        2.02,
+        4
+      ],
+      "to": [
+        12,
+        2.02,
+        13.98
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            4,
+            2,
+            12,
+            12
+          ],
+          "texture": "#bricks"
+        }
+      }
+    },
+    {
+      "name": "lining_left",
+      "from": [
+        4.02,
+        2,
+        4
+      ],
+      "to": [
+        4.02,
+        9,
+        13.98
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            2,
+            7,
+            12,
+            14
+          ],
+          "texture": "#bricks"
+        }
+      }
+    },
+    {
+      "name": "lining_right",
+      "from": [
+        11.98,
+        2,
+        4
+      ],
+      "to": [
+        11.98,
+        9,
+        13.98
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            4,
+            7,
+            14,
+            14
+          ],
+          "texture": "#bricks"
+        }
+      }
+    },
+    {
+      "name": "lining_roof",
+      "from": [
+        4,
+        8.98,
+        4
+      ],
+      "to": [
+        12,
+        8.98,
+        13.98
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            4,
+            2,
+            12,
+            12
+          ],
+          "texture": "#bricks"
+        }
+      }
+    }
+  ]
+}

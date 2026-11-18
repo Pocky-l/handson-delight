@@ -13,6 +13,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
@@ -83,6 +84,18 @@ public final class OvenBehavior implements StationBehavior {
     private static final float TOOL_BLOCK_SCALE = 0.5F;
     private static final float TOOL_PLACE = 6.5F;
     private static final float TOOL_ITEM = 3.5F;
+    /** The bakeware standing in an open-mouthed oven: its block at most this big and this wide (pixels), else the item lying flat. */
+    private static final float BAKEWARE_SCALE = 0.5F;
+    private static final float BAKEWARE_WIDE = 7.5F;
+    private static final float BAKEWARE_ITEM = 7.0F;
+    /**
+     * An oven that bakes sets takes its tray as one place, not as nine: something for it carried over the tray marks the whole tray
+     * (this colour, reaching this far beyond the outer places' middles, pixels); an empty hand outlines the thing a click takes. Where
+     * no bakeware stands, the one carried over the oven, or the one what lies there waits for, shows faintly where it would stand.
+     */
+    private static final int TRAY_MARK = 0x50FFFFFF;
+    private static final float TRAY_MARK_EDGE = 1.4F;
+    private static final int BAKEWARE_GHOST = 0x78FFFFFF;
     /** Baking, what lies there browns towards a crust's colour and rises a little, the most by the time it is done. */
     private static final int BROWNED = 0xFFB07A48;
     private static final float BROWNING = 0.7F;
@@ -92,9 +105,8 @@ public final class OvenBehavior implements StationBehavior {
     private static final float ARRIVE_TIME = 0.4F;
     private static final float ARRIVE_FROM = 9.0F;
     private static final float ARRIVE_ARC = 3.0F;
-    /** The heat inside: how see-through the glow is at most and how much it flickers. */
-    private static final int GLOW_ALPHA = 0xC0;
-    private static final int GLOW_FLICKER = 0x30;
+    /** The heat inside: how much of the glow's own see-through ({@link OvenLook#glowAlpha}) it flickers away. */
+    private static final float GLOW_FLICKER = 0.25F;
     /** Smoke while it bakes shut, puffs a second; shimmer out of the open mouth while it is hot. */
     private static final float SMOKE_RATE = 1.4F;
     private static final float SHIMMER_RATE = 2.5F;
@@ -156,6 +168,15 @@ public final class OvenBehavior implements StationBehavior {
     private float doneAt = -10.0F;
     private boolean baking;
     private ItemStack offered = ItemStack.EMPTY;
+    /** The bakeware what lies there waits for, while other bakeware or none stands in the oven: the badge blinks it. */
+    private ItemStack wanted = ItemStack.EMPTY;
+    /** The bakeware shown faintly where none stands (empty: none), and what the bakeware node shows now; faint or not. */
+    private ItemStack ghost = ItemStack.EMPTY;
+    private Item bakewareDrawn;
+    private boolean bakewareFaint;
+    /** The place whose thing is outlined for an empty hand, -1 none; whether the bakeware is. */
+    private int outlined = -1;
+    private boolean panOutlined;
 
     public OvenBehavior(StationView view, OvenLook look) {
         this.look = look;
@@ -176,6 +197,10 @@ public final class OvenBehavior implements StationBehavior {
         return new OvenBehavior(view, OvenLook.CULTURAL);
     }
 
+    public static OvenBehavior extra(StationView view) {
+        return new OvenBehavior(view, OvenLook.EXTRA);
+    }
+
     private static KitchenOven oven(StationView view) {
         return KitchenOven.of(view.level().getBlockEntity(view.pos()));
     }
@@ -183,6 +208,16 @@ public final class OvenBehavior implements StationBehavior {
     private static boolean eachPlace(StationView view) {
         KitchenOven oven = oven(view);
         return oven == null || oven.bakesEachPlace();
+    }
+
+    /** The bakeware standing in the oven, empty for none or for an oven without it. */
+    private static ItemStack bakeware(StationView view) {
+        return view.state().schema().slotGroups().containsKey(OvenStation.BAKEWARE) ? view.state().getItem(OvenStation.BAKEWARE_SLOT)
+                : ItemStack.EMPTY;
+    }
+
+    private static boolean isBakeware(KitchenOven oven, ItemStack stack) {
+        return oven != null && oven.usesBakeware() && oven.isBakeware(stack);
     }
 
     private static int outputs(StationView view) {
@@ -206,6 +241,26 @@ public final class OvenBehavior implements StationBehavior {
         Arrays.fill(browned, -1.0F);
         drawnItems.clear();
         drawnModels.clear();
+        ghost = ItemStack.EMPTY;
+        bakewareDrawn = null;
+        bakewareFaint = false;
+        outlined = -1;
+        panOutlined = false;
+        view.node("tray_mark").ifPresent(mark -> {
+            // Flat over the tray, as wide as the places reach and a little more; the columns lie evenly about the middle.
+            float wide = Math.abs(look.columnX()[0]) + TRAY_MARK_EDGE;
+            float back = look.rowZ()[0] + TRAY_MARK_EDGE;
+            float front = look.rowZ()[2] - TRAY_MARK_EDGE;
+            MeshShape shape = MeshShape.builder()
+                    .corner(-wide, 0.0F, back, 0.0F, 1.0F, 0.0F, 1.0F, 0.0F)
+                    .corner(wide, 0.0F, back, 1.0F, 1.0F, 0.0F, 1.0F, 0.0F)
+                    .corner(wide, 0.0F, front, 1.0F, 0.0F, 0.0F, 1.0F, 0.0F)
+                    .corner(-wide, 0.0F, front, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F)
+                    .build();
+            mark.setShape(shape, BADGE_TEXTURE, true);
+            mark.setTint(TRAY_MARK);
+            mark.setVisible(false);
+        });
         recipes = recipesOf(view);
         view.node("dial").ifPresent(dial -> dial.setTint(DIAL_COLOR));
         view.node("dial_track").ifPresent(track -> track.setTint(TRACK_COLOR));
@@ -248,7 +303,7 @@ public final class OvenBehavior implements StationBehavior {
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
             ItemStack held = player.getMainHandItem();
             KitchenOven oven = oven(view);
-            if (oven != null && oven.takes(held)) {
+            if (oven != null && (oven.takes(held) || isBakeware(oven, held))) {
                 lay(view, player.getInventory().selected, false);
             } else if (oven != null && oven.burnsFuel() && oven.isFuel(held)) {
                 fuel(view, player.getInventory().selected);
@@ -289,6 +344,9 @@ public final class OvenBehavior implements StationBehavior {
         if (oven.bakesEachPlace()) {
             return oven.takes(stack);
         }
+        if (isBakeware(oven, stack)) {
+            return true;
+        }
         return recipes.stream().anyMatch(recipe -> recipe.needed().stream().anyMatch(ingredient -> ingredient.test(stack)));
     }
 
@@ -323,8 +381,11 @@ public final class OvenBehavior implements StationBehavior {
         view.sendAction(OvenStation.ACTION_FUEL, how);
     }
 
+    /** The door opens for what the cook lays: always where the oven bakes a set (it holds while open), else only where nothing bakes. */
     private void openForIt(StationView view) {
-        if (!isDoorOpen(view) && view.state().getControl(OvenStation.PROGRESS) <= 0.0F) {
+        KitchenOven oven = oven(view);
+        boolean holds = oven != null && !oven.bakesEachPlace();
+        if (!isDoorOpen(view) && (holds || view.state().getControl(OvenStation.PROGRESS) <= 0.0F)) {
             askDoor(view, true);
         }
     }
@@ -361,15 +422,33 @@ public final class OvenBehavior implements StationBehavior {
             book.click(view, button);
             return true;
         }
-        if (isDoor(node)) {
+        KitchenOven oven = oven(view);
+        boolean reachable = isDoorOpen(view) && tray >= 1.0F;
+        boolean forOven = oven != null && (oven.takes(stack) || isBakeware(oven, stack));
+        if (isDoor(node) && !(reachable && forOven)) {
             askDoor(view, !isDoorOpen(view));
             return true;
         }
-        KitchenOven oven = oven(view);
         if (oven == null) {
             return false;
         }
         boolean place = node.startsWith("place_");
+        if (isBakeware(oven, stack) && (place || isDoor(node) || "rack_zone".equals(node) || "mouth".equals(node)
+                || "bakeware_slot".equals(node))) {
+            // Bakeware let go over the oven stands in it, one (Shift: the stack, bowls a recipe uses up); other bakeware comes back.
+            CompoundTag how = new CompoundTag();
+            how.putBoolean(OvenStation.ALL, shift);
+            view.sendAction(OvenStation.ACTION_LAY, how);
+            return true;
+        }
+        if ((isDoor(node) || "bakeware_slot".equals(node)) && oven.takes(stack)) {
+            // Food let go over the mouth while the bakeware is out goes into it; a right click lays one, as into a crafting grid.
+            CompoundTag how = new CompoundTag();
+            how.putBoolean(OvenStation.ONE, button == 1);
+            how.putBoolean(OvenStation.ALL, shift);
+            view.sendAction(OvenStation.ACTION_LAY, how);
+            return true;
+        }
         boolean intoOven = place || "rack_zone".equals(node) || "panel".equals(node);
         if (intoOven && oven.burnsFuel() && oven.isFuel(stack) && !oven.takes(stack)) {
             // Fuel let go at the controls or over the rack goes onto the fire at the back.
@@ -541,6 +620,103 @@ public final class OvenBehavior implements StationBehavior {
         }
         tools(view);
         fuelBed(view);
+        bakewareStanding(view);
+    }
+
+    /**
+     * The bakeware standing in an open-mouthed oven, under what bakes: its own block (a sheet, a pie dish, a loaf pan) sized to the
+     * oven, else the item lying flat (a muffin tin, a bowl). Where none stands, the {@link #ghost} faintly in its place.
+     */
+    private void bakewareStanding(StationView view) {
+        ItemStack standing = bakeware(view);
+        boolean faint = standing.isEmpty() && !ghost.isEmpty();
+        ItemStack stack = faint ? ghost : standing;
+        Item item = stack.isEmpty() ? null : stack.getItem();
+        if (item == bakewareDrawn && faint == bakewareFaint) {
+            return;
+        }
+        bakewareDrawn = item;
+        bakewareFaint = faint;
+        view.node("bakeware_model").ifPresent(node -> {
+            node.setVisible(item != null);
+            if (item == null) {
+                return;
+            }
+            int tint = faint ? BAKEWARE_GHOST : 0xFFFFFFFF;
+            float extent = blockExtent(item);
+            if (extent > 0.0F) {
+                node.setVisual(Visual.ofBlock(((BlockItem) item).getBlock().defaultBlockState()).withTint(tint));
+                node.rotateTo(0.0F, 0.0F, 0.0F, 0.0F);
+                node.scaleTo(Math.min(BAKEWARE_SCALE, BAKEWARE_WIDE / extent), 0.0F);
+                node.moveTo(0.0F, 0.0F, 0.0F, 0.0F);
+            } else {
+                node.setVisual(Visual.ofItem(item).withAnchor(ICON_MIDDLE).withTint(tint));
+                node.rotateTo(-90.0F, 0.0F, 0.0F, 0.0F);
+                node.scaleTo(BAKEWARE_ITEM / ITEM_PIXELS, 0.0F);
+                node.moveTo(0.0F, 0.1F, 0.0F, 0.0F);
+            }
+        });
+    }
+
+    /**
+     * An oven of sets shows its tray as one place ({@link #TRAY_MARK}): marked whole while the cook carries something for it over it,
+     * the thing a click takes outlined for an empty hand (the bakeware where nothing lies on it), and the bakeware it lacks faint where
+     * it would stand.
+     */
+    private void trayHints(StationView view, boolean reachable) {
+        KitchenOven oven = oven(view);
+        boolean sets = reachable && oven != null && !oven.bakesEachPlace();
+        LocalPlayer player = Minecraft.getInstance().player;
+        ItemStack carried = player == null ? ItemStack.EMPTY : player.inventoryMenu.getCarried();
+        boolean over = sets && overTray(view);
+        boolean bakewareCarried = isBakeware(oven, carried);
+        boolean forTray = !carried.isEmpty() && oven != null && (oven.takes(carried) || bakewareCarried);
+        view.node("tray_mark").ifPresent(mark -> mark.setVisible(over && forTray));
+        ItemStack faint = ItemStack.EMPTY;
+        if (sets && oven.usesBakeware()) {
+            faint = over && bakewareCarried ? carried : wanted;
+        }
+        if (faint.getItem() != ghost.getItem()) {
+            ghost = faint.isEmpty() ? ItemStack.EMPTY : faint.copyWithCount(1);
+            bakewareStanding(view);
+        }
+        int under = -1;
+        for (int i = 0; sets && carried.isEmpty() && i < PLACES; i++) {
+            boolean hovered = view.node(placeNode(i)).map(NodeView::isHovered).orElse(false);
+            if (hovered && !shown[i].isEmpty()) {
+                under = i;
+            }
+        }
+        boolean panUnder = sets && carried.isEmpty() && !bakeware(view).isEmpty()
+                && view.node("bakeware_slot").map(NodeView::isHovered).orElse(false);
+        if (panUnder != panOutlined) {
+            panOutlined = panUnder;
+            view.node("bakeware_model").ifPresent(node -> node.setOutlined(panUnder));
+        }
+        if (under != outlined) {
+            if (outlined >= 0) {
+                view.node("food_" + outlined).ifPresent(node -> node.setOutlined(false));
+            }
+            if (under >= 0) {
+                view.node("food_" + under).ifPresent(node -> node.setOutlined(true));
+            }
+            outlined = under;
+        }
+    }
+
+    /** Whether the cursor is over the tray: on a place, over the rack, the bakeware's rim or the mouth over it. */
+    private static boolean overTray(StationView view) {
+        for (String id : new String[] {"rack_zone", "bakeware_slot", "door_mouth", "mouth"}) {
+            if (view.node(id).map(NodeView::isHovered).orElse(false)) {
+                return true;
+            }
+        }
+        for (int i = 0; i < PLACES; i++) {
+            if (view.node(placeNode(i)).map(NodeView::isHovered).orElse(false)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The thing on place {@code index}, drawn by its food node: an item lying flat, tinted as it browns. */
@@ -698,8 +874,10 @@ public final class OvenBehavior implements StationBehavior {
                 making = KitchenOven.bakingOf(recipes, onTray[best]);
             }
         } else {
-            making = KitchenOven.matching(recipes, onTray);
+            making = KitchenOven.matching(recipes, onTray, bakeware(view));
         }
+        Item wants = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(state.data().getString(OvenStation.WANTS)));
+        wanted = making.isEmpty() && state.data().contains(OvenStation.WANTS) && wants != Items.AIR ? new ItemStack(wants) : ItemStack.EMPTY;
         ItemStack[] served = state.getItems(OvenStation.SERVED);
         ItemStack waiting = Arrays.stream(served).filter(stack -> !stack.isEmpty()).findFirst().orElse(ItemStack.EMPTY);
         int count = servedCount(view);
@@ -708,6 +886,8 @@ public final class OvenBehavior implements StationBehavior {
         ready = false;
         if (making.isPresent()) {
             dish = making.get().result();
+        } else if (!wanted.isEmpty()) {
+            dish = wanted;
         } else if (!waiting.isEmpty()) {
             dish = waiting;
             servings = count;
@@ -753,9 +933,13 @@ public final class OvenBehavior implements StationBehavior {
             view.node(part).ifPresent(node -> node.setVisible(whole));
         }
         boolean reachable = open && tray >= 1.0F;
+        // On a tray of sets an empty hand reaches through the rack and the empty places to the bakeware under them: it is taken
+        // anywhere on it where nothing lies.
+        LocalPlayer player = Minecraft.getInstance().player;
+        boolean throughToPan = !eachPlace(view) && (player == null || player.inventoryMenu.getCarried().isEmpty());
         for (int i = 0; i < PLACES; i++) {
             arrive(view, i, dt);
-            boolean enabled = reachable;
+            boolean enabled = reachable && !(throughToPan && shown[i].isEmpty());
             view.node(placeNode(i)).ifPresent(node -> node.setEnabled(enabled));
         }
         for (int i = 0; i < outputs(view); i++) {
@@ -763,9 +947,11 @@ public final class OvenBehavior implements StationBehavior {
             boolean holds = !view.state().getItem(SlotRef.of(OvenStation.SERVED, i)).isEmpty();
             view.node(served(view, i)).ifPresent(node -> node.setEnabled(reachable && holds));
         }
-        view.node("rack_zone").ifPresent(node -> node.setEnabled(reachable));
+        view.node("rack_zone").ifPresent(node -> node.setEnabled(reachable && !throughToPan));
+        view.node("bakeware_slot").ifPresent(node -> node.setEnabled(reachable));
         view.node("mouth").ifPresent(node -> node.setEnabled(reachable));
         view.node("panel").ifPresent(node -> node.setEnabled(reachable));
+        trayHints(view, inUse && reachable);
         brown(view, open);
         heat(view, dt, hot, open, baking && !open);
         offerFuel(view, inUse && reachable);
@@ -808,12 +994,19 @@ public final class OvenBehavior implements StationBehavior {
                 door = Math.max(0.0F, door - dt / look.doorTime());
             }
         }
-        String hinge = look.door() == OvenLook.Door.DROP ? "door" : "door_left";
-        if (open && !wasOpening && before < 1.0F) {
+        String hinge = switch (look.door()) {
+            case DROP -> "door";
+            case LEAVES -> "door_left";
+            case NONE -> "tray";
+        };
+        // An open mouth has no door to sound: the bakeware or the food on the ledge does, and an empty ledge moves in silence.
+        boolean sounds = look.door() != OvenLook.Door.NONE || !bakeware(view).isEmpty()
+                || Arrays.stream(shown).anyMatch(stack -> stack != null && !stack.isEmpty());
+        if (open && !wasOpening && before < 1.0F && sounds) {
             view.playSound(look.openSound(), hinge, 0.5F, 0.9F + view.level().random.nextFloat() * 0.1F);
         }
         float closesAt = look.door() == OvenLook.Door.DROP ? 0.5F : 0.0F;
-        if (before > closesAt && door <= closesAt && !open) {
+        if (before > closesAt && door <= closesAt && !open && sounds) {
             view.playSound(look.closeSound(), hinge, 0.5F, 0.9F + view.level().random.nextFloat() * 0.1F);
         }
         if (look.door() == OvenLook.Door.LEAVES && before < 1.0F && door >= 1.0F) {
@@ -821,7 +1014,9 @@ public final class OvenBehavior implements StationBehavior {
             view.playSound(SoundEvents.CHAIN_HIT, hinge, 0.3F, 1.3F);
         }
         wasOpening = open;
-        if (look.door() == OvenLook.Door.DROP) {
+        if (look.door() == OvenLook.Door.NONE) {
+            // An open mouth: only the bakeware moves.
+        } else if (look.door() == OvenLook.Door.DROP) {
             // Eased as its own animator eases it: fast at first, slowing as it comes down.
             float eased = 1.0F - (1.0F - door) * (1.0F - door) * (1.0F - door);
             float angle = look.doorOpen() * eased;
@@ -892,7 +1087,7 @@ public final class OvenBehavior implements StationBehavior {
         view.node("glow").ifPresent(node -> {
             node.setVisible(hot);
             float flicker = 0.5F + 0.3F * Mth.sin(time * 7.3F) + 0.2F * Mth.sin(time * 13.1F + 1.0F);
-            node.setTint((GLOW_ALPHA - Math.round(GLOW_FLICKER * flicker)) << 24 | 0xFFFFFF);
+            node.setTint((look.glowAlpha() - Math.round(look.glowAlpha() * GLOW_FLICKER * flicker)) << 24 | look.glowColor());
         });
         if (!hot || !shownHere) {
             return;
@@ -1022,6 +1217,8 @@ public final class OvenBehavior implements StationBehavior {
                 shownDish = dish.getItem();
                 node.setVisual(Visual.ofItem(shownDish).withAnchor(ICON_MIDDLE));
             }
+            // The bakeware what lies there waits for blinks, as the flame does without heat.
+            node.setVisible(wanted.isEmpty() || Mth.sin(time * 6.0F) > 0.0F);
             node.setTooltip(seconds > 0 ? Component.translatable("handson_delight.pot.cooking", dish.getHoverName(), seconds) : dish.getHoverName());
         });
     }

@@ -169,6 +169,28 @@ final class RecipeBook implements NodePainter {
     private static final int TAB_EDGE = 0x905A3C18;
     /** The least room kept between the tabs and the page's edges once the row has to move over to fit. */
     private static final float TAB_MARGIN = 2.0F;
+    /**
+     * More tabs than fit at their usual spacing stand a little over each other, up to this many; with more still, the row scrolls:
+     * this many side by side, between two paper tabs with a bold arrow at its ends (the wheel over the row scrolls it too), and the
+     * chosen one is always in view.
+     */
+    private static final float TAB_PITCH_TIGHT = 14.0F;
+    private static final int TABS_IN_VIEW = 4;
+    private static final int TABS_SCROLLING = 3;
+    private static final float TAB_PITCH_SCROLLING = 16.0F;
+    /** The usual spacing holds this many over the left page. */
+    private static final int TABS_AT_EASE = 3;
+    /** The arrow tabs at the ends of a row that scrolls: as wide, and the arrow on them this wide and high, units. */
+    private static final float ARROW_TAB_WIDE = 9.0F;
+    private static final int ARROW_TAB_HEAD = 4;
+    private static final int ARROW_TAB_HIGH = 7;
+    /**
+     * Until the player first scrolls a row of tabs, the arrow on nudges towards where the row goes, a few times once the book is
+     * open: seconds, how often, how far (units).
+     */
+    private static final float NUDGE_TIME = 1.5F;
+    private static final float NUDGE_EVERY = 0.5F;
+    private static final float NUDGE_FAR = 1.5F;
     /** The "only what can be made now" switch: a tab over the right page, just clear of the fold's shade. */
     private static final float FILTER_X = 6.0F;
     /** The search: a tab beside the switch; typing, the row of tabs over the list becomes one slip of paper with the text on it. */
@@ -316,6 +338,14 @@ final class RecipeBook implements NodePainter {
     private String chosenTab;
     private boolean tabRemembered;
     private Tab hoveredTab;
+    /** The first tab in view of a row that scrolls, and the arrow at its end under the cursor: -1 back, 1 on, 0 none. */
+    private int tabFirst;
+    private int overTabArrow;
+    /** The chosen tab and the row's kinds the row was last brought to the chosen tab for. */
+    private List<Object> rowShownFor = List.of();
+    /** When the book was last open all the way, seconds of {@code time}; whether any row of tabs was scrolled this game. */
+    private float openedAt = -10.0F;
+    private static boolean tabsScrolled;
     /**
      * The list keeps its order from the book's opening on: a dish never moves away from where the player found it while they
      * cook it (a rolled sheet is no longer its ingredients, which would put the dish at the end).
@@ -783,6 +813,16 @@ final class RecipeBook implements NodePainter {
         }
         tabs = offered(view, kinds, anyRecent);
         tab = tabs.stream().anyMatch(it -> Objects.equals(it.kind(), chosenTab)) ? chosenTab : null;
+        // The row comes to the chosen tab when that tab or the row changes, not at every read: the row the player scrolled stays.
+        List<Object> row = new ArrayList<>(tabs.size() + 1);
+        row.add(tab);
+        tabs.forEach(one -> row.add(one.kind()));
+        if (!row.equals(rowShownFor)) {
+            rowShownFor = row;
+            showChosenTab();
+        } else {
+            tabFirst = Mth.clamp(tabFirst, 0, Math.max(0, tabs.size() - tabsShown()));
+        }
         boolean searched = !query.isBlank();
         boolean lately = !searched && RECENT.equals(tab);
         List<Entry> found = new ArrayList<>();
@@ -976,7 +1016,11 @@ final class RecipeBook implements NodePainter {
         if (opening && open <= 0.0F && node.isVisible()) {
             turnSound();
         }
+        float before = open;
         open = Mth.clamp(open + (opening ? dt : -dt) / OPEN_TIME, 0.0F, 1.0F);
+        if (open >= 1.0F && before < 1.0F) {
+            openedAt = time;
+        }
         flip = Math.min(1.0F, flip + dt / flipTime);
         // Grows and opens where it hangs, breathing a little.
         float eased = eased();
@@ -1419,6 +1463,9 @@ final class RecipeBook implements NodePainter {
         int way = amount > 0.0 ? -1 : 1;
         if (cursorX >= UNITS_WIDE && cursorY >= 0.0F && bar != null) {
             scrollRows(way);
+        } else if (cursorY < 0.0F && cursorX >= 0.0F && cursorX < UNITS_WIDE && !searching() && tabsScroll()) {
+            // Over a row of tabs that scrolls: along it, a tab a notch.
+            scrollTabs(way);
         } else {
             turn(way, false);
         }
@@ -1621,7 +1668,8 @@ final class RecipeBook implements NodePainter {
             cursorY = y;
             // While a sheet goes over, the list it uncovers takes the cursor once it is mostly in view; the foot and tabs at once.
             hovered = flip >= FLIP_LIVE && y >= 0.0F ? entryAt(x, y) : null;
-            hoveredTab = overTabs ? tabAt(x) : null;
+            overTabArrow = overTabs ? tabArrowAt(x) : 0;
+            hoveredTab = overTabs && overTabArrow == 0 ? tabAt(x) : null;
             overFilter = onFilter;
             overSearch = onSearch;
             overSlip = onSlip;
@@ -1646,7 +1694,8 @@ final class RecipeBook implements NodePainter {
     private boolean onNothing() {
         Bar ingredients = bar;
         boolean onBar = ingredients != null && cursorX >= UNITS_WIDE && ingredients.onTrack(cursorX - UNITS_WIDE, cursorY);
-        return wanted && open >= 1.0F && flip >= 1.0F && hovered == null && hoveredTab == null && !overFilter && !overSearch && !overSlip
+        return wanted && open >= 1.0F && flip >= 1.0F && hovered == null && hoveredTab == null && overTabArrow == 0 && !overFilter
+                && !overSearch && !overSlip
                 && !onRibbon() && footSide() == 0 && hoveredDrawn == null && !overDish && !onBar;
     }
 
@@ -1660,23 +1709,97 @@ final class RecipeBook implements NodePainter {
     private Tab tabAt(float x) {
         float start = tabsX();
         float pitch = tabPitch();
+        int shown = tabsShown();
         // A tab drawn later lies over the one before it: each shows from its own left edge to the next one's.
-        int index = Math.min(Mth.floor((x - start) / pitch), tabs.size() - 1);
-        float into = x - start - index * pitch;
-        return index >= 0 && into < TAB_WIDE ? tabs.get(index) : null;
+        int slot = Math.min(Mth.floor((x - start) / pitch), shown - 1);
+        float into = x - start - slot * pitch;
+        int index = tabFirst + slot;
+        return slot >= 0 && into < TAB_WIDE && index < tabs.size() ? tabs.get(index) : null;
     }
 
-    /** Where the row of tabs starts: its usual place while they fit over the left page, else nearer its edge. */
+    /** Whether there are more tabs than the row shows at once: then it scrolls, between its arrow tabs. */
+    private boolean tabsScroll() {
+        return tabs.size() > TABS_IN_VIEW;
+    }
+
+    /** Where the row of tabs starts: its usual place, or right of the arrow back of a row that scrolls. */
     private float tabsX() {
-        return TABS_X + (tabs.size() - 1) * TAB_PITCH + TAB_WIDE <= UNITS_WIDE - TAB_MARGIN ? TABS_X : TAB_MARGIN;
+        return tabsScroll() ? TAB_MARGIN + ARROW_TAB_WIDE + 1.0F : TABS_X;
     }
 
-    /** How far apart the tabs stand: as usual, or closer, overlapping, so that however many there are all stay over the left page. */
+    /** How far apart the tabs stand: as usual while they fit, a little over each other when just more, side by side scrolling. */
     private float tabPitch() {
-        if (tabs.size() < 2) {
-            return TAB_PITCH;
+        if (tabsScroll()) {
+            return TAB_PITCH_SCROLLING;
         }
-        return Math.min(TAB_PITCH, (UNITS_WIDE - TAB_MARGIN - tabsX() - TAB_WIDE) / (tabs.size() - 1));
+        return tabs.size() <= TABS_AT_EASE ? TAB_PITCH : TAB_PITCH_TIGHT;
+    }
+
+    /** How many tabs are in view: all of them, or as many as fit between the arrows when the row scrolls. */
+    private int tabsShown() {
+        return tabsScroll() ? TABS_SCROLLING : tabs.size();
+    }
+
+    /** Where the arrow tab on of a row that scrolls stands. */
+    private float arrowOnX() {
+        return tabsEnd() + 1.0F;
+    }
+
+    /** Where the tabs in view end: the arrow on stands right of it. */
+    private float tabsEnd() {
+        return tabsX() + (tabsShown() - 1) * tabPitch() + TAB_WIDE;
+    }
+
+    /** The arrow tab of a row that scrolls under {@code x}: -1 back, 1 on, 0 none (also at an end, where it stands faded). */
+    private int tabArrowAt(float x) {
+        if (!tabsScroll()) {
+            return 0;
+        }
+        if (x >= TAB_MARGIN && x < TAB_MARGIN + ARROW_TAB_WIDE) {
+            return -1;
+        }
+        return x >= arrowOnX() && x < arrowOnX() + ARROW_TAB_WIDE ? 1 : 0;
+    }
+
+    /** Whether the row can scroll that way: tabs before the first in view (-1), after the last (1). */
+    private boolean tabsBeyond(int way) {
+        return way < 0 ? tabFirst > 0 : tabFirst + tabsShown() < tabs.size();
+    }
+
+    /** How far the arrow on nudges now: towards where the row goes, a few times once the book is open, until a row was scrolled. */
+    private float arrowNudge() {
+        float since = time - openedAt;
+        if (tabsScrolled || !tabsBeyond(1) || since < 0.0F || since >= NUDGE_TIME) {
+            return 0.0F;
+        }
+        return NUDGE_FAR * Math.abs(Mth.sin(since / NUDGE_EVERY * Mth.PI));
+    }
+
+    /** The row scrolls by {@code by} tabs, within its ends. */
+    private void scrollTabs(int by) {
+        tabsScrolled = true;
+        int first = Mth.clamp(tabFirst + by, 0, Math.max(0, tabs.size() - tabsShown()));
+        if (first != tabFirst) {
+            tabFirst = first;
+            rowSound();
+        }
+    }
+
+    /** The chosen tab is in view: the row scrolls to it where it would be out of it (the book opened, a station's tabs read). */
+    private void showChosenTab() {
+        int shown = tabsShown();
+        int chosen = 0;
+        for (int i = 0; i < tabs.size(); i++) {
+            if (Objects.equals(tabs.get(i).kind(), tab)) {
+                chosen = i;
+            }
+        }
+        if (chosen < tabFirst) {
+            tabFirst = chosen;
+        } else if (chosen >= tabFirst + shown) {
+            tabFirst = chosen - shown + 1;
+        }
+        tabFirst = Mth.clamp(tabFirst, 0, Math.max(0, tabs.size() - shown));
     }
 
     /** The ribbon that shuts the book, with a little room round it: it is the only way to shut it, so it is easy to hit. */
@@ -1732,6 +1855,8 @@ final class RecipeBook implements NodePainter {
             page = 0;
             rememberPage();
             startFlip(1, false);
+        } else if (overTabArrow != 0) {
+            scrollTabs(overTabArrow);
         } else if (hoveredTab != null) {
             if (!Objects.equals(tab, hoveredTab.kind())) {
                 rememberPage();
@@ -1986,9 +2111,24 @@ final class RecipeBook implements NodePainter {
             drawSlip(canvas);
             return;
         }
-        for (int i = 0; i < tabs.size(); i++) {
-            Tab shown = tabs.get(i);
-            canvas.tab(tabsX() + i * tabPitch(), Objects.equals(shown.kind(), tab), shown == hoveredTab, shown.icon(), 0.0F, false);
+        int shown = tabsShown();
+        int chosenSlot = -1;
+        for (int i = 0; i < shown && tabFirst + i < tabs.size(); i++) {
+            Tab one = tabs.get(tabFirst + i);
+            if (Objects.equals(one.kind(), tab)) {
+                // The chosen one is drawn last, over its neighbours: it runs on into the page.
+                chosenSlot = i;
+                continue;
+            }
+            canvas.tab(tabsX() + i * tabPitch(), false, one == hoveredTab, one.icon(), 0.0F, false);
+        }
+        if (chosenSlot >= 0) {
+            Tab one = tabs.get(tabFirst + chosenSlot);
+            canvas.tab(tabsX() + chosenSlot * tabPitch(), true, one == hoveredTab, one.icon(), 0.0F, false);
+        }
+        if (tabsScroll()) {
+            canvas.arrowTab(TAB_MARGIN, false, tabsBeyond(-1), overTabArrow < 0, 0.0F);
+            canvas.arrowTab(arrowOnX(), true, tabsBeyond(1), overTabArrow > 0, arrowNudge());
         }
     }
 
@@ -2235,6 +2375,31 @@ final class RecipeBook implements NodePainter {
             rect(x, y + size - 1.0F, size, 1.0F, COVER_LIFT, WELL_PICKED);
             rect(x, y, 1.0F, size, COVER_LIFT, WELL_PICKED);
             rect(x + size - 1.0F, y, 1.0F, size, COVER_LIFT, WELL_PICKED);
+        }
+
+        /**
+         * A paper tab at an end of a row of tabs that scrolls, as tall as the tabs beside it, with a bold arrow pointing back or on:
+         * lighter under the cursor, faded where the row ends that way; {@code nudge} moves the arrow its way, units.
+         */
+        void arrowTab(float x, boolean next, boolean live, boolean over, float nudge) {
+            float high = TAB_HIGH - TAB_DROP;
+            int paper = !live ? 0xFFC9BC9E : over ? 0xFFEDE4D0 : 0xFFD6C9AC;
+            float u0 = TAB_PAPER_U / PAPER_SIZE;
+            float v0 = TAB_PAPER_V / PAPER_SIZE;
+            quad(buffers.getBuffer(RenderType.text(PAPER)), x, -high, x + ARROW_TAB_WIDE, 0.0F, 0.0F, paper, u0,
+                    u0 + ARROW_TAB_WIDE / PAPER_SIZE, v0, v0 + high / PAPER_SIZE);
+            rect(x + 1.0F, -high, ARROW_TAB_WIDE - 2.0F, 1.0F, 0.1F, TAB_EDGE);
+            rect(x, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
+            rect(x + ARROW_TAB_WIDE - 1.0F, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
+            int colour = !live ? 0x50000000 | INK & 0xFFFFFF : over ? WELL_PICKED : INK;
+            float left = x + (ARROW_TAB_WIDE - ARROW_TAB_HEAD) / 2.0F + (next ? nudge : -nudge);
+            float top = -high + (high - ARROW_TAB_HIGH) / 2.0F;
+            int middle = ARROW_TAB_HIGH / 2;
+            for (int row = 0; row < ARROW_TAB_HIGH; row++) {
+                // A solid head: full width at the middle row, a unit shorter each row away from it, the point towards its way.
+                int wide = ARROW_TAB_HEAD - Math.abs(row - middle);
+                rect(next ? left : left + ARROW_TAB_HEAD - wide, top + row, wide, 1.0F, 0.15F, colour);
+            }
         }
 
         /**

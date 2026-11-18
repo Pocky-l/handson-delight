@@ -50,7 +50,9 @@ final class OvenBook implements RecipeBook.Source {
             if (recipe.needed().isEmpty() || recipe.needed().size() > oven.places()) {
                 continue;
             }
-            List<ItemStack> foot = List.of(heat, new ItemStack(Items.CLOCK));
+            // The bakeware it bakes in first, where it bakes in some: the cook brings it along.
+            List<ItemStack> foot = recipe.bakeware().isEmpty() ? List.of(heat, new ItemStack(Items.CLOCK))
+                    : List.of(recipe.bakeware().copy(), heat, new ItemStack(Items.CLOCK));
             Component seconds = Component.translatable("handson_delight.book.seconds", Math.max(1, Math.round(recipe.ticks() / 20.0F)));
             pages.add(new RecipeBook.Page(recipe.id(), recipe.result(), recipe.needed(), foot, seconds, false, recipe.kind()));
         }
@@ -70,6 +72,19 @@ final class OvenBook implements RecipeBook.Source {
         }
         List<RecipeBook.Tab> tabs = new ArrayList<>();
         tabs.add(new RecipeBook.Tab(null, new ItemStack(Items.COMPASS), Component.translatable("handson_delight.book.tab.all")));
+        if (oven.usesBakeware()) {
+            // A tab a bakeware, the one with the most recipes first: its own item and name.
+            Map<String, Long> counts = new LinkedHashMap<>();
+            oven.recipes(view.level()).forEach(recipe -> counts.merge(recipe.kind(), 1L, Long::sum));
+            counts.entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed()).forEach(entry -> {
+                ItemStack icon = BuiltInRegistries.ITEM.getOptional(ResourceLocation.tryParse(entry.getKey())).map(ItemStack::new)
+                        .orElse(ItemStack.EMPTY);
+                if (!icon.isEmpty()) {
+                    tabs.add(new RecipeBook.Tab(entry.getKey(), icon, icon.getHoverName()));
+                }
+            });
+            return tabs;
+        }
         for (String kind : ICONS.keySet()) {
             if (kinds.contains(kind)) {
                 tabs.add(new RecipeBook.Tab(kind, ICONS.get(kind), Component.translatable("handson_delight.book.tab.oven_" + kind)));
@@ -115,7 +130,9 @@ final class OvenBook implements RecipeBook.Source {
             }
             return null;
         }
-        return KitchenOven.matching(recipes, onTray).map(KitchenOven.Baking::id).orElse(null);
+        ItemStack bakeware = view.state().schema().slotGroups().containsKey(OvenStation.BAKEWARE)
+                ? view.state().getItem(OvenStation.BAKEWARE_SLOT) : ItemStack.EMPTY;
+        return KitchenOven.matching(recipes, onTray, bakeware).map(KitchenOven.Baking::id).orElse(null);
     }
 
     /** An oven that bakes each place alone takes any of its recipes beside what lies there: a page picked stays open. */

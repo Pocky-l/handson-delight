@@ -37,6 +37,8 @@ public final class OvenStation {
     public static final ResourceLocation ID = HandsOnDelight.id("oven");
     /** Cooking for Blockheads' oven, of every colour. */
     public static final ResourceLocation CFB_ID = HandsOnDelight.id("cfb_oven");
+    /** Extra Delight's oven. */
+    public static final ResourceLocation ED_ID = HandsOnDelight.id("ed_oven");
 
     public static final String INGREDIENTS = "ingredients";
     /** What is baked waits in the oven's output slots. */
@@ -45,6 +47,14 @@ public final class OvenStation {
     public static final String FUEL = "fuel";
     /** The tool places on top of the oven. */
     public static final String TOOLS = "tools";
+    /** The bakeware standing in the oven, under what bakes, for an oven that bakes in it. */
+    public static final String BAKEWARE = "bakeware";
+    public static final SlotRef BAKEWARE_SLOT = SlotRef.of(BAKEWARE, 0);
+    /**
+     * In the station's data, for an oven that bakes in bakeware: the item id of the bakeware what lies there bakes in, while other
+     * bakeware or none stands there; absent otherwise.
+     */
+    public static final String WANTS = "wants";
     public static final String PROGRESS = "progress";
     /**
      * Whether the door is open (1) or shut (0). The cook opens and shuts it with a click on it ({@link #ACTION_DOOR}); things go on the
@@ -124,11 +134,33 @@ public final class OvenStation {
             .idleLogic()
             .build();
 
+    public static final Supplier<Block> ED_OVEN = () -> BuiltInRegistries.BLOCK.get(EdOven.OVEN_ID);
+
+    /**
+     * Extra Delight's oven. Its block is open in front and stays in the world while somebody works at it: the scene pulls the bakeware
+     * out of its mouth onto its front with what bakes laid in it, and pushes it back in to bake over the heat under the oven. While
+     * nobody works at it the scene shows the bakeware and what lies in it inside the oven (its block entity sends its content to the
+     * clients near it, and how far it has baked: {@code EdOvenMixin}).
+     */
+    public static final StationType ED_TYPE = Diegesis.station(ED_ID)
+            .block(ED_OVEN)
+            .schema(schema(EdOven.PLACES, EdOven.PER_PLACE, 1, false, 0, true))
+            .logic(OvenLogic::new)
+            .orientation(StationType.Orientation.BLOCK)
+            .openWhen(OvenStation::opensEd)
+            .idleLogic()
+            .build();
+
     private OvenStation() {
     }
 
     /** The slots of an oven with {@code places} places holding {@code perPlace} each, its outputs, fuel and tool places. */
     public static StationSchema schema(int places, int perPlace, int outputs, boolean fuel, int tools) {
+        return schema(places, perPlace, outputs, fuel, tools, false);
+    }
+
+    /** The same, with a slot for the bakeware that stands under what bakes. */
+    public static StationSchema schema(int places, int perPlace, int outputs, boolean fuel, int tools, boolean bakeware) {
         StationSchema.Builder builder = StationSchema.builder()
                 .slots(INGREDIENTS, places, SlotRules.DEFAULT.kept().maxStack(perPlace))
                 .slots(SERVED, outputs, SlotRules.DEFAULT.kept().accepts(stack -> false));
@@ -137,6 +169,9 @@ public final class OvenStation {
         }
         if (tools > 0) {
             builder.slots(TOOLS, tools, SlotRules.DEFAULT.kept().maxStack(1));
+        }
+        if (bakeware) {
+            builder.slots(BAKEWARE, 1, SlotRules.DEFAULT.kept());
         }
         return builder
                 .control(PROGRESS, ControlSpec.stepped(0.0F, 1.0F, 100, 0.0F).locked())
@@ -151,6 +186,14 @@ public final class OvenStation {
         if (Platform.INSTANCE.isLoaded(CfbOven.MOD_ID)) {
             Diegesis.register(CFB_TYPE);
         }
+        if (Platform.INSTANCE.isLoaded(EdOven.MOD_ID)) {
+            Diegesis.register(ED_TYPE);
+        }
+    }
+
+    /** Sneaking keeps Extra Delight's oven's own menu; so does an oven this mod could not reach into (its mixin left out). */
+    private static boolean opensEd(Player player, BlockPos pos, BlockState state) {
+        return !player.isSecondaryUseActive() && EdOven.of(player.level().getBlockEntity(pos)) != null;
     }
 
     /** Sneaking keeps Cultural Delights' oven's own menu. */

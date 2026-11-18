@@ -86,6 +86,36 @@ public final class ExtraDelightGameTests {
         EdVatTests.edContainersInTheirSlotWorkAsBefore(helper);
     }
 
+    @GameTest(template = "empty")
+    public static void everyEdBakingFromItsFoodLaidIn(GameTestHelper helper) {
+        EdOvenTests.everyEdBakingFromItsFoodLaidIn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theEdOvenReadsItsRecipes(GameTestHelper helper) {
+        EdOvenTests.theEdOvenReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void bakewareStandsInTheOvenAndComesBack(GameTestHelper helper) {
+        EdOvenTests.bakewareStandsInTheOvenAndComesBack(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void doughWithoutItsSheetWaitsForIt(GameTestHelper helper) {
+        EdOvenTests.doughWithoutItsSheetWaitsForIt(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aRightClickLaysOneAndTheDoughBringsItsSheet(GameTestHelper helper) {
+        EdOvenTests.aRightClickLaysOneAndTheDoughBringsItsSheet(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 700)
+    public static void cookiesBakeWithTheSheetPushedIn(GameTestHelper helper) {
+        EdOvenTests.cookiesBakeWithTheSheetPushedIn(helper);
+    }
+
     public static void theMeltingPotReadsItsRecipes(GameTestHelper helper) {
         MeltingPotTests.theMeltingPotReadsItsRecipes(helper);
     }

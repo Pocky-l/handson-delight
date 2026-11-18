@@ -150,6 +150,10 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   spoon or whisk stands in the bowl: click its handle and stir, each circle round the bowl is a stir, and everything in
   it goes round and turns into the mixture. A whole bowlful is mixed at once. Done, a bowl or bottle from your inventory
   dips in for it. Its book pours the liquids too.
+- **Oven** of [Extra Delight](https://modrinth.com/mod/extradelight). Its pan slides out of the open mouth: stand a sheet,
+  tray, pie dish or loaf pan in it, lay the food in, and click the mouth to push it back over the heat. What bakes browns
+  and rises, the walls glow, and the badge blinks the pan a recipe still waits for. The book brings the right pan and the
+  food from your inventory and has a tab for each pan. Sneak to open its own menu; hoppers work as before.
 - **Oven** of [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads), in every colour. Its door
   drops open and the rack slides out over it: let raw food go over the rack and it fills the free places, or click one
   place with the right button. Coal or wood let go over the rack goes onto the fire, and an empty hand at its controls is
@@ -187,7 +191,7 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 [![Sodium](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/sodium.png)](https://modrinth.com/mod/sodium) ✅ **[Sodium](https://modrinth.com/mod/sodium)** and [![Iris](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/iris.png)](https://modrinth.com/mod/iris) **[Iris](https://modrinth.com/mod/iris)** (optional) - the stations draw as usual
 
-[![Extra Delight](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/extra-delight.png)](https://modrinth.com/mod/extradelight) ✅ **[Extra Delight](https://modrinth.com/mod/extradelight)** (optional) - its melting pot is a station
+[![Extra Delight](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/extra-delight.png)](https://modrinth.com/mod/extradelight) ✅ **[Extra Delight](https://modrinth.com/mod/extradelight)** (optional) - its mixing bowl, vat, melting pot and oven are stations
 
 [![Create Aeronautics](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/create-aeronautics.png)](https://modrinth.com/mod/create-aeronautics) ✅ **[Create Aeronautics](https://modrinth.com/mod/create-aeronautics)** (optional) - the stations open on its flying ships and stay with the ship as it flies and turns
 
@@ -205,7 +209,7 @@ station with its own recipes, spoons and whisk.
 its [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) scroll.
 [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s kebabs and bibimbap are put together on the
 board and keep the seasoning of their skewers. [Extra Delight](https://modrinth.com/mod/extradelight)'s vat opens as a
-station too, in each of its looks.
+station too, in each of its looks, and so does its oven, with its pans.
 [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block opens as a station of its own,
 for cutting food and splitting logs.
 [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)'s oven opens as a station in each of its

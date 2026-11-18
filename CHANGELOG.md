@@ -2,7 +2,7 @@
 
 ## [1.6.0+1.21.1] - Unreleased
 ### New
-- [Extra Delight](https://modrinth.com/mod/extradelight)'s mixing bowl, vat and melting pot are stations: stir with the spoon, age in stages under the lid, melt chocolate.
+- [Extra Delight](https://modrinth.com/mod/extradelight)'s mixing bowl, vat, melting pot and oven are stations: stir with the spoon, age in stages under the lid, melt chocolate, bake in its pans.
 - [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block is a station: food is cut along its marks and an axe splits a log like a pie.
 - [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)'s oven is a station: food bakes on its rack, fuel goes in at the fire, and it bakes Farmer's Delight's campfire dishes too.
 - [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest)'s keg, big keg and cask are stations: drinks ferment under the lid and age sealed in the cask ([#28](https://github.com/Pocky-l/handson-delight/issues/28)).
@@ -12,7 +12,8 @@
 ### Changed
 - The book's pages turn with Page Up and Page Down, Home and End, or a held click on either half of the page's foot.
 - The book's foot shows the page out of how many, each tab opens where you left it, and dishes you can make come first.
-- Tabs are named under the cursor, and an empty tab is hidden.
+- Tabs are named under the cursor, an empty tab is hidden, and a long row of tabs scrolls with the mouse wheel or the arrows at its ends.
+- At the ovens of Extra Delight and Cultural Delights a right click lays one thing, the pan comes from your inventory, and a finished set goes in by itself.
 
 ### Fixed
 - A keg's tap no longer hangs the server when [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s output slot is full. Thanks to LeDok ([#39](https://github.com/Pocky-l/handson-delight/pull/39)).

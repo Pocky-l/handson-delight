@@ -1,0 +1,129 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "handson_delight:block/ed_oven/heat",
+    "glow": "handson_delight:block/ed_oven/heat"
+  },
+  "elements": [
+    {
+      "name": "glow_back",
+      "from": [
+        4,
+        2,
+        13.95
+      ],
+      "to": [
+        12,
+        9,
+        13.95
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            9,
+            12,
+            16
+          ],
+          "texture": "#glow"
+        }
+      }
+    },
+    {
+      "name": "glow_floor",
+      "from": [
+        4,
+        2.05,
+        4
+      ],
+      "to": [
+        12,
+        2.05,
+        13.95
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            4,
+            3,
+            12,
+            8
+          ],
+          "texture": "#glow"
+        }
+      }
+    },
+    {
+      "name": "glow_left",
+      "from": [
+        4.05,
+        2,
+        4
+      ],
+      "to": [
+        4.05,
+        9,
+        13.95
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            2,
+            9,
+            12,
+            16
+          ],
+          "texture": "#glow"
+        }
+      }
+    },
+    {
+      "name": "glow_right",
+      "from": [
+        11.95,
+        2,
+        4
+      ],
+      "to": [
+        11.95,
+        9,
+        13.95
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            4,
+            9,
+            14,
+            16
+          ],
+          "texture": "#glow"
+        }
+      }
+    },
+    {
+      "name": "glow_roof",
+      "from": [
+        4,
+        8.95,
+        4
+      ],
+      "to": [
+        12,
+        8.95,
+        13.95
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            4,
+            0,
+            12,
+            2
+          ],
+          "texture": "#glow"
+        }
+      }
+    }
+  ]
+}

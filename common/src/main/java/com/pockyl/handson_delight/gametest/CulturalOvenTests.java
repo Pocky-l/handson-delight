@@ -140,8 +140,9 @@ public final class CulturalOvenTests {
     }
 
     /**
-     * Bread from wheat picked in the book: the wheat goes on the tray from the inventory; with the door open it does not bake; shut over
-     * the campfire it bakes in the oven's own time into bread in the output, which the cook takes.
+     * Bread from wheat picked in the book: the wheat goes on the tray from the inventory; with the door open it does not bake; a moment
+     * later the oven shuts it by itself, and over the campfire it bakes in the oven's own time into bread in the output, which the cook
+     * takes.
      */
     public static void breadBakesWithTheDoorShut(GameTestHelper helper) {
         Setup setup = oven(helper);
@@ -156,11 +157,12 @@ public final class CulturalOvenTests {
         helper.assertTrue(setup.oven.item(0).is(Items.WHEAT) && setup.oven.item(2).is(Items.WHEAT), "the book laid the wheat");
         helper.assertTrue(player.getInventory().countItem(Items.WHEAT) == 2, "one set of three from the inventory");
         helper.onEachTick(() -> setup.logic.tick(setup.station));
-        helper.runAfterDelay(40, () -> {
-            helper.assertTrue(setup.oven.ticks() <= 1, "nothing bakes with the door open, got " + setup.oven.ticks());
-            door(setup, player, false);
+        helper.runAfterDelay(10, () -> helper.assertTrue(OvenLogic.isOpen(setup.station) && setup.oven.ticks() <= 1,
+                "a moment open, nothing bakes, got " + setup.oven.ticks()));
+        helper.runAfterDelay(60, () -> {
+            helper.assertFalse(OvenLogic.isOpen(setup.station), "the oven shut its door by itself");
+            helper.assertTrue(setup.oven.ticks() > 0, "it bakes with the door shut");
         });
-        helper.runAfterDelay(60, () -> helper.assertTrue(setup.oven.ticks() > 0, "it bakes with the door shut"));
         helper.runAfterDelay(300, () -> {
             ItemStack served = setup.station.state().getItem(SERVED_SLOT);
             helper.assertTrue(served.is(Items.BREAD), "bread is baked, got " + served);

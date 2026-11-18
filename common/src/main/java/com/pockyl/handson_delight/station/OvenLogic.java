@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.station;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -32,12 +33,23 @@ import java.util.function.IntFunction;
 public final class OvenLogic implements StationLogic {
     /** The most sets of ingredients one pick in the book puts in, for an oven that bakes sets. */
     private static final int FILL_MOST = 16;
+    /**
+     * Ticks a set that makes a dish (in its bakeware, where it needs some) lies still on the tray before the oven takes it in by itself:
+     * long enough for the cook to lay a second set, short enough that nobody looks for a way to start it.
+     */
+    private static final int TAKE_IN_AFTER = 30;
 
     private final KitchenOven oven;
     /** The tray is being shared out: its own changes do not share it out again. */
     private boolean arranging;
     /** The recipe the cook last picked in the book: the oven's choice while the tray's food makes it, until the tray is empty. */
     private ResourceLocation picked;
+    /**
+     * The cook changed what lies on the open tray or the bakeware standing there, at {@code changedAt} (game time): once it makes a dish
+     * and lies still a moment, the oven takes it in ({@link #TAKE_IN_AFTER}). Off once it is in, and when the cook opens it by hand.
+     */
+    private boolean armed;
+    private long changedAt;
 
     public OvenLogic(StationContext station) {
         oven = KitchenOven.of(station.blockEntity());
@@ -52,6 +64,9 @@ public final class OvenLogic implements StationLogic {
         }
         if (oven.tools() > 0) {
             state.bindSlots(OvenStation.TOOLS, storage(oven.tools(), oven::tool, oven::setTool));
+        }
+        if (oven.usesBakeware()) {
+            state.bindSlots(OvenStation.BAKEWARE, storage(1, index -> oven.bakeware(), (index, stack) -> oven.setBakeware(stack)));
         }
     }
 
@@ -102,8 +117,40 @@ public final class OvenLogic implements StationLogic {
                 setDoor(station, false);
             }
             oven.whileDoor(station, isOpen(station));
+            takeInWhenMade(station);
         }
         refresh(station);
+    }
+
+    /**
+     * An oven that bakes sets takes the tray in by itself once what the cook laid makes a dish and has lain still a moment: no gesture to
+     * find before the baking starts (the cook can still shut or open it by hand at the door or the mouth).
+     */
+    private void takeInWhenMade(StationContext station) {
+        if (!armed || oven.bakesEachPlace() || !isOpen(station) || station.users().isEmpty()
+                || station.level().getGameTime() - changedAt < TAKE_IN_AFTER) {
+            return;
+        }
+        armed = false;
+        if (makesDish(station.level())) {
+            setDoor(station, false);
+        }
+    }
+
+    /** Whether the tray makes a dish now: a recipe of its bakeware (where it needs some) whose dish the output still has room for. */
+    private boolean makesDish(Level level) {
+        List<KitchenOven.Baking> recipes = oven.recipes(level);
+        Optional<KitchenOven.Baking> recipe = oven.usesBakeware() ? KitchenOven.matching(recipes, grid(), oven.bakeware())
+                : KitchenOven.matching(recipes, grid());
+        return recipe.isPresent() && room(recipe.get()) >= Math.max(1, recipe.get().result().getCount());
+    }
+
+    /** The cook changed the tray or the bakeware: the oven takes it in once it lies still and makes a dish. */
+    private void changed(Level level) {
+        if (level != null && !level.isClientSide()) {
+            armed = true;
+            changedAt = level.getGameTime();
+        }
     }
 
     public static boolean isOpen(StationContext station) {
@@ -139,6 +186,7 @@ public final class OvenLogic implements StationLogic {
             case OvenStation.INGREDIENTS -> isOpen(station) && oven.takes(stack);
             case OvenStation.FUEL -> isOpen(station) && oven.isFuel(stack);
             case OvenStation.TOOLS -> oven.isTool(stack);
+            case OvenStation.BAKEWARE -> isOpen(station) && oven.isBakeware(stack);
             default -> false;
         };
     }
@@ -161,16 +209,25 @@ public final class OvenLogic implements StationLogic {
             return;
         }
         switch (action) {
-            case OvenStation.ACTION_DOOR -> setDoor(station, data.getBoolean(OvenStation.OPEN));
+            case OvenStation.ACTION_DOOR -> {
+                // Opened or shut by hand: the cook decides, the oven takes nothing in by itself until they change the tray again. A
+                // request for what already is (the client opening for food the server already opened for) changes nothing.
+                if (isOpen(station) != data.getBoolean(OvenStation.OPEN)) {
+                    armed = false;
+                }
+                setDoor(station, data.getBoolean(OvenStation.OPEN));
+            }
             case OvenStation.ACTION_LAY -> {
-                if (!isOpen(station) && !isBaking()) {
-                    // The cook came with food to an oven where nothing bakes: its door is open for them before anything else.
+                if (!isOpen(station) && (!isBaking() || !oven.bakesEachPlace())) {
+                    // The cook came with food: the door opens (the tray comes out) for it. An oven that bakes a set holds it while open.
                     setDoor(station, true);
                 }
                 if (isOpen(station)) {
                     lay(player, data.contains(OvenStation.FROM) ? data.getInt(OvenStation.FROM) : -1,
                             data.contains(OvenStation.PLACE) ? data.getInt(OvenStation.PLACE) : -1, data.getBoolean(OvenStation.ONE),
                             data.getBoolean(OvenStation.ALL));
+                    bringBakeware(player, station.level());
+                    changed(station.level());
                 }
             }
             case OvenStation.ACTION_FILL -> {
@@ -181,8 +238,13 @@ public final class OvenLogic implements StationLogic {
                     if (oven.bakesEachPlace()) {
                         fillPlaces(player, recipe, data.getBoolean(OvenStation.ALL));
                     } else {
-                        fill(player, recipe, data.getBoolean(OvenStation.ALL) ? FILL_MOST : 1);
+                        int sets = data.getBoolean(OvenStation.ALL) ? FILL_MOST : 1;
+                        if (oven.usesBakeware()) {
+                            bakewareFor(player, recipe, sets);
+                        }
+                        fill(player, recipe, sets);
                     }
+                    changed(station.level());
                 });
             }
             case OvenStation.ACTION_FUEL -> {
@@ -206,6 +268,14 @@ public final class OvenLogic implements StationLogic {
             return;
         }
         ItemStack stack = from >= 0 ? inventory.getItem(from) : player.inventoryMenu.getCarried();
+        if (oven.usesBakeware() && oven.isBakeware(stack)) {
+            layBakeware(player, stack, all);
+            if (from < 0) {
+                player.inventoryMenu.setCarried(stack.isEmpty() ? ItemStack.EMPTY : stack);
+            }
+            inventory.setChanged();
+            return;
+        }
         if (stack.isEmpty() || !oven.takes(stack)) {
             return;
         }
@@ -230,12 +300,103 @@ public final class OvenLogic implements StationLogic {
                 }
             }
         } else {
-            layOnSet(stack);
+            layOnSet(stack, one);
         }
         if (from < 0) {
             player.inventoryMenu.setCarried(stack.isEmpty() ? ItemStack.EMPTY : stack);
         }
         inventory.setChanged();
+    }
+
+    /**
+     * Bakeware let go over the oven stands in it: one of it, or the whole stack with {@code all} (bowls a recipe uses up, one a bake).
+     * More of what stands there joins it; other bakeware standing there goes back to the cook.
+     */
+    private void layBakeware(Player player, ItemStack stack, boolean all) {
+        ItemStack there = oven.bakeware();
+        if (!there.isEmpty() && !ItemStack.isSameItemSameComponents(there, stack)) {
+            giveBack(player, there.copy());
+            there = ItemStack.EMPTY;
+        }
+        int room = stack.getMaxStackSize() - there.getCount();
+        int moved = Math.min(all ? stack.getCount() : 1, room);
+        if (moved <= 0) {
+            return;
+        }
+        oven.setBakeware(there.isEmpty() ? stack.copyWithCount(moved) : there.copyWithCount(there.getCount() + moved));
+        stack.shrink(moved);
+    }
+
+    private static void giveBack(Player player, ItemStack stack) {
+        if (!player.getInventory().add(stack)) {
+            player.drop(stack, false);
+        }
+    }
+
+    /**
+     * The bakeware a recipe picked in the book bakes in stands in the oven: what stands there of another kind goes back to the cook and
+     * theirs comes from the inventory, as many as {@code sets} bakes use up where the recipe uses it up. Nothing changes when the cook has
+     * none of it: the food still goes in and the badge shows the bakeware it waits for.
+     */
+    private void bakewareFor(Player player, KitchenOven.Baking recipe, int sets) {
+        if (recipe.bakeware().isEmpty()) {
+            return;
+        }
+        Inventory inventory = player.getInventory();
+        ItemStack there = oven.bakeware();
+        boolean right = recipe.bakesIn(there);
+        int wanted = recipe.usesUp() ? sets : 1;
+        if (right && there.getCount() >= wanted) {
+            return;
+        }
+        int source = -1;
+        for (int slot = 0; slot < Inventory.INVENTORY_SIZE && source < 0; slot++) {
+            if (recipe.bakesIn(inventory.getItem(slot)) && !inventory.getItem(slot).isEmpty()) {
+                source = slot;
+            }
+        }
+        if (source < 0) {
+            return;
+        }
+        if (!right) {
+            if (!there.isEmpty()) {
+                giveBack(player, there.copy());
+            }
+            there = ItemStack.EMPTY;
+        }
+        while (source >= 0 && there.getCount() < wanted) {
+            ItemStack taken = inventory.removeItem(source, wanted - there.getCount());
+            there = there.isEmpty() ? taken : there.copyWithCount(there.getCount() + taken.getCount());
+            source = -1;
+            for (int slot = 0; slot < Inventory.INVENTORY_SIZE && source < 0; slot++) {
+                if (ItemStack.isSameItemSameComponents(inventory.getItem(slot), there)) {
+                    source = slot;
+                }
+            }
+        }
+        oven.setBakeware(there);
+        inventory.setChanged();
+    }
+
+    /**
+     * What lies on the tray makes a dish only in bakeware other than what stands there (or none): the cook's own of it stands in the oven
+     * from the inventory, the other back to them, as the book does. Nothing changes when they have none: the badge shows the one it waits
+     * for. The tray is laid out again for what that bakeware makes.
+     */
+    private void bringBakeware(Player player, Level level) {
+        if (!oven.usesBakeware() || oven.bakesEachPlace() || level == null || level.isClientSide()) {
+            return;
+        }
+        List<KitchenOven.Baking> recipes = oven.recipes(level);
+        ItemStack[] grid = grid();
+        if (KitchenOven.matching(recipes, grid, oven.bakeware()).isPresent()) {
+            return;
+        }
+        Optional<KitchenOven.Baking> recipe = KitchenOven.matching(recipes, grid);
+        if (recipe.isPresent() && !recipe.get().bakeware().isEmpty()) {
+            bakewareFor(player, recipe.get(), 1);
+            arrange(level);
+        }
     }
 
     /** The free places, from the first; just {@code place} when it is free, with {@code one}. */
@@ -265,7 +426,8 @@ public final class OvenLogic implements StationLogic {
         return -1;
     }
 
-    private void layOnSet(ItemStack stack) {
+    /** One of {@code stack} with {@code one} (a right click, as into a crafting grid), else as much as a place holds. */
+    private void layOnSet(ItemStack stack, boolean one) {
         int place = -1;
         for (int slot = 0; slot < oven.places() && place < 0; slot++) {
             ItemStack there = oven.place(slot);
@@ -282,7 +444,7 @@ public final class OvenLogic implements StationLogic {
             return;
         }
         ItemStack there = oven.place(place);
-        int moved = Math.min(stack.getCount(), Math.min(oven.perPlace(), stack.getMaxStackSize()) - there.getCount());
+        int moved = Math.min(one ? 1 : stack.getCount(), Math.min(oven.perPlace(), stack.getMaxStackSize()) - there.getCount());
         oven.setPlace(place, there.isEmpty() ? stack.copyWithCount(moved) : there.copyWithCount(there.getCount() + moved));
         stack.shrink(moved);
         arrange(oven.blockEntity().getLevel());
@@ -373,6 +535,11 @@ public final class OvenLogic implements StationLogic {
         if (oven != null && !oven.bakesEachPlace() && slot.group().equals(OvenStation.INGREDIENTS)) {
             arrange(station.level());
         }
+        // Taken off or moved by the cook at the open tray: the oven waits again before it takes in what is left.
+        if (oven != null && isOpen(station) && !arranging
+                && (slot.group().equals(OvenStation.INGREDIENTS) || slot.group().equals(OvenStation.BAKEWARE))) {
+            changed(station.level());
+        }
     }
 
     /** The tray's places as slots; laying them out is no cook's change. */
@@ -415,7 +582,7 @@ public final class OvenLogic implements StationLogic {
             picked = null;
             return;
         }
-        List<KitchenOven.Baking> recipes = oven.recipes(level);
+        List<KitchenOven.Baking> recipes = inBakeware(oven.recipes(level));
         Optional<KitchenOven.Baking> now = KitchenOven.matching(recipes, grid());
         if (now.isPresent() && now.get().isShaped()) {
             return;
@@ -426,6 +593,34 @@ public final class OvenLogic implements StationLogic {
         if (choice != null) {
             StationRecipes.lay(tray, kinds, choice.parts());
         }
+    }
+
+    /**
+     * The recipes of the bakeware standing in the oven, for an oven that bakes in bakeware and has some in it: what lies there is laid
+     * out for what that bakeware makes. All of them otherwise.
+     */
+    private List<KitchenOven.Baking> inBakeware(List<KitchenOven.Baking> recipes) {
+        ItemStack there = oven.bakeware();
+        if (!oven.usesBakeware() || there.isEmpty()) {
+            return recipes;
+        }
+        return recipes.stream().filter(recipe -> recipe.bakesIn(there)).toList();
+    }
+
+    /**
+     * The bakeware what lies there wants while other bakeware or none stands in the oven: the set makes a recipe, not in this one. Empty
+     * when it bakes, when nothing lies there, or when it makes nothing at all.
+     */
+    private ItemStack wantedBakeware(Level level) {
+        if (!oven.usesBakeware() || level == null || StationRecipes.kinds(tray()).isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        List<KitchenOven.Baking> recipes = oven.recipes(level);
+        ItemStack[] grid = grid();
+        if (KitchenOven.matching(recipes, grid, oven.bakeware()).isPresent()) {
+            return ItemStack.EMPTY;
+        }
+        return KitchenOven.matching(recipes, grid).map(KitchenOven.Baking::bakeware).orElse(ItemStack.EMPTY);
     }
 
     private ItemStack[] grid() {
@@ -610,12 +805,20 @@ public final class OvenLogic implements StationLogic {
         int seconds = left > 0 ? Mth.ceil(left / 20.0F) * 20 : 0;
         boolean hot = oven.isHot();
         boolean cold = oven.waitsForHeat();
+        ItemStack wanted = wantedBakeware(station.level());
+        String wants = wanted.isEmpty() ? "" : BuiltInRegistries.ITEM.getKey(wanted.getItem()).toString();
         if (own.getInt(OvenStation.LEFT) != seconds || !Arrays.equals(own.getByteArray(OvenStation.BAKED), baked)
-                || own.getBoolean(OvenStation.HOT) != hot || own.getBoolean(OvenStation.COLD) != cold) {
+                || own.getBoolean(OvenStation.HOT) != hot || own.getBoolean(OvenStation.COLD) != cold
+                || !own.getString(OvenStation.WANTS).equals(wants)) {
             own.putInt(OvenStation.LEFT, seconds);
             own.putByteArray(OvenStation.BAKED, baked);
             own.putBoolean(OvenStation.HOT, hot);
             own.putBoolean(OvenStation.COLD, cold);
+            if (wants.isEmpty()) {
+                own.remove(OvenStation.WANTS);
+            } else {
+                own.putString(OvenStation.WANTS, wants);
+            }
             state.setData(own);
         }
     }

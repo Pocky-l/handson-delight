@@ -3,6 +3,7 @@ package com.pockyl.handson_delight.client;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -32,15 +33,20 @@ import java.util.Map;
  * @param openSound        played as the door starts to open
  * @param closeSound       played as the door shuts
  * @param blockParts       the scene's nodes the block draws as well, shown only while the station hides the block
+ * @param glowColor        the colour the heat inside is drawn in over the glow's own texture
+ * @param glowAlpha        how see-through the glow is at most (0-255): it flickers down to three quarters of it
  */
 record OvenLook(Door door, float doorOpen, float doorTime, float trayOut, float trayTime, float[] columnX, float[] rowZ, float onTray,
-        float foodScale, Vector3f mouth, Vector3f smokeFrom, SoundEvent openSound, SoundEvent closeSound, String[] blockParts, Models models) {
+        float foodScale, Vector3f mouth, Vector3f smokeFrom, SoundEvent openSound, SoundEvent closeSound, String[] blockParts, Models models,
+        int glowColor, int glowAlpha) {
 
     enum Door {
         /** One door hinged at its bottom edge, node {@code door}, dropping towards the cook. */
         DROP,
         /** Two leaves hinged at the sides, nodes {@code door_left} and {@code door_right}, swinging out like gates. */
-        LEAVES
+        LEAVES,
+        /** No door: an open mouth, the bakeware pulled out of it ({@code door_mouth} is clicked to push it back in). */
+        NONE
     }
 
     /** The models of the scene's nodes that follow the block's state: node id to model, given the block and whether it burns. */
@@ -60,7 +66,7 @@ record OvenLook(Door door, float doorOpen, float doorTime, float trayOut, float 
             sound(CfbOven.MOD_ID, "oven_open"), sound(CfbOven.MOD_ID, "oven_close"),
             // While nobody works at it, the block and its own renderer are the oven, as without this mod (its renderer lights the tools
             // on top with the light inside its own solid block, so they are dark there; the scene lights them from above).
-            new String[] {"oven"}, OvenLook::cfbModels);
+            new String[] {"oven"}, OvenLook::cfbModels, 0xFFFFFF, 0xC0);
 
     /**
      * Cultural Delights' brick oven: its grated door's two leaves swing out 105 degrees like gates, the baking tray slides out between
@@ -70,7 +76,18 @@ record OvenLook(Door door, float doorOpen, float doorTime, float trayOut, float 
     static final OvenLook CULTURAL = new OvenLook(Door.LEAVES, 105.0F, 0.4F, 7.0F, 0.35F, new float[] {2.67F, 0.0F, -2.67F},
             new float[] {1.67F, -1.0F, -3.67F}, 2.0F, 0.5F, new Vector3f(8.0F, 10.5F, 0.5F), new Vector3f(8.0F, 16.3F, 8.0F),
             sound(CulturalOven.MOD_ID, "block.oven.open"), sound(CulturalOven.MOD_ID, "block.oven.close"),
-            new String[] {"body", "door_left", "door_right", "tray_model"}, Models.NONE);
+            new String[] {"body", "door_left", "door_right", "tray_model"}, Models.NONE, 0xFFFFFF, 0xC0);
+
+    /**
+     * Extra Delight's brick oven, open in front: no door, the bakeware slides out of its mouth onto the oven's front, 6.5 pixels, as a
+     * cook pulls a pan out; places in a 3 x 3 grid on it. Its flat inner faces are lined with bricks (the scene's {@code lining});
+     * while the heat under it is on they glow from the floor up into soot under the vault (the glow's own texture); smoke out of the
+     * vent at its top. No door to sound: the pan knocks on the stone as it comes out and goes in, and an empty ledge is silent.
+     * The block stays in the world: the scene draws only the lining, the bakeware, what lies in it and the glow.
+     */
+    static final OvenLook EXTRA = new OvenLook(Door.NONE, 0.0F, 0.01F, 6.5F, 0.4F, new float[] {2.3F, 0.0F, -2.3F},
+            new float[] {2.0F, 0.0F, -2.0F}, 1.0F, 0.3F, new Vector3f(8.0F, 8.0F, 3.5F), new Vector3f(8.0F, 16.3F, 8.0F),
+            SoundEvents.LANTERN_PLACE, SoundEvents.LANTERN_HIT, new String[0], Models.NONE, 0xFFFFFF, 0x78);
 
     private static SoundEvent sound(String namespace, String path) {
         return SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(namespace, path));

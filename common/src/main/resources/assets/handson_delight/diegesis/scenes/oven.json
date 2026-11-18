@@ -133,6 +133,17 @@
               }
             },
             {
+              "$comment": "The tray as one place to lay things on: marked whole while the cook carries something for it over it (set by the code).",
+              "id": "tray_mark",
+              "pos": [
+                0,
+                1.6,
+                0
+              ],
+              "pickable": false,
+              "hidden": true
+            },
+            {
               "id": "place_0",
               "pos": [
                 2.67,
@@ -143,7 +154,7 @@
                 "slot": "ingredients[0]",
                 "display": "hidden",
                 "size": 2.6,
-                "highlight": true
+                "highlight": false
               },
               "children": [
                 {
@@ -169,7 +180,7 @@
                 "slot": "ingredients[1]",
                 "display": "hidden",
                 "size": 2.6,
-                "highlight": true
+                "highlight": false
               },
               "children": [
                 {
@@ -195,7 +206,7 @@
                 "slot": "ingredients[2]",
                 "display": "hidden",
                 "size": 2.6,
-                "highlight": true
+                "highlight": false
               },
               "children": [
                 {
@@ -221,7 +232,7 @@
                 "slot": "ingredients[3]",
                 "display": "hidden",
                 "size": 2.6,
-                "highlight": true
+                "highlight": false
               },
               "children": [
                 {
@@ -247,7 +258,7 @@
                 "slot": "ingredients[4]",
                 "display": "hidden",
                 "size": 2.6,
-                "highlight": true
+                "highlight": false
               },
               "children": [
                 {
@@ -273,7 +284,7 @@
                 "slot": "ingredients[5]",
                 "display": "hidden",
                 "size": 2.6,
-                "highlight": true
+                "highlight": false
               },
               "children": [
                 {
@@ -299,7 +310,7 @@
                 "slot": "ingredients[6]",
                 "display": "hidden",
                 "size": 2.6,
-                "highlight": true
+                "highlight": false
               },
               "children": [
                 {
@@ -325,7 +336,7 @@
                 "slot": "ingredients[7]",
                 "display": "hidden",
                 "size": 2.6,
-                "highlight": true
+                "highlight": false
               },
               "children": [
                 {
@@ -351,7 +362,7 @@
                 "slot": "ingredients[8]",
                 "display": "hidden",
                 "size": 2.6,
-                "highlight": true
+                "highlight": false
               },
               "children": [
                 {

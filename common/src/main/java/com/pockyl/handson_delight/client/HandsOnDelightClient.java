@@ -89,6 +89,7 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(SkilletStation.ID, SkilletBehavior::new);
         DiegesisClient.registerBehavior(StoveStation.ID, StoveBehavior::new);
         DiegesisClient.registerBehavior(OvenStation.CFB_ID, OvenBehavior::cfb);
+        DiegesisClient.registerBehavior(OvenStation.ED_ID, OvenBehavior::extra);
         DiegesisClient.registerLiquid(HandsOnDelight.id("broth"), LiquidLook.of(0xE0B0A070).thick(0.6F));
         registerParticles();
     }

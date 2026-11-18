@@ -18,7 +18,8 @@ import java.util.Optional;
  * An oven as the oven station sees it, whichever mod it comes from: a tray or rack of places where things bake, the places the baked
  * things wait in, and what else the oven has (a fuel slot, tool places on top). Each mod's oven is an adapter onto its own block
  * entity, the way {@link KitchenPot} serves several pots: Cooking for Blockheads' ({@link CfbOven}), each place baking alone, and
- * Cultural Delights' ({@link CulturalOven}), whose tray bakes as one set into a dish. The station, its door, tray, piles, glow, badge and book are
+ * Cultural Delights' ({@link CulturalOven}), whose tray bakes as one set into a dish, and Extra Delight's ({@link EdOven}), whose set bakes
+ * in the bakeware standing in it. The station, its door, tray, piles, glow, badge and book are
  * the same for all of them ({@link OvenLogic}, {@code OvenBehavior}, {@code OvenBook}).
  */
 public interface KitchenOven {
@@ -74,6 +75,25 @@ public interface KitchenOven {
     }
 
     /**
+     * Whether what bakes goes into bakeware of its own (a sheet, a pie dish, a loaf pan) that stands in the oven: one slot, which every
+     * recipe names ({@link Baking#bakeware}). None by default.
+     */
+    default boolean usesBakeware() {
+        return false;
+    }
+
+    default ItemStack bakeware() {
+        return ItemStack.EMPTY;
+    }
+
+    default void setBakeware(ItemStack stack) {
+    }
+
+    default boolean isBakeware(ItemStack stack) {
+        return false;
+    }
+
+    /**
      * Whether each place bakes on its own (one thing a place, each into what it bakes to), or the whole tray is one set that bakes into
      * a dish ({@link #recipes} of several ingredients).
      */
@@ -115,8 +135,15 @@ public interface KitchenOven {
     /**
      * A recipe: what goes in and what comes out after {@code ticks}. {@code width} 0: any places; otherwise laid out {@code width} x
      * {@code height} as at a crafting table, {@code ingredients} row by row with empty places. {@code kind} names the book's tab.
+     * {@code bakeware}: what it bakes in, for an oven that {@link KitchenOven#usesBakeware uses bakeware} (empty for any other), and
+     * whether a bake uses one of it up ({@code usesUp}: a bowl that goes with the dish) or leaves it in the oven.
      */
-    record Baking(ResourceLocation id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks, String kind) {
+    record Baking(ResourceLocation id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks, String kind,
+            ItemStack bakeware, boolean usesUp) {
+        public Baking(ResourceLocation id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks, String kind) {
+            this(id, ingredients, width, height, result, ticks, kind, ItemStack.EMPTY, false);
+        }
+
         public boolean isShaped() {
             return width > 0;
         }
@@ -124,6 +151,11 @@ public interface KitchenOven {
         /** What goes in, without the empty places of a laid-out recipe. */
         public List<Ingredient> needed() {
             return ingredients.stream().filter(ingredient -> !ingredient.isEmpty()).toList();
+        }
+
+        /** Whether it bakes in {@code there}: its own bakeware, or anything for a recipe that names none. */
+        public boolean bakesIn(ItemStack there) {
+            return bakeware.isEmpty() || there.is(bakeware.getItem());
         }
     }
 
@@ -135,6 +167,11 @@ public interface KitchenOven {
             }
         }
         return Optional.empty();
+    }
+
+    /** The recipe the tray bakes as one set in the bakeware standing in the oven ({@code bakeware}, empty for none). */
+    static Optional<Baking> matching(List<Baking> recipes, ItemStack[] grid, ItemStack bakeware) {
+        return matching(recipes.stream().filter(recipe -> recipe.bakesIn(bakeware)).toList(), grid);
     }
 
     /** What each place of an oven that bakes each place alone turns into, empty for what it does not bake. */
@@ -211,6 +248,10 @@ public interface KitchenOven {
     /** The oven of a block entity, from whichever mod it comes, or null for anything else. */
     static KitchenOven of(BlockEntity entity) {
         KitchenOven cfb = CfbOven.of(entity);
-        return cfb != null ? cfb : CulturalOven.of(entity);
+        if (cfb != null) {
+            return cfb;
+        }
+        KitchenOven extra = EdOven.of(entity);
+        return extra != null ? extra : CulturalOven.of(entity);
     }
 }

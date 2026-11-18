@@ -54,4 +54,33 @@ public final class ExtraDelightGameTests {
     public static void theBookFillsFoodAndLiquids(GameTestHelper helper) {
         BowlTests.theBookFillsFoodAndLiquids(helper);
     }
+
+    public static void everyEdAgingFromItsFoodDroppedIn(GameTestHelper helper) {
+        EdVatTests.everyEdAgingFromItsFoodDroppedIn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theEdVatReadsItsRecipes(GameTestHelper helper) {
+        EdVatTests.theEdVatReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void liquidIsPouredAndDrawnBack(GameTestHelper helper) {
+        EdVatTests.liquidIsPouredAndDrawnBack(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void sauerkrautAgesInItsStagesAndIsDrawnIntoBowls(GameTestHelper helper) {
+        EdVatTests.sauerkrautAgesInItsStagesAndIsDrawnIntoBowls(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theEdLidIsABlockOnTheVat(GameTestHelper helper) {
+        EdVatTests.theEdLidIsABlockOnTheVat(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void edContainersInTheirSlotWorkAsBefore(GameTestHelper helper) {
+        EdVatTests.edContainersInTheirSlotWorkAsBefore(helper);
+    }
 }

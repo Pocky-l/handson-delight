@@ -78,6 +78,7 @@ dependencies {
     // by name, as their classes build on the L2 libraries nested in its jar).
     compileOnly "maven.modrinth:gensokyo-delight-youkais-feasts:${youkais_feasts_version}"
     // Extra Delight's mixing bowl is a station too: compiled against it only.
+    // Extra Delight's vat is a station too: compiled against it only.
     compileOnly "maven.modrinth:extradelight:${extra_delight_version}"
 }
 

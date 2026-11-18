@@ -24,6 +24,7 @@ import com.pockyl.handson_delight.station.StoveStation;
 import com.pockyl.handson_delight.station.SteamerStation;
 import com.pockyl.handson_delight.station.VatLogic;
 import com.pockyl.handson_delight.station.VatStation;
+import com.pockyl.handson_delight.station.EdVatStation;
 import com.pockyl.handson_delight.station.YoukaiPotStation;
 
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ public final class HandsOnDelightClient {
         KegLiquids.register();
         DiegesisClient.registerBehavior(OvenStation.ID, OvenBehavior::new);
         DiegesisClient.registerBehavior(VatStation.ID, VatBehavior::new);
+        DiegesisClient.registerBehavior(EdVatStation.ID, EdVatBehavior::new);
         DiegesisClient.registerBehavior(KettleStation.ID, KettleBehavior::new);
         DiegesisClient.registerBehavior(KettleStation.YOUKAI_ID, KettleBehavior::new);
         DiegesisClient.registerBehavior(GrillStation.ID, GrillBehavior::new);

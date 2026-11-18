@@ -102,6 +102,11 @@ public interface Platform {
     /** Sends {@code AssemblyRecipes.book()} to the player's client, for {@code BoardDishes}. */
     void sendBoardDishes(ServerPlayer player);
 
+    /** What only Extra Delight's own code knows of its vat, or null where it is not: it has a NeoForge build only. */
+    default com.pockyl.handson_delight.station.KitchenEdVat.Access edVats() {
+        return null;
+    }
+
     static <T> T load(Class<T> type) {
         return ServiceLoader.load(type, type.getClassLoader()).findFirst()
                 .orElseThrow(() -> new IllegalStateException("No " + type.getName() + " for this mod loader"));

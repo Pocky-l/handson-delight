@@ -6,6 +6,9 @@
   oil, crack the eggs over the rim, then take your spoon or whisk by its handle and stir. Each circle round the bowl is a
   stir, and a whole bowlful is mixed at once. When it is done, a bowl or bottle from your inventory dips in for it. A
   right click with an egg cracks it for its white, as the bowl's own click does. `mixing_bowl` in the config turns it off.
+- [Extra Delight](https://modrinth.com/mod/extradelight)'s vat is a station: pour the brine in, drop the vegetables in,
+  shake in the salt or yeast when its stage comes. The lid comes off and goes back on as each stage wants it, and what
+  is made waits in the vat until you draw it into jars or bowls.
 
 ### Fixed
 - Shift-using a keg's tap no longer hangs the server when [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s

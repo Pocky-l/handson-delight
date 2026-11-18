@@ -20,6 +20,14 @@
     {
       "id": "#c:gunpowders",
       "required": false
+    },
+    {
+      "id": "extradelight:yeast",
+      "required": false
+    },
+    {
+      "id": "#c:chili/powder",
+      "required": false
     }
   ]
 }

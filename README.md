@@ -88,6 +88,11 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 - **Vat** of [Cultural Delights](https://modrinth.com/mod/cultural-delights). A stone tub under a lid that swings up.
   Pour water or milk in and drop the rest in to float, shut the lid and it ages at the warmth under it: it boils over a
   fire and frosts over on ice. The drink stays in the vat until you draw it with a bottle, beer under its head of foam.
+- **Vat** of [Extra Delight](https://modrinth.com/mod/extradelight). Its crock opens up: pour the brine in, drop the
+  vegetables in to float and shake in the salt or yeast each stage wants. Its lid comes off and goes back on as each
+  stage needs it, from your inventory when you leave. The badge shows the stages, what the one under way still wants and
+  the days left, and the book lists every recipe with its stages. What it makes waits in the vat, no jars or bowls needed
+  until you draw it into them.
 - **Kettle** of [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port). Lift its lid off onto the stove, pour
   a bucket in at the opening and drop the leaves in: they float, soak and sink, giving the water their colour while it
   brews over the fire, with steam rising from the spout. Done, the kettle whistles. Click the spout with a bottle and
@@ -169,7 +174,8 @@ station with its own recipes, spoons and whisk.
 [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell)'s alchemist pot opens as a pot station with
 its [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) scroll.
 [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s kebabs and bibimbap are put together on the
-board and keep the seasoning of their skewers.
+board and keep the seasoning of their skewers. [Extra Delight](https://modrinth.com/mod/extradelight)'s vat opens as a
+station too, in each of its looks.
 
 Hoppers, pipes and drops use the blocks' own inventories. A pot fed by automation cooks by itself, as in Farmer's Delight.
 
@@ -183,6 +189,7 @@ which each player sets in their own file.
 | `cooking_pot`, `cutting_board`, `skillet`, `stove` | `true` | The station of that block. Off, the block works as in Farmer's Delight. `cooking_pot` covers the addons' pots too (copper, monster, alchemist) |
 | `keg` | `true` | Brewin' and Chewin's keg as a station. Off, the keg keeps its own menu |
 | `oven`, `vat` | `true` | Cultural Delights' oven and vat as stations. Off, they keep their own menus |
+| `ed_vat` | `true` | Extra Delight's vat as a station. Off, it keeps its own menu. It keeps its own aging times; on, it also ages with no jars or bowls in it and keeps what it made to be drawn into them |
 | `kettle` | `true` | The kettles of Farmer's Respite and Youkai's Feasts as stations. Off, each is used as before |
 | `grill`, `basin` | `true` | Barbeque's Delight's grill and ingredients basin as stations. Off, they are used as before |
 | `cuisine_board` | `true` | Youkai's Feasts' cuisine board as a station. Off, it is used as before |

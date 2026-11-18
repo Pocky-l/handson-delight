@@ -1,0 +1,673 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Extra Delight's vat (a crock with handles), worked from the side the cook comes from. The station hides the block, and Extra Delight's lid block on it, while it is used and shows them here: the crock open, walls 1 px round an inside x,z 3..13 over a floor at y 2, its body turned by the code to stand as the block stands; the lid (Extra Delight's own lid model, drawn by the code in the look of the block) on the rim, swung up about the far edge of the rim and leant back, or flown to and from the cook. What is poured in is its tank's liquid; what is dropped in floats round on it or lies on the floor, drawn by the code (the slots are click places that move with what they hold); item_6 is the stage place (salt, yeast). What is made waits in the vat until it is drawn into its containers.",
+  "work_plane": 12,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      8,
+      67.6,
+      -35.0
+    ],
+    "target": [
+      8,
+      14,
+      10
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "id": "vat",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "children": [
+        {
+          "$comment": "The crock's body, as the block's but open: shown only while the station hides the block; its model follows the block's look.",
+          "id": "body",
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/ed_vat/body",
+            "lit_as_block": true
+          }
+        },
+        {
+          "$comment": "The far edge of the rim, at its top: the lid swings up about it and leans back.",
+          "id": "hinge",
+          "pos": [
+            0,
+            16,
+            6
+          ],
+          "pickable": false,
+          "children": [
+            {
+              "$comment": "Extra Delight's lid, set by the code; a click lifts it off or puts it on.",
+              "id": "lid",
+              "pos": [
+                0,
+                0,
+                -6
+              ],
+              "hidden": true,
+              "collider": {
+                "from": [
+                  -6,
+                  -0.5,
+                  -6
+                ],
+                "to": [
+                  6,
+                  3.5,
+                  6
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "$comment": "The vat's liquid, and what was made waiting in it; its colour moves to what it makes as it ages.",
+      "id": "brew",
+      "pickable": false,
+      "tank": {
+        "tank": "brew",
+        "inner": {
+          "from": [
+            3.05,
+            2,
+            3.05
+          ],
+          "to": [
+            12.95,
+            16,
+            12.95
+          ]
+        }
+      }
+    },
+    {
+      "id": "mouth",
+      "drop_zone": "ingredients",
+      "collider": {
+        "from": [
+          3,
+          2,
+          3
+        ],
+        "to": [
+          13,
+          16,
+          13
+        ]
+      }
+    },
+    {
+      "id": "item_0",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[0]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_0",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_1",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[1]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_1",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_2",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[2]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_2",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_3",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[3]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_3",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_4",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[4]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_4",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_5",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[5]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_5",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "item_6",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "slot": {
+        "slot": "stage[0]",
+        "display": "hidden",
+        "size": 3.4,
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_6",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.55
+        }
+      ]
+    },
+    {
+      "$comment": "What was made: what waits in the vat is drawn by a click on it (one, shift all) into a container from the inventory; what lies in the output is taken the same way.",
+      "id": "served",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "hidden": true,
+      "collider": {
+        "from": [
+          -4.8,
+          0,
+          -4.8
+        ],
+        "to": [
+          4.8,
+          8,
+          4.8
+        ]
+      }
+    },
+    {
+      "id": "dish",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "$comment": "A container from the inventory brought over the vat, dipped in and taken away full; moved by the code in scene pixels.",
+      "id": "dipper",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "$comment": "What a hand brings over the vat and pours or shakes out, moved by the code in scene pixels: one for each place, and one for the liquid.",
+      "id": "hand_0",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_1",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_2",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_3",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_4",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_5",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_6",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_liquid",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -4.84,
+        27.94,
+        3.3
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -4.83,
+        27.96,
+        3.28
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -4.82,
+        27.98,
+        3.26
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "thermo",
+      "pos": [
+        -4.83,
+        27.96,
+        3.28
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "thermo_now",
+      "pos": [
+        -4.82,
+        27.98,
+        3.26
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -4.81,
+        28.01,
+        3.23
+      ],
+      "rotation": [
+        46.0,
+        -13.1,
+        -0.9
+      ],
+      "scale": 0.187,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "$comment": "The badge's column right of its icon, in the plate's own plane (its pixels are the plate's, x and z negated): what the stage under way wants. The icons stand a little off the plate, the marks over them.",
+      "id": "column",
+      "pos": [
+        -4.83,
+        27.96,
+        3.28
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495,
+      "children": [
+        {
+          "$comment": "A dark place for the stage's thing and one for the lid.",
+          "id": "cells",
+          "pos": [
+            0,
+            0.02,
+            0
+          ],
+          "pickable": false
+        },
+        {
+          "$comment": "The thing the stage under way wants in the stage place, flat, facing the camera like the badge's icon.",
+          "id": "want_item",
+          "pos": [
+            -2.0625,
+            0.15,
+            0.9375
+          ],
+          "rotation": [
+            90,
+            0,
+            0
+          ],
+          "scale": 0.07,
+          "hidden": true,
+          "collider": {
+            "from": [
+              -12,
+              -12,
+              -12
+            ],
+            "to": [
+              12,
+              12,
+              12
+            ]
+          }
+        },
+        {
+          "$comment": "The lid in the lower place, the vat's own lid block seen as its inventory icon is: wanted on, or struck through while the stage ages open.",
+          "id": "want_lid",
+          "pos": [
+            -2.0625,
+            0.5,
+            -0.6875
+          ],
+          "rotation": [
+            37.76,
+            63.43,
+            50.77
+          ],
+          "scale": 0.07,
+          "hidden": true,
+          "collider": {
+            "from": [
+              -12,
+              -12,
+              -12
+            ],
+            "to": [
+              12,
+              12,
+              12
+            ]
+          }
+        },
+        {
+          "$comment": "A tick on each place whose want is met.",
+          "id": "want_ok",
+          "pos": [
+            0,
+            1.0,
+            0
+          ],
+          "pickable": false
+        },
+        {
+          "$comment": "A blinking frame round a place whose want is not met.",
+          "id": "want_missing",
+          "pos": [
+            0,
+            1.0,
+            0
+          ],
+          "pickable": false
+        },
+        {
+          "$comment": "The lid struck through: the stage ages open to the air.",
+          "id": "want_open",
+          "pos": [
+            0,
+            1.05,
+            0
+          ],
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        22.36,
+        33.45,
+        -5.7
+      ],
+      "rotation": [
+        -40.6,
+        -0.2,
+        17.7
+      ],
+      "scale": 1.19,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -5.3,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          5.3,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

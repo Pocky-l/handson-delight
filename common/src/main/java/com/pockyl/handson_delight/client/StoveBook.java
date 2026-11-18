@@ -12,6 +12,7 @@ import net.minecraft.world.level.Level;
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.handson_delight.CookingTimes;
 import com.pockyl.handson_delight.station.Grill;
+import com.pockyl.handson_delight.station.MazeStove;
 import com.pockyl.handson_delight.station.SkilletCooking;
 import com.pockyl.handson_delight.station.StoveCooking;
 import com.pockyl.handson_delight.station.StoveStation;
@@ -35,7 +36,8 @@ final class StoveBook implements RecipeBook.Source {
             if (food.isEmpty()) {
                 continue;
             }
-            int ticks = 2 * StoveCooking.sideTicks(recipe.getCookingTime(), CookingTimes.stove());
+            int time = MazeStove.ticks(level.getBlockState(view.pos()), dish, recipe.getCookingTime());
+            int ticks = 2 * StoveCooking.sideTicks(time, CookingTimes.stove());
             Component seconds = Component.translatable("handson_delight.book.seconds", Math.round(ticks / 20.0F));
             pages.add(new RecipeBook.Page(holder.id(), dish.copy(), List.of(food),
                     List.of(new ItemStack(Items.CLOCK)), seconds, false));

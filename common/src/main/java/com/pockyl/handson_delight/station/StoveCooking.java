@@ -114,10 +114,12 @@ public final class StoveCooking {
             if (recipe.isEmpty()) {
                 continue;
             }
+            int ticks = MazeStove.ticks(stove.getBlockState(), recipe.get().getResultItem(level.registryAccess()),
+                    recipe.get().getCookingTime());
             if (SkilletCooking.isOneSided(stack)) {
-                grill.grillThrough(place, 0.5F / sideTicks(recipe.get().getCookingTime(), HandsOnConfig.stoveTime()));
+                grill.grillThrough(place, 0.5F / sideTicks(ticks, HandsOnConfig.stoveTime()));
             } else {
-                grill.grill(place, 1.0F / sideTicks(recipe.get().getCookingTime(), HandsOnConfig.stoveTime()));
+                grill.grill(place, 1.0F / sideTicks(ticks, HandsOnConfig.stoveTime()));
             }
             if (grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
                 // Done on both sides: Farmer's Delight's own code cooks it this very tick (see beforeFarmersDelightCooks).
@@ -186,7 +188,9 @@ public final class StoveCooking {
         if (level == null || stack.isEmpty() || grill.ready(place) || grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
             return 1;
         }
-        return SkilletCooking.recipe(level, stack).map(CampfireCookingRecipe::getCookingTime).filter(time -> time > 0).orElse(1);
+        return SkilletCooking.recipe(level, stack)
+                .map(recipe -> MazeStove.ticks(stove.getBlockState(), recipe.getResultItem(level.registryAccess()), recipe.getCookingTime()))
+                .filter(time -> time > 0).orElse(1);
     }
 
     /** The drops of Farmer's Delight's cooking this tick are caught when the station has a piece in it; the slots as they were. */

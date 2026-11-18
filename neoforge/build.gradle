@@ -125,6 +125,23 @@ if (extraDelight) {
     sourceSets.main.resources.srcDir 'src/extradelight/resources'
 }
 
+// -Ptwilight runs the game tests with Twilight's Flavor & Delight and the Twilight Forest it needs: its maze stove is a stove station that
+// grills Twilight dishes twice as fast. Its own flag, as the Twilight Forest is a whole dimension, not a kitchen addon. The Twilight
+// Forest is only on CurseForge: its jar comes from CurseForge's CDN once, into the build folder.
+if (providers.gradleProperty('twilight').isPresent()) {
+    var forest = layout.buildDirectory.file('addon-jars/twilightforest-1.21.1-4.7.3196-universal.jar').get().asFile
+    if (!forest.exists()) {
+        forest.parentFile.mkdirs()
+        new URL('https://edge.forgecdn.net/files/6472/889/twilightforest-1.21.1-4.7.3196-universal.jar').withInputStream { input ->
+            forest.withOutputStream { it << input }
+        }
+    }
+    dependencies {
+        localRuntime 'maven.modrinth:twilight-delight:MFC7tDeW'           // Twilight's Flavor & Delight 3.2.9
+        localRuntime files(forest)                                        // The Twilight Forest 4.7.3196 (CurseForge 6472889)
+    }
+}
+
 // -Paddons runs the game and the game tests with the most downloaded Farmer's Delight addons that have a NeoForge 1.21.1 build
 // (Modrinth version ids), so that the mod is tested with them as well as without. Delightful and Nether's Delight have none; Farmer's
 // Respite has an unofficial port.

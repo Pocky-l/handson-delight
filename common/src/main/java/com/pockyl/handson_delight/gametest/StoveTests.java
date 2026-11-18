@@ -75,8 +75,12 @@ public final class StoveTests {
     }
 
     private static Top stove(GameTestHelper helper) {
+        return stove(helper, FarmersDelightContent.STOVE.get());
+    }
+
+    private static Top stove(GameTestHelper helper, Block block) {
         BlockPos at = new BlockPos(1, 1, 1);
-        helper.setBlock(at, FarmersDelightContent.STOVE.get().defaultBlockState().setValue(AbstractStoveBlock.LIT, true));
+        helper.setBlock(at, block.defaultBlockState().setValue(AbstractStoveBlock.LIT, true));
         // 1.21's test frame lays its barrier ceiling right above: the top would count as covered.
         helper.setBlock(at.above(), Blocks.AIR);
         BlockPos pos = helper.absolutePos(at);
@@ -214,6 +218,45 @@ public final class StoveTests {
             helper.assertTrue(helper.getBlockEntity(at) instanceof AbstractStoveBlockEntity,
                     BuiltInRegistries.BLOCK.getKey(block) + " grills on a stove's block entity");
         }
+        helper.succeed();
+    }
+
+    /**
+     * Twilight's Flavor & Delight's maze stove grills the Twilight Forest's food in half its time, as it does food put on its own way,
+     * and other food in the usual time; handed to its own way, the piece keeps the half. Passes at once without the addon.
+     */
+    public static void theMazeStoveGrillsTwilightFoodTwiceAsFast(GameTestHelper helper) {
+        Block maze = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("twilightdelight", "maze_stove"));
+        if (maze == net.minecraft.world.level.block.Blocks.AIR) {
+            helper.succeed();
+            return;
+        }
+        Level level = helper.getLevel();
+        // 1.21.1's maze stove halves the time by the dish's mod, 1.20.1's by the raw food's.
+        CampfireCookingRecipe twilight = level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING).stream()
+                .map(RecipeHolder::value)
+                .filter(recipe -> !recipe.getIngredients().isEmpty() && recipe.getIngredients().get(0).getItems().length > 0
+                        && BuiltInRegistries.ITEM.getKey(recipe.getResultItem(level.registryAccess()).getItem()).getNamespace()
+                        .equals("twilightforest"))
+                .findFirst().orElse(null);
+        helper.assertTrue(twilight != null, "the Twilight Forest has food for the fire");
+        Item food = twilight.getIngredients().get(0).getItems()[0].getItem();
+        Top top = stove(helper, maze);
+        top.place(food, 1);
+        top.place(Items.BEEF, 1);
+        helper.assertTrue(top.on(0).is(food) && top.on(1).is(Items.BEEF), "both lie on the maze stove");
+        float[] steps = new float[2];
+        StoveCooking.tick(top.stove);
+        steps[0] = top.grill().down(0);
+        steps[1] = top.grill().down(1);
+        int half = twilight.getCookingTime() / 2;
+        float times = HandsOnConfig.stoveTime();
+        helper.assertTrue(Math.abs(steps[0] - 1.0F / StoveCooking.sideTicks(half, times)) < 1.0E-6F,
+                food + " grills in half its " + twilight.getCookingTime() + " ticks, got a step of " + steps[0]);
+        helper.assertTrue(Math.abs(steps[1] - 1.0F / StoveCooking.sideTicks(600, times)) < 1.0E-6F,
+                "beef in its usual time, got a step of " + steps[1]);
+        int[] saved = StoveCooking.savedTimes(top.stove);
+        helper.assertTrue(saved[0] == half && saved[1] == 600, "its own way keeps the half: " + saved[0] + ", " + saved[1]);
         helper.succeed();
     }
 

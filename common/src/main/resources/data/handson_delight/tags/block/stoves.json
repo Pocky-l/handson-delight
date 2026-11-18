@@ -16,6 +16,10 @@
     {
       "id": "dungeonsdelight:dungeon_stove",
       "required": false
+    },
+    {
+      "id": "twilightdelight:maze_stove",
+      "required": false
     }
   ]
 }

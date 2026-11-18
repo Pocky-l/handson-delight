@@ -539,6 +539,11 @@ public final class ModGameTests {
         StoveTests.everyStoveOfTheTagIsAStation(helper);
     }
 
+    @GameTest(template = "empty")
+    public static void theMazeStoveGrillsTwilightFoodTwiceAsFast(GameTestHelper helper) {
+        StoveTests.theMazeStoveGrillsTwilightFoodTwiceAsFast(helper);
+    }
+
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void choppersDelightsBoardsAreStations(GameTestHelper helper) {
         BoardTests.choppersDelightsBoardsAreStations(helper);

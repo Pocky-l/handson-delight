@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.6.0+1.21.1] - Unreleased
+## [1.6.0+1.21.1] - 2026-11-19
 ### New
 - [Extra Delight](https://modrinth.com/mod/extradelight)'s mixing bowl, vat, melting pot and oven are stations: stir with the spoon, age in stages under the lid, melt chocolate, bake in its pans.
 - [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block is a station: food is cut along its marks and an axe splits a log like a pie.

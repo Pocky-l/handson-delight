@@ -52,6 +52,8 @@ public final class VatBehavior implements StationBehavior {
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "thermo", "thermo_now", "preview"};
     /** The parts the block's own model has too: drawn by the scene only while the block is hidden. */
     private static final String[] VAT_PARTS = {"body", "lid"};
+    /** The parts that lie as the block does in the world, not as the scene is turned to the cook. */
+    private static final String[] WORLD_PARTS = {"body", "frost", "lid", "frost_ring"};
     private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /** The lid swings up this far about its hinge, degrees, in this many seconds, and settles with a little bounce. */
     private static final float LID_OPEN = 110.0F;
@@ -147,6 +149,8 @@ public final class VatBehavior implements StationBehavior {
     private final VatContents contents = new VatContents(SLOTS, FLOOR, RIM, this::surface);
     private KitchenMotions.Dip dip;
     private float time;
+    /** The turn {@link #turnToWorld} gave the vat's parts last; NaN: none yet. */
+    private float shownTurn = Float.NaN;
     /** How far the lid is up, 0 shut to 1. */
     private float lid;
     private boolean wasOpening;
@@ -191,6 +195,7 @@ public final class VatBehavior implements StationBehavior {
 
     @Override
     public void onSceneReady(StationView view) {
+        shownTurn = Float.NaN;
         drawnDial = "";
         drawnThermo = "";
         shownDish = null;
@@ -213,9 +218,6 @@ public final class VatBehavior implements StationBehavior {
             view.node(part).ifPresent(node -> node.setOnTop(true));
         }
         view.node("book_open").ifPresent(node -> node.setPainter(book));
-        // The lid lies as the block's lid lies, whichever side the scene is turned to: its handle stays where it is in the world.
-        float turn = lidTurn(view.facing());
-        view.node("lid").ifPresent(node -> node.rotateTo(0.0F, turn, 0.0F, 0.0F));
         view.node("brew").ifPresent(brew -> {
             brew.setWakeLook(1.8F, 0.45F);
             brew.setFloatingWake(0.0F);
@@ -223,9 +225,27 @@ public final class VatBehavior implements StationBehavior {
         refresh(view);
     }
 
-    /** The turn about the vertical that undoes the scene's own turn towards the cook. */
+    /**
+     * The turn about the vertical that undoes the scene's own turn towards the cook: Diegesis turns a scene facing {@code facing} into
+     * the world by minus its yaw (north 0, east 90, south 180, west 270), so a node turned by plus that yaw lies as in the world.
+     */
     static float lidTurn(Direction facing) {
-        return Mth.wrapDegrees(180.0F - facing.toYRot());
+        return Mth.wrapDegrees(facing.toYRot() + 180.0F);
+    }
+
+    /**
+     * The vat's own parts lie as the block's do, whichever side the cook came from: its lid's handle, the stone and the rime stay where
+     * they are in the world. Read every frame: the scene is made ready before anybody opens it, from whatever side it faced then.
+     */
+    private void turnToWorld(StationView view) {
+        float turn = lidTurn(view.facing());
+        if (turn == shownTurn) {
+            return;
+        }
+        shownTurn = turn;
+        for (String part : WORLD_PARTS) {
+            view.node(part).ifPresent(node -> node.rotateTo(0.0F, turn, 0.0F, 0.0F));
+        }
     }
 
     @Override
@@ -600,6 +620,7 @@ public final class VatBehavior implements StationBehavior {
         time += dt;
         boolean inUse = view.isInUse();
         boolean open = inUse && isLidOpen(view);
+        turnToWorld(view);
         swing(view, dt, open);
         boolean whole = view.isBlockHidden();
         for (String part : VAT_PARTS) {

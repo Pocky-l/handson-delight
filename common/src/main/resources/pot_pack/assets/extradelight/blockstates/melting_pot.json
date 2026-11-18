@@ -1,0 +1,78 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/melting_pot/body"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "support": "tray|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/pot/tray"
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/melting_pot/body",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "support": "tray|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/pot/tray",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/melting_pot/body",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "support": "tray|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/pot/tray",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/melting_pot/body",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "support": "tray|handle"
+      },
+      "apply": {
+        "model": "handson_delight:diegesis/pot/tray",
+        "y": 270
+      }
+    }
+  ]
+}

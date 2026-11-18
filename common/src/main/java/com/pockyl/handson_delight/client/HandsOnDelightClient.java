@@ -19,6 +19,8 @@ import com.pockyl.handson_delight.station.GrillStation;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.OvenStation;
 import com.pockyl.handson_delight.station.KettleStation;
+import com.pockyl.handson_delight.station.MeltingPotLogic;
+import com.pockyl.handson_delight.station.MeltingPotStation;
 import com.pockyl.handson_delight.station.SkilletStation;
 import com.pockyl.handson_delight.station.StoveStation;
 import com.pockyl.handson_delight.station.SteamerStation;
@@ -66,6 +68,9 @@ public final class HandsOnDelightClient {
         // Ice cream in the vat: opaque, grainy as snow, so thick that it hardly moves.
         DiegesisClient.registerLiquid(VatLogic.CREAM_LIQUID,
                 new LiquidLook(0xFFF6EEDC, ResourceLocation.withDefaultNamespace("block/snow"), false, 0.95F));
+        DiegesisClient.registerBehavior(MeltingPotStation.ID, MeltingPotBehavior::new);
+        // What has melted in the melting pot (chocolate syrup, marshmallow fluff), coloured by the code; thick, so that it moves slowly.
+        DiegesisClient.registerLiquid(MeltingPotLogic.MELTED_LIQUID, LiquidLook.of(0xF0FFFFFF).thick(0.8F));
         DiegesisClient.registerBehavior(CuisineBoardStation.ID, CuisineBehavior::new);
         DiegesisClient.registerLiquid(YoukaiPotBehavior.SOUP_LIQUID, LiquidLook.of(0x96FFFFFF));
         DiegesisClient.registerBehavior(YoukaiPotStation.SMALL_ID, view -> new YoukaiPotBehavior(view, YoukaiPotBehavior.Size.SMALL));

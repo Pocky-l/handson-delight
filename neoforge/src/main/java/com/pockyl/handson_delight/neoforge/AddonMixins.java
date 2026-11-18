@@ -45,7 +45,8 @@ public final class AddonMixins implements IMixinConfigPlugin {
             Map.entry("YoukaiSteamerMixin", Needs.mod(YOUKAI)),
             Map.entry("YoukaiPotSoupMixin", Needs.mod(YOUKAI)),
             Map.entry("YoukaiHintsMixin", Needs.mod(YOUKAI)),
-            Map.entry("MixingBowlMixin", Needs.mod(EXTRA_DELIGHT)));
+            Map.entry("MixingBowlMixin", Needs.mod(EXTRA_DELIGHT)),
+            Map.entry("MeltingPotMixin", Needs.mod(EXTRA_DELIGHT)));
 
     @Override
     public void onLoad(String mixinPackage) {

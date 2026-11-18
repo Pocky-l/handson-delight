@@ -23,7 +23,8 @@
     "MixingBowlMixin",
     "EdVatMixin",
     "EdVatRecipeMixin",
-    "EdVatBlockMixin"
+    "EdVatBlockMixin",
+    "MeltingPotMixin"
   ],
   "client": [
     "CopperPotQuietMixin",

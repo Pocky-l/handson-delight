@@ -24,4 +24,16 @@ public final class NeoForgeClientPlatform implements ClientPlatform {
         BakedModel model = models.getModel(ModelResourceLocation.standalone(id));
         return model == models.getMissingModel() ? null : model;
     }
+
+    @Override
+    public int fluidColor(net.minecraft.world.level.material.Fluid fluid) {
+        int tint = net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(fluid).getTintColor();
+        // A fluid that is not tinted draws its texture as it is: its colour is then the texture's, which the caller reads itself.
+        return tint == 0xFFFFFFFF ? 0 : tint;
+    }
+
+    @Override
+    public ResourceLocation fluidTexture(net.minecraft.world.level.material.Fluid fluid) {
+        return net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(fluid).getStillTexture();
+    }
 }

@@ -9,6 +9,8 @@
 - [Extra Delight](https://modrinth.com/mod/extradelight)'s vat is a station: pour the brine in, drop the vegetables in,
   shake in the salt or yeast when its stage comes. The lid comes off and goes back on as each stage wants it, and what
   is made waits in the vat until you draw it into jars or bowls.
+- [Extra Delight](https://modrinth.com/mod/extradelight)'s melting pot is a station: drop chocolate into the double
+  boiler, watch it melt into the syrup going round in it and fill a bottle from it.
 
 ### Fixed
 - Shift-using a keg's tap no longer hangs the server when [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s

@@ -93,6 +93,10 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   stage needs it, from your inventory when you leave. The badge shows the stages, what the one under way still wants and
   the days left, and the book lists every recipe with its stages. What it makes waits in the vat, no jars or bowls needed
   until you draw it into them.
+- **Melting pot** of [Extra Delight](https://modrinth.com/mod/extradelight). A double boiler, its upper pot open over the
+  heat: drop chocolate in and watch it soften, sink and melt into the syrup going round in it, while the water below
+  steams. Its book has everything it melts, with the time. Click the syrup with a bottle or a bucket to fill it; with an
+  empty hand a bottle is offered from your inventory.
 - **Kettle** of [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port). Lift its lid off onto the stove, pour
   a bucket in at the opening and drop the leaves in: they float, soak and sink, giving the water their colour while it
   brews over the fire, with steam rising from the spout. Done, the kettle whistles. Click the spout with a bottle and
@@ -138,6 +142,7 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 | Action | How |
 |---|---|
 | Open a station | Right-click the pot, board, skillet, stove, keg, oven, vat, grill, basin, kettle or mixing bowl |
+| Open a station | Right-click the pot, board, skillet, stove, keg, oven, vat, melting pot, grill, basin or kettle |
 | Use the block as in Farmer's Delight | Sneak + right-click |
 | Stir | Click the spoon's handle, move the mouse, click again to put it down |
 | Serve | Click the soup with a bowl |
@@ -158,6 +163,8 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 [![REI](https://raw.githubusercontent.com/Pocky-l/handson-delight/main/docs/compat/rei.png)](https://www.curseforge.com/minecraft/mc-mods/roughly-enough-items) ✅ **[REI](https://www.curseforge.com/minecraft/mc-mods/roughly-enough-items)** (optional) - the same
 
 [![Sodium](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/sodium.png)](https://modrinth.com/mod/sodium) ✅ **[Sodium](https://modrinth.com/mod/sodium)** and [![Iris](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/iris.png)](https://modrinth.com/mod/iris) **[Iris](https://modrinth.com/mod/iris)** (optional) - the stations draw as usual
+
+[![Extra Delight](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/extra-delight.png)](https://modrinth.com/mod/extradelight) ✅ **[Extra Delight](https://modrinth.com/mod/extradelight)** (optional) - its melting pot is a station
 
 [![Create Aeronautics](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/create-aeronautics.png)](https://modrinth.com/mod/create-aeronautics) ✅ **[Create Aeronautics](https://modrinth.com/mod/create-aeronautics)** (optional) - the stations open on its flying ships and stay with the ship as it flies and turns
 
@@ -190,6 +197,7 @@ which each player sets in their own file.
 | `keg` | `true` | Brewin' and Chewin's keg as a station. Off, the keg keeps its own menu |
 | `oven`, `vat` | `true` | Cultural Delights' oven and vat as stations. Off, they keep their own menus |
 | `ed_vat` | `true` | Extra Delight's vat as a station. Off, it keeps its own menu. It keeps its own aging times; on, it also ages with no jars or bowls in it and keeps what it made to be drawn into them |
+| `melting_pot` | `true` | Extra Delight's melting pot as a station. Off, it keeps its own menu. It keeps its own melting times |
 | `kettle` | `true` | The kettles of Farmer's Respite and Youkai's Feasts as stations. Off, each is used as before |
 | `grill`, `basin` | `true` | Barbeque's Delight's grill and ingredients basin as stations. Off, they are used as before |
 | `cuisine_board` | `true` | Youkai's Feasts' cuisine board as a station. Off, it is used as before |

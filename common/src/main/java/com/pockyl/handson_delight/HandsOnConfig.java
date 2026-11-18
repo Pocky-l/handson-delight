@@ -27,6 +27,8 @@ public final class HandsOnConfig {
             "cooking_pot, cutting_board, skillet, stove: the station of that block. Off, the block works as in Farmer's Delight.",
             "keg: Brewin' and Chewin's keg as a station, when that mod is there. Off, the keg keeps its own menu.",
             "oven, vat: Cultural Delights' oven and vat as stations, when that mod is there. Off, they keep their own menus.",
+            "melting_pot: Extra Delight's melting pot as a station, when that mod is there. Off, it keeps its own menu. It",
+            "  keeps its own melting times.",
             "kettle: the kettles of Farmer's Respite and Youkai's Feasts as stations, when those mods are there. Off, each",
             "  kettle is used as before.",
             "grill, basin: Barbeque's Delight's grill and ingredients basin as stations, when that mod is there. Off, they are",
@@ -66,6 +68,7 @@ public final class HandsOnConfig {
     private static boolean keg = true;
     private static boolean oven = true;
     private static boolean vat = true;
+    private static boolean meltingPot = true;
     private static boolean grill = true;
     private static boolean basin = true;
     private static boolean kettle = true;
@@ -107,6 +110,7 @@ public final class HandsOnConfig {
         keg = read(values, "keg", keg);
         oven = read(values, "oven", oven);
         vat = read(values, "vat", vat);
+        meltingPot = read(values, "melting_pot", meltingPot);
         grill = read(values, "grill", grill);
         basin = read(values, "basin", basin);
         kettle = read(values, "kettle", kettle);
@@ -205,6 +209,10 @@ public final class HandsOnConfig {
     /** Extra Delight's vat as a station; with it, its recipes also age without their containers (they are drawn into them after). */
     public static boolean edVat() {
         return edVat;
+    }
+
+    public static boolean meltingPot() {
+        return meltingPot;
     }
 
     public static boolean grill() {

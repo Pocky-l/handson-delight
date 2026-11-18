@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link CulturalOvenTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link YoukaiTankTests}, {@link StumpTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
+ * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link HearthKegTests}, {@link HearthCaskTests}, {@link CulturalOvenTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link YoukaiTankTests}, {@link StumpTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
  * and {@link RecipeAudit} on NeoForge.
  */
 @GameTestHolder(HandsOnDelight.MOD_ID)
@@ -957,6 +957,56 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void youkaiFlaskIsFilledAtTheTank(GameTestHelper helper) {
         YoukaiTankTests.youkaiFlaskIsFilledAtTheTank(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthKegReadsItsRecipes(GameTestHelper helper) {
+        HearthKegTests.hearthKegReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 140)
+    public static void hearthWineFermentsAndIsTapped(GameTestHelper helper) {
+        HearthKegTests.hearthWineFermentsAndIsTapped(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthBookFillsCountsAndWaterGoesBack(GameTestHelper helper) {
+        HearthKegTests.hearthBookFillsCountsAndWaterGoesBack(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthBigKegIsOneStation(GameTestHelper helper) {
+        HearthKegTests.hearthBigKegIsOneStation(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 140)
+    public static void hearthBigKegBrewsBeer(GameTestHelper helper) {
+        HearthKegTests.hearthBigKegBrewsBeer(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void hearthPicklesWaitToBeTaken(GameTestHelper helper) {
+        HearthKegTests.hearthPicklesWaitToBeTaken(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthCaskReadsItsRecipes(GameTestHelper helper) {
+        HearthCaskTests.hearthCaskReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthCaskLidIsItsSeal(GameTestHelper helper) {
+        HearthCaskTests.hearthCaskLidIsItsSeal(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void hearthWineAgesSealed(GameTestHelper helper) {
+        HearthCaskTests.hearthWineAgesSealed(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthCaskBookLaysJerky(GameTestHelper helper) {
+        HearthCaskTests.hearthCaskBookLaysJerky(helper);
     }
 
     @GameTest(template = "empty")

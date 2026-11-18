@@ -92,6 +92,8 @@ dependencies {
     compileOnly "maven.modrinth:gensokyo-delight-youkais-feasts:${youkais_feasts_version}"
     // Extra Delight's mixing bowl, vat and melting pot are stations too: compiled against it only.
     compileOnly "maven.modrinth:extradelight:${extra_delight_version}"
+    // Hearth and Harvest's keg and cask are stations too: compiled against it only.
+    compileOnly "maven.modrinth:hearth-and-harvest:${hearth_and_harvest_version}"
     // Sable Trees' chopping block (the stump of a felled tree) is a board station too: compiled against it only.
     compileOnly "curse.maven:sable-trees-1744089:${sable_trees_version}"
 }
@@ -148,6 +150,7 @@ if (providers.gradleProperty('addons').isPresent()) {
                 'sable:fg9dTRz9',                 // Sable 2.0.6+mc1.21.1, needed by Sable Trees
                 'cooking-for-blockheads:ZjiYlt4A', // Cooking for Blockheads 21.1.25+neoforge-1.21.1: its oven
                 'balm:gMedgtzL',                  // Balm 21.0.67+neoforge-1.21.1, needed by Cooking for Blockheads
+                "hearth-and-harvest:${hearth_and_harvest_version}", // Hearth and Harvest 1.4.3: its keg and cask
         ].each { localRuntime "maven.modrinth:${it}" }
         // Sable Trees 0.5.1 (CurseForge only): its chopping block.
         localRuntime "curse.maven:sable-trees-1744089:${sable_trees_version}"

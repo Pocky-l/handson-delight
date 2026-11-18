@@ -82,7 +82,7 @@ final class KegFerment {
     /** The lid comes off a working brew: a puff of gas and foam out of the opening. */
     void opened(StationView view, ToScene keg, KegBehavior.Shape shape, boolean dry, int foam) {
         RandomSource random = view.level().random;
-        Vector3f middle = keg.at(8.0F, shape.seam() + 0.5F, (shape.rimZ0() + shape.rimZ1()) / 2.0F);
+        Vector3f middle = keg.at((shape.rimX0() + shape.rimX1()) / 2.0F, shape.seam() + 0.5F, (shape.rimZ0() + shape.rimZ1()) / 2.0F);
         view.spawnParticles(DiegesisParticles.STEAM, middle, new Vector3f(0.0F, 3.0F, 0.0F), 2.0F, 4, dry ? CURING : GAS);
         if (!dry) {
             for (int i = 0; i < 6; i++) {

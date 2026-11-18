@@ -23,6 +23,10 @@ public final class AddonMixins implements IMixinConfigPlugin {
     private static final String PACKAGE = "com.pockyl.handson_delight.neoforge.mixin.";
     private static final String YOUKAI = "youkaisfeasts";
     private static final String EXTRA_DELIGHT = "extradelight";
+    private static final String HEARTH = "hearthandharvest";
+    /** Hearth and Harvest's keg, with its two tanks, and its cask sealed by hand, and aging only so: both from 1.4.0 on. */
+    private static final String HEARTH_KEG = "alabaster.hearthandharvest.common.block.entity.KegBlockEntity";
+    private static final String HEARTH_CASK = "alabaster.hearthandharvest.common.item.CaskBlockItem";
     /** Youkai's Feasts' drinks as fluids, which its kettle and fermentation tank stations pour and tap: from 1.0.4 on. */
     private static final String YOUKAI_DRINKS = "dev.xkmc.youkaishomecoming.content.item.fluid.IYHFluidItem";
     private static final String SABLE_TREES = "sabletrees";
@@ -54,7 +58,11 @@ public final class AddonMixins implements IMixinConfigPlugin {
             Map.entry("ChoppingBlockAccess", new Needs(SABLE_TREES, SABLE_TREES_CUT)),
             Map.entry("StumpCutMixin", new Needs(SABLE_TREES, SABLE_TREES_CUT)),
             Map.entry("StumpSplitMixin", new Needs(SABLE_TREES, SABLE_TREES_CUT)),
-            Map.entry("StumpContentMixin", new Needs(SABLE_TREES, SABLE_TREES_CUT)));
+            Map.entry("StumpContentMixin", new Needs(SABLE_TREES, SABLE_TREES_CUT)),
+            Map.entry("HearthKegMixin", new Needs(HEARTH, HEARTH_KEG)),
+            Map.entry("HearthKegAccess", new Needs(HEARTH, HEARTH_KEG)),
+            Map.entry("HearthCaskMixin", new Needs(HEARTH, HEARTH_CASK)),
+            Map.entry("HearthCaskAccess", new Needs(HEARTH, HEARTH_CASK)));
 
     @Override
     public void onLoad(String mixinPackage) {

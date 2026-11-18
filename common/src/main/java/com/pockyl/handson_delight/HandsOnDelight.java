@@ -60,6 +60,9 @@ public final class HandsOnDelight {
         if (HandsOnConfig.meltingPot()) {
             MeltingPotStation.register();
         }
+        if (HandsOnConfig.cask()) {
+            KegStation.registerCask();
+        }
         if (HandsOnConfig.grill()) {
             GrillStation.register();
         }

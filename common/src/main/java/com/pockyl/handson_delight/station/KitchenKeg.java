@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.station;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
@@ -15,7 +16,8 @@ import java.util.function.IntSupplier;
  * Brewin' and Chewin's keg, as the station sees it: mixed into its block entity by each loader that has that mod. Slots are
  * counted as the keg's own inventory has them: four ingredients, the container, the output. Youkai's Feasts' fermentation tank is
  * the same station in its own way (eight things, one a slot, its lid a state of its block, no warmth, what ferments into things
- * stays where it lay): the defaults here are the keg's.
+ * stays where it lay): the defaults here are the keg's. Hearth and Harvest's keg is one too: two slots read in any order, the liquid
+ * it ferments and the drink in two tanks, no warmth.
  */
 public interface KitchenKeg {
     int INGREDIENTS = 4;
@@ -57,6 +59,65 @@ public interface KitchenKeg {
     /** Whether {@code items}, what lies in it, make {@code recipe}: one of each ingredient, as the keg reads its recipes. */
     default boolean handson$makes(Fermenting recipe, List<ItemStack> items) {
         return StationRecipes.matches(recipe.ingredients(), items);
+    }
+
+    /**
+     * Whether what goes in is laid out the way a recipe reads it, one ingredient a slot. Not in a keg that reads its slots in any order
+     * and takes several of one kind from a slot (Hearth and Harvest's: two wheat and a hops for a beer): there it lies as it was put
+     * in, and a pick in the book puts in as many of each as a set takes.
+     */
+    default boolean handson$laysOut() {
+        return true;
+    }
+
+    /**
+     * The liquid the tap draws: the keg's own, or, in a keg that keeps what fermented in a tank of its own beside the liquid it is made
+     * from (Hearth and Harvest's: a juice in one, its wine in the other), that one. {@link #handson$fluid} is then the liquid it is made
+     * from while some is left, else the drink.
+     */
+    default Fluid handson$drawn() {
+        return handson$fluid();
+    }
+
+    /** Whether it keeps what fermented in a tank of its own beside the liquid it is made from (see {@link #handson$drawn}). */
+    default boolean handson$keepsDrinkApart() {
+        return false;
+    }
+
+    default int handson$drawnAmount() {
+        return handson$amount();
+    }
+
+    /** How much liquid the keg holds in all, as it shows: both tanks of a keg with two. */
+    default int handson$shownAmount() {
+        return handson$amount();
+    }
+
+    /** How much of {@code fluid} one drink drawn at the tap takes: a glass, or Hearth and Harvest's wine bottle of four. */
+    default int handson$serving(Fluid fluid) {
+        return 250;
+    }
+
+    /**
+     * {@link #handson$use} at the opening ({@code tap} false) or at the tap. A keg with a tank for the drink of its own fills a container
+     * at the tap from that one, and at the opening takes in what pours or gives back the liquid not yet fermented
+     * ({@link #handson$canDrawBack}).
+     */
+    default List<ItemStack> handson$useAt(ItemStack held, int most, boolean creative, boolean tap) {
+        return handson$use(held, most, creative);
+    }
+
+    /**
+     * Whether a container that pours or fills in the hand is used on the keg in the world, without the station opening (Brewin' and
+     * Chewin's quick use); false for a keg whose every use opens it (Hearth and Harvest's): the station opens with it.
+     */
+    default boolean handson$quickUse() {
+        return true;
+    }
+
+    /** Whether {@code stack}, an empty container at the opening, takes back the liquid not yet fermented. */
+    default boolean handson$canDrawBack(ItemStack stack) {
+        return false;
     }
 
     ItemStack handson$getItem(int slot);
@@ -117,6 +178,11 @@ public interface KitchenKeg {
     void handson$awardRecipes(Player player);
 
     BlockEntity handson$blockEntity();
+
+    /** Where the keg that holds everything stands: its own place, or a big keg's controller for any block of it. */
+    default BlockPos handson$home() {
+        return handson$blockEntity().getBlockPos();
+    }
 
     /** The keg of a block entity, or null for anything else. */
     static KitchenKeg of(BlockEntity entity) {

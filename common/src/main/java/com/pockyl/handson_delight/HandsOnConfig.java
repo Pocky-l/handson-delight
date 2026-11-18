@@ -25,7 +25,8 @@ public final class HandsOnConfig {
     private static final String HEADER = String.join("\n",
             "Hands-On Delight. Restart the game or the server after a change.",
             "cooking_pot, cutting_board, skillet, stove: the station of that block. Off, the block works as in Farmer's Delight.",
-            "keg: Brewin' and Chewin's keg as a station, when that mod is there. Off, the keg keeps its own menu.",
+            "keg: the kegs of Brewin' and Chewin' and Hearth and Harvest as stations, when those mods are there. Off, each keg",
+            "  keeps its own menu.",
             "oven, vat: Cultural Delights' oven and vat as stations, when that mod is there, and Cooking for Blockheads' oven,",
             "  which keeps its own baking time (its config's ovenCookTimeMultiplier). Off, they keep their own menus.",
             "melting_pot: Extra Delight's melting pot as a station, when that mod is there. Off, it keeps its own menu. It",
@@ -46,6 +47,8 @@ public final class HandsOnConfig {
             "mixing_bowl: Extra Delight's mixing bowl as a station, when that mod is there. Off, it keeps its own menu.",
             "ed_vat: Extra Delight's vat as a station, when that mod is there. Off, it keeps its own menu. It keeps its own",
             "  aging times. On, it also ages with no containers in it and keeps what it made to be drawn into them.",
+            "cask: Hearth and Harvest's cask as a station, when that mod is there. Off, it keeps its own menu. It keeps its own",
+            "  aging times (faster in the dark).",
             "youkai_hints: Youkai's Feasts' squares on the right of the screen while one of its blocks is looked at (what it",
             "  takes next, what lies in it and its progress). Off by default.",
             "remove_crafting_recipes: Farmer's Delight's food crafts (sandwiches, salads, rolls, pies, feasts) are made on the",
@@ -83,6 +86,7 @@ public final class HandsOnConfig {
     private static boolean youkaiHints = false;
     private static boolean mixingBowl = true;
     private static boolean edVat = true;
+    private static boolean cask = true;
     private static boolean removeCraftingRecipes = true;
     private static boolean stirringRequired = true;
     private static boolean recipeBook = true;
@@ -126,6 +130,7 @@ public final class HandsOnConfig {
         youkaiHints = read(values, "youkai_hints", youkaiHints);
         mixingBowl = read(values, "mixing_bowl", mixingBowl);
         edVat = read(values, "ed_vat", edVat);
+        cask = read(values, "cask", cask);
         removeCraftingRecipes = read(values, "remove_crafting_recipes", removeCraftingRecipes);
         stirringRequired = read(values, "stirring_required", stirringRequired);
         recipeBook = read(values, "recipe_book", recipeBook);
@@ -250,6 +255,10 @@ public final class HandsOnConfig {
 
     public static boolean youkaiTank() {
         return youkaiTank;
+    }
+
+    public static boolean cask() {
+        return cask;
     }
 
     /** Whether Youkai's Feasts draws its squares of what its blocks take next; this mod hides them unless turned on. */

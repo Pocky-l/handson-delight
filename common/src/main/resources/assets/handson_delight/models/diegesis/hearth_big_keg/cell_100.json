@@ -1,0 +1,248 @@
+{
+  "__lint_allow": [
+    "D005"
+  ],
+  "textures": {
+    "particle": "hearthandharvest:block/big_keg_back",
+    "front": "hearthandharvest:block/big_keg_front",
+    "side": "hearthandharvest:block/big_keg_side",
+    "3": "hearthandharvest:block/keg_bits",
+    "inside": "minecraft:block/spruce_planks"
+  },
+  "elements": [
+    {
+      "name": "head_100",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.0,
+            8.0,
+            8.0,
+            16.0
+          ],
+          "texture": "#front"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#inside"
+        },
+        "east": {
+          "uv": [
+            15.5,
+            8.0,
+            16.0,
+            16.0
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            0.0,
+            0.0,
+            0.5,
+            8.0
+          ],
+          "rotation": 90,
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "stave_100",
+      "from": [
+        15,
+        0,
+        1
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            8.0,
+            8.0,
+            15.5,
+            16.0
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            15,
+            16
+          ],
+          "texture": "#inside"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.0,
+            8.0,
+            0.5
+          ],
+          "rotation": 90,
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "floor_100",
+      "from": [
+        0,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        1,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            15,
+            15
+          ],
+          "texture": "#inside",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            8.0,
+            8.0
+          ],
+          "rotation": 90,
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "tap_east_0",
+      "from": [
+        0,
+        6,
+        -3.5
+      ],
+      "to": [
+        1.5,
+        7,
+        -0.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            1,
+            6.5,
+            2
+          ],
+          "texture": "#3"
+        },
+        "east": {
+          "uv": [
+            5,
+            1,
+            8,
+            2
+          ],
+          "texture": "#3"
+        },
+        "up": {
+          "uv": [
+            6.5,
+            3,
+            8,
+            6
+          ],
+          "texture": "#3"
+        },
+        "down": {
+          "uv": [
+            6.5,
+            7,
+            8,
+            10
+          ],
+          "texture": "#3"
+        }
+      }
+    },
+    {
+      "name": "tap_east_1",
+      "from": [
+        0,
+        7,
+        -3
+      ],
+      "to": [
+        1,
+        9,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            2,
+            3,
+            4
+          ],
+          "texture": "#3"
+        },
+        "east": {
+          "uv": [
+            4,
+            5,
+            1,
+            7
+          ],
+          "texture": "#3"
+        },
+        "up": {
+          "uv": [
+            1,
+            2,
+            4,
+            3
+          ],
+          "rotation": 90,
+          "texture": "#3"
+        },
+        "down": {
+          "uv": [
+            1,
+            8,
+            4,
+            9
+          ],
+          "rotation": 90,
+          "texture": "#3"
+        }
+      }
+    }
+  ]
+}

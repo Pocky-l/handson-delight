@@ -48,31 +48,76 @@ public final class KegBehavior implements StationBehavior {
      * inside under the lid; the lower lip of the tap's hole, where a drink leaves it, in the scene before the keg is turned to its
      * facing (null without a tap: drinks are dipped out at the opening); the middle of the liquid in its own node; the opening the lid
      * sits in, in the model's pixels; the seam where the lid sits on the walls; whether things lie on slats across the top while it
-     * holds no liquid (else on its floor); how far from the middle what floats goes round.
+     * holds no liquid (else on its floor); how far from the middle what floats goes round, and how far behind the middle it goes
+     * round (where the camera sees through a hatch); the lid's way off (up, over, and where it leans on the side, from where it
+     * sits); where what is done waits, from the middle of the floor (null: in the middle, on the liquid or the floor);
+     * whether what lies in it stands up facing the cook (bottles in a deep cask, seen over its rim) rather than lying; half its width,
+     * from its middle, where what lies in it is placed (8: one block; a big keg of eight blocks, 16, its middle where four meet).
      */
     public record Shape(float floor, float full, Vector3f tap, float middleX, float middleZ, float rimX0, float rimX1, float rimZ0,
-            float rimZ1, float seam, boolean rack, float floatRadius) {
+            float rimZ1, float seam, boolean rack, float floatRadius, float floatBehind, LidPath lid, Vector3f servedAt, boolean standing,
+            float half) {
         /**
          * The lying keg: walls 1 px thick, the whole top between them a hatch; the tap's hole low in the middle of its front, x 7..9,
          * y 4..6 (Brewin' and Chewin's texture, rows 11..13 on a face from y 2).
          */
         public static final Shape LYING = new Shape(3.0F, 12.0F, new Vector3f(8.0F, 4.2F, 0.0F), 0.0F, 0.0F, 2.0F, 14.0F, 1.0F, 15.0F, 16.05F,
-                true, 3.2F);
+                true, 3.2F, 0.0F, LidPath.KEG, null, false, 8.0F);
         /** The standing keg: staves 1 px thick, the whole head a lid; the tap's hole near the bottom of its front, x 7..9, y 1..3. */
         public static final Shape STANDING = new Shape(1.0F, 11.5F, new Vector3f(8.0F, 1.2F, 1.0F), 8.0F, 8.0F, 2.0F, 14.0F, 2.0F, 14.0F,
-                16.05F, true, 3.2F);
+                16.05F, true, 3.2F, 0.0F, LidPath.KEG, null, false, 8.0F);
         /**
          * Youkai's Feasts' fermentation tank: walls 2 px thick to y 14 and a floor 2 px high round an inside x, z 3..13; full, the
          * liquid stands three quarters up the inside, as in the keg, never to the brim; its lid lies on the walls. No tap.
          */
-        public static final Shape TANK = new Shape(2.0F, 11.0F, null, 8.0F, 8.0F, 3.0F, 13.0F, 3.0F, 13.0F, 14.05F, false, 3.4F);
+        public static final Shape TANK = new Shape(2.0F, 11.0F, null, 8.0F, 8.0F, 3.0F, 13.0F, 3.0F, 13.0F, 14.05F, false, 3.4F,
+                0.0F, LidPath.KEG, null, false, 8.0F);
+        /**
+         * Hearth and Harvest's keg: a lying barrel x 1..15, y 1..15 on two cradles, walls 1 px thick, the top between them a hatch
+         * (x 2..14, z 1..15), floor y 2; full, three quarters up the inside. Its tap sticks out of the front head and turns down: a drink
+         * leaves the spout's mouth at y 3, 2 px out of the head. Dry, things lie on its floor.
+         */
+        public static final Shape HEARTH = new Shape(2.0F, 11.0F, new Vector3f(8.0F, 3.0F, -1.7F), 0.0F, 0.0F, 2.0F, 14.0F, 1.0F, 15.0F,
+                15.05F, false, 3.2F, 0.0F,
+                new LidPath(LidPath.LIFT, LidPath.SWING, new Vector3f(-9.75F, -8.75F, 0.0F)), null, false, 8.0F);
+        /**
+         * Hearth and Harvest's cask: a small standing barrel x, z 3..13, walls 1 px thick to y 12 round an inside x, z 4..12, floor
+         * y 1, its lid with the handle on the walls. Nothing liquid goes in: what ages stands on its floor, close together, to be seen
+         * over the rim. What has aged waits outside, on the floor before it: the cask gives it out sealed.
+         */
+        public static final Shape CASK = new Shape(1.0F, 10.0F, null, 8.0F, 8.0F, 4.0F, 12.0F, 4.0F, 12.0F, 13.05F, false, 1.6F, 0.0F,
+                new LidPath(new Vector3f(0.0F, 5.0F, 0.0F), new Vector3f(-12.0F, 7.0F, 0.0F), new Vector3f(-7.0F, -7.6F, 0.0F)),
+                new Vector3f(5.0F, 0.25F, -7.0F), true, 8.0F);
+        /**
+         * Eight of Hearth and Harvest's kegs built into a big keg, a cube of 32: walls 1 px thick, floor y 1, a hatch in the middle of
+         * its top (x and z 8..24) with a lid; full (8000 mB), three quarters up the inside. Its tap sticks out of the front head where
+         * the two lower front blocks meet and turns down: a drink leaves its mouth at y 6, 2 px out of the head. Its middle is where
+         * four blocks meet: the scene's 16, 16.
+         */
+        public static final Shape BIG = new Shape(1.0F, 23.5F, new Vector3f(16.0F, 6.0F, -1.7F), 0.0F, 0.0F, 8.0F, 24.0F, 8.0F, 24.0F,
+                32.05F, false, 3.0F, 4.0F,
+                new LidPath(new Vector3f(0.0F, 6.0F, 0.0F), new Vector3f(-24.0F, 10.0F, 0.0F), new Vector3f(-19.5F, -23.6F, 0.0F)), null,
+                false, 16.0F);
+    }
+
+    /**
+     * How the lid comes off, pixels from where it sits: lifted straight up, carried over the side, and set leaning on it, on a curve
+     * through the first two to the last, turning on its edge as it goes (its outer end down). Big or narrow ones are carried higher
+     * and further out, so that the lid never cuts the rim or the inside.
+     */
+    public record LidPath(Vector3f lift, Vector3f swing, Vector3f lean) {
+        static final Vector3f LIFT = new Vector3f(0.0F, 3.0F, 0.0F);
+        static final Vector3f SWING = new Vector3f(-8.5F, 3.5F, 0.0F);
+        /** A keg's lid of 12 to 14 px, leaning on the side of a keg of one block. */
+        public static final LidPath KEG = new LidPath(LIFT, SWING, new Vector3f(-9.75F, -9.75F, 0.0F));
     }
 
     /** The places of what lies in it: the keg's four, the tank's eight. */
     private static final String[] ITEM_NODES = {"item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_6", "item_7"};
     /** The badge over the keg: its plate, the bar and the thermometer. */
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "thermo", "thermo_now", "preview"};
-    private static final String[] SHOWN_IN_USE = {"keg", "lid", "drink", "tap", "mouth", "served"};
+    private static final String[] SHOWN_IN_USE = {"keg", "body", "lid", "drink", "tap", "mouth", "served", "cell_000", "cell_001", "cell_010",
+            "cell_011", "cell_100", "cell_101", "cell_110", "cell_111"};
     private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /**
      * The lid is taken off and set down on the floor on the cook's right, leaning on the keg's side, and put back when the last
@@ -80,9 +125,6 @@ public final class KegBehavior implements StationBehavior {
      * it stands, pixels from its place on the keg (the keg's own frame), and how far it leans, degrees.
      */
     private static final float LID_MOVE = 0.42F;
-    private static final Vector3f LID_LIFTED = new Vector3f(0.0F, 3.0F, 0.0F);
-    private static final Vector3f LID_SWUNG = new Vector3f(-8.5F, 3.5F, 0.0F);
-    private static final Vector3f LID_LEANING = new Vector3f(-9.75F, -9.75F, 0.0F);
     private static final float LID_TURN = 68.0F;
     /** How hard a brew nobody watches seems to work, and how often this client looks whether it does, seconds. */
     private static final float IDLE_VIGOUR = 0.6F;
@@ -217,7 +259,8 @@ public final class KegBehavior implements StationBehavior {
 
     public KegBehavior(StationView view, Shape shape) {
         this.shape = shape;
-        book = new RecipeBook(new KegBook(shape == Shape.TANK ? "youkai_tank" : ""));
+        book = new RecipeBook(new KegBook(shape == Shape.TANK ? "youkai_tank" : shape == Shape.HEARTH || shape == Shape.BIG ? "hearth_keg"
+                : shape == Shape.CASK ? "hearth_cask" : ""));
         Arrays.fill(shown, ItemStack.EMPTY);
         Arrays.fill(arriveAge, Float.NaN);
     }
@@ -232,6 +275,18 @@ public final class KegBehavior implements StationBehavior {
 
     public static KegBehavior tank(StationView view) {
         return new KegBehavior(view, Shape.TANK);
+    }
+
+    public static KegBehavior hearth(StationView view) {
+        return new KegBehavior(view, Shape.HEARTH);
+    }
+
+    public static KegBehavior cask(StationView view) {
+        return new KegBehavior(view, Shape.CASK);
+    }
+
+    public static KegBehavior big(StationView view) {
+        return new KegBehavior(view, Shape.BIG);
     }
 
     private boolean hasTap() {
@@ -375,7 +430,7 @@ public final class KegBehavior implements StationBehavior {
         }
         boolean atOpening = "mouth".equals(node) || "drink".equals(node);
         boolean tap = (hasTap() ? "tap".equals(node) : atOpening) && keg.handson$canTap(stack);
-        boolean pour = !tap && atOpening && keg.handson$canPour(stack);
+        boolean pour = !tap && atOpening && (keg.handson$canPour(stack) || isLidOff(view) && keg.handson$canDrawBack(stack));
         if (!tap && !pour) {
             return "mouth".equals(node) && FullZone.offer(view, KegStation.INGREDIENTS, stack, button);
         }
@@ -471,15 +526,24 @@ public final class KegBehavior implements StationBehavior {
         offeredItem = null;
     }
 
+    /**
+     * What a glass bottle drawn at the tap of a keg that keeps its drink apart (Hearth and Harvest's) becomes: a bottle of the drink;
+     * anything else stays as it is.
+     */
+    private static ItemStack filledOf(KitchenKeg keg, ItemStack vessel, Fluid fluid) {
+        return keg.handson$keepsDrinkApart() && vessel.is(Items.GLASS_BOTTLE) ? keg.handson$drinkOf(fluid) : ItemStack.EMPTY;
+    }
+
     /** The cook draws a drink into {@code vessel}: its mug comes to the tap at the click, before the keg answers. */
     private void draw(StationView view, ItemStack vessel, boolean fromHand, boolean all) {
         KitchenKeg keg = keg(view);
-        if (keg == null || keg.handson$fluid() == Fluids.EMPTY) {
+        if (keg == null || keg.handson$drawn() == Fluids.EMPTY) {
             return;
         }
-        Fluid fluid = keg.handson$fluid();
+        Fluid fluid = keg.handson$drawn();
         int color = colourOf(view, keg, fluid);
-        draughts.draw(view, vessel, BuiltInRegistries.FLUID.getKey(fluid), color, KegLiquids.of(fluid).orElse(null), fromHand, all);
+        draughts.draw(view, vessel, filledOf(keg, vessel, fluid), BuiltInRegistries.FLUID.getKey(fluid), color, KegLiquids.of(fluid).orElse(null),
+                fromHand, all);
     }
 
     @Override
@@ -488,6 +552,10 @@ public final class KegBehavior implements StationBehavior {
         int color = 0xFF000000 | colourOf(view, keg(view), fluid) & 0xFFFFFF;
         if (KegStation.EFFECT_POURED.equals(effect)) {
             poured(view, data, color);
+        } else if (KegStation.EFFECT_TAPPED.equals(effect) && fluid != Fluids.EMPTY && hasTap() && KegStation.MOUTH.equals(node)) {
+            // What had not fermented, taken back at the opening.
+            view.node("drink").ifPresent(drink -> drink.ripple(shape.middleX(), shape.middleZ(), 0.5F));
+            view.playSound(SoundEvents.BUCKET_FILL, "drink", 0.6F, 1.0F);
         } else if (KegStation.EFFECT_TAPPED.equals(effect) && fluid != Fluids.EMPTY && !hasTap()) {
             // Dipped out of a tank: those at it saw the dip; a cook nearby hears it.
             if (!view.isFocused()) {
@@ -495,7 +563,9 @@ public final class KegBehavior implements StationBehavior {
             }
         } else if (KegStation.EFFECT_TAPPED.equals(effect) && fluid != Fluids.EMPTY) {
             Item vessel = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(data.getString(KegStation.VESSEL)));
-            draughts.tapped(view, new ItemStack(vessel), BuiltInRegistries.FLUID.getKey(fluid), colourOf(view, keg(view), fluid),
+            KitchenKeg keg = keg(view);
+            draughts.tapped(view, new ItemStack(vessel), keg == null ? ItemStack.EMPTY : filledOf(keg, new ItemStack(vessel), fluid),
+                    BuiltInRegistries.FLUID.getKey(fluid), colourOf(view, keg, fluid),
                     KegLiquids.of(fluid).orElse(null), data.getInt(KegStation.COUNT));
         }
     }
@@ -517,8 +587,9 @@ public final class KegBehavior implements StationBehavior {
             pour.stop();
         }
         float surface = surfaceY();
-        Vector3f onto = new Vector3f(8.5F, surface, 8.5F);
-        Vector3f from = view.cursorOn(shape.full() + POUR_FROM_ABOVE).orElse(new Vector3f(8.0F, shape.full() + POUR_FROM_ABOVE, 4.0F));
+        float half = shape.half();
+        Vector3f onto = new Vector3f(half + 0.5F, surface, half + 0.5F);
+        Vector3f from = view.cursorOn(shape.full() + POUR_FROM_ABOVE).orElse(new Vector3f(half, shape.full() + POUR_FROM_ABOVE, half - 4.0F));
         // Tipped over the rim of the opening, not down in the keg: the stream falls to the liquid.
         pour = new KitchenMotions.Pour(hand, "keg_pour", new ItemStack(vessel), from, onto, this::surfaceY, "drink", POUR_SIZE, -1.0F, 0.0F)
                 .lipAtLeast(RIM + POUR_OVER_RIM);
@@ -535,9 +606,9 @@ public final class KegBehavior implements StationBehavior {
     /** Where a drink leaves the tap's hole in the scene, turned with the keg, just out of the stave; the middle of a tank's drink. */
     private Vector3f tapPoint(StationView view) {
         if (!hasTap()) {
-            return new Vector3f(8.0F, surfaceY(), 8.0F);
+            return new Vector3f(shape.half(), surfaceY(), shape.half());
         }
-        Vector3f hole = new Vector3f(shape.tap()).sub(8.0F, 0.0F, 8.0F).add(0.0F, 0.0F, -0.3F);
+        Vector3f hole = new Vector3f(shape.tap()).sub(shape.half(), 0.0F, shape.half()).add(0.0F, 0.0F, -0.3F);
         return view.node("keg").map(keg -> keg.sceneMatrix().transformPosition(hole)).orElse(new Vector3f(shape.tap()));
     }
 
@@ -568,12 +639,12 @@ public final class KegBehavior implements StationBehavior {
 
     /** A point of the keg in its model's pixels, in the scene: turned with the keg. */
     private Vector3f kegPoint(float x, float y, float z) {
-        Vector3f local = new Vector3f(x - 8.0F, y, z - 8.0F);
+        Vector3f local = new Vector3f(x - shape.half(), y, z - shape.half());
         return inScene(local);
     }
 
     private Vector3f inScene(Vector3f local) {
-        return kegNode == null ? local.add(8.0F, 0.0F, 8.0F) : kegNode.sceneMatrix().transformPosition(local);
+        return kegNode == null ? local.add(shape.half(), 0.0F, shape.half()) : kegNode.sceneMatrix().transformPosition(local);
     }
 
     /** The colour of foam on what the keg holds or brews. */
@@ -612,7 +683,7 @@ public final class KegBehavior implements StationBehavior {
             for (int k = 0; k < arrivals.size(); k++) {
                 int index = arrivals.get(k);
                 arriveAge[index] = -k * ARRIVE_STAGGER;
-                arriveFrom[index] = FromPlayer.point(view, height, k, arrivals.size()).orElse(new Vector3f(8.0F, height, 8.0F));
+                arriveFrom[index] = FromPlayer.point(view, height, k, arrivals.size()).orElse(new Vector3f(shape.half(), height, shape.half()));
             }
         } else {
             arrivals.forEach(index -> splashIn(view, index));
@@ -642,7 +713,7 @@ public final class KegBehavior implements StationBehavior {
         if (keg == null) {
             return;
         }
-        Fluid fluid = keg.handson$fluid();
+        Fluid fluid = KegLogic.shownFluid(keg);
         drink = KegLiquids.of(fluid).orElse(null);
         int base = colourOf(view, keg, fluid);
         float progress = view.state().getControl(KegStation.PROGRESS);
@@ -658,11 +729,12 @@ public final class KegBehavior implements StationBehavior {
             dish = served;
             servings = served.getCount();
             ready = true;
-        } else if (dish.isEmpty() && fluid != Fluids.EMPTY && keg.handson$amount() > 0) {
-            // Whatever the keg holds, as it is drawn or poured, and how many servings of it.
-            dish = keg.handson$drinkOf(fluid);
-            servings = keg.handson$amount() / SERVING;
-            ready = keg.handson$recipes().stream().anyMatch(recipe -> recipe.resultFluid() != Fluids.EMPTY && recipe.resultFluid().isSame(fluid));
+        } else if (dish.isEmpty() && keg.handson$drawn() != Fluids.EMPTY && keg.handson$drawnAmount() > 0) {
+            // Whatever the keg holds at its tap, as it is drawn or poured, and how many servings of it.
+            Fluid drawn = keg.handson$drawn();
+            dish = keg.handson$drinkOf(drawn);
+            servings = keg.handson$drawnAmount() / Math.max(1, keg.handson$serving(drawn));
+            ready = keg.handson$recipes().stream().anyMatch(recipe -> recipe.resultFluid() != Fluids.EMPTY && recipe.resultFluid().isSame(drawn));
         }
         if (progress > 0.0F) {
             sawFermenting = true;
@@ -776,7 +848,15 @@ public final class KegBehavior implements StationBehavior {
         view.node("rack").ifPresent(node -> node.setVisible(open && onRack));
         float surface = onRack ? RACK_TOP : dry ? shape.floor() : surfaceY();
         floaters(view, dt, open, open && level > 0.02F, surface);
-        view.node("served").ifPresent(node -> node.moveTo(0.0F, surface + 0.25F, 0.0F, 0.0F));
+        Vector3f servedAt = shape.servedAt();
+        view.node("served").ifPresent(node -> {
+            if (servedAt == null) {
+                node.moveTo(0.0F, surface + 0.25F, 0.0F, 0.0F);
+            } else {
+                // Outside, before it.
+                node.moveTo(servedAt.x, servedAt.y, servedAt.z, 0.0F);
+            }
+        });
         book.frame(view, dt);
         float progress = view.state().getControl(KegStation.PROGRESS);
         boolean fermenting = progress > 0.0F;
@@ -829,8 +909,8 @@ public final class KegBehavior implements StationBehavior {
         float knock = lid <= 0.0F ? ferment.bump() : 0.0F;
         // Up off the rim, over and down: a curve through two points, so that it never cuts through the keg's edge.
         float u = 1.0F - k;
-        Vector3f at = new Vector3f(LID_LIFTED).mul(3.0F * u * u * k).add(new Vector3f(LID_SWUNG).mul(3.0F * u * k * k))
-                .add(new Vector3f(LID_LEANING).mul(k * k * k));
+        Vector3f at = new Vector3f(shape.lid().lift()).mul(3.0F * u * u * k).add(new Vector3f(shape.lid().swing()).mul(3.0F * u * k * k))
+                .add(new Vector3f(shape.lid().lean()).mul(k * k * k));
         // It is turned on its edge once it is clear of the rim.
         float turn = LID_TURN * KitchenMotions.smooth((lid - 0.15F) / 0.7F);
         view.node("lid").ifPresent(node -> {
@@ -895,12 +975,12 @@ public final class KegBehavior implements StationBehavior {
             }
             float bob = afloat ? Mth.sin(time * 0.9F + index * 1.3F) * 0.07F : 0.0F;
             float y = (afloat || surface >= RACK_TOP ? surface : shape.floor()) + 0.25F + bob;
-            Vector3f at = new Vector3f(Mth.cos(place) * shape.floatRadius(), y, Mth.sin(place) * shape.floatRadius());
+            Vector3f at = new Vector3f(Mth.cos(place) * shape.floatRadius(), y, Mth.sin(place) * shape.floatRadius() + shape.floatBehind());
             boolean waiting = arrive(view, i, dt, at);
             if (splashAt[i] && !waiting) {
                 splashAt[i] = false;
                 int color = 0xFF000000 | liquidColor;
-                Vector3f where = new Vector3f(at).add(8.0F, 0.0F, 8.0F);
+                Vector3f where = new Vector3f(at).add(shape.half(), 0.0F, shape.half());
                 view.spawnParticles(DiegesisParticles.SPLASH, where, new Vector3f(0.0F, 9.0F, 0.0F), 1.4F, 7, color);
                 view.spawnParticles(DiegesisParticles.DROPLET, where, new Vector3f(0.0F, 14.0F, 0.0F), 2.2F, 4, color);
                 ringsAt(view, where, LANDING_RINGS);
@@ -909,13 +989,17 @@ public final class KegBehavior implements StationBehavior {
                 ringIn[i] -= dt;
                 if (ringIn[i] <= 0.0F) {
                     ringIn[i] = BOB_RING_EVERY + view.level().random.nextFloat() * BOB_RING_SPREAD;
-                    ringsAt(view, new Vector3f(at).add(8.0F, 0.0F, 8.0F), BOB_RINGS);
+                    ringsAt(view, new Vector3f(at).add(shape.half(), 0.0F, shape.half()), BOB_RINGS);
                 }
             }
             view.node(ITEM_NODES[i]).ifPresent(node -> {
                 node.setEnabled(there && !waiting);
                 node.moveTo(at.x, at.y, at.z, 0.0F);
-                node.rotateTo(Mth.sin(time * 0.5F + index) * 3.0F, -place * Mth.RAD_TO_DEG, 0.0F, 0.0F);
+                if (shape.standing()) {
+                    node.rotateTo(0.0F, 0.0F, 0.0F, 0.0F);
+                } else {
+                    node.rotateTo(Mth.sin(time * 0.5F + index) * 3.0F, -place * Mth.RAD_TO_DEG, 0.0F, 0.0F);
+                }
             });
         }
     }
@@ -946,7 +1030,7 @@ public final class KegBehavior implements StationBehavior {
             splashIn(view, index);
             return false;
         }
-        Vector3f from = new Vector3f(arriveFrom[index]).sub(8.0F, 0.0F, 8.0F);
+        Vector3f from = new Vector3f(arriveFrom[index]).sub(shape.half(), 0.0F, shape.half());
         float eased = KitchenMotions.smooth(k);
         at.set(Mth.lerp(eased, from.x, at.x), Mth.lerp(k, from.y, at.y) + ARRIVE_ARC * Mth.sin(k * Mth.PI), Mth.lerp(eased, from.z, at.z));
         return false;

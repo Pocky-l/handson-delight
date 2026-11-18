@@ -1,0 +1,127 @@
+{
+  "render_type": "minecraft:cutout",
+  "__lint_allow": [
+    "T009"
+  ],
+  "textures": {
+    "particle": "hearthandharvest:block/cask_top",
+    "side": "hearthandharvest:block/cask_side",
+    "top": "hearthandharvest:block/cask_top",
+    "1": "hearthandharvest:block/cask_handle",
+    "inside": "handson_delight:block/keg/lying"
+  },
+  "elements": [
+    {
+      "name": "lid",
+      "from": [
+        3,
+        12,
+        3
+      ],
+      "to": [
+        13,
+        13,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            3,
+            13,
+            4
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            3,
+            3,
+            13,
+            4
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            3,
+            3,
+            13,
+            4
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            3,
+            3,
+            13,
+            4
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#top",
+          "rotation": 270
+        },
+        "down": {
+          "uv": [
+            4,
+            4,
+            6.5,
+            6.5
+          ],
+          "texture": "#inside"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        13,
+        8
+      ],
+      "to": [
+        11,
+        15,
+        8
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          10.25,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            14,
+            11,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            5,
+            14,
+            11,
+            16
+          ],
+          "texture": "#1"
+        }
+      },
+      "name": "handle"
+    }
+  ]
+}

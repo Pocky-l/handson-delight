@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "sealed=false,facing=east": {
+      "model": "hearthandharvest:block/cask",
+      "y": 270
+    },
+    "sealed=false,facing=north": {
+      "model": "hearthandharvest:block/cask",
+      "y": 180
+    },
+    "sealed=false,facing=south": {
+      "model": "hearthandharvest:block/cask"
+    },
+    "sealed=false,facing=west": {
+      "model": "hearthandharvest:block/cask",
+      "y": 90
+    },
+    "sealed=true,facing=east": {
+      "model": "hearthandharvest:block/cask",
+      "y": 270
+    },
+    "sealed=true,facing=north": {
+      "model": "hearthandharvest:block/cask",
+      "y": 180
+    },
+    "sealed=true,facing=south": {
+      "model": "hearthandharvest:block/cask"
+    },
+    "sealed=true,facing=west": {
+      "model": "hearthandharvest:block/cask",
+      "y": 90
+    }
+  }
+}

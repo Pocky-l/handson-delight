@@ -1,0 +1,348 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Hearth and Harvest's cask, a small standing barrel x, z 3..13. The station hides the block while it is used and shows it here: walls 1 px thick to y 12 round an opening x, z 4..12, floor y 1, its lid with the handle on top (y 12..13), lifted off with a click and leant on its right side, put back with another; the lid is the block's seal. Nothing liquid goes in: what ages lies on its floor in four places. What has aged waits on the floor before it, taken whether the lid is on or off, as the cask gives it out sealed. Nothing shows while nobody uses it.",
+  "work_plane": 16,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      -0.99,
+      54.45,
+      -16.71
+    ],
+    "target": [
+      8,
+      5,
+      8
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C",
+    "carry_size": 4.5
+  },
+  "nodes": [
+    {
+      "id": "keg",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "children": [
+        {
+          "id": "body",
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_cask/body",
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "lid",
+          "pos": [
+            0,
+            12.5,
+            0
+          ],
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_cask/lid",
+            "anchor": [
+              8,
+              12.5,
+              8
+            ],
+            "lit_as_block": true
+          },
+          "collider": {
+            "from": [
+              -5.5,
+              -0.6,
+              -5.5
+            ],
+            "to": [
+              5.5,
+              2.6,
+              5.5
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "drink",
+      "pickable": false,
+      "tank": {
+        "tank": "drink",
+        "inner": {
+          "from": [
+            4,
+            1,
+            4
+          ],
+          "to": [
+            12,
+            10,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "id": "mouth",
+      "drop_zone": "ingredients",
+      "collider": {
+        "from": [
+          4,
+          1,
+          4
+        ],
+        "to": [
+          12,
+          14,
+          12
+        ]
+      }
+    },
+    {
+      "id": "item_0",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[0]",
+        "size": 8.0,
+        "counts": "hover",
+        "highlight": false,
+        "display": "upright"
+      }
+    },
+    {
+      "id": "item_1",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[1]",
+        "size": 8.0,
+        "counts": "hover",
+        "highlight": false,
+        "display": "upright"
+      }
+    },
+    {
+      "id": "item_2",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[2]",
+        "size": 8.0,
+        "counts": "hover",
+        "highlight": false,
+        "display": "upright"
+      }
+    },
+    {
+      "id": "item_3",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[3]",
+        "size": 8.0,
+        "counts": "hover",
+        "highlight": false,
+        "display": "upright"
+      }
+    },
+    {
+      "id": "served",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "slot": {
+        "slot": "served",
+        "size": 4.2,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "offer",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": 0.35,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "$comment": "The bucket or bottle a hand tips over the opening as it pours, moved by the code in scene pixels.",
+      "id": "pour_hand",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -0.41,
+        14.86,
+        12.66
+      ],
+      "rotation": [
+        -28.0,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -0.42,
+        14.88,
+        12.63
+      ],
+      "rotation": [
+        -28.0,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -0.43,
+        14.91,
+        12.62
+      ],
+      "rotation": [
+        -28.0,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "thermo",
+      "pos": [
+        -0.42,
+        14.88,
+        12.63
+      ],
+      "rotation": [
+        -28.0,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "thermo_now",
+      "pos": [
+        -0.43,
+        14.91,
+        12.62
+      ],
+      "rotation": [
+        -28.0,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -0.44,
+        14.95,
+        12.59
+      ],
+      "rotation": [
+        62.0,
+        20.0,
+        0
+      ],
+      "scale": 0.156,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        10.35,
+        30.26,
+        -9.92
+      ],
+      "rotation": [
+        -28.0,
+        20.0,
+        0
+      ],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -5.3,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          5.3,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

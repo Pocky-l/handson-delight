@@ -28,7 +28,11 @@
     "ChoppingBlockEntityMixin",
     "ChoppingBlockAccess",
     "StumpCutMixin",
-    "StumpSplitMixin"
+    "StumpSplitMixin",
+    "HearthKegMixin",
+    "HearthKegAccess",
+    "HearthCaskMixin",
+    "HearthCaskAccess"
   ],
   "client": [
     "CopperPotQuietMixin",

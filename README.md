@@ -124,6 +124,15 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   pie: the axe comes down from high above on each of three dashed lines through its middle, the cuts open, and with the
   third the wedges fall apart and the planks come to you, half as many again as the crafting table gives. Its dirt
   grows with the food cut on it, and after 32 cuts it takes no more food.
+- **Keg** of [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest). Its lid comes off with a click: pour in a
+  juice, water, milk or brine and drop in what ferments. Under the lid it ferments a portion at a time, the liquid turning
+  to the drink's colour, and the wine is drawn into a bottle at its tap. An empty bucket or bottle at the opening takes back
+  what has not fermented, a jar of pickles or a cheese wheel waits to be taken, and the book puts in as many of each as a
+  recipe takes. Eight kegs built into a big keg open as one, from any of its blocks, with a lid in the middle of its top.
+- **Cask** of [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest). Lift its lid by the handle, lay in the
+  bottles to age, salt and meat for jerky or a cheese, and put the lid back on to seal it. Sealed, a wine ages a bottle at
+  a time into its next vintage, faster in a dark cellar; what is done waits before the cask and is taken without breaking
+  the seal. The book shows each recipe's time where the cask stands.
 - **Grill** of [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge). Two skewers lie over its fire.
   One smokes when its lower side is done: click it to turn it over, once. Click a skewer with a powder to shake it over
   or with a sauce to dab it on, and the seasoning stays on it. A skewer left on after it is done darkens, smokes and
@@ -200,7 +209,7 @@ station too, in each of its looks.
 [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block opens as a station of its own,
 for cutting food and splitting logs.
 [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)'s oven opens as a station in each of its
-colours, its tools still standing on top.
+colours, its tools still standing on top, and so do [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest)'s keg and cask.
 
 Hoppers, pipes and drops use the blocks' own inventories. A pot fed by automation cooks by itself, as in Farmer's Delight.
 
@@ -212,7 +221,7 @@ which each player sets in their own file.
 | Key | Default | What it does |
 |---|---|---|
 | `cooking_pot`, `cutting_board`, `skillet`, `stove` | `true` | The station of that block. Off, the block works as in Farmer's Delight. `cooking_pot` covers the addons' pots too (copper, monster, alchemist) |
-| `keg` | `true` | Brewin' and Chewin's keg as a station. Off, the keg keeps its own menu |
+| `keg` | `true` | The kegs of Brewin' and Chewin' and Hearth and Harvest as stations. Off, each keg keeps its own menu. Hearth and Harvest's keeps its own fermenting times |
 | `oven`, `vat` | `true` | The ovens of Cultural Delights and Cooking for Blockheads, and Cultural Delights' vat, as stations. Off, they keep their own menus. Cooking for Blockheads' oven keeps its own baking time |
 | `ed_vat` | `true` | Extra Delight's vat as a station. Off, it keeps its own menu. It keeps its own aging times; on, it also ages with no jars or bowls in it and keeps what it made to be drawn into them |
 | `melting_pot` | `true` | Extra Delight's melting pot as a station. Off, it keeps its own menu. It keeps its own melting times |
@@ -224,6 +233,7 @@ which each player sets in their own file.
 | `youkai_steamer` | `true` | Youkai's Feasts' steamer as a station. Off, it is used as before. It keeps its own steaming times |
 | `youkai_tank` | `true` | Youkai's Feasts' fermentation tank as a station. Off, it is used as before. It keeps its own fermenting times |
 | `mixing_bowl` | `true` | Extra Delight's mixing bowl as a station. Off, it keeps its own menu |
+| `cask` | `true` | Hearth and Harvest's cask as a station. Off, it keeps its own menu. It keeps its own aging times, faster in the dark |
 | `youkai_hints` | `false` | Youkai's Feasts' squares on the right of the screen while one of its blocks is looked at (what it takes next, what lies in it). Hidden unless on |
 | `remove_crafting_recipes` | `true` | Farmer's Delight's food crafts are made on the board only |
 | `stirring_required` | `true` | Food you put into the pot waits for the spoon while you are at it |

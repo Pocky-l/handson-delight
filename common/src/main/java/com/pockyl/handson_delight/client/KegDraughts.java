@@ -37,6 +37,8 @@ final class KegDraughts {
     private static final float SCALE = 0.75F;
     private static final float HEIGHT = 7.0F * SCALE;
     private static final float FULL = 0.86F;
+    /** How far a filled bottle is turned to stand up, degrees: its icon lies on the diagonal. */
+    private static final float FILLED_ROLL = -45.0F;
     /** An item that is not a tankard is drawn this many pixels high; items are 16 px. */
     private static final float ITEM_SIZE = 4.5F;
     /** Where it is held: its middle this far out from the tap's wall, its rim this far under the tap, pixels. */
@@ -94,8 +96,14 @@ final class KegDraughts {
             this.pace = pace;
         }
 
+        /** The item a container is shown as at the tap instead of itself (a glass bottle as a bottle of beer); empty: itself. */
+        private ItemStack filled = ItemStack.EMPTY;
+        /** Shown as {@code filled}, turned upright: its icon lies on the diagonal, as Hearth and Harvest draws its bottles. */
+        private boolean showsFilled;
+
         private Mug next() {
             Mug mug = new Mug(vessel.copyWithCount(held), liquid, color, look, own, fromHand, false, Pace.QUICK);
+            mug.filled = filled;
             mug.answered = true;
             return mug;
         }
@@ -135,9 +143,12 @@ final class KegDraughts {
      * after. It comes from the hand ({@code fromHand}) or from the inventory; the drink goes back to the hand when the hand held only
      * that mug, else into the inventory.
      */
-    void draw(StationView view, ItemStack vessel, ResourceLocation liquid, int color, KegLiquids.Drink look, boolean fromHand, boolean all) {
+    void draw(StationView view, ItemStack vessel, ItemStack filled, ResourceLocation liquid, int color, KegLiquids.Drink look, boolean fromHand,
+            boolean all) {
         Pace pace = all && vessel.getCount() > 1 ? Pace.QUICK : Pace.ONE;
-        waiting.add(new Mug(vessel, liquid, color, look, true, fromHand, fromHand && vessel.getCount() == 1, pace));
+        Mug mug = new Mug(vessel, liquid, color, look, true, fromHand, fromHand && vessel.getCount() == 1, pace);
+        mug.filled = filled.copyWithCount(1);
+        waiting.add(mug);
         if (fromHand && view.isFocused() && !handHidden) {
             // At the click, before the mug sets off: the cursor's stack would cover it.
             view.setCarriedHidden(true);
@@ -149,7 +160,7 @@ final class KegDraughts {
      * The keg filled {@code count} of {@code vessel}: the cook's own mug that waits for it goes on, with more after it when
      * several were filled; a drink somebody else drew comes now.
      */
-    void tapped(StationView view, ItemStack vessel, ResourceLocation liquid, int color, KegLiquids.Drink look, int count) {
+    void tapped(StationView view, ItemStack vessel, ItemStack filled, ResourceLocation liquid, int color, KegLiquids.Drink look, int count) {
         int drinks = Math.max(1, count);
         Mug own = unanswered();
         if (own != null) {
@@ -175,6 +186,7 @@ final class KegDraughts {
         }
         for (int i = 0; i < drinks; i++) {
             Mug mug = new Mug(vessel, liquid, color, look, false, false, false, drinks > 1 ? Pace.QUICK : Pace.ONE);
+            mug.filled = filled.copyWithCount(1);
             mug.answered = true;
             waiting.add(mug);
         }
@@ -322,10 +334,12 @@ final class KegDraughts {
             node.showLiquid(null, 0.0F);
             node.showLiquid(mug.liquid, 0.0F);
             node.setFoam(0.0F, KegLiquids.HEAD);
-        } else if (shownItem != mug.vessel.getItem()) {
-            shownItem = mug.vessel.getItem();
-            node.setVisual(Visual.ofItem(shownItem).withAnchor(new Vector3f(8.0F, 0.0F, 8.0F)));
-            node.showLiquid(null, 0.0F);
+        } else if (!mug.dry && !mug.filled.isEmpty()) {
+            // A glass bottle comes as the bottle it is filled into (Hearth and Harvest's drinks), not as a vial that changes shape.
+            showItem(node, mug.filled.getItem());
+            mug.showsFilled = true;
+        } else {
+            showItem(node, mug.vessel.getItem());
         }
         node.setOnTop(true);
         node.setVisible(true);
@@ -339,6 +353,14 @@ final class KegDraughts {
         }
     }
 
+    private void showItem(NodeView node, Item item) {
+        if (shownItem != item) {
+            shownItem = item;
+            node.setVisual(Visual.ofItem(item).withAnchor(new Vector3f(8.0F, 0.0F, 8.0F)));
+            node.showLiquid(null, 0.0F);
+        }
+    }
+
     /** The mug's place and pose: {@code at} is its bottom; leaning, it turns round its rim, which stays under the tap. */
     private void place(NodeView node, Mug mug, Vector3f at, float lean, float yaw, Vector3fc outward, float size) {
         float radians = lean * Mth.DEG_TO_RAD;
@@ -346,7 +368,7 @@ final class KegDraughts {
         Vector3f bottom = new Vector3f(at).add(0.0F, tall * (1.0F - Mth.cos(radians)), 0.0F)
                 .add(outward.x() * tall * Mth.sin(radians), 0.0F, outward.z() * tall * Mth.sin(radians));
         node.moveTo(bottom.x - 8.0F, bottom.y, bottom.z - 8.0F, 0.0F);
-        node.rotateTo(lean, yaw, 0.0F, 0.0F);
+        node.rotateTo(lean, yaw, mug.showsFilled ? FILLED_ROLL : 0.0F, 0.0F);
         float scale = mug.isTankard() ? size : size * ITEM_SIZE / 16.0F / SCALE;
         node.scaleTo(scale, 0.0F);
     }

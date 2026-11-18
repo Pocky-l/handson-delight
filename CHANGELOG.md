@@ -25,6 +25,17 @@
   piece browns as it bakes, and what is done waits on the open door. A skillet or a pot clicked on its top stands upright on
   a burner, other tools lie flat there. Its book has Farmer's Delight's campfire dishes too, which it bakes on this
   version. Sneak for its own menu; hoppers work as before. `oven` in the config turns it off.
+- [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest)'s keg is a station
+  ([#28](https://github.com/Pocky-l/handson-delight/issues/28)): its lid comes off, juice, water, milk or brine is poured
+  in and what ferments dropped in, and under the lid it turns to wine, beer, cheese or pickles a portion at a time, the
+  colour moving to the drink's. Its wine is drawn into a bottle at the tap, an empty bucket or bottle at the opening takes
+  back what has not fermented, and the book puts in as many of each as a recipe takes. Sneak for its own menu. Eight kegs
+  built into a big keg are one station, opened from any of its blocks: a lid in the middle of its top over 8000 mB, its one
+  tap in front. Its tortilla is made on the cutting board, as Farmer's Delight's dishes are.
+- Hearth and Harvest's cask is a station: lift its lid by the handle, lay in the bottles to age, the salt and meat for
+  jerky or the cheese, and put the lid back on to seal it. A wine ages a bottle at a time into its next vintage, faster in
+  the dark, and what is done waits before the cask, taken without breaking the seal. The book shows each recipe's time
+  where the cask stands. Sneak for its own seal; `cask` in the config turns it off.
 
 ### Changed
 - The book's pages turn with Page Up and Page Down, Home and End, or a click on either half of the page's foot, which goes

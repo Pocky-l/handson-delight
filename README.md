@@ -200,27 +200,24 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 How much of each mod's kitchen opens as stations right in the world. A dash means the mod has no build for that version.
 
+<details><summary><b>Every mod with stations and the planned ones</b></summary>
+
 | Mod | Stations | 1.20.1 | 1.21.1 |
 |---|:---:|:---:|:---:|
 | [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight) | 100% | ✅ | ✅ |
-| [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin) | 100% | ✅ | ✅ |
-| [Cultural Delights](https://modrinth.com/mod/cultural-delights) | 100% | - | ✅ |
-| [Extra Delight](https://modrinth.com/mod/extradelight) | 67% | - | ✅ |
-| [Farmer's Respite](https://modrinth.com/mod/farmers-respite) | 100% | ✅ | ✅ |
-| [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts) | 100% | ✅ | ✅ |
-| [Miner's Delight](https://modrinth.com/mod/miners-delight) | 100% | ✅ | ✅ |
-
-<details><summary><b>All other mods and the planned ones</b></summary>
-
-| Mod | Stations | 1.20.1 | 1.21.1 |
-|---|:---:|:---:|:---:|
 | [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge) | 100% | ✅ | ✅ |
+| [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin) | 100% | ✅ | ✅ |
 | [Chopper's Delight](https://modrinth.com/mod/choppers-delight) | 100% | ✅ | ✅ |
 | [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads) | 100% | ✅ | ✅ |
+| [Cultural Delights](https://modrinth.com/mod/cultural-delights) | 100% | - | ✅ |
 | [Dungeons Delight](https://modrinth.com/mod/dungeons_delight) | 100% | ✅ | ✅ |
 | [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) | 100% | ✅ | ✅ |
+| [Extra Delight](https://modrinth.com/mod/extradelight) | 67% | - | ✅ |
+| [Farmer's Respite](https://modrinth.com/mod/farmers-respite) | 100% | ✅ | ✅ |
 | [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell) | 100% | ✅ | ✅ |
+| [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts) | 100% | ✅ | ✅ |
 | [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest) | 100% | ✅ | ✅ |
+| [Miner's Delight](https://modrinth.com/mod/miners-delight) | 100% | ✅ | ✅ |
 | [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) | 100% | ✅ | ✅ |
 | [Nether's Delight](https://modrinth.com/mod/nethers-delight) | 100% | ✅ | - |
 | [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees) | 100% | - | ✅ |

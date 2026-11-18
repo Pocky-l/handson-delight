@@ -10,7 +10,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Vector3f;
-import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
 import com.pockyl.diegesis.api.client.DiegesisParticles;
 import com.pockyl.diegesis.api.client.NodeView;
@@ -108,8 +107,8 @@ public final class StoveBehavior implements StationBehavior {
         // What the grill will not take now (an egg, a full grill) stays in the hand, unrefused.
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()
-                && view.level().getBlockEntity(view.pos()) instanceof AbstractStoveBlockEntity stove
-                && StoveCooking.takes(stove, player.getMainHandItem())) {
+                && StoveCooking.isStove(view.level().getBlockEntity(view.pos()))
+                && StoveCooking.takes(view.level().getBlockEntity(view.pos()), player.getMainHandItem())) {
             onInventoryShiftClick(view, player.getInventory().selected, player.getMainHandItem());
         }
     }

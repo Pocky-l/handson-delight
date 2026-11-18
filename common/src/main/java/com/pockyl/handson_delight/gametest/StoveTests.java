@@ -20,6 +20,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import vectorwing.farmersdelight.common.block.AbstractStoveBlock;
@@ -30,7 +31,6 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnConfig;
-import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.Grill;
 import com.pockyl.handson_delight.station.StoveCooking;
 import com.pockyl.handson_delight.station.StoveLogic;
@@ -49,7 +49,7 @@ public final class StoveTests {
     private StoveTests() {
     }
 
-    private record Top(Station station, StoveLogic logic, AbstractStoveBlockEntity stove, Player cook) {
+    private record Top(Station station, StoveLogic logic, BlockEntity stove, Player cook) {
         void act(String action, CompoundTag data) {
             logic.onCustomAction(station, cook, action, data);
         }
@@ -66,7 +66,7 @@ public final class StoveTests {
         }
 
         ItemStack on(int place) {
-            return Platform.INSTANCE.getItem(stove, place);
+            return StoveCooking.item(stove, place);
         }
 
         Grill grill() {
@@ -85,7 +85,7 @@ public final class StoveTests {
         helper.setBlock(at.above(), Blocks.AIR);
         BlockPos pos = helper.absolutePos(at);
         Station station = new Station(helper.getLevel(), pos);
-        AbstractStoveBlockEntity stove = (AbstractStoveBlockEntity) helper.getLevel().getBlockEntity(pos);
+        BlockEntity stove = helper.getLevel().getBlockEntity(pos);
         return new Top(station, new StoveLogic(station), stove, helper.makeMockPlayer(GameType.CREATIVE));
     }
 
@@ -172,7 +172,8 @@ public final class StoveTests {
     public static void farmersDelightsWayStaysItsOwn(GameTestHelper helper) {
         Top top = stove(helper);
         ItemStack beef = new ItemStack(Items.BEEF);
-        top.stove.placeFood(top.cook, beef, top.stove.getCookingRecipe(beef).orElseThrow());
+        AbstractStoveBlockEntity farmers = (AbstractStoveBlockEntity) top.stove;
+        farmers.placeFood(top.cook, beef, farmers.getCookingRecipe(beef).orElseThrow());
         helper.assertTrue(top.on(0).is(Items.BEEF) && !top.grill().byHand(0), "Farmer's Delight's own right click: its way");
         helper.runAfterDelay(20, () -> {
             helper.assertTrue(((StoveTop) top.stove).handson$progress()[0] > 10, "and it counts its own time");
@@ -215,7 +216,7 @@ public final class StoveTests {
             BlockState state = block.defaultBlockState();
             helper.setBlock(at, state);
             helper.assertTrue(StoveStation.TYPE.matches(state), BuiltInRegistries.BLOCK.getKey(block) + " opens as the station");
-            helper.assertTrue(helper.getBlockEntity(at) instanceof AbstractStoveBlockEntity,
+            helper.assertTrue(StoveCooking.isStove(helper.getBlockEntity(at)),
                     BuiltInRegistries.BLOCK.getKey(block) + " grills on a stove's block entity");
         }
         helper.succeed();
@@ -314,7 +315,8 @@ public final class StoveTests {
         helper.assertTrue(top.station.effects.contains(StoveStation.EFFECT_REFUSED), "it bounces back to the hand");
         helper.assertFalse(StoveCooking.takes(top.stove, new ItemStack(Items.EGG)), "opened by use with an egg, it stays in the hand");
         ItemStack egg = new ItemStack(Items.EGG);
-        top.stove.placeFood(top.cook, egg, top.stove.getCookingRecipe(egg).orElseThrow());
+        AbstractStoveBlockEntity farmers = (AbstractStoveBlockEntity) top.stove;
+        farmers.placeFood(top.cook, egg, farmers.getCookingRecipe(egg).orElseThrow());
         helper.assertTrue(top.on(0).is(Items.EGG) && !top.grill().byHand(0), "Farmer's Delight's right click is its own way");
         boolean eggRecipe = false;
         for (RecipeHolder<CampfireCookingRecipe> holder : helper.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {

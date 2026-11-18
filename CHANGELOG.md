@@ -7,6 +7,7 @@
 - [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)'s oven is a station: food bakes on its rack, fuel goes in at the fire, and it bakes Farmer's Delight's campfire dishes too.
 - [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest)'s keg, big keg and cask are stations: drinks ferment under the lid and age sealed in the cask ([#28](https://github.com/Pocky-l/handson-delight/issues/28)).
 - [Twilight's Flavor & Delight](https://modrinth.com/mod/twilight-delight)'s maze stove is a station, and Twilight food still grills twice as fast on it.
+- [Trail&Tales Delight](https://modrinth.com/mod/trailtales-delight)'s mud stove is a stove station.
 - The recipe book can be searched, shows only what you can make now on a switch, and keeps a tab of the dishes made lately.
 - A click on a thing that goes in opens its own recipe, when the book has one.
 
@@ -27,6 +28,7 @@
 - A milk bucket on the cooking pot makes [Brazilian Delight](https://modrinth.com/mod/braziliandelight)'s milk pot again.
 - In a LAN game, a guest who turned the cutting board off can craft its dishes in the crafting grid again.
 - Switching quickly between neighbouring stations no longer breaks the recipe book.
+- With Trail&Tales Delight, stone lies down on the cutting board again to be broken with a pickaxe.
 
 ## [1.5.0+1.21.1] - 2026-11-15
 ### New

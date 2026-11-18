@@ -237,11 +237,19 @@ public final class Cutting {
      * Whether {@code item} on the cursor is the board's tool, never laid down: a thing some cut is made with that cuts {@code onBoard},
      * or that goes into none of {@code dishes} as a layer. An addon cutting a mould with a glass bottle (Fright's Delight) or a pod with
      * a stick (Immortaler's Delight) leaves the bottle and the stick the first layers of drinks and skewers; a knife is no layer and
-     * knocks. The server passes its dishes, a client those its server sent: both decide alike.
+     * knocks. A thing that is cut itself and has nothing to cut on the board lies down too: Trail&Tales Delight cuts a torchflower
+     * with stone, which Farmer's Delight's own recipe breaks with a pickaxe. The server passes its dishes, a client those its server
+     * sent: both decide alike.
      */
     public static boolean isTool(Level level, ItemStack item, ItemStack onBoard, List<AssemblyRecipes.Assembly> dishes) {
-        return isTool(level, item) && (findWith(level, onBoard, item).isPresent()
-                || dishes.stream().noneMatch(dish -> dish.ingredients().stream().anyMatch(ingredient -> ingredient.test(item))));
+        if (!isTool(level, item)) {
+            return false;
+        }
+        if (findWith(level, onBoard, item).isPresent()) {
+            return true;
+        }
+        return dishes.stream().noneMatch(dish -> dish.ingredients().stream().anyMatch(ingredient -> ingredient.test(item)))
+                && recipesFor(level, item).isEmpty();
     }
 
     /**

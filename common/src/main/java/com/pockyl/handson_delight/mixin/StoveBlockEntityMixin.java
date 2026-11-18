@@ -9,6 +9,7 @@ import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import vectorwing.farmersdelight.common.block.AbstractStoveBlock;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.Grill;
 import com.pockyl.handson_delight.station.StoveCooking;
 import com.pockyl.handson_delight.station.StoveTop;
@@ -69,6 +71,32 @@ abstract class StoveBlockEntityMixin implements StoveTop {
     @Override
     public int[] handson$times() {
         return cookingTime;
+    }
+
+    @Override
+    public ItemStack handson$item(int slot) {
+        return Platform.INSTANCE.getItem(handson$self(), slot);
+    }
+
+    @Override
+    public void handson$setItem(int slot, ItemStack stack) {
+        Platform.INSTANCE.setItem(handson$self(), slot, stack);
+    }
+
+    @Override
+    public int handson$slots() {
+        return (int) handson$self().streamItems().count();
+    }
+
+    @Override
+    public boolean handson$covered() {
+        AbstractStoveBlockEntity stove = handson$self();
+        return stove.getLevel() != null && AbstractStoveBlock.isStoveTopCovered(stove.getLevel(), stove.getBlockPos(), stove.getBlockState());
+    }
+
+    @Unique
+    private AbstractStoveBlockEntity handson$self() {
+        return (AbstractStoveBlockEntity) (Object) this;
     }
 
     @Inject(method = "serverTick", at = @At("HEAD"), remap = false)

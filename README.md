@@ -201,7 +201,8 @@ the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-
 [Miner's Delight](https://modrinth.com/mod/miners-delight)'s copper pot,
 [Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot and dungeon stove,
 [Twilight's Flavor & Delight](https://modrinth.com/mod/twilight-delight)'s maze stove (Twilight food still grills twice
-as fast on it), and every cutting board of
+as fast on it), [Trail&Tales Delight](https://modrinth.com/mod/trailtales-delight)'s mud stove (its pottery cooking pot keeps Farmer's
+Delight's menu), and every cutting board of
 [Chopper's Delight](https://modrinth.com/mod/choppers-delight), the decorated one too, each in its own look.
 [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle opens as a station too, its tray on a stove
 drawn with Farmer's Delight's own, and so does [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)'s kettle,

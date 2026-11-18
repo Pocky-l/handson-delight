@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -29,9 +29,9 @@ import java.util.function.Supplier;
  */
 public final class KettleStation {
     public static final String MOD_ID = "farmersrespite";
-    public static final ResourceLocation ID = HandsOnDelight.id("kettle");
+    public static final Identifier ID = HandsOnDelight.id("kettle");
     public static final String YOUKAI_MOD_ID = "youkaisfeasts";
-    public static final ResourceLocation YOUKAI_ID = HandsOnDelight.id("youkai_kettle");
+    public static final Identifier YOUKAI_ID = HandsOnDelight.id("youkai_kettle");
 
     public static final String INGREDIENTS = "ingredients";
     public static final String DRINK = "drink";
@@ -75,11 +75,11 @@ public final class KettleStation {
     /** In a poured or served effect: the container used, as it was before (a water bucket poured, a bottle filled). */
     public static final String VESSEL = "vessel";
     /** Played for everybody who sees it: something poured in at the opening, a drink poured out of the spout. */
-    public static final ResourceLocation EFFECT_POURED = HandsOnDelight.id("kettle_poured");
-    public static final ResourceLocation EFFECT_SERVED = HandsOnDelight.id("kettle_served");
+    public static final Identifier EFFECT_POURED = HandsOnDelight.id("kettle_poured");
+    public static final Identifier EFFECT_SERVED = HandsOnDelight.id("kettle_served");
 
-    public static final Supplier<Block> KETTLE = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "kettle"));
-    public static final Supplier<Block> YOUKAI_KETTLE = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(YOUKAI_MOD_ID, "kettle"));
+    public static final Supplier<Block> KETTLE = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(MOD_ID, "kettle"));
+    public static final Supplier<Block> YOUKAI_KETTLE = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(YOUKAI_MOD_ID, "kettle"));
 
     public static final StationSchema SCHEMA = schema(KitchenKettle.INGREDIENTS, SlotRules.DEFAULT.kept());
     /** Youkai's Feasts' kettle steeps four things, one in each of its slots. */
@@ -103,7 +103,7 @@ public final class KettleStation {
                 .build();
     }
 
-    private static StationType type(ResourceLocation id, Supplier<Block> block, StationSchema schema) {
+    private static StationType type(Identifier id, Supplier<Block> block, StationSchema schema) {
         return Diegesis.station(id)
                 .block(block)
                 .schema(schema)
@@ -125,7 +125,7 @@ public final class KettleStation {
     }
 
     /** Whether {@code id} is one of the kettle stations. */
-    public static boolean isKettle(ResourceLocation id) {
+    public static boolean isKettle(Identifier id) {
         return ID.equals(id) || YOUKAI_ID.equals(id);
     }
 

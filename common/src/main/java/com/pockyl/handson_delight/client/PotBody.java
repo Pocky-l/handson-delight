@@ -3,9 +3,9 @@ package com.pockyl.handson_delight.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+import com.pockyl.diegesis.api.client.SceneBuffers;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import org.joml.Matrix4f;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 
@@ -29,12 +29,12 @@ final class PotBody implements NodePainter {
     }
 
     @Override
-    public void paint(PoseStack poseStack, MultiBufferSource buffers, int light) {
+    public void paint(PoseStack poseStack, SceneBuffers buffers, int light) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || !(minecraft.level.getBlockEntity(view.pos()) instanceof CookingPotBlockEntity pot)) {
             return;
         }
-        BlockEntityRenderer<CookingPotBlockEntity> renderer = minecraft.getBlockEntityRenderDispatcher().getRenderer(pot);
+        BlockEntityRenderer<CookingPotBlockEntity, BlockEntityRenderState> renderer = minecraft.getBlockEntityRenderDispatcher().getRenderer(pot);
         if (renderer == null) {
             return;
         }
@@ -44,9 +44,14 @@ final class PotBody implements NodePainter {
         poseStack.mulPose(new Matrix4f(node.sceneMatrix()).invert());
         poseStack.scale(16.0F, 16.0F, 16.0F);
         poseStack.translate(0.5F, 0.0F, 0.5F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(yaw(view)));
+        poseStack.rotate(Axis.YP.rotationDegrees(yaw(view)));
         poseStack.translate(-0.5F, 0.0F, -0.5F);
-        renderer.render(pot, minecraft.getTimer().getGameTimeDeltaPartialTick(false), poseStack, buffers, light, OverlayTexture.NO_OVERLAY);
+        // As the world draws the pot since Minecraft 26.x: its look read into a render state, then submitted, here into the scene.
+        BlockEntityRenderState state = renderer.createRenderState();
+        renderer.extractRenderState(pot, state, minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false),
+                minecraft.gameRenderer.mainCamera().position(), null);
+        state.lightCoords = light;
+        renderer.submit(state, poseStack, buffers.submits(), minecraft.gameRenderer.gameRenderState().levelRenderState.cameraRenderState);
         poseStack.popPose();
     }
 

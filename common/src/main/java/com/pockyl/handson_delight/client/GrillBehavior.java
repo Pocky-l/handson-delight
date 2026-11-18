@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -20,6 +20,7 @@ import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.ItemNbt;
 import com.pockyl.handson_delight.station.GrillStation;
 import com.pockyl.handson_delight.station.KitchenGrill;
 
@@ -126,7 +127,7 @@ public final class GrillBehavior implements StationBehavior {
         // What the cook came with is meant for the grill: a skewer goes on, a seasoning over the first skewer that takes it.
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
-            onInventoryShiftClick(view, player.getInventory().selected, player.getMainHandItem());
+            onInventoryShiftClick(view, player.getInventory().getSelectedSlot(), player.getMainHandItem());
         }
     }
 
@@ -157,7 +158,7 @@ public final class GrillBehavior implements StationBehavior {
         }
         boolean together = arriving > 1 && !quiet;
         int landing = 0;
-        boolean lit = state.data().getBoolean(GrillStation.LIT);
+        boolean lit = state.data().getBooleanOr(GrillStation.LIT, false);
         for (int place = 0; place < KitchenGrill.PLACES; place++) {
             ItemStack now = onGrill(state, place);
             String look = lookKey(view, place, now);
@@ -218,8 +219,8 @@ public final class GrillBehavior implements StationBehavior {
             return null;
         }
         CompoundTag data = view.state().data();
-        boolean turned = clock < heldUntil[place] ? heldTurned[place] : data.getBoolean(GrillStation.TURNED + place);
-        int burn = Mth.floor(data.getFloat(GrillStation.BURN + place) * 10.0F);
+        boolean turned = clock < heldUntil[place] ? heldTurned[place] : data.getBooleanOr(GrillStation.TURNED + place, false);
+        int burn = Mth.floor(data.getFloatOr(GrillStation.BURN + place, 0.0F) * 10.0F);
         boolean seasoned = clock >= seasonedFrom[place] && KitchenGrill.isSeasoned(stack);
         return BuiltInRegistries.ITEM.getKey(stack.getItem()) + "/" + turned + "/" + burn + "/" + seasoned;
     }
@@ -237,7 +238,7 @@ public final class GrillBehavior implements StationBehavior {
             return;
         }
         CompoundTag data = view.state().data();
-        boolean turned = clock < heldUntil[place] ? heldTurned[place] : data.getBoolean(GrillStation.TURNED + place);
+        boolean turned = clock < heldUntil[place] ? heldTurned[place] : data.getBooleanOr(GrillStation.TURNED + place, false);
         ItemStack look = turned ? grilled(view, stack) : stack;
         Optional<ItemVoxels.Icon> icon = ItemVoxels.icon(look);
         if (icon.isPresent()) {
@@ -247,7 +248,7 @@ public final class GrillBehavior implements StationBehavior {
             node.setShape(null, null);
             node.setVisual(Visual.ofItem(look.getItem()).withAnchor(new Vector3f(8.0F, 8.0F, 8.0F)));
         }
-        float burn = KitchenGrill.isBurnt(stack) ? 0.0F : data.getFloat(GrillStation.BURN + place);
+        float burn = KitchenGrill.isBurnt(stack) ? 0.0F : data.getFloatOr(GrillStation.BURN + place, 0.0F);
         node.setTint(KitchenLooks.mix(0xFFFFFFFF, BURNING, KitchenMotions.smooth(Mth.clamp(burn, 0.0F, 1.0F)) * 0.8F));
         if (!node.isMoving()) {
             node.moveTo(0.0F, 0.0F, 0.0F, 0.0F);
@@ -284,7 +285,7 @@ public final class GrillBehavior implements StationBehavior {
         String path = BuiltInRegistries.ITEM.getKey(seasoning.getItem()).getPath();
         String other = sauce ? path.equals("barbeque_sauce") ? "buffalo_sauce" : "barbeque_sauce"
                 : path.equals("cumin_powder") ? "chili_powder" : "cumin_powder";
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KitchenGrill.MOD_ID, other));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KitchenGrill.MOD_ID, other));
     }
 
     /** Barbeque's Delight's sauces (honey mustard, buffalo, barbeque): dabbed on, not shaken. */
@@ -358,7 +359,7 @@ public final class GrillBehavior implements StationBehavior {
      */
     private void heat(StationView view, float dt) {
         CompoundTag data = view.state().data();
-        if (!data.getBoolean(GrillStation.LIT)) {
+        if (!data.getBooleanOr(GrillStation.LIT, false)) {
             sizzle = 0.0F;
             return;
         }
@@ -375,13 +376,13 @@ public final class GrillBehavior implements StationBehavior {
             if (shown[place].isEmpty() || KitchenGrill.isBurnt(shown[place]) || clock - turnedAt[place] < FLIGHT) {
                 continue;
             }
-            float burn = data.getFloat(GrillStation.BURN + place);
+            float burn = data.getFloatOr(GrillStation.BURN + place, 0.0F);
             if (burn > 0.0F) {
                 burning += burn;
                 waiting.add(place);
-            } else if (data.getBoolean(GrillStation.WAITS + place)) {
+            } else if (data.getBooleanOr(GrillStation.WAITS + place, false)) {
                 waiting.add(place);
-            } else if (!data.getBoolean(GrillStation.TURNED + place) || data.getFloat(GrillStation.LOWER + place) < 1.0F) {
+            } else if (!data.getBooleanOr(GrillStation.TURNED + place, false) || data.getFloatOr(GrillStation.LOWER + place, 0.0F) < 1.0F) {
                 cooking.add(place);
             }
         }
@@ -395,7 +396,7 @@ public final class GrillBehavior implements StationBehavior {
         while (smoke >= 1.0F && !waiting.isEmpty()) {
             smoke -= 1.0F;
             int place = waiting.get(random.nextInt(waiting.size()));
-            float burn = data.getFloat(GrillStation.BURN + place);
+            float burn = data.getFloatOr(GrillStation.BURN + place, 0.0F);
             view.spawnParticles(HandsOnDelightClient.PAN_SMOKE, roundPiece(place), new Vector3f(randomly(0.5F), 4.0F, randomly(0.5F)),
                     0.3F, 1, burn > 0.4F ? 0xA0605650 : 0);
         }
@@ -457,7 +458,7 @@ public final class GrillBehavior implements StationBehavior {
         // A skewer that smokes, waiting, is what the cook clicks: it turns. The other button takes it, raw or half done; done, either.
         if (click.button() == 1 || done) {
             view.sendAction(GrillStation.ACTION_TAKE, at);
-        } else if (data.getBoolean(GrillStation.WAITS + place)) {
+        } else if (data.getBooleanOr(GrillStation.WAITS + place, false)) {
             if (clock - turnedAt[place] > FLIGHT + 0.05F) {
                 view.sendAction(GrillStation.ACTION_TURN, at);
                 turned(view, place);
@@ -592,8 +593,8 @@ public final class GrillBehavior implements StationBehavior {
     }
 
     @Override
-    public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
-        int place = data.getInt(GrillStation.PLACE);
+    public void onEffect(StationView view, Identifier effect, String node, CompoundTag data) {
+        int place = data.getIntOr(GrillStation.PLACE, 0);
         boolean known = place >= 0 && place < KitchenGrill.PLACES;
         if (GrillStation.EFFECT_TURNED.equals(effect)) {
             // The cook's own turn is on show already.
@@ -610,7 +611,7 @@ public final class GrillBehavior implements StationBehavior {
         } else if (GrillStation.EFFECT_PLACED.equals(effect)) {
             view.playSound(SoundEvents.LANTERN_PLACE, "grill", 0.4F, 1.1F);
         } else if (GrillStation.EFFECT_REFUSED.equals(effect)) {
-            ItemStack refused = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(GrillStation.STACK));
+            ItemStack refused = ItemNbt.parse(view.level().registryAccess(), data.getCompound(GrillStation.STACK));
             ghost(view, refused).ifPresent(ghost -> {
                 ghost.moveTo(0.0F, LAND_FROM + 2.0F, 0.0F, 0.0F);
                 ghost.moveTo(0.0F, 1.5F, 0.0F, 0.09F);
@@ -619,9 +620,9 @@ public final class GrillBehavior implements StationBehavior {
             });
             view.playSound(SoundEvents.LANTERN_HIT, "grill", 0.4F, 1.3F);
         } else if (GrillStation.EFFECT_TAKEN.equals(effect)) {
-            taken(view, place, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(GrillStation.STACK)));
+            taken(view, place, ItemNbt.parse(view.level().registryAccess(), data.getCompound(GrillStation.STACK)));
         } else if (GrillStation.EFFECT_SEASONED.equals(effect) && known) {
-            seasoned(view, place, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(GrillStation.STACK)));
+            seasoned(view, place, ItemNbt.parse(view.level().registryAccess(), data.getCompound(GrillStation.STACK)));
         }
     }
 
@@ -648,7 +649,7 @@ public final class GrillBehavior implements StationBehavior {
             shownLook[place] = null;
             refresh(view);
             if (isSauce(seasoning)) {
-                view.playSound(SoundEvents.HONEY_DRINK, "grill", 0.3F, 1.2F);
+                view.playSound(SoundEvents.HONEY_DRINK.value(), "grill", 0.3F, 1.2F);
             }
         });
         refresh(view);

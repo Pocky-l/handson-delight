@@ -1,13 +1,10 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.tags.ItemTags;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.AxeItem;
-import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.item.ShearsItem;
-import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import org.joml.Matrix3f;
@@ -16,6 +13,7 @@ import org.joml.Vector3f;
 import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.Cutting;
 
 import java.util.List;
@@ -68,22 +66,22 @@ enum ToolStroke {
     /** The stroke of {@code recipe} on {@code worked}: by the tools it takes, the knife for anything else (an addon's own tool). */
     static ToolStroke of(CuttingBoardRecipe recipe) {
         Ingredient tool = Cutting.tool(recipe);
-        ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")));
-        ItemStack[] tools = tool.getItems();
+        ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("iron_knife")));
+        ItemStack[] tools = RecipeParts.items(tool);
         if (tools.length == 0 || tool.test(knife)) {
             return CUT;
         }
         for (ItemStack stack : tools) {
-            if (stack.getItem() instanceof AxeItem) {
+            if (stack.is(ItemTags.AXES)) {
                 return strips(recipe) ? STRIP : CHOP;
             }
-            if (stack.getItem() instanceof PickaxeItem) {
+            if (stack.is(ItemTags.PICKAXES)) {
                 return SMASH;
             }
-            if (stack.getItem() instanceof ShovelItem) {
+            if (stack.is(ItemTags.SHOVELS)) {
                 return DIG;
             }
-            if (stack.getItem() instanceof HoeItem) {
+            if (stack.is(ItemTags.HOES)) {
                 return PRY;
             }
             if (stack.getItem() instanceof ShearsItem) {
@@ -108,7 +106,7 @@ enum ToolStroke {
 
     /** An axe that leaves a stripped block (logs, wood, stems, bamboo) strips; on anything else it splits. */
     private static boolean strips(CuttingBoardRecipe recipe) {
-        return recipe.getResults().stream().anyMatch(result -> BuiltInRegistries.ITEM.getKey(result.getItem()).getPath().startsWith("stripped_"));
+        return RecipeParts.results(recipe).stream().anyMatch(result -> BuiltInRegistries.ITEM.getKey(result.getItem()).getPath().startsWith("stripped_"));
     }
 
     /**

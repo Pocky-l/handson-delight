@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -29,10 +29,10 @@ import java.util.function.Supplier;
  * station in its own textures, cooking its own recipes of monster food.
  */
 public final class CookingPotStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("cooking_pot");
-    public static final ResourceLocation COPPER_ID = HandsOnDelight.id("copper_pot");
-    public static final ResourceLocation MONSTER_ID = HandsOnDelight.id("monster_pot");
-    public static final ResourceLocation ALCHEMIST_ID = HandsOnDelight.id("alchemist_pot");
+    public static final Identifier ID = HandsOnDelight.id("cooking_pot");
+    public static final Identifier COPPER_ID = HandsOnDelight.id("copper_pot");
+    public static final Identifier MONSTER_ID = HandsOnDelight.id("monster_pot");
+    public static final Identifier ALCHEMIST_ID = HandsOnDelight.id("alchemist_pot");
 
     /** Brazilian Delight: a milk bucket on Farmer's Delight's pot in the world makes its milk pot, the way to its heavy cream. */
     private static final String BRAZILIAN_DELIGHT = "braziliandelight";
@@ -97,7 +97,7 @@ public final class CookingPotStation {
     public static final String STIR_AT = "at";
     public static final String STIR_Z = "z";
     /** Played when a serving leaves the pot, for everybody who sees it. */
-    public static final ResourceLocation EFFECT_SCOOPED = HandsOnDelight.id("scooped");
+    public static final Identifier EFFECT_SCOOPED = HandsOnDelight.id("scooped");
 
     /** Farmer's Delight's pot holds six ingredients, the copper pot four. */
     public static final int SLOTS = 6;
@@ -133,7 +133,7 @@ public final class CookingPotStation {
                 .build();
     }
 
-    private static StationType type(ResourceLocation id, Supplier<Block> block, StationSchema schema) {
+    private static StationType type(Identifier id, Supplier<Block> block, StationSchema schema) {
         return Diegesis.station(id)
                 .block(block)
                 .schema(schema)
@@ -187,6 +187,6 @@ public final class CookingPotStation {
         if (!Platform.INSTANCE.isLoaded(BRAZILIAN_DELIGHT)) {
             return false;
         }
-        return held.is(Items.MILK_BUCKET) || BuiltInRegistries.ITEM.getKey(held.getItem()).equals(ResourceLocation.fromNamespaceAndPath(BRAZILIAN_DELIGHT, "heavy_cream_bucket"));
+        return held.is(Items.MILK_BUCKET) || BuiltInRegistries.ITEM.getKey(held.getItem()).equals(Identifier.fromNamespaceAndPath(BRAZILIAN_DELIGHT, "heavy_cream_bucket"));
     }
 }

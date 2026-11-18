@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -76,7 +77,7 @@ final class KegBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(KegStation.DISH, page.key().toString());
-        fill.putBoolean(KegStation.ALL, Screen.hasShiftDown());
+        fill.putBoolean(KegStation.ALL, Minecraft.getInstance().hasShiftDown());
         view.sendAction(KegStation.ACTION_FILL, fill);
     }
 

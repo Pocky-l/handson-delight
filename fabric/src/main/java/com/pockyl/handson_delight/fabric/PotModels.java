@@ -2,13 +2,14 @@ package com.pockyl.handson_delight.fabric;
 
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.renderer.block.model.BlockModelDefinition;
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -63,35 +65,34 @@ final class PotModels {
         if (block == Blocks.AIR) {
             return;
         }
+        // Read first: a file that cannot be read leaves the block its usual models instead of the missing one.
+        Optional<Map<BlockState, BlockStateModel.UnbakedRoot>> models = read(block, file);
+        if (models.isEmpty()) {
+            return;
+        }
         try {
-            context.registerBlockStateResolver(block, resolver -> {
-                UnbakedModel model = read(block, file).orElseGet(() -> resolver.getOrLoadModel(ModelBakery.MISSING_MODEL_LOCATION));
-                for (BlockState state : block.getStateDefinition().getPossibleStates()) {
-                    resolver.setModel(state, model);
-                }
-            });
+            context.registerBlockStateResolver(block, resolver -> models.get().forEach(resolver::setModel));
         } catch (IllegalArgumentException e) {
             // Another mod already decides how the block looks: its choice stands.
             HandsOnDelight.LOGGER.warn("The models of {} are resolved by another mod; this mod's are not used", block, e);
         }
     }
 
-    /** The multipart of this mod's block state file, bound to the block's properties. */
-    private static Optional<UnbakedModel> read(Block block, String name) {
+    /** The multipart of this mod's block state file, bound to the block's properties: a model for each of its states. */
+    private static Optional<Map<BlockState, BlockStateModel.UnbakedRoot>> read(Block block, String name) {
         Optional<Path> file = FabricLoader.getInstance().getModContainer(HandsOnDelight.MOD_ID).flatMap(mod -> mod.findPath(name));
         if (file.isEmpty()) {
             HandsOnDelight.LOGGER.error("{} is missing from the mod", name);
             return Optional.empty();
         }
         try (Reader reader = Files.newBufferedReader(file.get())) {
-            BlockModelDefinition.Context context = new BlockModelDefinition.Context();
-            context.setDefinition(block.getStateDefinition());
-            BlockModelDefinition definition = BlockModelDefinition.fromStream(context, reader);
-            if (!definition.isMultiPart()) {
+            BlockStateModelDispatcher definition = BlockStateModelDispatcher.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader))
+                    .getOrThrow();
+            if (definition.multiPart().isEmpty()) {
                 HandsOnDelight.LOGGER.error("{} is no multipart", name);
                 return Optional.empty();
             }
-            return Optional.of(definition.getMultiPart());
+            return Optional.of(definition.instantiate(block.getStateDefinition(), () -> name));
         } catch (IOException | RuntimeException e) {
             HandsOnDelight.LOGGER.error("Cannot read {}", name, e);
             return Optional.empty();

@@ -3,7 +3,7 @@ package com.pockyl.handson_delight.gametest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -25,11 +25,11 @@ public final class BasinTests {
     private BasinTests() {
     }
 
-    private static final java.util.function.Supplier<Item> CABBAGE = () -> BuiltInRegistries.ITEM.get(
-            ResourceLocation.fromNamespaceAndPath("farmersdelight", "cabbage"));
+    private static final java.util.function.Supplier<Item> CABBAGE = () -> BuiltInRegistries.ITEM.getValue(
+            Identifier.fromNamespaceAndPath("farmersdelight", "cabbage"));
 
     private static Item barbeque(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KitchenGrill.MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KitchenGrill.MOD_ID, path));
     }
 
     private record Setup(PotTests.TestStation station, BasinLogic logic, KitchenBasin basin, BlockPos pos) {
@@ -128,7 +128,7 @@ public final class BasinTests {
         data.putString(BasinStation.DISH, beef.id().toString());
         setup.logic.onCustomAction(setup.station, player, BasinStation.ACTION_FILL, data);
         helper.assertTrue(player.getInventory().countItem(barbeque("raw_beef_skewer")) == 1, "the book made a skewer, basin " + setup.basin.getItem(0) + " " + setup.basin.getItem(1) + " inv "
-                + player.getInventory().items.stream().filter(it -> !it.isEmpty()).toList());
+                + player.getInventory().getNonEquipmentItems().stream().filter(it -> !it.isEmpty()).toList());
         helper.assertTrue(player.getInventory().countItem(Items.BEEF) == 2 && player.getInventory().countItem(CABBAGE.get()) == 2,
                 "of just what one takes");
         helper.succeed();

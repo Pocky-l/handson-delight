@@ -3,12 +3,14 @@ package com.pockyl.handson_delight.client;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.texture.SpriteContents;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.mixin.SpriteContentsAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 
@@ -27,7 +29,7 @@ final class FoodColors {
     private static final int HUES = 12;
     private static final Map<ItemVoxels.Look, Integer> MAIN = new HashMap<>();
     private static final Map<ItemVoxels.Look, Integer> BROTH = new HashMap<>();
-    private static BakedModel readWith;
+    private static BlockStateModel readWith;
     /** Where the bowl starts on a dish's icon, as a part of its height, when it is not drawn in a bowl's own colours. */
     private static final float BOWL_TOP = 0.6F;
     private static final float GREY = 0.14F;
@@ -48,7 +50,7 @@ final class FoodColors {
 
     /** Resources were reloaded (the game's fallback model is a new one): the colours read so far may be of other textures. */
     private static void forgetOnReload() {
-        BakedModel missing = Minecraft.getInstance().getModelManager().getMissingModel();
+        BlockStateModel missing = com.pockyl.diegesis.impl.client.render.SceneDraw.missingModel();
         if (missing != readWith) {
             readWith = missing;
             CACHE.clear();
@@ -66,7 +68,7 @@ final class FoodColors {
         long weight = 0;
         for (int y = 0; y < contents.height(); y++) {
             for (int x = 0; x < contents.width(); x++) {
-                int abgr = image.getPixelRGBA(x, y);
+                int abgr = ARGB.toABGR(image.getPixel(x, y));
                 if ((abgr >>> 24) < 128) {
                     continue;
                 }
@@ -111,11 +113,11 @@ final class FoodColors {
     private static ItemStack container(Level level, ItemStack meal) {
         for (RecipeHolder<CookingPotRecipe> holder : Platform.INSTANCE.cookingRecipes(level)) {
             CookingPotRecipe recipe = holder.value();
-            if (recipe.getResultItem(level.registryAccess()).is(meal.getItem()) && !recipe.getOutputContainer().isEmpty()) {
-                return recipe.getOutputContainer();
+            if (RecipeParts.result(recipe).is(meal.getItem()) && !RecipeParts.container(recipe).isEmpty()) {
+                return RecipeParts.container(recipe);
             }
         }
-        return meal.getItem().hasCraftingRemainingItem() ? new ItemStack(meal.getItem().getCraftingRemainingItem()) : ItemStack.EMPTY;
+        return RecipeParts.hasRemainder(meal.getItem()) ? new ItemStack(RecipeParts.remainder(meal.getItem())) : ItemStack.EMPTY;
     }
 
     private static NativeImage image(ItemStack stack) {
@@ -123,7 +125,7 @@ final class FoodColors {
     }
 
     private static SpriteContents contents(ItemStack stack) {
-        return ItemVoxels.model(stack).getParticleIcon().contents();
+        return ItemVoxels.particle(stack).contents();
     }
 
     /** The colours of the visible pixels of an icon, as {@link NativeImage} keeps them without their alpha. */
@@ -134,7 +136,7 @@ final class FoodColors {
             NativeImage image = image(stack);
             for (int y = 0; y < contents.height(); y++) {
                 for (int x = 0; x < contents.width(); x++) {
-                    int abgr = image.getPixelRGBA(x, y);
+                    int abgr = ARGB.toABGR(image.getPixel(x, y));
                     if ((abgr >>> 24) >= 128) {
                         colours.add(abgr & 0xFFFFFF);
                     }
@@ -149,7 +151,7 @@ final class FoodColors {
         NativeImage image = image(stack);
         for (int y = 0; y < contents.height(); y++) {
             for (int x = 0; x < contents.width(); x++) {
-                int abgr = image.getPixelRGBA(x, y);
+                int abgr = ARGB.toABGR(image.getPixel(x, y));
                 if ((abgr >>> 24) >= 128 && colours.contains(abgr & 0xFFFFFF)) {
                     return true;
                 }
@@ -164,7 +166,7 @@ final class FoodColors {
         long[][] hues = new long[HUES][4];
         for (int y = 0; y < contents.height() * rows; y++) {
             for (int x = 0; x < contents.width(); x++) {
-                int abgr = image.getPixelRGBA(x, y);
+                int abgr = ARGB.toABGR(image.getPixel(x, y));
                 if ((abgr >>> 24) < 128 || leftOut.contains(abgr & 0xFFFFFF)) {
                     continue;
                 }

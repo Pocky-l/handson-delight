@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.fabric;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
@@ -19,6 +20,7 @@ import vectorwing.farmersdelight.refabricated.inventory.ItemStackHandler;
 import vectorwing.farmersdelight.refabricated.inventory.RecipeWrapper;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.assembly.BoardDishes;
 import com.pockyl.handson_delight.platform.Platform;
 
@@ -40,17 +42,25 @@ public final class FabricPlatform implements Platform {
 
     @Override
     public Optional<RecipeHolder<CookingPotRecipe>> findRecipe(Level level, List<ItemStack> items) {
-        return level.getRecipeManager().getRecipeFor(ModRecipeTypes.COOKING.get(), new RecipeWrapper(slots(items)), level);
+        return KitchenRecipes.find(level, ModRecipeTypes.COOKING.get(), new RecipeWrapper(slots(items)));
     }
 
     @Override
     public ItemStack cooked(Level level, CookingPotRecipe recipe, List<ItemStack> items) {
-        return recipe.assemble(new RecipeWrapper(slots(items)), level.registryAccess());
+        return recipe.assemble(new RecipeWrapper(slots(items)));
     }
+
+    private static final IntList INPUT_SLOTS = IntList.of(java.util.stream.IntStream.range(0, CookingPotBlockEntity.MEAL_DISPLAY_SLOT).toArray());
 
     /** The pot's slots holding copies of {@code items}, from the first one on. */
     private static ItemStackHandler slots(List<ItemStack> items) {
-        ItemStackHandler slots = new ItemStackHandler(CookingPotBlockEntity.INVENTORY_SIZE);
+        // Farmer's Delight's recipe input reads only the slots its handler names as inputs, none by default: the pot's own names its six.
+        ItemStackHandler slots = new ItemStackHandler(CookingPotBlockEntity.INVENTORY_SIZE) {
+            @Override
+            public IntList getInputSlotIndexes() {
+                return INPUT_SLOTS;
+            }
+        };
         for (int i = 0; i < Math.min(items.size(), CookingPotBlockEntity.MEAL_DISPLAY_SLOT); i++) {
             slots.setStackInSlot(i, items.get(i).copy());
         }
@@ -59,7 +69,7 @@ public final class FabricPlatform implements Platform {
 
     @Override
     public List<RecipeHolder<CookingPotRecipe>> cookingRecipes(Level level) {
-        return level.getRecipeManager().getAllRecipesFor(ModRecipeTypes.COOKING.get());
+        return KitchenRecipes.all(level, ModRecipeTypes.COOKING.get());
     }
 
     @Override
@@ -128,6 +138,7 @@ public final class FabricPlatform implements Platform {
     public void sendBoardDishes(ServerPlayer player) {
         if (player.connection != null && ServerPlayNetworking.canSend(player, BoardDishes.Payload.TYPE)) {
             ServerPlayNetworking.send(player, BoardDishes.payload());
+            ServerPlayNetworking.send(player, KitchenRecipes.payload(player.level()));
         }
     }
 

@@ -5,7 +5,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -50,11 +50,11 @@ public final class OvenBehavior implements StationBehavior {
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "flame", "flame_lit", "preview"};
     /** The parts the block's own model has too: drawn by the scene only while the block is hidden. */
     private static final String[] OVEN_PARTS = {"body", "door_left", "door_right", "tray_model"};
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
+    private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
     private static final SoundEvent OPEN_SOUND = SoundEvent.createVariableRangeEvent(
-            ResourceLocation.fromNamespaceAndPath(KitchenOven.MOD_ID, "block.oven.open"));
+            Identifier.fromNamespaceAndPath(KitchenOven.MOD_ID, "block.oven.open"));
     private static final SoundEvent CLOSE_SOUND = SoundEvent.createVariableRangeEvent(
-            ResourceLocation.fromNamespaceAndPath(KitchenOven.MOD_ID, "block.oven.close"));
+            Identifier.fromNamespaceAndPath(KitchenOven.MOD_ID, "block.oven.close"));
     /**
      * The door's two leaves swing open on their hinges at its sides, as gates, then the tray slides out between them; shutting,
      * the tray goes in first. Seconds each; how far the leaves turn, degrees; how far out the tray comes, pixels.
@@ -218,7 +218,7 @@ public final class OvenBehavior implements StationBehavior {
         // What the cook came with is what they meant to bake: a right click with food lays it on the tray, never slower.
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty() && usable(player.getMainHandItem())) {
-            lay(view, player.getInventory().selected);
+            lay(view, player.getInventory().getSelectedSlot());
         }
         refresh(view);
     }
@@ -566,10 +566,10 @@ public final class OvenBehavior implements StationBehavior {
             }
         }
         if (open && !wasOpening && before < 1.0F) {
-            view.playSound(OPEN_SOUND, "door_left", 0.5F, 0.95F + view.level().random.nextFloat() * 0.1F);
+            view.playSound(OPEN_SOUND, "door_left", 0.5F, 0.95F + view.level().getRandom().nextFloat() * 0.1F);
         }
         if (before > 0.0F && door <= 0.0F) {
-            view.playSound(CLOSE_SOUND, "door_left", 0.5F, 0.95F + view.level().random.nextFloat() * 0.1F);
+            view.playSound(CLOSE_SOUND, "door_left", 0.5F, 0.95F + view.level().getRandom().nextFloat() * 0.1F);
         }
         if (before < 1.0F && door >= 1.0F) {
             // The leaves come to rest on their hinges with a small knock of iron.
@@ -664,7 +664,7 @@ public final class OvenBehavior implements StationBehavior {
         boolean shown = cookHere && !dish.isEmpty();
         view.node("badge").ifPresent(plate -> plate.setVisible(shown));
         float progress = view.state().getControl(OvenStation.PROGRESS);
-        int left = view.state().data().getInt(OvenStation.LEFT);
+        int left = view.state().data().getIntOr(OvenStation.LEFT, 0);
         int seconds = baking && progress > 0.0F && left > 0 ? Math.max(1, Mth.ceil(left / 20.0F)) : 0;
         int bar = baking ? Math.round(progress * BAR_LENGTH) : ready ? BAR_LENGTH : 0;
         String text = seconds >= 60 ? seconds / 60 + ":" + String.format("%02d", seconds % 60) : seconds > 0 ? Integer.toString(seconds)

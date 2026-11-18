@@ -1,10 +1,12 @@
 package com.pockyl.handson_delight.mixin;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.RecipeBook;
 import net.minecraft.stats.ServerRecipeBook;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,6 +20,7 @@ import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The recipe book shows no sandwich: the crafting grid would not make it, it is put together on the cutting board. Farmer's
@@ -27,15 +30,22 @@ import java.util.List;
 @Mixin(ServerRecipeBook.class)
 abstract class ServerRecipeBookMixin extends RecipeBook {
     @Shadow
+    @Final
+    protected Set<ResourceKey<Recipe<?>>> known;
+
+    @Shadow
+    public abstract void remove(ResourceKey<Recipe<?>> id);
+
+    @Shadow
     public abstract int addRecipes(Collection<RecipeHolder<?>> recipes, ServerPlayer player);
 
     @Inject(method = "addRecipes", at = @At("HEAD"), cancellable = true)
     private void handson$notTheBoards(Collection<RecipeHolder<?>> recipes, ServerPlayer player, CallbackInfoReturnable<Integer> callback) {
-        if (!HandsOnConfig.removeCraftingRecipes() || !Platform.INSTANCE.hasBoard(player) || recipes.stream().noneMatch(recipe -> AssemblyRecipes.isMadeOnTheBoard(recipe.id()))) {
+        if (!HandsOnConfig.removeCraftingRecipes() || !Platform.INSTANCE.hasBoard(player) || recipes.stream().noneMatch(recipe -> AssemblyRecipes.isMadeOnTheBoard(recipe.id().identifier()))) {
             // A client without the mod crafts sandwiches in the grid, and its book shows them.
             return;
         }
-        callback.setReturnValue(addRecipes(recipes.stream().filter(recipe -> !AssemblyRecipes.isMadeOnTheBoard(recipe.id())).toList(), player));
+        callback.setReturnValue(addRecipes(recipes.stream().filter(recipe -> !AssemblyRecipes.isMadeOnTheBoard(recipe.id().identifier())).toList(), player));
     }
 
     /**
@@ -49,8 +59,8 @@ abstract class ServerRecipeBookMixin extends RecipeBook {
             return;
         }
         // A plain loop: a method reference to this would name the mixin class itself, which never exists at run time.
-        for (ResourceLocation id : List.copyOf(known)) {
-            if (AssemblyRecipes.isMadeOnTheBoard(id)) {
+        for (ResourceKey<Recipe<?>> id : List.copyOf(known)) {
+            if (AssemblyRecipes.isMadeOnTheBoard(id.identifier())) {
                 remove(id);
             }
         }

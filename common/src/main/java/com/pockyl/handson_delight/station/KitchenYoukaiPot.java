@@ -1,6 +1,6 @@
 package com.pockyl.handson_delight.station;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -26,14 +26,14 @@ public interface KitchenYoukaiPot {
     }
 
     /** A recipe of the pots: what goes in (in any order), the dish, the ticks it cooks over heat, and the pot it needs. */
-    record Dish(ResourceLocation id, ItemStack result, List<Ingredient> ingredients, int ticks, Item pot) {
+    record Dish(Identifier id, ItemStack result, List<Ingredient> ingredients, int ticks, Item pot) {
     }
 
     /**
      * The soup in the pot, client side: what it is now ({@code youkaisfeasts:water}, {@code soy_sauce}, {@code miso}, {@code cream},
      * {@code soul}: its soup bases), what it becomes as it cooks, and how far it has become that, 0 to 1.
      */
-    record Soup(ResourceLocation now, ResourceLocation next, float toNext) {
+    record Soup(Identifier now, Identifier next, float toNext) {
     }
 
     /**
@@ -73,7 +73,7 @@ public interface KitchenYoukaiPot {
     ItemStack handson$takeBack(Player player);
 
     /** The recipe cooking now, or null while what is in the pot is no whole recipe. */
-    ResourceLocation handson$cooking();
+    Identifier handson$cooking();
 
     /** How many ticks it has cooked, and how many it takes; 0 and 0 while nothing cooks. */
     int handson$cooked();

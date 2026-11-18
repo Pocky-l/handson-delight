@@ -9,7 +9,7 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.crafting.Ingredient;
 
@@ -118,7 +118,7 @@ final class AssemblyCategory implements IRecipeCategory<Assembly> {
     }
 
     @Override
-    public void draw(Assembly dish, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY) {
+    public void draw(Assembly dish, IRecipeSlotsView slots, GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
         board.draw(graphics, BOARD_X, BOARD_Y);
         arrow.draw(graphics, ARROW_X, ARROW_Y);
     }

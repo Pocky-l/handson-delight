@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -12,11 +12,13 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.KitchenPot;
@@ -38,7 +40,7 @@ public final class AlchemistPotTests {
     }
 
     private static Item fs(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(FarmersDelightContent.FARMERS_SPELL + ":" + path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.tryParse(FarmersDelightContent.FARMERS_SPELL + ":" + path));
     }
 
     /** An alchemist pot over {@code heat} (air: no fire), with the logic the station would make for it; null without Farmer's Spell. */
@@ -58,7 +60,7 @@ public final class AlchemistPotTests {
         return new Setup(station, new PotLogic(station), pot, scrolls);
     }
 
-    private static ItemStack scroll(Setup setup, ResourceLocation school) {
+    private static ItemStack scroll(Setup setup, Identifier school) {
         List<ItemStack> scrolls = setup.scrolls.handson$scrollsOf(school);
         return scrolls.isEmpty() ? ItemStack.EMPTY : scrolls.get(0).copy();
     }
@@ -84,9 +86,9 @@ public final class AlchemistPotTests {
         helper.assertTrue(!recipes.isEmpty() && setup.scrolls.handson$isOwnRecipe(recipes.get(0))
                 && recipes.stream().anyMatch(recipe -> !setup.scrolls.handson$isOwnRecipe(recipe)), "its own recipes, then Farmer's Delight's");
         helper.assertTrue(setup.pot.handson$findRecipe(helper.getLevel(), List.of(new ItemStack(fs("icy_egg"))))
-                .filter(recipe -> recipe.value().getResultItem(helper.getLevel().registryAccess()).is(fs("fired_ice_egg"))).isPresent(),
+                .filter(recipe -> RecipeParts.result(recipe.value()).is(fs("fired_ice_egg"))).isPresent(),
                 "an icy egg fires");
-        ItemStack tomatoes = new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("tomato")));
+        ItemStack tomatoes = new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("tomato")));
         helper.assertTrue(setup.pot.handson$findRecipe(helper.getLevel(), List.of(tomatoes.copy(), tomatoes.copy())).isPresent(),
                 "Farmer's Delight's tomato sauce cooks there too");
         helper.succeed();
@@ -176,7 +178,7 @@ public final class AlchemistPotTests {
         fill.putString(CookingPotStation.DISH, recipe.id().toString());
         setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_FILL, fill);
         helper.assertTrue(ScrollPot.HOLY.equals(setup.scrolls.handson$school()), "the holy scroll hangs");
-        helper.assertTrue(player.getInventory().items.stream().anyMatch(stack -> ScrollPot.ICE.equals(setup.scrolls.handson$schoolOf(stack))),
+        helper.assertTrue(player.getInventory().getNonEquipmentItems().stream().anyMatch(stack -> ScrollPot.ICE.equals(setup.scrolls.handson$schoolOf(stack))),
                 "the ice scroll is in the inventory");
         helper.assertTrue(setup.pot.handson$findRecipe(helper.getLevel(), List.of(setup.pot.handson$getItem(0), setup.pot.handson$getItem(1),
                 setup.pot.handson$getItem(2))).isPresent(), "and the food in the pot cooks now");
@@ -191,7 +193,7 @@ public final class AlchemistPotTests {
         }
         BlockPos above = new BlockPos(1, 3, 1);
         helper.setBlock(above, Blocks.HOPPER);
-        HopperBlockEntity hopper = (HopperBlockEntity) helper.getBlockEntity(above);
+        HopperBlockEntity hopper = helper.getBlockEntity(above, HopperBlockEntity.class);
         hopper.setItem(0, new ItemStack(fs("icy_egg"), 1));
         helper.runAfterDelay(260, () -> {
             // Served without a container, it goes straight to the served slot.

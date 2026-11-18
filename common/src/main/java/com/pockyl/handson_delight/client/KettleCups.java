@@ -1,6 +1,6 @@
 package com.pockyl.handson_delight.client;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -57,7 +57,7 @@ final class KettleCups {
     private static final class Cup {
         private final ItemStack vessel;
         private final ItemStack drink;
-        private final ResourceLocation liquid;
+        private final Identifier liquid;
         /** ARGB, the alpha how clear the drink is. */
         private final int color;
         private final boolean own;
@@ -73,7 +73,7 @@ final class KettleCups {
         private boolean filled;
         private Vector3f from;
 
-        private Cup(ItemStack vessel, ItemStack drink, ResourceLocation liquid, int color, boolean own, boolean fromHand, boolean toHand,
+        private Cup(ItemStack vessel, ItemStack drink, Identifier liquid, int color, boolean own, boolean fromHand, boolean toHand,
                 Pace pace) {
             this.vessel = vessel.copyWithCount(1);
             this.held = vessel.getCount();
@@ -136,7 +136,7 @@ final class KettleCups {
      * after. It comes from the hand ({@code fromHand}) or from the inventory; the drink goes back to the hand when the hand held only
      * that cup, else into the inventory.
      */
-    void pour(StationView view, ItemStack vessel, ItemStack drink, ResourceLocation liquid, int color, boolean fromHand, boolean all) {
+    void pour(StationView view, ItemStack vessel, ItemStack drink, Identifier liquid, int color, boolean fromHand, boolean all) {
         Pace pace = all && vessel.getCount() > 1 ? Pace.QUICK : Pace.ONE;
         waiting.add(new Cup(vessel, drink, liquid, color, true, fromHand, fromHand && vessel.getCount() == 1, pace));
         if (fromHand && view.isFocused() && !handHidden) {
@@ -149,7 +149,7 @@ final class KettleCups {
      * The kettle filled {@code count} of {@code vessel}: the cook's own cup that waits for it goes on, with more after it when
      * several were filled; a drink somebody else poured comes now.
      */
-    void served(ItemStack vessel, ItemStack drink, ResourceLocation liquid, int color, int count) {
+    void served(ItemStack vessel, ItemStack drink, Identifier liquid, int color, int count) {
         int drinks = Math.max(1, count);
         Cup own = unanswered();
         if (own != null) {
@@ -271,8 +271,8 @@ final class KettleCups {
             lean = LEAN * (1.0F - KitchenMotions.smooth(k * 1.3F));
             if (!cup.poured) {
                 cup.poured = true;
-                view.playSound(SoundEvents.BOTTLE_FILL, NODE, 0.55F, 1.05F + view.level().random.nextFloat() * 0.1F);
-                view.playSound(pace == Pace.QUICK ? POUR_QUICK : POUR, NODE, 0.35F, 1.35F + view.level().random.nextFloat() * 0.1F);
+                view.playSound(SoundEvents.BOTTLE_FILL, NODE, 0.55F, 1.05F + view.level().getRandom().nextFloat() * 0.1F);
+                view.playSound(pace == Pace.QUICK ? POUR_QUICK : POUR, NODE, 0.35F, 1.35F + view.level().getRandom().nextFloat() * 0.1F);
             }
             stream(view, running, held, cup.color, k);
             // Fast while the mug is empty, slower as the drink nears the rim.

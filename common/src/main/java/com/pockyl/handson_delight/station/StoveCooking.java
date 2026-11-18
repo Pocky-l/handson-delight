@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -18,7 +18,9 @@ import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
 import com.pockyl.diegesis.api.Diegesis;
 import com.pockyl.handson_delight.HandsOnConfig;
+import com.pockyl.handson_delight.ItemNbt;
 import com.pockyl.handson_delight.KitchenTags;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
@@ -115,9 +117,9 @@ public final class StoveCooking {
                 continue;
             }
             if (SkilletCooking.isOneSided(stack)) {
-                grill.grillThrough(place, 0.5F / sideTicks(recipe.get().getCookingTime(), HandsOnConfig.stoveTime()));
+                grill.grillThrough(place, 0.5F / sideTicks(recipe.get().cookingTime(), HandsOnConfig.stoveTime()));
             } else {
-                grill.grill(place, 1.0F / sideTicks(recipe.get().getCookingTime(), HandsOnConfig.stoveTime()));
+                grill.grill(place, 1.0F / sideTicks(recipe.get().cookingTime(), HandsOnConfig.stoveTime()));
             }
             if (grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
                 // Done on both sides: Farmer's Delight's own code cooks it this very tick (see beforeFarmersDelightCooks).
@@ -186,7 +188,7 @@ public final class StoveCooking {
         if (level == null || stack.isEmpty() || grill.ready(place) || grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
             return 1;
         }
-        return SkilletCooking.recipe(level, stack).map(CampfireCookingRecipe::getCookingTime).filter(time -> time > 0).orElse(1);
+        return SkilletCooking.recipe(level, stack).map(CampfireCookingRecipe::cookingTime).filter(time -> time > 0).orElse(1);
     }
 
     /** The drops of Farmer's Delight's cooking this tick are caught when the station has a piece in it; the slots as they were. */
@@ -255,7 +257,7 @@ public final class StoveCooking {
             return null;
         }
         ItemStack expected = level == null ? ItemStack.EMPTY : SkilletCooking.recipe(level, raw)
-                .map(recipe -> recipe.assemble(new SingleRecipeInput(raw.copyWithCount(1)), level.registryAccess())).orElse(ItemStack.EMPTY);
+                .map(recipe -> recipe.assemble(new SingleRecipeInput(raw.copyWithCount(1)))).orElse(ItemStack.EMPTY);
         for (int i = 0; i < drops.size(); i++) {
             if (drops.get(i).stack().is(expected.getItem())) {
                 return drops.remove(i);
@@ -277,7 +279,7 @@ public final class StoveCooking {
             ItemStack stack = Platform.INSTANCE.getItem(stove, place);
             Optional<CampfireCookingRecipe> recipe = level == null || stack.isEmpty() ? Optional.empty() : SkilletCooking.recipe(level, stack);
             if (recipe.isPresent()) {
-                grilled(stove, place, recipe.get().assemble(new SingleRecipeInput(stack.copyWithCount(1)), level.registryAccess()));
+                grilled(stove, place, recipe.get().assemble(new SingleRecipeInput(stack.copyWithCount(1))));
             } else {
                 grill(stove).done(place);
             }
@@ -292,7 +294,7 @@ public final class StoveCooking {
         ((StoveTop) stove).handson$times()[place] = Integer.MAX_VALUE;
         CompoundTag data = new CompoundTag();
         data.putInt(StoveStation.PLACE, place);
-        data.put(StoveStation.STACK, done.saveOptional(stove.getLevel().registryAccess()));
+        data.put(StoveStation.STACK, ItemNbt.save(done, stove.getLevel().registryAccess()));
         effect(stove, StoveStation.EFFECT_GRILLED, data);
     }
 
@@ -385,7 +387,7 @@ public final class StoveCooking {
      * every item falls through (a fried egg) gives {@link Ingredient#EMPTY}.
      */
     public static Ingredient grillable(Ingredient ingredient) {
-        ItemStack[] items = ingredient.getItems();
+        ItemStack[] items = RecipeParts.items(ingredient);
         List<ItemStack> kept = new ArrayList<>();
         for (ItemStack item : items) {
             if (!item.is(KitchenTags.NOT_ON_GRILL)) {
@@ -395,7 +397,7 @@ public final class StoveCooking {
         if (kept.size() == items.length) {
             return ingredient;
         }
-        return kept.isEmpty() ? Ingredient.EMPTY : Ingredient.of(kept.stream());
+        return kept.isEmpty() ? RecipeParts.NOTHING : Ingredient.of(kept.stream().map(ItemStack::getItem));
     }
 
     /**
@@ -418,7 +420,7 @@ public final class StoveCooking {
         }
     }
 
-    private static void effect(AbstractStoveBlockEntity stove, ResourceLocation effect, CompoundTag data) {
+    private static void effect(AbstractStoveBlockEntity stove, Identifier effect, CompoundTag data) {
         if (stove.getLevel() instanceof ServerLevel server) {
             Diegesis.activeStation(server, stove.getBlockPos()).ifPresent(station -> station.effect(effect, "grill", data));
         }

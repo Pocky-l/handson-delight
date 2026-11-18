@@ -2,13 +2,14 @@ package com.pockyl.handson_delight.client;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import com.pockyl.diegesis.api.client.DiegesisClient;
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.client.LiquidLook;
 import com.pockyl.diegesis.api.client.ParticleStyle;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.assembly.BoardDishes;
 import com.pockyl.handson_delight.station.BasinStation;
 import com.pockyl.handson_delight.station.CookingPotStation;
@@ -30,15 +31,15 @@ import java.util.List;
 
 /** Client setup; only loaded on clients. */
 public final class HandsOnDelightClient {
-    public static final ResourceLocation OIL_POP = HandsOnDelight.id("oil_pop");
-    public static final ResourceLocation FAT = HandsOnDelight.id("fat");
-    public static final ResourceLocation PAN_SMOKE = HandsOnDelight.id("pan_smoke");
+    public static final Identifier OIL_POP = HandsOnDelight.id("oil_pop");
+    public static final Identifier FAT = HandsOnDelight.id("fat");
+    public static final Identifier PAN_SMOKE = HandsOnDelight.id("pan_smoke");
     /** A campfire's flame under a pot heated by a fire scroll: the game's flame, as big as a campfire's, glowing. */
-    public static final ResourceLocation SCROLL_FLAME = HandsOnDelight.id("scroll_flame");
-    public static final ResourceLocation HEAT = HandsOnDelight.id("heat");
-    public static final ResourceLocation GRAIN = HandsOnDelight.id("grain");
+    public static final Identifier SCROLL_FLAME = HandsOnDelight.id("scroll_flame");
+    public static final Identifier HEAT = HandsOnDelight.id("heat");
+    public static final Identifier GRAIN = HandsOnDelight.id("grain");
     @SuppressWarnings("removal")
-    private static final ResourceLocation DIEGESIS_BUBBLE = ResourceLocation.fromNamespaceAndPath("diegesis", "bubble");
+    private static final Identifier DIEGESIS_BUBBLE = Identifier.fromNamespaceAndPath("diegesis", "bubble");
 
     private HandsOnDelightClient() {
     }
@@ -62,7 +63,7 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerLiquid(VatLogic.BREW_LIQUID, LiquidLook.of(0xD0B8D8F0));
         // Ice cream in the vat: opaque, grainy as snow, so thick that it hardly moves.
         DiegesisClient.registerLiquid(VatLogic.CREAM_LIQUID,
-                new LiquidLook(0xFFF6EEDC, ResourceLocation.withDefaultNamespace("block/snow"), false, 0.95F));
+                new LiquidLook(0xFFF6EEDC, Identifier.withDefaultNamespace("block/snow"), false, 0.95F));
         DiegesisClient.registerBehavior(CuisineBoardStation.ID, CuisineBehavior::new);
         DiegesisClient.registerLiquid(YoukaiPotBehavior.SOUP_LIQUID, LiquidLook.of(0x96FFFFFF));
         DiegesisClient.registerBehavior(YoukaiPotStation.SMALL_ID, view -> new YoukaiPotBehavior(view, YoukaiPotBehavior.Size.SMALL));
@@ -76,8 +77,8 @@ public final class HandsOnDelightClient {
         registerParticles();
     }
 
-    private static List<ResourceLocation> frames(String base, int count) {
-        List<ResourceLocation> frames = new ArrayList<>();
+    private static List<Identifier> frames(String base, int count) {
+        List<Identifier> frames = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             frames.add(HandsOnDelight.id(base + "_" + i));
         }
@@ -87,26 +88,26 @@ public final class HandsOnDelightClient {
     /** The skillet's heat: oil seething round the food, fat spitting off it, smoke of a side that waits, shimmer over the hot pan. */
     @SuppressWarnings("removal")
     private static void registerParticles() {
-        List<ResourceLocation> popping = new ArrayList<>(List.of(DIEGESIS_BUBBLE, DIEGESIS_BUBBLE));
+        List<Identifier> popping = new ArrayList<>(List.of(DIEGESIS_BUBBLE, DIEGESIS_BUBBLE));
         for (int i = 0; i < 5; i++) {
-            popping.add(ResourceLocation.fromNamespaceAndPath("diegesis", "bubble_pop_" + i));
+            popping.add(Identifier.fromNamespaceAndPath("diegesis", "bubble_pop_" + i));
         }
         DiegesisClient.registerParticle(OIL_POP, ParticleStyle.builder(popping).color(0xE6F7C27A).size(0.8F, 1.3F).life(0.25F, 0.5F)
                 .drag(1.0F).grow(0.4F).pop().build());
-        DiegesisClient.registerParticle(FAT, ParticleStyle.builder(ResourceLocation.fromNamespaceAndPath("minecraft", "drip_fall")).color(0xFFFFE7A8)
+        DiegesisClient.registerParticle(FAT, ParticleStyle.builder(Identifier.fromNamespaceAndPath("minecraft", "drip_fall")).color(0xFFFFE7A8)
                 .size(0.3F, 0.45F).life(0.3F, 0.6F).gravity(75.0F).drag(0.05F).stretch().pop().build());
-        List<ResourceLocation> steam = new ArrayList<>();
+        List<Identifier> steam = new ArrayList<>();
         for (int i = 0; i < 12; i++) {
-            steam.add(ResourceLocation.fromNamespaceAndPath("diegesis", "steam_" + i));
+            steam.add(Identifier.fromNamespaceAndPath("diegesis", "steam_" + i));
         }
         DiegesisClient.registerParticle(PAN_SMOKE, ParticleStyle.builder(steam).color(0x58C8C6C2).size(1.8F, 2.6F).life(1.6F, 2.4F)
                 .gravity(-4.0F).drag(0.75F).grow(3.0F).wobble(1.0F).fadeIn(0.3F).build());
         DiegesisClient.registerParticle(HEAT, ParticleStyle.builder(frames("heat", 4)).color(0x48FFFFFF)
                 .size(3.0F, 4.0F).life(0.8F, 1.3F).gravity(-5.0F).drag(0.6F).grow(0.4F).wobble(0.3F).fadeIn(0.4F).build());
-        DiegesisClient.registerParticle(SCROLL_FLAME, ParticleStyle.builder(ResourceLocation.withDefaultNamespace("flame")).color(0xFFFFFFFF)
+        DiegesisClient.registerParticle(SCROLL_FLAME, ParticleStyle.builder(Identifier.withDefaultNamespace("flame")).color(0xFFFFFFFF)
                 .size(1.6F, 2.4F).life(0.35F, 0.6F).gravity(-6.0F).drag(0.8F).emissive().grow(0.35F).wobble(0.2F).build());
         // Sugar, cocoa and the like shaken out over a pot: fine grains that fall straight and are gone in the soup.
-        DiegesisClient.registerParticle(GRAIN, ParticleStyle.builder(ResourceLocation.withDefaultNamespace("generic_0")).color(0xFFFFFFFF)
+        DiegesisClient.registerParticle(GRAIN, ParticleStyle.builder(Identifier.withDefaultNamespace("generic_0")).color(0xFFFFFFFF)
                 .size(0.28F, 0.42F).life(0.35F, 0.6F).gravity(55.0F).drag(0.2F).pop().build());
     }
 
@@ -116,6 +117,7 @@ public final class HandsOnDelightClient {
      */
     public static void loggedOut() {
         BoardDishes.clear();
+        KitchenRecipes.clear();
         BoardBook.received(new ListTag());
     }
 

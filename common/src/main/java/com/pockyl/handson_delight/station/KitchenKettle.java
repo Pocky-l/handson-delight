@@ -1,6 +1,6 @@
 package com.pockyl.handson_delight.station;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
@@ -148,6 +148,6 @@ public interface KitchenKettle {
      * A brewing recipe: one to four ingredients steeped in a base liquid ({@code baseAmount} millibuckets of it, a whole kettle) over
      * heat for a time (once it boils, for a kettle that boils its water first); the base becomes the result liquid.
      */
-    record Brewing(ResourceLocation id, List<Ingredient> ingredients, Fluid base, int baseAmount, Fluid result, int ticks) {
+    record Brewing(Identifier id, List<Ingredient> ingredients, Fluid base, int baseAmount, Fluid result, int ticks) {
     }
 }

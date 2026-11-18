@@ -1,11 +1,12 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -16,6 +17,7 @@ import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.handson_delight.CookingTimes;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.KitchenPot;
 import com.pockyl.handson_delight.station.PotLogic;
@@ -54,11 +56,11 @@ final class PotBook implements RecipeBook.Source {
                 // Made of whatever lies in the pot (Modest Meals' meals): no list to show, nothing to fill the pot with.
                 continue;
             }
-            List<Ingredient> ingredients = recipe.getIngredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
+            List<Ingredient> ingredients = RecipeParts.ingredients(recipe).stream().filter(ingredient -> !ingredient.isEmpty()).toList();
             if (ingredients.size() > slots) {
                 continue;
             }
-            ResourceLocation school = scrolls == null ? null : scrolls.handson$schoolFor(recipe);
+            Identifier school = scrolls == null ? null : scrolls.handson$schoolFor(recipe);
             if (school != null) {
                 ingredients = new ArrayList<>(ingredients);
                 ingredients.add(scrolls.handson$scrollIngredient(school));
@@ -72,7 +74,7 @@ final class PotBook implements RecipeBook.Source {
             Component seconds = Component.translatable("handson_delight.book.seconds",
                     Math.round(recipe.getCookTime() * CookingTimes.cookingPot() / 20.0F / PotLogic.speed(1)));
             String kind = scrolls == null ? null : scrolls.handson$isOwnRecipe(recipe) ? OWN : FARMERS_DELIGHT;
-            pages.add(new RecipeBook.Page(holder.id(), KitchenPot.resultOf(pot, recipe, level.registryAccess()), ingredients, foot, seconds,
+            pages.add(new RecipeBook.Page(holder.id().identifier(), KitchenPot.resultOf(pot, recipe, level.registryAccess()), ingredients, foot, seconds,
                     true, kind));
         }
         return pages;
@@ -83,7 +85,7 @@ final class PotBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(CookingPotStation.DISH, page.key().toString());
-        fill.putBoolean(CookingPotStation.SCOOP_ALL, Screen.hasShiftDown());
+        fill.putBoolean(CookingPotStation.SCOOP_ALL, Minecraft.getInstance().hasShiftDown());
         view.sendAction(CookingPotStation.ACTION_FILL, fill);
     }
 
@@ -95,7 +97,7 @@ final class PotBook implements RecipeBook.Source {
         }
         return List.of(new RecipeBook.Tab(null, new ItemStack(Items.COMPASS)),
                 new RecipeBook.Tab(OWN, new ItemStack(FarmersDelightContent.ALCHEMIST_POT.get())),
-                new RecipeBook.Tab(FARMERS_DELIGHT, new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("cooking_pot")))));
+                new RecipeBook.Tab(FARMERS_DELIGHT, new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("cooking_pot")))));
     }
 
     @Override

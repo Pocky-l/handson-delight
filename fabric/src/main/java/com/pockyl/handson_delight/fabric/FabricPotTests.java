@@ -1,15 +1,15 @@
 package com.pockyl.handson_delight.fabric;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.gametest.framework.GameTest;
+import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
-import vectorwing.farmersdelight.client.recipebook.CookingPotRecipeBookTab;
+import vectorwing.farmersdelight.common.crafting.CookingPotBookCategory;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 import vectorwing.farmersdelight.refabricated.inventory.RecipeWrapper;
 
@@ -17,221 +17,223 @@ import com.pockyl.handson_delight.gametest.PotTests;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /** {@link PotTests} on Fabric: they run when the game starts with {@code -Dfabric-api.gametest}. */
-public final class FabricPotTests implements FabricGameTest {
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+public final class FabricPotTests {
+    @GameTest(maxTicks = 100)
     public void whatWentInWithoutFloatingComesBackOut(GameTestHelper helper) {
         PotTests.whatWentInWithoutFloatingComesBackOut(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void slotsAreThePotsOwn(GameTestHelper helper) {
         PotTests.slotsAreThePotsOwn(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void theMealStaysInThePot(GameTestHelper helper) {
         PotTests.theMealStaysInThePot(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void aBowlClickedOnTheSoupFills(GameTestHelper helper) {
         PotTests.aBowlClickedOnTheSoupFills(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void anEmptyHandScoopsWithBowlsFromTheInventory(GameTestHelper helper) {
         PotTests.anEmptyHandScoopsWithBowlsFromTheInventory(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void milkAskedForAsFoodIsMilk(GameTestHelper helper) {
         PotTests.milkAskedForAsFoodIsMilk(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void twoAlikeThrownInMakeTheirDish(GameTestHelper helper) {
         PotTests.twoAlikeThrownInMakeTheirDish(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void aFullPotTakesWhatItsDishStillReads(GameTestHelper helper) {
         PotTests.aFullPotTakesWhatItsDishStillReads(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void theFullerDishOnceItsLastIngredientIsIn(GameTestHelper helper) {
         PotTests.theFullerDishOnceItsLastIngredientIsIn(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void aTagTakesWhatTheOtherIngredientsLeave(GameTestHelper helper) {
         PotTests.aTagTakesWhatTheOtherIngredientsLeave(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void theBookKeepsThePickedDish(GameTestHelper helper) {
         PotTests.theBookKeepsThePickedDish(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void aDishNobodyCanMakeIsNotOffered(GameTestHelper helper) {
         PotTests.aDishNobodyCanMakeIsNotOffered(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void everyDishFromItsFoodThrownIn(GameTestHelper helper) {
         PotTests.everyDishFromItsFoodThrownIn(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void aStackIsSharedOutForARecipeOfTwoAlike(GameTestHelper helper) {
         PotTests.aStackIsSharedOutForARecipeOfTwoAlike(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void dishesStayOutOfTheWater(GameTestHelper helper) {
         PotTests.dishesStayOutOfTheWater(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void shiftFillsTheWholeStack(GameTestHelper helper) {
         PotTests.shiftFillsTheWholeStack(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 340)
+    @GameTest(maxTicks = 340)
     public void theWholeBatchCooksAtOnce(GameTestHelper helper) {
         PotTests.theWholeBatchCooksAtOnce(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void theCooksClockJudgesThePace(GameTestHelper helper) {
         PotTests.theCooksClockJudgesThePace(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void aFloodOfStrokesFillsNoFaster(GameTestHelper helper) {
         PotTests.aFloodOfStrokesFillsNoFaster(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void theBookFillsThePot(GameTestHelper helper) {
         PotTests.theBookFillsThePot(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    @GameTest(maxTicks = 100)
     public void aBonusIsCarriedOn(GameTestHelper helper) {
         PotTests.aBonusIsCarriedOn(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 400)
+    @GameTest(maxTicks = 400)
     public void theSetsSavedGoBack(GameTestHelper helper) {
         PotTests.theSetsSavedGoBack(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 450)
+    @GameTest(maxTicks = 450)
     public void theSetsSavedStayWhenTheCookLeft(GameTestHelper helper) {
         PotTests.theSetsSavedStayWhenTheCookLeft(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 500)
+    @GameTest(maxTicks = 500)
     public void theEmptiedContainerGoesToTheCook(GameTestHelper helper) {
         PotTests.theEmptiedContainerGoesToTheCook(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 360)
+    @GameTest(maxTicks = 360)
     public void aPotLeftByItsCookCooksOn(GameTestHelper helper) {
         PotTests.aPotLeftByItsCookCooksOn(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 260)
+    @GameTest(maxTicks = 260)
     public void aCookWhoKnowsTheDishGetsMore(GameTestHelper helper) {
         PotTests.aCookWhoKnowsTheDishGetsMore(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 260)
+    @GameTest(maxTicks = 260)
     public void theFirstTimeHasOneStar(GameTestHelper helper) {
         PotTests.theFirstTimeHasOneStar(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void onlyGoodStirringEarnsStars(GameTestHelper helper) {
         PotTests.onlyGoodStirringEarnsStars(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 200)
+    @GameTest(maxTicks = 200)
     public void nothingCooksWithoutStirring(GameTestHelper helper) {
         PotTests.nothingCooksWithoutStirring(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void theStationReadsHeat(GameTestHelper helper) {
         PotTests.theStationReadsHeat(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 220)
+    @GameTest(maxTicks = 220)
     public void theSmallestStackSetsTheBatch(GameTestHelper helper) {
         PotTests.theSmallestStackSetsTheBatch(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 300)
+    @GameTest(maxTicks = 300)
     public void aHopperFedPotCooksByItself(GameTestHelper helper) {
         PotTests.aHopperFedPotCooksByItself(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 300)
+    @GameTest(maxTicks = 300)
     public void aHopperFeedsThePotByItselfBesideACook(GameTestHelper helper) {
         PotTests.aHopperFeedsThePotByItselfBesideACook(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 60)
+    @GameTest(maxTicks = 60)
     public void oneSpoonOneHand(GameTestHelper helper) {
         PotTests.oneSpoonOneHand(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void aServingTakenByHandCounts(GameTestHelper helper) {
         PotTests.aServingTakenByHandCounts(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 160)
+    @GameTest(maxTicks = 160)
     public void aModdedRecipeCooksAsABatch(GameTestHelper helper) {
         PotTests.aModdedRecipeCooksAsABatch(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 160)
+    @GameTest(maxTicks = 160)
     public void aMealOfWhatLiesThereCooksAsABatch(GameTestHelper helper) {
         PotTests.aMealOfWhatLiesThereCooksAsABatch(helper, MealOfWhatLiesThere::new);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 220)
+    @GameTest(maxTicks = 220)
     public void aDishWithoutAContainerComesOutWhole(GameTestHelper helper) {
         PotTests.aDishWithoutAContainerComesOutWhole(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 320)
+    @GameTest(maxTicks = 320)
     public void moreRiceThanAStackStillCooks(GameTestHelper helper) {
         PotTests.moreRiceThanAStackStillCooks(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 200)
+    @GameTest(maxTicks = 200)
     public void riceAddedWhileCookingKeepsTheProgress(GameTestHelper helper) {
         PotTests.riceAddedWhileCookingKeepsTheProgress(helper);
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    @GameTest(maxTicks = 100)
     public void theCookingTimeFollowsTheConfig(GameTestHelper helper) {
         PotTests.theCookingTimeFollowsTheConfig(helper);
     }
 
     /** {@link PotTests.MealMaker}'s meal of what lies in the pot on Fabric. */
     private static final class MealOfWhatLiesThere extends CookingPotRecipe {
-        private final NonNullList<Ingredient> inputs;
+        private final List<Ingredient> inputs;
         private final ItemStack plain;
 
-        MealOfWhatLiesThere(NonNullList<Ingredient> inputs, ItemStack made, ItemStack plain) {
-            super("", CookingPotRecipeBookTab.MEALS, inputs, made, new ItemStack(Items.BOWL), 0.1F, 40);
+        MealOfWhatLiesThere(List<Ingredient> inputs, ItemStack made, ItemStack plain) {
+            super("", CookingPotBookCategory.MEALS, inputs, ItemStackTemplate.fromNonEmptyStack(made),
+                    Optional.of(new ItemStackTemplate(Items.BOWL)), 0.1F, 40);
             this.inputs = inputs;
             this.plain = plain;
         }
@@ -249,13 +251,13 @@ public final class FabricPotTests implements FabricGameTest {
         }
 
         @Override
-        public NonNullList<Ingredient> getIngredients() {
-            return NonNullList.create();
+        public List<Ingredient> input() {
+            return List.of();
         }
 
         @Override
-        public ItemStack getResultItem(HolderLookup.Provider registries) {
-            return plain;
+        public ItemStackTemplate result() {
+            return ItemStackTemplate.fromNonEmptyStack(plain);
         }
     }
 }

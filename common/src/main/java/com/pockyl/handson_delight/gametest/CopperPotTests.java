@@ -4,16 +4,18 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.KitchenPot;
@@ -24,7 +26,7 @@ import com.pockyl.handson_delight.station.PotLogic;
  * copper cups, two to a serving. Each test passes at once where Miner's Delight is not there.
  */
 public final class CopperPotTests {
-    private static final ResourceLocation CUP = ResourceLocation.fromNamespaceAndPath(FarmersDelightContent.MINERS_DELIGHT, "copper_cup");
+    private static final Identifier CUP = Identifier.fromNamespaceAndPath(FarmersDelightContent.MINERS_DELIGHT, "copper_cup");
 
     private CopperPotTests() {
     }
@@ -59,7 +61,7 @@ public final class CopperPotTests {
         setup.pot.handson$setItem(6, new ItemStack(Items.BOWL));
         helper.assertTrue(setup.station.state().getItem(CookingPotStation.SERVED_SLOT).is(Items.BOWL), "served is the pot's output slot");
         helper.assertFalse(setup.logic.mayPlace(setup.station, helper.makeMockPlayer(GameType.CREATIVE), SlotRef.of(CookingPotStation.INGREDIENTS, 0),
-                new ItemStack(BuiltInRegistries.ITEM.get(CUP))), "a copper cup does not go into the soup");
+                new ItemStack(BuiltInRegistries.ITEM.getValue(CUP))), "a copper cup does not go into the soup");
         helper.succeed();
     }
 
@@ -80,7 +82,7 @@ public final class CopperPotTests {
             helper.assertTrue(meal.getCount() == 4, "both servings come out together, two cups each, got " + meal);
             helper.assertTrue(BuiltInRegistries.ITEM.getKey(meal.getItem()).getPath().endsWith("_cup"), "a stew in a copper cup, got " + meal);
             helper.assertTrue(setup.pot.handson$getItem(0).isEmpty(), "out of all the ingredients");
-            helper.assertTrue(setup.pot.handson$isContainerValid(new ItemStack(BuiltInRegistries.ITEM.get(CUP))), "served in copper cups");
+            helper.assertTrue(setup.pot.handson$isContainerValid(new ItemStack(BuiltInRegistries.ITEM.getValue(CUP))), "served in copper cups");
             helper.succeed();
         });
     }
@@ -93,7 +95,7 @@ public final class CopperPotTests {
         }
         BlockPos above = new BlockPos(1, 3, 1);
         helper.setBlock(above, Blocks.HOPPER);
-        HopperBlockEntity hopper = (HopperBlockEntity) helper.getBlockEntity(above);
+        HopperBlockEntity hopper = helper.getBlockEntity(above, HopperBlockEntity.class);
         hopper.setItem(0, new ItemStack(Items.BEEF, 1));
         hopper.setItem(1, new ItemStack(Items.CARROT, 1));
         hopper.setItem(2, new ItemStack(Items.POTATO, 1));
@@ -112,15 +114,15 @@ public final class CopperPotTests {
         }
         Player player = helper.makeMockPlayer(GameType.CREATIVE);
         var big = Platform.INSTANCE.cookingRecipes(helper.getLevel()).stream()
-                .filter(recipe -> recipe.value().getIngredients().stream().filter(ingredient -> !ingredient.isEmpty()).count() > 4).findFirst();
+                .filter(recipe -> RecipeParts.ingredients(recipe.value()).stream().filter(ingredient -> !ingredient.isEmpty()).count() > 4).findFirst();
         if (big.isEmpty()) {
             helper.succeed();
             return;
         }
         int slot = 0;
-        for (var ingredient : big.get().value().getIngredients()) {
-            if (!ingredient.isEmpty() && ingredient.getItems().length > 0) {
-                player.getInventory().setItem(slot++, ingredient.getItems()[0].copyWithCount(4));
+        for (var ingredient : RecipeParts.ingredients(big.get().value())) {
+            if (!ingredient.isEmpty() && RecipeParts.items(ingredient).length > 0) {
+                player.getInventory().setItem(slot++, RecipeParts.items(ingredient)[0].copyWithCount(4));
             }
         }
         CompoundTag fill = new CompoundTag();

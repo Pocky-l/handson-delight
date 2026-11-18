@@ -2,17 +2,15 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShearsItem;
-import net.minecraft.world.item.TieredItem;
 import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.CakeBlock;
@@ -21,9 +19,10 @@ import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.KitchenTags;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
-import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
@@ -47,7 +46,8 @@ public final class Cutting {
      * Per recipe manager: the client's and the server's of a single-player game are two. Read again when the manager's map of
      * recipes is a new one (a reload, a server's recipes): looked up every frame at the board, so never built anew in between.
      */
-    private static final Map<RecipeManager, Cached> CACHE = new WeakHashMap<>();
+    /** By what the recipes come from ({@link KitchenRecipes#source}): the server's and a client's apart. */
+    private static final Map<Object, Cached> CACHE = new WeakHashMap<>();
 
     private Cutting() {
     }
@@ -71,23 +71,22 @@ public final class Cutting {
     }
 
     private static Cached cached(Level level) {
-        return cached(level.getRecipeManager(), level);
+        return cached(KitchenRecipes.source(level), KitchenRecipes.byName(level), level);
     }
 
-    /** The cutting recipes of {@code manager}, which need not be the level's: a test reads them as a client would. */
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Cached cached(RecipeManager manager, Level level) {
-        Map<?, ?> recipes = ((RecipeManagerAccessor) manager).handson$byName();
+    /** The cutting recipes among {@code recipes}, which need not be the level's (a test reads them as a client would), kept by source. */
+    private static Cached cached(Object source, Map<Identifier, RecipeHolder<?>> recipes, Level level) {
         synchronized (CACHE) {
-            Cached cached = CACHE.get(manager);
+            Cached cached = CACHE.get(source);
             if (cached == null || cached.from() != recipes) {
                 List<CuttingBoardRecipe> everything = new ArrayList<>();
-                Map<CuttingBoardRecipe, ResourceLocation> ids = new IdentityHashMap<>();
-                List<RecipeHolder<?>> found = manager.getAllRecipesFor((RecipeType) FarmersDelightContent.CUTTING.get());
-                for (RecipeHolder<?> holder : found) {
-                    if (holder.value() instanceof CuttingBoardRecipe cutting && !cutting.getIngredients().isEmpty()) {
+                Map<CuttingBoardRecipe, Identifier> ids = new IdentityHashMap<>();
+                RecipeType<?> cuttingType = FarmersDelightContent.CUTTING.get();
+                for (RecipeHolder<?> holder : recipes.values()) {
+                    if (holder.value().getType() == cuttingType && holder.value() instanceof CuttingBoardRecipe cutting
+                            && !cutting.getInput().isEmpty()) {
                         everything.add(cutting);
-                        ids.put(cutting, holder.id());
+                        ids.put(cutting, holder.id().identifier());
                     }
                 }
                 everything.sort(Comparator.comparing(ids::get));
@@ -95,7 +94,7 @@ public final class Cutting {
                 List<CuttingBoardRecipe> ordered = new ArrayList<>(everything.stream().filter(recipe -> isCooking(recipe, pot)).toList());
                 everything.stream().filter(recipe -> !ordered.contains(recipe)).forEach(ordered::add);
                 cached = new Cached(recipes, List.copyOf(everything), List.copyOf(ordered), ids);
-                CACHE.put(manager, cached);
+                CACHE.put(source, cached);
             }
             return cached;
         }
@@ -107,32 +106,32 @@ public final class Cutting {
      * of its kebabs). Cooking comes first in the board's book.
      */
     public static boolean isCooking(CuttingBoardRecipe recipe, List<CookingPotRecipe> pot) {
-        for (ItemStack input : recipe.getIngredients().get(0).getItems()) {
+        for (ItemStack input : RecipeParts.items(RecipeParts.ingredients(recipe).get(0))) {
             if (input.has(DataComponents.FOOD)) {
                 return true;
             }
         }
-        List<ItemStack> results = recipe.getResults();
+        List<ItemStack> results = RecipeParts.results(recipe);
         for (ItemStack result : results) {
-            if (result.has(DataComponents.FOOD) || pot.stream().anyMatch(cooking -> cooking.getIngredients().stream().anyMatch(in -> in.test(result)))) {
+            if (result.has(DataComponents.FOOD) || pot.stream().anyMatch(cooking -> RecipeParts.ingredients(cooking).stream().anyMatch(in -> in.test(result)))) {
                 return true;
             }
         }
         // A knife that cuts something into nothing but what the pot serves on makes skewers. A bush cut into sticks with an axe, a
         // basket taken apart into canvas and a stick, a plant cut into a stick and gunpowder are no cooking, though a stick holds a
         // marshmallow from the pot.
-        ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")));
+        ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("iron_knife")));
         return !results.isEmpty() && tool(recipe).test(knife) && results.stream().allMatch(result -> pot.stream()
-                .map(CookingPotRecipe::getOutputContainer).anyMatch(container -> !container.isEmpty() && container.is(result.getItem())));
+                .map(RecipeParts::container).anyMatch(container -> !container.isEmpty() && container.is(result.getItem())));
     }
 
     /** The cutting recipes read from a recipe manager's map of recipes, as long as the map is the same one. */
     private record Cached(Map<?, ?> from, List<CuttingBoardRecipe> everything, List<CuttingBoardRecipe> ordered,
-                          Map<CuttingBoardRecipe, ResourceLocation> ids) {
+                          Map<CuttingBoardRecipe, Identifier> ids) {
     }
 
     /** The id {@code recipe} is known by, now that a recipe holds none of its own. */
-    public static ResourceLocation id(Level level, CuttingBoardRecipe recipe) {
+    public static Identifier id(Level level, CuttingBoardRecipe recipe) {
         return cached(level).ids().get(recipe);
     }
 
@@ -143,7 +142,7 @@ public final class Cutting {
     private static List<CuttingBoardRecipe> recipesFor(List<CuttingBoardRecipe> all, ItemStack item) {
         List<CuttingBoardRecipe> found = new ArrayList<>();
         if (!item.isEmpty()) {
-            all.stream().filter(recipe -> recipe.getIngredients().get(0).test(item)).forEach(found::add);
+            all.stream().filter(recipe -> RecipeParts.ingredients(recipe).get(0).test(item)).forEach(found::add);
         }
         return found;
     }
@@ -168,18 +167,18 @@ public final class Cutting {
     }
 
     public static Plan plan(Level level, ItemStack item) {
-        return plan(level.getRecipeManager(), level, item);
+        return plan(KitchenRecipes.source(level), KitchenRecipes.byName(level), level, item);
     }
 
-    /** {@link #plan(Level, ItemStack)} by the recipes of {@code manager}: a test plans as a client would. */
-    public static Plan plan(RecipeManager manager, Level level, ItemStack item) {
+    /** {@link #plan(Level, ItemStack)} by {@code recipes}, which {@code source} stands for: a test plans as a client would. */
+    public static Plan plan(Object source, Map<Identifier, RecipeHolder<?>> recipes, Level level, ItemStack item) {
         Style style = item.is(KitchenTags.CUT_IN_WEDGES) || isRound(item) ? Style.WEDGES
                 : item.is(KitchenTags.CUT_IN_STRIPS) ? Style.STRIPS
                 : item.is(KitchenTags.SLICED_STRAIGHT) ? Style.STRAIGHT : Style.ACROSS;
         if (style == Style.STRIPS) {
             return new Plan(STRIPS, style);
         }
-        int pieces = recipesFor(cached(manager, level).ordered(), item).stream().findFirst().map(Cutting::pieces).orElse(2);
+        int pieces = recipesFor(cached(source, recipes, level).ordered(), item).stream().findFirst().map(Cutting::pieces).orElse(2);
         // n cuts across make n + 1 pieces; n cuts through the middle make 2n wedges.
         int marks = style == Style.WEDGES ? (pieces + 1) / 2 : pieces - 1;
         return new Plan(Mth.clamp(marks, 1, MOST_MARKS), style);
@@ -192,7 +191,7 @@ public final class Cutting {
 
     /** What an item falls into: the main result as many as it gives, and one piece for each thing besides (the bone of a ham). */
     static int pieces(CuttingBoardRecipe recipe) {
-        List<ItemStack> results = recipe.getResults();
+        List<ItemStack> results = RecipeParts.results(recipe);
         if (results.isEmpty()) {
             return 2;
         }
@@ -206,8 +205,8 @@ public final class Cutting {
     public static int toolSlot(Level level, ItemStack item, Inventory inventory) {
         // The item's cuts are looked up once, not once a slot: the board offers the knife every frame.
         List<CuttingBoardRecipe> recipes = recipesFor(level, item);
-        if (findWith(recipes, inventory.getSelected()).isPresent()) {
-            return inventory.selected;
+        if (findWith(recipes, inventory.getSelectedItem()).isPresent()) {
+            return inventory.getSelectedSlot();
         }
         if (findWith(recipes, inventory.getItem(Inventory.SLOT_OFFHAND)).isPresent()) {
             return Inventory.SLOT_OFFHAND;
@@ -225,7 +224,7 @@ public final class Cutting {
      * a sword, an axe), a trident or shears.
      */
     public static boolean canStick(ItemStack item) {
-        return item.getItem() instanceof TieredItem || item.getItem() instanceof TridentItem || item.getItem() instanceof ShearsItem;
+        return item.has(DataComponents.TOOL) || item.getItem() instanceof TridentItem || item.getItem() instanceof ShearsItem;
     }
 
     /** Whether {@code item} is what some cutting recipe cuts with: a knife, an axe, an addon's rolling pin. */

@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -31,11 +31,11 @@ import java.util.function.Supplier;
  */
 public final class KegStation {
     public static final String MOD_ID = "brewinandchewin";
-    public static final ResourceLocation ID = HandsOnDelight.id("keg");
+    public static final Identifier ID = HandsOnDelight.id("keg");
     /** The keg stood on its end: the same station, its own scene. */
-    public static final ResourceLocation STANDING_ID = HandsOnDelight.id("standing_keg");
+    public static final Identifier STANDING_ID = HandsOnDelight.id("standing_keg");
     public static final String TANK_MOD_ID = "youkaisfeasts";
-    public static final ResourceLocation TANK_ID = HandsOnDelight.id("youkai_tank");
+    public static final Identifier TANK_ID = HandsOnDelight.id("youkai_tank");
     /** The tank holds eight things, one in each slot, as its own container does. */
     public static final int TANK_INGREDIENTS = 8;
 
@@ -82,11 +82,11 @@ public final class KegStation {
     /** In a poured or tapped effect: the container used, as it was before (a water bucket poured, a tankard filled). */
     public static final String VESSEL = "vessel";
     /** Played for everybody who sees it: something poured in at the opening, a drink drawn at the tap. */
-    public static final ResourceLocation EFFECT_POURED = HandsOnDelight.id("poured");
-    public static final ResourceLocation EFFECT_TAPPED = HandsOnDelight.id("tapped");
+    public static final Identifier EFFECT_POURED = HandsOnDelight.id("poured");
+    public static final Identifier EFFECT_TAPPED = HandsOnDelight.id("tapped");
 
-    public static final Supplier<Block> KEG = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "keg"));
-    public static final Supplier<Block> TANK = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(TANK_MOD_ID, "fermentation_tank"));
+    public static final Supplier<Block> KEG = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(MOD_ID, "keg"));
+    public static final Supplier<Block> TANK = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(TANK_MOD_ID, "fermentation_tank"));
 
     public static final StationSchema SCHEMA = schema(KitchenKeg.INGREDIENTS, SlotRules.DEFAULT.kept());
     public static final StationSchema TANK_SCHEMA = schema(TANK_INGREDIENTS, SlotRules.DEFAULT.kept().maxStack(1));
@@ -111,7 +111,7 @@ public final class KegStation {
     }
 
     /** The keg's block is hidden while somebody works at it: the scene shows it with its lid open. */
-    private static StationType type(ResourceLocation id, Supplier<Block> block, StationSchema schema, Predicate<BlockState> when) {
+    private static StationType type(Identifier id, Supplier<Block> block, StationSchema schema, Predicate<BlockState> when) {
         return Diegesis.station(id)
                 .block(block)
                 .when(when)

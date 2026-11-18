@@ -6,7 +6,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import com.pockyl.handson_delight.CookingTimes;
 import com.pockyl.handson_delight.HandsOnConfig;
@@ -23,12 +23,12 @@ import java.util.stream.Collectors;
  * stay crafting recipes. The same packet carries the server's cooking times ({@link CookingTimes}).
  */
 public final class BoardDishes {
-    public static final ResourceLocation CHANNEL = HandsOnDelight.id("board_dishes");
+    public static final Identifier CHANNEL = HandsOnDelight.id("board_dishes");
     /**
      * A channel a client names when its own config turns the board's station off: it has no board to make the dishes on, so the
      * server leaves them in its grid and its recipe book. Nothing is sent on it.
      */
-    public static final ResourceLocation NO_BOARD = HandsOnDelight.id("no_board");
+    public static final Identifier NO_BOARD = HandsOnDelight.id("no_board");
 
     /** The server's config keeps these dishes in the crafting grid as well: the viewers show both. */
     private static final String CRAFTED_TOO = "crafted_too";
@@ -78,9 +78,9 @@ public final class BoardDishes {
     /** Called on the network thread: the dishes are only kept here, and read once the tags are bound. */
     public static void receive(Payload packet) {
         CompoundTag payload = packet.book();
-        craftedToo = payload.getBoolean(CRAFTED_TOO);
-        received = payload.getList("dishes", Tag.TAG_COMPOUND);
-        CookingTimes.receive(payload.getCompound(TIMES));
+        craftedToo = payload.getBooleanOr(CRAFTED_TOO, false);
+        received = payload.getListOrEmpty("dishes");
+        CookingTimes.receive(payload.getCompoundOrEmpty(TIMES));
     }
 
     public static void clear() {
@@ -104,7 +104,7 @@ public final class BoardDishes {
     }
 
     /** The crafting recipes a player does not make: the viewers hide them. */
-    public static Set<ResourceLocation> ids() {
+    public static Set<Identifier> ids() {
         if (craftedToo || !HandsOnConfig.cuttingBoard()) {
             return Set.of();
         }

@@ -33,7 +33,7 @@ public final class PotServing {
         int served = now.isEmpty() ? before.getCount() : ItemStack.isSameItemSameComponents(now, before) ? before.getCount() - now.getCount() : 0;
         if (served > 0) {
             ItemStack serving = before.copyWithCount(served);
-            serving.onCraftedBy(level, player, served);
+            serving.onCraftedBy(player, served);
         }
     }
 }

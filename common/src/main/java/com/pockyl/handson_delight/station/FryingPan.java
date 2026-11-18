@@ -11,7 +11,7 @@ public interface FryingPan {
      * Farmer's Delight cooks one item of what is in the pan at once, through its own code, so that what other mods add to it happens
      * (experience, quality); it throws the result out of the pan, which {@link CaughtDrops} can catch.
      */
-    void handson$cookOneNow(net.minecraft.world.level.Level level);
+    void handson$cookOneNow(net.minecraft.server.level.ServerLevel level);
 
     /** The food in the pan cooks Farmer's Delight's way in {@code ticks}, counted from the start. */
     void handson$farmersDelightsTime(int ticks);

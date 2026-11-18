@@ -12,6 +12,8 @@ import com.pockyl.diegesis.api.client.NodeView;
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.scene.Visual;
 
+import com.pockyl.handson_delight.RecipeParts;
+
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
@@ -86,7 +88,7 @@ final class KitchenMotions {
 
     /** The container a liquid comes in, or nothing when it comes in none. */
     static Optional<Item> containerOf(ItemStack stack) {
-        Item container = stack.getItem().getCraftingRemainingItem();
+        Item container = RecipeParts.remainder(stack.getItem());
         return container == null || container == Items.AIR ? Optional.empty() : Optional.of(container);
     }
 

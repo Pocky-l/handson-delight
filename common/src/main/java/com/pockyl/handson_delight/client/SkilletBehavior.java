@@ -3,7 +3,7 @@ package com.pockyl.handson_delight.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -22,6 +22,8 @@ import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.ItemNbt;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.SkilletCooking;
 import com.pockyl.handson_delight.station.SkilletStation;
 
@@ -200,7 +202,7 @@ public final class SkilletBehavior implements StationBehavior {
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()
                 && view.level().getBlockEntity(view.pos()) instanceof SkilletBlockEntity skillet
                 && SkilletCooking.takes(skillet, player.getMainHandItem())) {
-            onInventoryShiftClick(view, player.getInventory().selected, player.getMainHandItem());
+            onInventoryShiftClick(view, player.getInventory().getSelectedSlot(), player.getMainHandItem());
         }
     }
 
@@ -231,7 +233,7 @@ public final class SkilletBehavior implements StationBehavior {
         int batch = inPan.isEmpty() ? 0 : Math.max(1, Math.min(inPan.getCount(), SkilletCooking.BATCH));
         int pieces = Math.min(batch, PIECES);
         int unders = Math.min(Math.max(0, batch - PIECES), PIECES);
-        float up = clock < lookHeldUntil ? shownUp : Float.isNaN(tossedUp) ? state.data().getFloat(SkilletStation.UP) : tossedUp;
+        float up = clock < lookHeldUntil ? shownUp : Float.isNaN(tossedUp) ? state.data().getFloatOr(SkilletStation.UP, 0.0F) : tossedUp;
         // Food that became what the fire makes of it is the same food: it stays where it lay, nothing lands (a potato
         // done in the pan used to land again as if put in).
         boolean sameFood = ItemStack.isSameItemSameComponents(inPan, shown)
@@ -259,7 +261,7 @@ public final class SkilletBehavior implements StationBehavior {
         if (!quiet) {
             // What came in lands; several at once (a stack, the book) come from the player one after the other. What was there
             // stays.
-            boolean hot = state.data().getBoolean(SkilletStation.HEATED);
+            boolean hot = state.data().getBooleanOr(SkilletStation.HEATED, false);
             boolean together = pieces - before > 1;
             for (int i = before; i < pieces; i++) {
                 int index = i;
@@ -345,7 +347,7 @@ public final class SkilletBehavior implements StationBehavior {
 
     /** What the campfire makes of {@code raw}: the look of a done top. */
     private static ItemStack cooked(StationView view, ItemStack raw) {
-        return SkilletCooking.recipe(view.level(), raw).map(recipe -> recipe.getResultItem(view.level().registryAccess()))
+        return SkilletCooking.recipe(view.level(), raw).map(recipe -> RecipeParts.result(recipe))
                 .filter(result -> !result.isEmpty()).orElse(raw);
     }
 
@@ -503,7 +505,7 @@ public final class SkilletBehavior implements StationBehavior {
      */
     private void frying(StationView view, float dt) {
         CompoundTag data = view.state().data();
-        boolean hot = data.getBoolean(SkilletStation.HEATED);
+        boolean hot = data.getBooleanOr(SkilletStation.HEATED, false);
         boolean food = !shown.isEmpty();
         boolean inAir = clock - tossedAt < JERK_TIME + FLIGHT + FLIGHT_STRONG;
         oil.frame(dt, hot && food);
@@ -546,8 +548,8 @@ public final class SkilletBehavior implements StationBehavior {
             view.spawnParticles(HandsOnDelightClient.FAT, roundFood(), new Vector3f(Mth.cos(angle) * out, 7.0F + random.nextFloat() * 6.0F,
                     Mth.sin(angle) * out), 0.1F, 1, 0);
         }
-        boolean waits = data.getBoolean(SkilletStation.BY_HAND) && data.getFloat(SkilletStation.DOWN) >= 1.0F
-                && data.getFloat(SkilletStation.UP) < 1.0F && Float.isNaN(tossedUp);
+        boolean waits = data.getBooleanOr(SkilletStation.BY_HAND, false) && data.getFloatOr(SkilletStation.DOWN, 0.0F) >= 1.0F
+                && data.getFloatOr(SkilletStation.UP, 0.0F) < 1.0F && Float.isNaN(tossedUp);
         if (waits && !wasWaiting && !inAir) {
             wantsTurning(view);
         }
@@ -556,7 +558,7 @@ public final class SkilletBehavior implements StationBehavior {
         if (!waits) {
             sizzle = 0.0F;
             // The sizzle grows as the side on the pan browns: the ear follows the frying without looking.
-            float down = Mth.clamp(data.getFloat(SkilletStation.DOWN), 0.0F, 1.0F);
+            float down = Mth.clamp(data.getFloatOr(SkilletStation.DOWN, 0.0F), 0.0F, 1.0F);
             fryVoice -= dt;
             if (fryVoice <= 0.0F && !inAir) {
                 fryVoice = FRY_VOICE * (1.0F - 0.3F * down);
@@ -623,7 +625,7 @@ public final class SkilletBehavior implements StationBehavior {
         if (shown.isEmpty()) {
             return false;
         }
-        if (view.state().data().getBoolean(SkilletStation.READY)) {
+        if (view.state().data().getBooleanOr(SkilletStation.READY, false)) {
             return true;
         }
         if (doneFor != shown) {
@@ -792,7 +794,7 @@ public final class SkilletBehavior implements StationBehavior {
     /** The toss as everybody sees it: the pan jerks, the food flies up, turns over at the top and comes down the other side up. */
     private void tossed(StationView view, float strength) {
         tossedAt = clock;
-        float newUp = view.state().data().getFloat(SkilletStation.DOWN);
+        float newUp = view.state().data().getFloatOr(SkilletStation.DOWN, 0.0F);
         view.node("pan").ifPresent(pan -> {
             pan.rotateTo(TILT * (0.7F + 0.3F * strength), 0.0F, 0.0F, JERK_TIME);
             pan.moveTo(0.0F, JERK_UP, JERK_BACK, JERK_TIME);
@@ -886,11 +888,11 @@ public final class SkilletBehavior implements StationBehavior {
     }
 
     @Override
-    public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
+    public void onEffect(StationView view, Identifier effect, String node, CompoundTag data) {
         if (SkilletStation.EFFECT_TOSSED.equals(effect)) {
             // The cook's own toss is on show already.
             if (!view.isFocused() || clock - tossedAt > 0.6F) {
-                tossed(view, data.getFloat(SkilletStation.STRENGTH));
+                tossed(view, data.getFloatOr(SkilletStation.STRENGTH, 0.0F));
             }
         } else if (SkilletStation.EFFECT_UNTOSSED.equals(effect)) {
             // The server did not take the cook's toss: the food lies the way it did.
@@ -898,12 +900,12 @@ public final class SkilletBehavior implements StationBehavior {
             lookHeldUntil = 0.0F;
             refresh(view);
         } else if (SkilletStation.EFFECT_PLACED.equals(effect)) {
-            if (view.state().data().getBoolean(SkilletStation.HEATED)) {
+            if (view.state().data().getBooleanOr(SkilletStation.HEATED, false)) {
                 view.playSound(FarmersDelightContent.SKILLET_ADD_FOOD, "pan", 0.8F, 1.0F);
             }
             view.playSound(SoundEvents.LANTERN_PLACE, "pan", 0.5F, 1.0F);
         } else if (SkilletStation.EFFECT_REFUSED.equals(effect)) {
-            ItemStack refused = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(SkilletStation.STACK));
+            ItemStack refused = ItemNbt.parse(view.level().registryAccess(), data.getCompound(SkilletStation.STACK));
             ghost(view, refused, 0).ifPresent(ghost -> {
                 ghost.moveTo(0.0F, LAND_FROM + 2.0F, 0.0F, 0.0F);
                 ghost.moveTo(0.0F, 1.5F, 0.0F, 0.09F);
@@ -912,13 +914,13 @@ public final class SkilletBehavior implements StationBehavior {
             });
             view.playSound(SoundEvents.LANTERN_HIT, "pan", 0.4F, 1.3F);
         } else if (SkilletStation.EFFECT_TAKEN.equals(effect)) {
-            leaves(view, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(SkilletStation.STACK)), true);
+            leaves(view, ItemNbt.parse(view.level().registryAccess(), data.getCompound(SkilletStation.STACK)), true);
             view.playSound(SoundEvents.ITEM_PICKUP, "pan", 0.3F, 1.5F);
         } else if (SkilletStation.EFFECT_FRIED.equals(effect)) {
-            if (data.getBoolean(SkilletStation.IN_PAN)) {
+            if (data.getBooleanOr(SkilletStation.IN_PAN, false)) {
                 ready(view);
             } else {
-                leaves(view, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(SkilletStation.STACK)), data.getBoolean(SkilletStation.TO_COOK));
+                leaves(view, ItemNbt.parse(view.level().registryAccess(), data.getCompoundOrEmpty(SkilletStation.STACK)), data.getBooleanOr(SkilletStation.TO_COOK, false));
             }
             view.playSound(SoundEvents.ITEM_PICKUP, "pan", 0.35F, 1.3F);
         }

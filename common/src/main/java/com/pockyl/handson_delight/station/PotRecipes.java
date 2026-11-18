@@ -1,10 +1,12 @@
 package com.pockyl.handson_delight.station;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
+
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +28,7 @@ public final class PotRecipes {
 
     /** The recipe's ingredients, without gaps: one slot each. */
     public static List<Ingredient> ingredients(CookingPotRecipe recipe) {
-        return recipe.getIngredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
+        return RecipeParts.ingredients(recipe).stream().filter(ingredient -> !RecipeParts.isGap(ingredient)).toList();
     }
 
     /** The food in the pot's ingredient slots as kinds: alike stacks counted together, in the order of the slots. */
@@ -65,12 +67,12 @@ public final class PotRecipes {
 
     /** The pot's recipes as {@link StationRecipes} reads them, in their order. */
     public static List<StationRecipes.Candidate<RecipeHolder<CookingPotRecipe>>> candidates(List<RecipeHolder<CookingPotRecipe>> recipes) {
-        return StationRecipes.candidates(recipes, RecipeHolder::id, holder -> ingredients(holder.value()));
+        return StationRecipes.candidates(recipes, holder -> holder.id().identifier(), holder -> ingredients(holder.value()));
     }
 
     /** The recipe {@code kinds} make in a pot of {@code slots} ingredient slots, or null: see {@link StationRecipes#choose}. */
-    public static Choice choose(List<RecipeHolder<CookingPotRecipe>> recipes, List<ItemStack> kinds, int slots, ResourceLocation wanted,
-            ResourceLocation found, boolean overflow) {
+    public static Choice choose(List<RecipeHolder<CookingPotRecipe>> recipes, List<ItemStack> kinds, int slots, Identifier wanted,
+            Identifier found, boolean overflow) {
         StationRecipes.Choice<RecipeHolder<CookingPotRecipe>> choice = StationRecipes.choose(candidates(recipes), kinds, slots, wanted, found,
                 overflow);
         return choice == null ? null : new Choice(choice.candidate().recipe(), choice.parts(), choice.fits());

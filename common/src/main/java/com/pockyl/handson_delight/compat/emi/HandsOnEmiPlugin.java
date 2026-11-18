@@ -10,7 +10,7 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.WidgetHolder;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.Ingredient;
 
 import com.pockyl.handson_delight.HandsOnDelight;
@@ -41,7 +41,7 @@ public final class HandsOnEmiPlugin implements EmiPlugin {
         registry.addCategory(CATEGORY);
         registry.addWorkstation(CATEGORY, BOARD);
         List<Assembly> dishes = BoardDishes.all();
-        Set<ResourceLocation> ids = BoardDishes.ids();
+        Set<Identifier> ids = BoardDishes.ids();
         // EMI recipes may have no id, and the set refuses a null lookup: one such recipe in a modpack broke the whole plugin.
         registry.removeRecipes(recipe -> recipe.getCategory() == VanillaEmiRecipeCategories.CRAFTING && recipe.getId() != null
                 && ids.contains(recipe.getId()));

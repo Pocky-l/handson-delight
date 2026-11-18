@@ -11,6 +11,8 @@ import vectorwing.farmersdelight.common.block.SkilletBlock;
 
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.handson_delight.CookingTimes;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.SkilletCooking;
 import com.pockyl.handson_delight.station.SkilletStation;
 
@@ -23,16 +25,16 @@ final class SkilletBook implements RecipeBook.Source {
     public List<RecipeBook.Page> pages(StationView view) {
         Level level = view.level();
         List<RecipeBook.Page> pages = new ArrayList<>();
-        for (RecipeHolder<CampfireCookingRecipe> holder : level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {
+        for (RecipeHolder<CampfireCookingRecipe> holder : KitchenRecipes.all(level, RecipeType.CAMPFIRE_COOKING)) {
             CampfireCookingRecipe recipe = holder.value();
-            ItemStack dish = recipe.getResultItem(level.registryAccess());
-            if (dish.isEmpty() || recipe.getIngredients().isEmpty()) {
+            ItemStack dish = RecipeParts.result(recipe);
+            if (dish.isEmpty() || RecipeParts.ingredients(recipe).isEmpty()) {
                 continue;
             }
-            int skillet = SkilletBlock.getSkilletCookingTime(recipe.getCookingTime(), 0);
+            int skillet = SkilletBlock.getSkilletCookingTime(recipe.cookingTime(), 0);
             int ticks = 2 * SkilletCooking.sideTicks(skillet, 1, CookingTimes.skillet());
             Component seconds = Component.translatable("handson_delight.book.seconds", Math.round(ticks / 20.0F));
-            pages.add(new RecipeBook.Page(holder.id(), dish.copy(), List.of(recipe.getIngredients().get(0)),
+            pages.add(new RecipeBook.Page(holder.id().identifier(), dish.copy(), List.of(RecipeParts.ingredients(recipe).get(0)),
                     List.of(new ItemStack(Items.CLOCK)), seconds, false));
         }
         return pages;

@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * The station only shows it and does by hand what its menu did.
  */
 public final class OvenStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("oven");
+    public static final Identifier ID = HandsOnDelight.id("oven");
 
     public static final String INGREDIENTS = "ingredients";
     /** What is baked waits in the oven's output slot. */
@@ -50,7 +50,7 @@ public final class OvenStation {
     /** What the logic tells the clients in the station's data: how long baking still takes, in ticks. */
     public static final String LEFT = "left";
     public static final SlotRef SERVED_SLOT = SlotRef.of(SERVED, 0);
-    public static final Supplier<Block> OVEN = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(KitchenOven.MOD_ID, "oven"));
+    public static final Supplier<Block> OVEN = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(KitchenOven.MOD_ID, "oven"));
 
     public static final StationSchema SCHEMA = StationSchema.builder()
             .slots(INGREDIENTS, KitchenOven.INGREDIENTS, SlotRules.DEFAULT.kept())

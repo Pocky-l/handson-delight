@@ -7,17 +7,19 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameType;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.platform.Platform;
@@ -47,7 +49,12 @@ public final class FullInventoryTests {
         private final List<ItemStack> dropped = new ArrayList<>();
 
         Cook(GameTestHelper helper) {
-            super(helper.getLevel(), BlockPos.ZERO, 0.0F, new GameProfile(UUID.randomUUID(), "cook"));
+            super(helper.getLevel(), new GameProfile(UUID.randomUUID(), "cook"));
+        }
+
+        @Override
+        public GameType gameMode() {
+            return GameType.SURVIVAL;
         }
 
         @Override
@@ -61,7 +68,7 @@ public final class FullInventoryTests {
         }
 
         @Override
-        public ItemEntity drop(ItemStack stack, boolean includeThrowerName) {
+        public ItemEntity drop(ItemStack stack, boolean thrownFromHand, Prediction prediction) {
             dropped.add(stack.copy());
             return null;
         }
@@ -78,12 +85,14 @@ public final class FullInventoryTests {
         ServerCook(GameTestHelper helper) {
             super(helper.getLevel().getServer(), helper.getLevel(), new GameProfile(UUID.randomUUID(), "cook"),
                     ClientInformation.createDefault());
-            new ServerGamePacketListenerImpl(helper.getLevel().getServer(), new Connection(PacketFlow.SERVERBOUND), this,
+            new ServerGamePacketListenerImpl(helper.getLevel().getServer(), new net.minecraft.network.Connection(PacketFlow.SERVERBOUND), this,
                     CommonListenerCookie.createInitial(getGameProfile(), false));
+            // A new player takes the server's game mode, creative on the game test server: a creative knife never wears.
+            setGameMode(GameType.SURVIVAL);
         }
 
         @Override
-        public ItemEntity drop(ItemStack stack, boolean dropAround, boolean includeThrowerName) {
+        public ItemEntity drop(ItemStack stack, boolean thrownFromHand, Prediction prediction) {
             dropped.add(stack.copy());
             return null;
         }
@@ -94,11 +103,11 @@ public final class FullInventoryTests {
     }
 
     private static Item feasts(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KitchenCuisine.MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KitchenCuisine.MOD_ID, path));
     }
 
     private static Item farmers(String path) {
-        return BuiltInRegistries.ITEM.get(FarmersDelightContent.id(path));
+        return BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id(path));
     }
 
     /**

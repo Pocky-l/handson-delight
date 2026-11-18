@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -13,6 +14,7 @@ import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.station.BoardLogic;
 import com.pockyl.handson_delight.station.Cutting;
@@ -49,11 +51,11 @@ final class BoardBook implements RecipeBook.Source {
         Level level = view.level();
         List<RecipeBook.Page> pages = new ArrayList<>(dishes(view));
         for (CuttingBoardRecipe recipe : Cutting.all(level)) {
-            List<ItemStack> results = recipe.getResults();
+            List<ItemStack> results = RecipeParts.results(recipe);
             if (results.isEmpty()) {
                 continue;
             }
-            List<Ingredient> ingredients = List.of(recipe.getIngredients().get(0), Cutting.tool(recipe));
+            List<Ingredient> ingredients = List.of(RecipeParts.ingredients(recipe).get(0), Cutting.tool(recipe));
             List<ItemStack> foot = results.size() > 1 ? results : List.of();
             pages.add(new RecipeBook.Page(Cutting.id(level, recipe), results.get(0).copy(), ingredients, foot, null, false,
                     toolKind(recipe)));
@@ -71,7 +73,7 @@ final class BoardBook implements RecipeBook.Source {
         // Everything under a compass, as in vanilla's recipe book.
         tabs.add(new RecipeBook.Tab(null, new ItemStack(Items.COMPASS)));
         if (!dishes(view).isEmpty()) {
-            tabs.add(new RecipeBook.Tab(DISHES, new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("hamburger")))));
+            tabs.add(new RecipeBook.Tab(DISHES, new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("hamburger")))));
         }
         Map<Item, Integer> others = new HashMap<>();
         boolean knife = false;
@@ -79,11 +81,11 @@ final class BoardBook implements RecipeBook.Source {
             if (toolKind(recipe).equals(KNIFE)) {
                 knife = true;
             } else {
-                others.merge(Cutting.tool(recipe).getItems()[0].getItem(), 1, Integer::sum);
+                others.merge(RecipeParts.items(Cutting.tool(recipe))[0].getItem(), 1, Integer::sum);
             }
         }
         if (knife) {
-            tabs.add(new RecipeBook.Tab(KNIFE, new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")))));
+            tabs.add(new RecipeBook.Tab(KNIFE, new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("iron_knife")))));
         }
         others.entrySet().stream().max(Map.Entry.<Item, Integer>comparingByValue()
                         .thenComparing(entry -> BuiltInRegistries.ITEM.getKey(entry.getKey()).toString(), Comparator.reverseOrder()))
@@ -98,12 +100,12 @@ final class BoardBook implements RecipeBook.Source {
 
     /** What a cut is made with: the knife, or another tool. */
     private static String toolKind(CuttingBoardRecipe recipe) {
-        ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife")));
+        ItemStack knife = new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("iron_knife")));
         Ingredient tool = Cutting.tool(recipe);
         if (tool.test(knife)) {
             return KNIFE;
         }
-        return tool.getItems().length == 0 ? KNIFE : TOOLS;
+        return RecipeParts.items(tool).length == 0 ? KNIFE : TOOLS;
     }
 
     static void received(ListTag book) {
@@ -156,7 +158,7 @@ final class BoardBook implements RecipeBook.Source {
         if (dishes(view).stream().anyMatch(dish -> dish.key().equals(page.key()))) {
             CompoundTag pick = new CompoundTag();
             pick.putString(CuttingBoardStation.DISH, page.key().toString());
-            pick.putBoolean(CuttingBoardStation.ALL, Screen.hasShiftDown());
+            pick.putBoolean(CuttingBoardStation.ALL, Minecraft.getInstance().hasShiftDown());
             view.sendAction(CuttingBoardStation.ACTION_PICK, pick);
         }
     }
@@ -164,7 +166,7 @@ final class BoardBook implements RecipeBook.Source {
     /** The dish the layers make, else what lies on the board to be cut. */
     @Override
     public Object current(StationView view) {
-        String dish = view.state().data().getString(CuttingBoardStation.DISH);
+        String dish = view.state().data().getStringOr(CuttingBoardStation.DISH, "");
         if (!dish.isEmpty()) {
             for (RecipeBook.Page page : dishes(view)) {
                 if (BuiltInRegistries.ITEM.getKey(page.dish().getItem()).toString().equals(dish)) {

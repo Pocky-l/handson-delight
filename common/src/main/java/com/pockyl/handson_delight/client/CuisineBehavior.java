@@ -2,13 +2,13 @@ package com.pockyl.handson_delight.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -21,7 +21,9 @@ import com.pockyl.diegesis.api.client.StationBehavior;
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
+import com.pockyl.diegesis.impl.client.render.SceneDraw;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.ItemNbt;
 import com.pockyl.handson_delight.station.CuisineBoardStation;
 import com.pockyl.handson_delight.station.CuisineLogic;
 import com.pockyl.handson_delight.station.Cutting;
@@ -99,7 +101,7 @@ public final class CuisineBehavior implements StationBehavior {
     private static final int MARK_COLOR = 0xA0FFFFFF;
     private static final int SCORE_COLOR = 0xC0281C12;
     private static final int SHADE_COLOR = 0x8C1A120C;
-    private static final ResourceLocation WHITE = ResourceLocation.withDefaultNamespace("block/white_concrete");
+    private static final Identifier WHITE = Identifier.withDefaultNamespace("block/white_concrete");
     /** The box of a finished dish (x, y, z from and to) when its models cannot be read: a roll lying along x. */
     private static final float[] ROLL_BOX = {2.0F, 14.0F, 1.0F, 5.0F, 6.0F, 10.0F};
     private static final Direction[] SIDES = {null, Direction.DOWN, Direction.UP, Direction.NORTH, Direction.SOUTH, Direction.WEST,
@@ -112,8 +114,8 @@ public final class CuisineBehavior implements StationBehavior {
     private final List<Step> steps = new ArrayList<>();
     /** What the scene draws as lying on the board: lags the board while a step is being shown. */
     private List<ItemStack> shown = List.of();
-    private final List<ResourceLocation> shownModels = new ArrayList<>();
-    private List<ResourceLocation> previewModels = List.of();
+    private final List<Identifier> shownModels = new ArrayList<>();
+    private List<Identifier> previewModels = List.of();
     private Object previewFor;
     private boolean lifted;
     private KitchenMotions.Motion hand;
@@ -203,7 +205,7 @@ public final class CuisineBehavior implements StationBehavior {
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
             ItemStack held = player.getMainHandItem();
             CompoundTag how = new CompoundTag();
-            how.putInt(CuisineBoardStation.FROM, player.getInventory().selected);
+            how.putInt(CuisineBoardStation.FROM, player.getInventory().getSelectedSlot());
             if (board.handson$takes(held) > 0) {
                 view.sendAction(CuisineBoardStation.ACTION_PUT, how);
             }
@@ -309,15 +311,15 @@ public final class CuisineBehavior implements StationBehavior {
     /** Draws {@code contents} with the board's models; with {@code pop}, a part that was not there comes up out of the board. */
     private void showContents(StationView view, List<ItemStack> contents, boolean pop) {
         KitchenCuisine board = board(view);
-        List<ResourceLocation> models = board == null ? null : board.handson$modelsOf(contents);
+        List<Identifier> models = board == null ? null : board.handson$modelsOf(contents);
         if (models == null) {
             models = board == null ? List.of() : board.handson$models();
         }
         shown = copy(contents);
         float turn = turn(view);
-        Set<ResourceLocation> before = new HashSet<>(shownModels);
+        Set<Identifier> before = new HashSet<>(shownModels);
         for (int k = 0; k < PARTS; k++) {
-            ResourceLocation model = k < models.size() ? models.get(k) : null;
+            Identifier model = k < models.size() ? models.get(k) : null;
             boolean fresh = model != null && !before.contains(model);
             view.node("part_" + k).ifPresent(node -> {
                 node.setVisible(model != null);
@@ -365,11 +367,11 @@ public final class CuisineBehavior implements StationBehavior {
             return;
         }
         previewFor = key;
-        List<ResourceLocation> models = next == null ? null : board.handson$modelsOf(next);
+        List<Identifier> models = next == null ? null : board.handson$modelsOf(next);
         previewModels = models == null ? List.of() : models.stream().filter(model -> !shownModels.contains(model)).toList();
         float turn = turn(view);
         for (int k = 0; k < PARTS; k++) {
-            ResourceLocation model = k < previewModels.size() ? previewModels.get(k) : null;
+            Identifier model = k < previewModels.size() ? previewModels.get(k) : null;
             view.node("preview_" + k).ifPresent(node -> {
                 node.setVisible(model != null);
                 if (model != null) {
@@ -490,7 +492,7 @@ public final class CuisineBehavior implements StationBehavior {
             return -1;
         }
         int count = markCount(view, finished);
-        int cuts = view.state().data().getInt(CuisineBoardStation.CUTS);
+        int cuts = view.state().data().getIntOr(CuisineBoardStation.CUTS, 0);
         return cuts < count ? cuts : -1;
     }
 
@@ -507,7 +509,7 @@ public final class CuisineBehavior implements StationBehavior {
         ItemStack finished = board.handson$finished();
         boolean drawn = !finished.isEmpty() && !cutting && clock >= busyUntil;
         int count = drawn ? markCount(view, finished) : 0;
-        int cuts = drawn ? Math.min(view.state().data().getInt(CuisineBoardStation.CUTS), count) : 0;
+        int cuts = drawn ? Math.min(view.state().data().getIntOr(CuisineBoardStation.CUTS, 0), count) : 0;
         int next = drawn && !knife.isEmpty() && cuts < count ? cuts : -1;
         int key = Objects.hash(count, cuts, next, measuredFor, drawn);
         if (key == drawnMarks) {
@@ -561,31 +563,26 @@ public final class CuisineBehavior implements StationBehavior {
 
     /** The box of what lies on the board (x, y, z from and to, scene pixels), read from its models' faces once they change. */
     private void measure() {
-        List<ResourceLocation> models = List.copyOf(shownModels);
+        List<Identifier> models = List.copyOf(shownModels);
         if (models.equals(measuredFor)) {
             return;
         }
         measuredFor = models;
         float[] found = {Float.MAX_VALUE, -Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE};
-        RandomSource random = RandomSource.create(42L);
-        for (ResourceLocation id : models) {
-            BakedModel model = ClientPlatform.INSTANCE.model(id);
+        for (Identifier id : models) {
+            BlockStateModel model = ClientPlatform.INSTANCE.model(id);
             if (model == null) {
                 continue;
             }
-            for (Direction side : SIDES) {
-                for (BakedQuad quad : model.getQuads(null, side, random)) {
-                    int[] data = quad.getVertices();
-                    int stride = data.length / 4;
-                    for (int corner = 0; corner < 4; corner++) {
-                        for (int axis = 0; axis < 3; axis++) {
-                            float value = Float.intBitsToFloat(data[corner * stride + axis]) * 16.0F;
-                            found[axis * 2] = Math.min(found[axis * 2], value);
-                            found[axis * 2 + 1] = Math.max(found[axis * 2 + 1], value);
-                        }
+            SceneDraw.forEachQuad(model, quad -> {
+                for (int corner = 0; corner < 4; corner++) {
+                    for (int axis = 0; axis < 3; axis++) {
+                        float value = quad.position(corner).get(axis) * 16.0F;
+                        found[axis * 2] = Math.min(found[axis * 2], value);
+                        found[axis * 2 + 1] = Math.max(found[axis * 2 + 1], value);
                     }
                 }
-            }
+            });
         }
         // The models are drawn unturned (turn 0), so their own space is the scene's.
         box = found[0] < found[1] ? found : ROLL_BOX.clone();
@@ -754,7 +751,7 @@ public final class CuisineBehavior implements StationBehavior {
     }
 
     @Override
-    public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
+    public void onEffect(StationView view, Identifier effect, String node, CompoundTag data) {
         if (CuisineBoardStation.EFFECT_LAID.equals(effect)) {
             laid(view, data);
         } else if (CuisineBoardStation.EFFECT_TAKEN.equals(effect)) {
@@ -768,18 +765,18 @@ public final class CuisineBehavior implements StationBehavior {
             cut(view, data);
         } else if (CuisineBoardStation.EFFECT_REFUSED.equals(effect)) {
             putFrom = null;
-            refused(view, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(CuisineBoardStation.STACK)));
+            refused(view, ItemNbt.parse(view.level().registryAccess(), data.getCompound(CuisineBoardStation.STACK)));
         }
     }
 
     /** Steps went on, shown one after the other: each comes down from the cook, is poured, or is done by hand. */
     private void laid(StationView view, CompoundTag data) {
-        ListTag told = data.getList(CuisineBoardStation.STEPS, Tag.TAG_COMPOUND);
+        ListTag told = data.getListOrEmpty(CuisineBoardStation.STEPS);
         float at = start();
         for (int i = 0; i < told.size(); i++) {
-            CompoundTag step = told.getCompound(i);
-            ItemStack laid = ItemStack.parseOptional(view.level().registryAccess(), step.getCompound(CuisineBoardStation.STACK));
-            List<ItemStack> afterIt = stacks(view, step.getList(CuisineBoardStation.AFTER, Tag.TAG_COMPOUND));
+            CompoundTag step = told.getCompoundOrEmpty(i);
+            ItemStack laid = ItemNbt.parse(view.level().registryAccess(), step.getCompound(CuisineBoardStation.STACK));
+            List<ItemStack> afterIt = stacks(view, step.getListOrEmpty(CuisineBoardStation.AFTER));
             int index = i;
             float begins = at;
             if (laid.isEmpty()) {
@@ -874,7 +871,7 @@ public final class CuisineBehavior implements StationBehavior {
     private void rollUp(StationView view, List<NodeView> parts, List<ItemStack> afterIt) {
         float turn = turn(view);
         KitchenCuisine board = board(view);
-        List<ResourceLocation> rolled = board == null ? null : board.handson$modelsOf(afterIt);
+        List<Identifier> rolled = board == null ? null : board.handson$modelsOf(afterIt);
         Optional<NodeView> roll = view.node("roll");
         if (rolled == null || rolled.isEmpty() || roll.isEmpty()) {
             showContents(view, afterIt, true);
@@ -886,7 +883,7 @@ public final class CuisineBehavior implements StationBehavior {
         float far = -side * SHEET_HALF;
         Vector3f pivot = toScene(turn, 0.0F, SHEET_Y, far);
         for (NodeView part : parts) {
-            Optional<ResourceLocation> model = part.visual().flatMap(Visual::model);
+            Optional<Identifier> model = part.visual().flatMap(Visual::model);
             if (model.isEmpty()) {
                 continue;
             }
@@ -927,7 +924,7 @@ public final class CuisineBehavior implements StationBehavior {
     private void taken(StationView view, CompoundTag data) {
         float at = start();
         boolean batch = data.contains(CuisineBoardStation.AFTER);
-        List<ItemStack> afterIt = batch ? stacks(view, data.getList(CuisineBoardStation.AFTER, Tag.TAG_COMPOUND)) : List.of();
+        List<ItemStack> afterIt = batch ? stacks(view, data.getListOrEmpty(CuisineBoardStation.AFTER)) : List.of();
         after(at, () -> {
             leave(view, visibleParts(view));
             view.playSound(SoundEvents.ITEM_PICKUP, "surface", 0.35F, 1.4F);
@@ -943,11 +940,11 @@ public final class CuisineBehavior implements StationBehavior {
      */
     private void back(StationView view, CompoundTag data) {
         float at = start();
-        List<ItemStack> afterIt = stacks(view, data.getList(CuisineBoardStation.AFTER, Tag.TAG_COMPOUND));
-        ItemStack off = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(CuisineBoardStation.STACK));
+        List<ItemStack> afterIt = stacks(view, data.getListOrEmpty(CuisineBoardStation.AFTER));
+        ItemStack off = ItemNbt.parse(view.level().registryAccess(), data.getCompound(CuisineBoardStation.STACK));
         after(at, () -> {
             KitchenCuisine board = board(view);
-            List<ResourceLocation> left = board == null ? null : board.handson$modelsOf(afterIt);
+            List<Identifier> left = board == null ? null : board.handson$modelsOf(afterIt);
             view.playSound(SoundEvents.ITEM_PICKUP, "surface", 0.3F, 1.5F);
             if (left == null || !shownModels.containsAll(left)) {
                 showContents(view, afterIt, false);
@@ -998,8 +995,8 @@ public final class CuisineBehavior implements StationBehavior {
      * to the cook one after the other.
      */
     private void cut(StationView view, CompoundTag data) {
-        ListTag results = data.getList(CuisineBoardStation.RESULTS, Tag.TAG_COMPOUND);
-        ItemStack piece = results.isEmpty() ? ItemStack.EMPTY : ItemStack.parseOptional(view.level().registryAccess(), results.getCompound(0));
+        ListTag results = data.getListOrEmpty(CuisineBoardStation.RESULTS);
+        ItemStack piece = results.isEmpty() ? ItemStack.EMPTY : ItemNbt.parse(view.level().registryAccess(), results.getCompound(0));
         int pieces = Mth.clamp(piece.getCount(), 2, PIECES);
         view.playSound(FarmersDelightContent.KNIFE_CUT, "surface", 0.8F, 0.95F + view.level().getRandom().nextFloat() * 0.15F);
         cutting = true;
@@ -1070,7 +1067,7 @@ public final class CuisineBehavior implements StationBehavior {
     private static List<ItemStack> stacks(StationView view, ListTag list) {
         List<ItemStack> stacks = new ArrayList<>();
         for (int i = 0; i < list.size(); i++) {
-            stacks.add(ItemStack.parseOptional(view.level().registryAccess(), list.getCompound(i)));
+            stacks.add(ItemNbt.parse(view.level().registryAccess(), list.getCompound(i)));
         }
         return stacks;
     }

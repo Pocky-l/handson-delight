@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -20,7 +20,7 @@ import com.pockyl.handson_delight.HandsOnDelight;
  * back at the player who placed the skillet.
  */
 public final class SkilletStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("skillet");
+    public static final Identifier ID = HandsOnDelight.id("skillet");
 
     /** What lies in the pan: Farmer's Delight's own slot, a stack. */
     public static final String PAN = "pan";
@@ -51,14 +51,14 @@ public final class SkilletStation {
     public static final String STRENGTH = "strength";
 
     /** Effects for everybody who sees the skillet. */
-    public static final ResourceLocation EFFECT_PLACED = HandsOnDelight.id("skillet_placed");
-    public static final ResourceLocation EFFECT_REFUSED = HandsOnDelight.id("skillet_refused");
-    public static final ResourceLocation EFFECT_TOSSED = HandsOnDelight.id("tossed");
+    public static final Identifier EFFECT_PLACED = HandsOnDelight.id("skillet_placed");
+    public static final Identifier EFFECT_REFUSED = HandsOnDelight.id("skillet_refused");
+    public static final Identifier EFFECT_TOSSED = HandsOnDelight.id("tossed");
     /** A toss the server did not take (the last one was still in the air): the cook's client turns the food back. */
-    public static final ResourceLocation EFFECT_UNTOSSED = HandsOnDelight.id("untossed");
-    public static final ResourceLocation EFFECT_TAKEN = HandsOnDelight.id("skillet_taken");
+    public static final Identifier EFFECT_UNTOSSED = HandsOnDelight.id("untossed");
+    public static final Identifier EFFECT_TAKEN = HandsOnDelight.id("skillet_taken");
     /** A batch is done: {@link #STACK} what it became, {@link #TO_COOK} whether it went to the cook or jumped out of the pan. */
-    public static final ResourceLocation EFFECT_FRIED = HandsOnDelight.id("fried");
+    public static final Identifier EFFECT_FRIED = HandsOnDelight.id("fried");
     public static final String STACK = "stack";
     public static final String TO_COOK = "to_cook";
     /** With {@link #EFFECT_FRIED}: the done batch stays in the pan for the cook to take. */

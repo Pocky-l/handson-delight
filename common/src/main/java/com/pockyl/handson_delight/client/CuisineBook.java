@@ -1,13 +1,15 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.CuisineBoardStation;
 import com.pockyl.handson_delight.station.CuisineLogic;
 import com.pockyl.handson_delight.station.Cutting;
@@ -45,7 +47,7 @@ final class CuisineBook implements RecipeBook.Source {
         for (KitchenCuisine.Dish dish : board.handson$dishes()) {
             List<Ingredient> needed = dish.steps().stream().filter(step -> !step.isEmpty()).toList();
             // A step nothing in the game fits (a tag no mod fills) makes a dish nobody can make: it is not shown.
-            if (needed.stream().anyMatch(step -> step.getItems().length == 0)) {
+            if (needed.stream().anyMatch(step -> RecipeParts.items(step).length == 0)) {
                 continue;
             }
             pages.add(new RecipeBook.Page(dish.id(), dish.result(), needed, List.of(), Component.empty(), false, kind(view, dish)));
@@ -54,7 +56,7 @@ final class CuisineBook implements RecipeBook.Source {
     }
 
     private static String kind(StationView view, KitchenCuisine.Dish dish) {
-        if (!dish.steps().isEmpty() && Arrays.stream(dish.steps().get(0).getItems())
+        if (!dish.steps().isEmpty() && Arrays.stream(RecipeParts.items(dish.steps().get(0)))
                 .anyMatch(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().contains(BAMBOO))) {
             return BAMBOO;
         }
@@ -71,7 +73,7 @@ final class CuisineBook implements RecipeBook.Source {
 
     @SuppressWarnings("removal")
     private static ItemStack icon(String path) {
-        return new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KitchenCuisine.MOD_ID, path)));
+        return new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KitchenCuisine.MOD_ID, path)));
     }
 
     @Override
@@ -83,7 +85,7 @@ final class CuisineBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(CuisineBoardStation.DISH, page.key().toString());
-        fill.putBoolean(CuisineBoardStation.ALL, Screen.hasShiftDown());
+        fill.putBoolean(CuisineBoardStation.ALL, Minecraft.getInstance().hasShiftDown());
         view.sendAction(CuisineBoardStation.ACTION_FILL, fill);
     }
 

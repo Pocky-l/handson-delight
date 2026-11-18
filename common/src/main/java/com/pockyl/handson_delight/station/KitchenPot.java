@@ -9,6 +9,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
@@ -99,13 +100,13 @@ public interface KitchenPot {
     /** What {@code recipe} makes at the pot of {@code entity}, or as the recipe says where there is none. */
     static ItemStack resultOf(BlockEntity entity, CookingPotRecipe recipe, RegistryAccess access) {
         KitchenPot pot = of(entity);
-        return pot == null ? recipe.getResultItem(access) : pot.handson$resultOf(recipe, access);
+        return pot == null ? RecipeParts.result(recipe) : pot.handson$resultOf(recipe, access);
     }
 
     /** What {@code recipe}'s dish is served in at the pot of {@code entity}, or as the recipe says where there is none. */
     static ItemStack containerOf(BlockEntity entity, CookingPotRecipe recipe, RegistryAccess access) {
         KitchenPot pot = of(entity);
-        return pot == null ? recipe.getOutputContainer() : pot.handson$containerOf(recipe, access);
+        return pot == null ? RecipeParts.container(recipe) : pot.handson$containerOf(recipe, access);
     }
 
     /** The pot's ingredient slots as a list, for recipe lookups. */

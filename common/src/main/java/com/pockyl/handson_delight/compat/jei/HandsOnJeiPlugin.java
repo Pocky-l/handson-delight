@@ -8,7 +8,7 @@ import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -27,7 +27,7 @@ import java.util.List;
 @JeiPlugin
 public final class HandsOnJeiPlugin implements IModPlugin {
     @Override
-    public ResourceLocation getPluginUid() {
+    public Identifier getPluginUid() {
         return HandsOnDelight.id("jei");
     }
 
@@ -51,7 +51,7 @@ public final class HandsOnJeiPlugin implements IModPlugin {
         RecipeManager recipes = Minecraft.getInstance().getConnection().getRecipeManager();
         // JEI keeps hidden recipes by identity: it is handed the very holders it shows, never copies.
         List<RecipeHolder<CraftingRecipe>> crafting = new ArrayList<>();
-        for (ResourceLocation id : BoardDishes.ids()) {
+        for (Identifier id : BoardDishes.ids()) {
             recipes.byKey(id).ifPresent(holder -> {
                 if (holder.value() instanceof CraftingRecipe) {
                     @SuppressWarnings("unchecked")

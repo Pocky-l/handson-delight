@@ -1,8 +1,3 @@
-import java.util.jar.JarFile
-import java.util.jar.JarOutputStream
-import java.util.jar.Manifest
-import java.util.zip.ZipEntry
-
 // The stations, scenes and assets shared by NeoForge and Fabric, compiled against plain Minecraft, the Diegesis API and
 // Farmer's Delight. Nothing here may use a loader API or a member of Farmer's Delight whose type differs between its
 // NeoForge and Fabric builds (the inventory, the recipe wrapper, the registry holders): those go through platform.Platform.
@@ -13,28 +8,49 @@ plugins {
 
 neoForge {
     neoFormVersion = neo_form_version
-    parchment {
-        mappingsVersion = parchment_mappings_version
-        minecraftVersion = parchment_minecraft_version
-    }
 }
+
+// Minecraft 26.3: the recipe viewers and addon mods have no 26.3 Fabric builds yet, so what compiles against them is left
+// out of the build (the sources stay). The loader projects leave out the same files. The addon mixins are also left out of
+// handson_delight.mixins.json; the rest of the addon support finds the addons at runtime and stays dormant without them.
+ext.compatSources = [
+        'com/pockyl/handson_delight/compat/jei/**',
+        'com/pockyl/handson_delight/compat/emi/**',
+        'com/pockyl/handson_delight/mixin/DecoratedBoardContentMixin.java',
+        'com/pockyl/handson_delight/mixin/DecoratedBoardMixin.java',
+        'com/pockyl/handson_delight/mixin/KegMixin.java',
+        'com/pockyl/handson_delight/mixin/OvenMixin.java',
+        'com/pockyl/handson_delight/mixin/VatMixin.java',
+        'com/pockyl/handson_delight/mixin/VatSparksMixin.java',
+        'com/pockyl/handson_delight/mixin/VatUprightMixin.java',
+]
+sourceSets.main.java.exclude(compatSources)
 
 dependencies {
     compileOnly 'org.spongepowered:mixin:0.8.5'
     // The mixin plugin's interface names ASM's class node; the loaders bring ASM at runtime.
     compileOnly 'org.ow2.asm:asm-tree:9.5'
     compileOnly "com.pockyl.diegesis:common:${diegesis_version}"
-    // The NeoForge build stands for both: the classes common uses have the same names and signatures in Refabricated.
-    compileOnly "maven.modrinth:farmers-delight:${farmers_delight_version}"
-    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
-    compileOnly "dev.emi:emi-xplat-mojmap:${emi_version}:api"
-    // Brewin' and Chewin's keg is a station: compiled against it only. Its keg classes are the same on NeoForge and Fabric.
-    compileOnly "maven.modrinth:brewin-and-chewin:${brewin_and_chewin_version}"
-    // Chopper's Delight's decorated board is a board station: compiled against it only, its classes the same on both loaders.
-    compileOnly "maven.modrinth:choppers-delight:${choppers_delight_version}"
-    // Cultural Delights' oven is a station: its block entity sends its content to clients through a mixin compiled against its
-    // NeoForge jar; the classes it touches are the same in its Refabricated build.
-    compileOnly "maven.modrinth:cultural-delights:${cultural_delights_version}"
+    // Farmer's Delight on NeoForge has no 26.3 build: Refabricated stands for both. 26.x is unobfuscated, so its jar is in
+    // Mojang names like this project.
+    compileOnly("maven.modrinth:farmers-delight-refabricated:${farmers_delight_refabricated_version}") { transitive = false }
+    // Refabricated's block entities name Fabric's transfer and menu APIs in their signatures: javac needs them to read them.
+    compileOnly("net.fabricmc.fabric-api:fabric-transfer-api-v1:${fabric_transfer_api_version}") { transitive = false }
+    compileOnly("net.fabricmc.fabric-api:fabric-api-base:${fabric_api_base_version}") { transitive = false }
+    // Its cooking pot is an extended menu provider of Fabric's menu API, which the game tests read it as.
+    compileOnly("net.fabricmc.fabric-api:fabric-menu-api-v1:${fabric_menu_api_version}") { transitive = false }
+}
+
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Fabric'
+                url = 'https://maven.fabricmc.net/'
+            }
+        }
+        filter { includeGroup('net.fabricmc.fabric-api') }
+    }
 }
 
 configurations {
@@ -51,39 +67,4 @@ configurations {
 artifacts {
     commonJava sourceSets.main.java.sourceDirectories.singleFile
     commonResources sourceSets.main.resources.sourceDirectories.singleFile
-}
-
-// Farmer's Delight Refabricated 3.3 is built with a newer Loom, and the Fabric project's Loom (1.14.10, shared by every 1.21.1
-// Fabric build that playtest-1.21.1-fabric composes: one composite cannot mix Loom versions) refuses such jars. Compiling
-// needs only its classes, so fabric remaps a copy without the Loom entries of the manifest like any other mod.
-// Prepared here at configuration time, since Loom resolves the mod dependencies while it configures fabric: resolving in
-// fabric would use its repositories before Loom has added its own, and resolving this project's configurations from
-// fabric is refused under parallel builds.
-ext.refabricatedForCompile = layout.buildDirectory
-        .file("refabricated/farmers-delight-refabricated-${farmers_delight_refabricated_version}.jar").get().asFile
-if (!refabricatedForCompile.isFile()) {
-    def release = configurations.detachedConfiguration(
-            dependencies.create("maven.modrinth:farmers-delight-refabricated:${farmers_delight_refabricated_version}"))
-    release.transitive = false
-    refabricatedForCompile.parentFile.mkdirs()
-    new JarFile(release.singleFile).withCloseable { jar ->
-        def manifest = new Manifest(jar.manifest)
-        manifest.mainAttributes.keySet().removeIf { it.toString().startsWith('Fabric-Loom-') }
-        new JarOutputStream(new FileOutputStream(refabricatedForCompile), manifest).withCloseable { out ->
-            jar.entries().each { entry ->
-                if (entry.name == JarFile.MANIFEST_NAME || entry.name.endsWith('.classtweaker')) {
-                    return
-                }
-                out.putNextEntry(new ZipEntry(entry.name))
-                if (entry.name == 'fabric.mod.json') {
-                    // Its class tweaker is format v2, which Loom 1.14 cannot read; the widened members are not used here.
-                    def text = jar.getInputStream(entry).getText('UTF-8')
-                    out << text.readLines().findAll { !it.contains('"accessWidener"') }.join('\n').getBytes('UTF-8')
-                } else {
-                    jar.getInputStream(entry).withCloseable { out << it }
-                }
-                out.closeEntry()
-            }
-        }
-    }
 }

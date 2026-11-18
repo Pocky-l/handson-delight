@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -15,6 +15,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CuisineBoardStation;
 import com.pockyl.handson_delight.station.CuisineLogic;
@@ -34,12 +35,12 @@ public final class YoukaiBoardTests {
 
     @SuppressWarnings("removal")
     private static Item feasts(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KitchenCuisine.MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KitchenCuisine.MOD_ID, path));
     }
 
     @SuppressWarnings("removal")
     private static Item farmers(String path) {
-        return BuiltInRegistries.ITEM.get(FarmersDelightContent.id(path));
+        return BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id(path));
     }
 
     private record Setup(PotTests.TestStation station, CuisineLogic logic, KitchenCuisine board) {
@@ -174,10 +175,10 @@ public final class YoukaiBoardTests {
         // Two marks, as the board cuts a roll into three: the first is only a cut, the second cuts it through; a click on the cut
         // mark again does nothing.
         cutAt(setup, player, 0);
-        helper.assertTrue(setup.station.state().data().getInt(CuisineBoardStation.CUTS) == 1
+        helper.assertTrue(setup.station.state().data().getIntOr(CuisineBoardStation.CUTS, 0) == 1
                 && setup.board.handson$finished().is(feasts("kappa_maki")), "the first mark is cut, the roll still lies whole");
         cutAt(setup, player, 0);
-        helper.assertTrue(setup.station.state().data().getInt(CuisineBoardStation.CUTS) == 1, "a mark is cut once");
+        helper.assertTrue(setup.station.state().data().getIntOr(CuisineBoardStation.CUTS, 0) == 1, "a mark is cut once");
         cutAt(setup, player, 1);
         helper.assertTrue(player.getInventory().countItem(feasts("kappa_maki_slice")) == 3, "cut into three pieces for the cook, got "
                 + player.getInventory().countItem(feasts("kappa_maki_slice")));
@@ -255,8 +256,8 @@ public final class YoukaiBoardTests {
                 List<ItemStack> before = List.copyOf(setup.board.handson$contents());
                 if (step.isEmpty()) {
                     act(setup, player, CuisineBoardStation.ACTION_SHAPE, false);
-                } else if (step.getItems().length > 0) {
-                    player.inventoryMenu.setCarried(step.getItems()[0].copyWithCount(16));
+                } else if (RecipeParts.items(step).length > 0) {
+                    player.inventoryMenu.setCarried(RecipeParts.items(step)[0].copyWithCount(16));
                     act(setup, player, CuisineBoardStation.ACTION_PUT, false);
                 }
                 List<ItemStack> after = List.copyOf(setup.board.handson$contents());
@@ -264,8 +265,8 @@ public final class YoukaiBoardTests {
                     continue;
                 }
                 checked++;
-                List<ResourceLocation> stays = setup.board.handson$modelsOf(before);
-                List<ResourceLocation> shown = setup.board.handson$modelsOf(after);
+                List<Identifier> stays = setup.board.handson$modelsOf(before);
+                List<Identifier> shown = setup.board.handson$modelsOf(after);
                 if (stays == null || stays.isEmpty() || shown == null) {
                     wrong.add(dish.id().getPath() + " " + before + " -> " + after);
                 } else if (!shown.containsAll(stays)) {

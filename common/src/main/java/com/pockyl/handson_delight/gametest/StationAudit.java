@@ -9,6 +9,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 
 import com.pockyl.diegesis.api.state.SlotStorage;
 import com.pockyl.handson_delight.Cookable;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.StationRecipes;
 
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ final class StationAudit {
                     .filter(other -> Objects.equals(base.apply(other.recipe()), base.apply(recipe.recipe()))).toList();
             List<ItemStack> set = new ArrayList<>();
             for (Ingredient ingredient : ingredients) {
-                set.add(Arrays.stream(ingredient.getItems()).filter(stack -> !stack.isEmpty() && !stack.is(Items.BARRIER)).findFirst().orElseThrow()
+                set.add(Arrays.stream(RecipeParts.items(ingredient)).filter(stack -> !stack.isEmpty() && !stack.is(Items.BARRIER)).findFirst().orElseThrow()
                         .copyWithCount(1));
             }
             for (int times = 1; times <= 3; times++) {

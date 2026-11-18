@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
@@ -31,6 +31,7 @@ import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.KitchenPot;
@@ -76,7 +77,7 @@ public final class PotBehavior implements StationBehavior {
     /** A press on the spoon shorter than this is a click: the spoon stays in the hand, stirring as the mouse goes, until the next click. */
     private static final float SPOON_CLICK = 0.3F;
     @SuppressWarnings("removal")
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
+    private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /** The height of the item nodes in the scene, less the part of an item that stays under the surface. */
     private static final float ITEM_REST = 8.0F - 0.25F;
     /** How far the ingredients drift from the middle of the pot, in pixels. */
@@ -232,8 +233,8 @@ public final class PotBehavior implements StationBehavior {
     /** The alchemist pot's scroll, or null for a pot without one. */
     private final PotScroll scroll;
     /** The school the dish in the pot waits for (its scroll does not hang there), or null; the school the dish was looked up under. */
-    private ResourceLocation waitingFor;
-    private ResourceLocation cookedUnder;
+    private Identifier waitingFor;
+    private Identifier cookedUnder;
     private final RecipeBook book;
     /** Whether an item goes into some dish or serves one: only those show in the inventory at the pot. */
     private final UsableCache usable = new UsableCache();
@@ -493,7 +494,7 @@ public final class PotBehavior implements StationBehavior {
         } else if (event instanceof SceneEvent.Click click && click.node().equals("soup") && click.button() == 0 && !offered.isEmpty()) {
             CompoundTag how = new CompoundTag();
             how.putBoolean(CookingPotStation.FROM_INVENTORY, true);
-            how.putBoolean(CookingPotStation.SCOOP_ALL, Screen.hasShiftDown());
+            how.putBoolean(CookingPotStation.SCOOP_ALL, Minecraft.getInstance().hasShiftDown());
             view.sendAction(CookingPotStation.ACTION_SCOOP, how);
             scoopedAt = time;
             ItemStack meal = view.state().getItem(CookingPotStation.MEAL_SLOT);
@@ -650,7 +651,7 @@ public final class PotBehavior implements StationBehavior {
         }
         takeBack = shown[last];
         // A liquid is scooped back with its empty container; an egg or sugar shows as itself.
-        Item container = takeBack.getItem().getCraftingRemainingItem();
+        Item container = RecipeParts.remainder(takeBack.getItem());
         Item shownItem = container != null && container != Items.AIR ? container : takeBack.getItem();
         if (offeredItem != shownItem) {
             offeredItem = shownItem;
@@ -680,7 +681,7 @@ public final class PotBehavior implements StationBehavior {
     }
 
     @Override
-    public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
+    public void onEffect(StationView view, Identifier effect, String node, CompoundTag data) {
         if (CookingPotStation.EFFECT_SCOOPED.equals(effect)) {
             book.statsChanged();
             // The cook's own scoop rang the soup where the bowl went in; the others see a bowl go in somewhere.
@@ -901,16 +902,16 @@ public final class PotBehavior implements StationBehavior {
     }
 
     private static int grade(StationView view) {
-        return Mth.clamp(view.state().data().getInt(CookingPotStation.GRADE), 0, STARS);
+        return Mth.clamp(view.state().data().getIntOr(CookingPotStation.GRADE, 0), 0, STARS);
     }
 
     private static int bonus(StationView view) {
-        return Math.max(0, view.state().data().getInt(CookingPotStation.BONUS));
+        return Math.max(0, view.state().data().getIntOr(CookingPotStation.BONUS, 0));
     }
 
     /** The stars the cook has opened for this dish: one the first time, all three once they know it. */
     private static int openStars(StationView view) {
-        return Mth.clamp(view.state().data().getInt(CookingPotStation.OPEN_STARS), 1, STARS);
+        return Mth.clamp(view.state().data().getIntOr(CookingPotStation.OPEN_STARS, 0), 1, STARS);
     }
 
     /** Where the left edge of a star stands, the open ones centred over the icon; five pixels wide, they sit between its pixels. */
@@ -1045,7 +1046,7 @@ public final class PotBehavior implements StationBehavior {
     /** Clear water, tinted by what is in it, deepening to the colour of the food as it cooks. */
     private void colour(StationView view, ItemStack meal, ItemStack[] items) {
         int water = liquid != 0 ? OOZE_ALPHA << 24 | liquid
-                : WATER_ALPHA << 24 | BiomeColors.getAverageWaterColor(view.level(), view.pos()) & 0xFFFFFF;
+                : WATER_ALPHA << 24 | BiomeColors.getAverageWaterColor((net.minecraft.client.multiplayer.ClientLevel) view.level(), view.pos()) & 0xFFFFFF;
         if (meal.isEmpty()) {
             // A liquid poured in colours the water from when it runs: milk makes it milky before anything cooks.
             for (int i = 0; i < items.length; i++) {
@@ -1120,7 +1121,7 @@ public final class PotBehavior implements StationBehavior {
             } else if (state.getControl(CookingPotStation.HEATED) < 0.5F || state.getControl(CookingPotStation.STIRRING) < 0.5F) {
                 node.setTooltip(preview.getHoverName());
             } else {
-                int seconds = Mth.ceil(state.data().getInt(CookingPotStation.COOK_LEFT) / 20.0F);
+                int seconds = Mth.ceil(state.data().getIntOr(CookingPotStation.COOK_LEFT, 0) / 20.0F);
                 node.setTooltip(Component.translatable("handson_delight.pot.cooking", preview.getHoverName(), seconds));
             }
         });
@@ -1132,7 +1133,7 @@ public final class PotBehavior implements StationBehavior {
      */
     private ItemStack cooked(StationView view, ItemStack[] items) {
         ScrollPot scrolls = ScrollPot.of(view.level().getBlockEntity(view.pos()));
-        ResourceLocation under = scrolls == null ? null : scrolls.handson$school();
+        Identifier under = scrolls == null ? null : scrolls.handson$school();
         boolean same = java.util.Objects.equals(under, cookedUnder);
         cookedUnder = under;
         for (int i = 0; i < slots && same; i++) {
@@ -1151,7 +1152,7 @@ public final class PotBehavior implements StationBehavior {
                     : scrolls.handson$waiting(view.level(), Arrays.asList(items)).map(RecipeHolder::value);
             if (waiting.isPresent()) {
                 waitingFor = scrolls.handson$schoolFor(waiting.get());
-                cookedMade = waiting.get().getResultItem(view.level().registryAccess());
+                cookedMade = RecipeParts.result(waiting.get());
             }
         }
         return cookedMade;

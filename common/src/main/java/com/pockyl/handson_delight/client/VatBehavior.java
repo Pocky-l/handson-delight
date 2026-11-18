@@ -7,7 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -32,6 +32,7 @@ import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.KitchenTags;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.KitchenVat;
 import com.pockyl.handson_delight.station.VatStation;
 
@@ -56,7 +57,7 @@ public final class VatBehavior implements StationBehavior {
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "thermo", "thermo_now", "preview"};
     /** The parts the block's own model has too: drawn by the scene only while the block is hidden. */
     private static final String[] VAT_PARTS = {"body", "lid"};
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
+    private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /** The lid swings up this far about its hinge, degrees, in this many seconds, and settles with a little bounce. */
     private static final float LID_OPEN = 110.0F;
     private static final float LID_TIME = 0.45F;
@@ -294,7 +295,7 @@ public final class VatBehavior implements StationBehavior {
         // What the cook came with is what they meant to put in, or to draw the drink into: a right click with it does it, never slower.
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty() && usable(player.getMainHandItem())) {
-            use(view, player.getInventory().selected, player.getMainHandItem(), false);
+            use(view, player.getInventory().getSelectedSlot(), player.getMainHandItem(), false);
         }
         refresh(view);
     }
@@ -389,7 +390,7 @@ public final class VatBehavior implements StationBehavior {
     private boolean clicked(StationView view, String node) {
         switch (node) {
             case "lid" -> askLid(view, !isLidOpen(view));
-            case "served" -> draw(view, Screen.hasShiftDown(), -1);
+            case "served" -> draw(view, Minecraft.getInstance().hasShiftDown(), -1);
             default -> {
                 return false;
             }
@@ -428,7 +429,7 @@ public final class VatBehavior implements StationBehavior {
                     : from < 0 ? player.inventoryMenu.getCarried() : player.getInventory().getItem(from);
             if (container.isEmpty() || brought.isEmpty() || !container.get().test(brought)) {
                 needUntil = time + NEED_TIME;
-                needed = container.map(ingredient -> ingredient.getItems().length > 0 ? ingredient.getItems()[0].getItem() : null).orElse(null);
+                needed = container.map(ingredient -> RecipeParts.items(ingredient).length > 0 ? RecipeParts.items(ingredient)[0].getItem() : null).orElse(null);
                 view.playSound(SoundEvents.NOTE_BLOCK_BASS.value(), "badge", 0.3F, 0.7F);
                 return;
             }
@@ -593,7 +594,7 @@ public final class VatBehavior implements StationBehavior {
                 continue;
             }
             int color = KitchenLooks.liquidColor(stack);
-            float w = stack.getCount() * (stack.getItem().getCraftingRemainingItem() == net.minecraft.world.item.Items.BUCKET ? 3.0F : 1.0F);
+            float w = stack.getCount() * (RecipeParts.remainder(stack.getItem()) == net.minecraft.world.item.Items.BUCKET ? 3.0F : 1.0F);
             r += (color >> 16 & 0xFF) * w;
             g += (color >> 8 & 0xFF) * w;
             b += (color & 0xFF) * w;
@@ -768,10 +769,10 @@ public final class VatBehavior implements StationBehavior {
         float before = lid;
         lid = open ? Math.min(1.0F, lid + dt / LID_TIME) : Math.max(0.0F, lid - dt / LID_TIME);
         if (open && !wasOpening && before < 1.0F) {
-            view.playSound(SoundEvents.BARREL_OPEN, "lid", 0.45F, 0.95F + view.level().random.nextFloat() * 0.1F);
+            view.playSound(SoundEvents.BARREL_OPEN, "lid", 0.45F, 0.95F + view.level().getRandom().nextFloat() * 0.1F);
         }
         if (before > 0.0F && lid <= 0.0F) {
-            view.playSound(SoundEvents.BARREL_CLOSE, "lid", 0.45F, 0.95F + view.level().random.nextFloat() * 0.1F);
+            view.playSound(SoundEvents.BARREL_CLOSE, "lid", 0.45F, 0.95F + view.level().getRandom().nextFloat() * 0.1F);
         }
         if (before < 1.0F && lid >= 1.0F) {
             // The lid comes to rest on the far rim with a knock of wood on stone.
@@ -873,7 +874,7 @@ public final class VatBehavior implements StationBehavior {
         if (!hot) {
             return;
         }
-        RandomSource random = view.level().random;
+        RandomSource random = view.level().getRandom();
         if (inside && wet) {
             bubbles += dt * HOT_BUBBLES;
             if (bubbles >= 1.0F) {
@@ -943,7 +944,7 @@ public final class VatBehavior implements StationBehavior {
         if (!cold) {
             return;
         }
-        RandomSource random = view.level().random;
+        RandomSource random = view.level().getRandom();
         mist += dt * MIST_RATE;
         if (mist >= 1.0F) {
             mist -= 1.0F;
@@ -1116,7 +1117,7 @@ public final class VatBehavior implements StationBehavior {
         boolean shown = cookHere && !dish.isEmpty();
         view.node("badge").ifPresent(plate -> plate.setVisible(shown));
         float progress = view.state().getControl(VatStation.PROGRESS);
-        int left = view.state().data().getInt(VatStation.LEFT);
+        int left = view.state().data().getIntOr(VatStation.LEFT, 0);
         int seconds = aging && progress > 0.0F && left > 0 ? Math.max(1, Mth.ceil(left / 20.0F)) : 0;
         int bar = aging ? Math.round(progress * BAR_LENGTH) : ready ? BAR_LENGTH : 0;
         String text = seconds >= 60 ? seconds / 60 + ":" + String.format("%02d", seconds % 60) : seconds > 0 ? Integer.toString(seconds)

@@ -1,7 +1,8 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -11,6 +12,8 @@ import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.state.SlotStorage;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
+
+import com.pockyl.handson_delight.ItemNbt;
 
 import java.util.Optional;
 
@@ -59,14 +62,14 @@ public final class BasinLogic implements StationLogic {
         if (basin == null) {
             return;
         }
-        int place = data.contains(BasinStation.PLACE) ? data.getInt(BasinStation.PLACE) : -1;
-        int from = data.contains(BasinStation.FROM) ? data.getInt(BasinStation.FROM) : -1;
-        boolean all = data.getBoolean(BasinStation.ALL);
+        int place = data.contains(BasinStation.PLACE) ? data.getIntOr(BasinStation.PLACE, 0) : -1;
+        int from = data.contains(BasinStation.FROM) ? data.getIntOr(BasinStation.FROM, 0) : -1;
+        boolean all = data.getBooleanOr(BasinStation.ALL, false);
         switch (action) {
             case BasinStation.ACTION_PUT -> put(station, player, place, from, all);
             case BasinStation.ACTION_TAKE -> take(station, player, place);
             case BasinStation.ACTION_SKEWER -> skewer(station, player, from, all);
-            case BasinStation.ACTION_FILL -> fill(station, player, data.getString(BasinStation.DISH), all);
+            case BasinStation.ACTION_FILL -> fill(station, player, data.getStringOr(BasinStation.DISH, ""), all);
             default -> {
             }
         }
@@ -83,7 +86,7 @@ public final class BasinLogic implements StationLogic {
         CompoundTag data = new CompoundTag();
         data.putInt(BasinStation.PLACE, at);
         if (put == 0) {
-            data.put(BasinStation.STACK, carried.copyWithCount(1).saveOptional(station.level().registryAccess()));
+            data.put(BasinStation.STACK, ItemNbt.save(carried.copyWithCount(1), station.level().registryAccess()));
             station.effect(BasinStation.EFFECT_REFUSED, "basin", data);
             return;
         }
@@ -115,10 +118,10 @@ public final class BasinLogic implements StationLogic {
         basin.setItem(place, ItemStack.EMPTY);
         CompoundTag data = new CompoundTag();
         data.putInt(BasinStation.PLACE, place);
-        data.put(BasinStation.STACK, taken.copyWithCount(1).saveOptional(station.level().registryAccess()));
+        data.put(BasinStation.STACK, ItemNbt.save(taken.copyWithCount(1), station.level().registryAccess()));
         station.effect(BasinStation.EFFECT_TAKEN, "basin", data);
         if (!player.getInventory().add(taken)) {
-            player.drop(taken, false);
+            player.drop(taken, false, Prediction.SERVER_ONLY);
         }
     }
 
@@ -139,7 +142,7 @@ public final class BasinLogic implements StationLogic {
         Optional<KitchenBasin.Match> first = basin.match(station.level(), tool);
         if (first.isEmpty()) {
             CompoundTag data = new CompoundTag();
-            data.put(BasinStation.STACK, tool.copyWithCount(1).saveOptional(station.level().registryAccess()));
+            data.put(BasinStation.STACK, ItemNbt.save(tool.copyWithCount(1), station.level().registryAccess()));
             station.effect(BasinStation.EFFECT_REFUSED, "basin", data);
             return;
         }
@@ -161,13 +164,13 @@ public final class BasinLogic implements StationLogic {
         for (int i = 0; i < made; i++) {
             ItemStack given = result.copy();
             if (!player.getInventory().add(given)) {
-                player.drop(given, false);
+                player.drop(given, false, Prediction.SERVER_ONLY);
             }
         }
         CompoundTag data = new CompoundTag();
-        data.put(BasinStation.STACK, result.saveOptional(station.level().registryAccess()));
-        data.put(BasinStation.FOOD, food.saveOptional(station.level().registryAccess()));
-        data.put(BasinStation.SIDE, side.saveOptional(station.level().registryAccess()));
+        data.put(BasinStation.STACK, ItemNbt.save(result, station.level().registryAccess()));
+        data.put(BasinStation.FOOD, ItemNbt.save(food, station.level().registryAccess()));
+        data.put(BasinStation.SIDE, ItemNbt.save(side, station.level().registryAccess()));
         data.putInt(BasinStation.FOOD_COUNT, match.recipe().foodCount());
         data.putInt(BasinStation.SIDE_COUNT, match.recipe().plain() ? 0 : match.recipe().sideCount());
         data.putInt(BasinStation.PLACE, match.foodPlace());
@@ -177,8 +180,8 @@ public final class BasinLogic implements StationLogic {
 
     private static int findTool(StationContext station, Player player) {
         Inventory inventory = player.getInventory();
-        for (int slot = 0; slot < inventory.items.size(); slot++) {
-            if (KitchenBasin.isTool(station.level(), inventory.items.get(slot))) {
+        for (int slot = 0; slot < inventory.getNonEquipmentItems().size(); slot++) {
+            if (KitchenBasin.isTool(station.level(), inventory.getNonEquipmentItems().get(slot))) {
                 return slot;
             }
         }
@@ -190,7 +193,7 @@ public final class BasinLogic implements StationLogic {
      * inventory, enough for one skewer or with {@code all} for as many as there is; then a stick from the inventory skewers them.
      */
     private void fill(StationContext station, Player player, String id, boolean all) {
-        ResourceLocation key = ResourceLocation.tryParse(id);
+        Identifier key = Identifier.tryParse(id);
         KitchenBasin.Skewering recipe = KitchenBasin.recipes(station.level()).stream().filter(it -> it.id().equals(key)).findFirst()
                 .orElse(null);
         if (recipe == null) {
@@ -221,8 +224,8 @@ public final class BasinLogic implements StationLogic {
         for (int place = 0; place < KitchenBasin.PLACES && target < 0; place++) {
             target = place != not && !basin.getItem(place).isEmpty() && wanted.test(basin.getItem(place)) ? place : -1;
         }
-        for (int slot = 0; slot < inventory.items.size(); slot++) {
-            ItemStack stack = inventory.items.get(slot);
+        for (int slot = 0; slot < inventory.getNonEquipmentItems().size(); slot++) {
+            ItemStack stack = inventory.getNonEquipmentItems().get(slot);
             if (!wanted.test(stack)) {
                 continue;
             }

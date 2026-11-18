@@ -9,7 +9,7 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import org.joml.Quaternionf;
 
@@ -23,7 +23,7 @@ import com.pockyl.handson_delight.HandsOnDelight;
  * texels to a pixel. The layer is built and baked here, so nothing is registered.
  */
 final class RecipeBookModel {
-    static final ResourceLocation TEXTURE = HandsOnDelight.id("textures/entity/recipe_book.png");
+    static final Identifier TEXTURE = HandsOnDelight.id("textures/entity/recipe_book.png");
     /** The export's space is Blockbench's turned half a turn about z, as entity renderers turn it back. */
     private static final Quaternionf FROM_EXPORT = new Quaternionf().rotationZ(Mth.PI);
 
@@ -105,7 +105,7 @@ final class RecipeBookModel {
 
     void render(PoseStack poseStack, VertexConsumer consumer, int light, int overlay) {
         poseStack.pushPose();
-        poseStack.mulPose(FROM_EXPORT);
+        poseStack.rotate(FROM_EXPORT);
         root.render(poseStack, consumer, light, overlay);
         poseStack.popPose();
     }

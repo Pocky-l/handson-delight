@@ -2,8 +2,9 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
@@ -19,6 +20,7 @@ import com.pockyl.diegesis.api.state.TankContents;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public final class KegLogic implements StationLogic {
     /** A cook changed what lies in the keg: it is laid out on the next tick. */
     private boolean unsorted;
     /** The recipe the cook last picked in the book: the keg's choice while its food makes it, until the keg is empty. */
-    private ResourceLocation wanted;
+    private Identifier wanted;
     /** The liquid the food was last laid out for: food thrown into an empty keg is laid out again once its liquid is poured in. */
     private Fluid arrangedFor = Fluids.EMPTY;
     /** While the lid is off: how far the keg had fermented, which it stays at until the lid is back on; -1 with the lid on. */
@@ -228,7 +230,7 @@ public final class KegLogic implements StationLogic {
     @Override
     public void onTaken(StationContext station, Player player, SlotRef slot, ItemStack stack) {
         if (slot.equals(KegStation.SERVED_SLOT)) {
-            stack.onCraftedBy(station.level(), player, stack.getCount());
+            stack.onCraftedBy(player, stack.getCount());
             keg.handson$awardRecipes(player);
         }
     }
@@ -238,29 +240,29 @@ public final class KegLogic implements StationLogic {
         if (StationRecipes.ACTION_OFFER.equals(action)) {
             // A stack clicked onto a keg whose slots hold other food: in, when the food still makes a drink with it.
             if (keg.handson$perSlot() > 1 && StationRecipes.offerCarried(station, this, player, KegStation.INGREDIENTS, ingredients,
-                    data.getBoolean(StationRecipes.ONE), this::partsWith)) {
+                    data.getBooleanOr(StationRecipes.ONE, false), this::partsWith)) {
                 unsorted = true;
             }
         } else if (KegStation.ACTION_LID.equals(action)) {
-            setLid(station, data.getBoolean(KegStation.OPEN));
+            setLid(station, data.getBooleanOr(KegStation.OPEN, false));
         } else if (KegStation.ACTION_USE.equals(action)) {
             boolean tap = KegStation.TAP.equals(data.getString(KegStation.AT));
             if (!tap && !isOpen(station)) {
                 // Nothing is poured in through the lid.
                 return;
             }
-            if (tap && data.getBoolean(KegStation.FROM_INVENTORY)) {
-                tapFromInventory(station, player, data.getBoolean(KegStation.ALL));
+            if (tap && data.getBooleanOr(KegStation.FROM_INVENTORY, false)) {
+                tapFromInventory(station, player, data.getBooleanOr(KegStation.ALL, false));
             } else {
-                useCarried(station, player, tap, data.getBoolean(KegStation.ALL),
-                        data.contains(KegStation.FROM) ? data.getInt(KegStation.FROM) : -1);
+                useCarried(station, player, tap, data.getBooleanOr(KegStation.ALL, false),
+                        data.contains(KegStation.FROM) ? data.getIntOr(KegStation.FROM, 0) : -1);
             }
         } else if (KegStation.ACTION_FILL.equals(action)) {
-            ResourceLocation id = ResourceLocation.tryParse(data.getString(KegStation.DISH));
+            Identifier id = Identifier.tryParse(data.getStringOr(KegStation.DISH, ""));
             // A recipe picked in the book takes the lid off for its ingredients to go in.
             setLid(station, true);
             keg.handson$recipes().stream().filter(recipe -> recipe.id().equals(id)).findFirst()
-                    .ifPresent(recipe -> fill(player, recipe, data.getBoolean(KegStation.ALL) ? FILL_MOST : 1));
+                    .ifPresent(recipe -> fill(player, recipe, data.getBooleanOr(KegStation.ALL, false) ? FILL_MOST : 1));
         }
     }
 
@@ -287,7 +289,7 @@ public final class KegLogic implements StationLogic {
                 KettleLogic.putBack(player, from, stack);
                 handFree = false;
             } else if (!player.getInventory().add(stack)) {
-                player.drop(stack, false);
+                player.drop(stack, false, Prediction.SERVER_ONLY);
             }
         }
         if (handFree) {
@@ -353,7 +355,7 @@ public final class KegLogic implements StationLogic {
         List<ItemStack> back = useWhile(container, true, all, player.getAbilities().instabuild);
         for (ItemStack stack : back) {
             if (!player.getInventory().add(stack)) {
-                player.drop(stack, false);
+                player.drop(stack, false, Prediction.SERVER_ONLY);
             }
         }
         player.getInventory().setChanged();
@@ -377,8 +379,8 @@ public final class KegLogic implements StationLogic {
      * from the inventory (an empty hand asks for a drink, not for a tank's water back); a bucket on the cursor still draws.
      */
     public static int containerSlot(KitchenKeg keg, Inventory inventory) {
-        if (offerable(keg, inventory.getSelected())) {
-            return inventory.selected;
+        if (offerable(keg, inventory.getSelectedItem())) {
+            return inventory.getSelectedSlot();
         }
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
             if (offerable(keg, inventory.getItem(slot))) {
@@ -399,7 +401,7 @@ public final class KegLogic implements StationLogic {
      */
     private void fill(Player player, KitchenKeg.Fermenting recipe, int sets) {
         int perSlot = keg.handson$perSlot();
-        StationRecipes.Filled filled = StationRecipes.fill(player.getInventory(), recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty())
+        StationRecipes.Filled filled = StationRecipes.fill(player.getInventory(), recipe.ingredients().stream().filter(ingredient -> !RecipeParts.isGap(ingredient))
                 .toList(), StationRecipes.kinds(ingredients), keg.handson$ingredients(), sets, perSlot);
         if (filled != null) {
             wanted = recipe.id();
@@ -430,7 +432,7 @@ public final class KegLogic implements StationLogic {
         state.setData(own);
         int capacity = Math.max(1, keg.handson$capacity());
         // The tank holds the keg's own liquid, so that it looks like what it is (KegLiquids on the client).
-        ResourceLocation liquid = keg.handson$fluid() == Fluids.EMPTY ? HandsOnDelight.id("drink") : BuiltInRegistries.FLUID.getKey(keg.handson$fluid());
+        Identifier liquid = keg.handson$fluid() == Fluids.EMPTY ? HandsOnDelight.id("drink") : BuiltInRegistries.FLUID.getKey(keg.handson$fluid());
         state.setTank(KegStation.DRINK, TankContents.of(liquid, Math.round(100.0F * keg.handson$amount() / capacity)));
     }
 }

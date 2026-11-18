@@ -89,7 +89,7 @@ publishMods {
         projectId = curseforge_project_id
         accessToken = curseforgeToken
         minecraftVersions.add(minecraft_version)
-        javaVersions.add(JavaVersion.VERSION_21)
+        javaVersions.add(JavaVersion.VERSION_25)
         client = curseforge_client.toBoolean()
         server = curseforge_server.toBoolean()
         // Farmer's Delight is a different project on each loader: curseforge_requires_<loader> replaces the shared list.

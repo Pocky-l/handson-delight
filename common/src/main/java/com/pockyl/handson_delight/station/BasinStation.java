@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * are windows on the basin's own: what lies in them stays the basin's.
  */
 public final class BasinStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("basin");
+    public static final Identifier ID = HandsOnDelight.id("basin");
 
     /** The basin's two compartments, one stack each. */
     public static final String COMPARTMENTS = "compartments";
@@ -55,10 +55,10 @@ public final class BasinStation {
      * of each go on it ({@link #FOOD_COUNT}, {@link #SIDE_COUNT}), from which compartment the food came ({@link #PLACE}), and how
      * many skewers ({@link #MADE}).
      */
-    public static final ResourceLocation EFFECT_SKEWERED = HandsOnDelight.id("basin_skewered");
-    public static final ResourceLocation EFFECT_PUT = HandsOnDelight.id("basin_put");
-    public static final ResourceLocation EFFECT_REFUSED = HandsOnDelight.id("basin_refused");
-    public static final ResourceLocation EFFECT_TAKEN = HandsOnDelight.id("basin_taken");
+    public static final Identifier EFFECT_SKEWERED = HandsOnDelight.id("basin_skewered");
+    public static final Identifier EFFECT_PUT = HandsOnDelight.id("basin_put");
+    public static final Identifier EFFECT_REFUSED = HandsOnDelight.id("basin_refused");
+    public static final Identifier EFFECT_TAKEN = HandsOnDelight.id("basin_taken");
     public static final String STACK = "stack";
     public static final String FOOD = "food";
     public static final String SIDE = "side";
@@ -71,7 +71,7 @@ public final class BasinStation {
             .slots(HAND, 1, SlotRules.DEFAULT)
             .build();
 
-    public static final Supplier<Block> BASIN = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(KitchenGrill.MOD_ID,
+    public static final Supplier<Block> BASIN = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(KitchenGrill.MOD_ID,
             "basin"));
 
     /** The basin is the block itself, nothing on it opens: the scene draws what lies in its compartments, also for passers-by. */

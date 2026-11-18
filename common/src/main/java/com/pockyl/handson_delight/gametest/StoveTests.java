@@ -5,7 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -20,6 +20,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import vectorwing.farmersdelight.common.block.AbstractStoveBlock;
@@ -30,6 +31,8 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnConfig;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.Grill;
 import com.pockyl.handson_delight.station.StoveCooking;
@@ -211,7 +214,7 @@ public final class StoveTests {
             BlockState state = block.defaultBlockState();
             helper.setBlock(at, state);
             helper.assertTrue(StoveStation.TYPE.matches(state), BuiltInRegistries.BLOCK.getKey(block) + " opens as the station");
-            helper.assertTrue(helper.getBlockEntity(at) instanceof AbstractStoveBlockEntity,
+            helper.assertTrue(helper.getBlockEntity(at, BlockEntity.class) instanceof AbstractStoveBlockEntity,
                     BuiltInRegistries.BLOCK.getKey(block) + " grills on a stove's block entity");
         }
         helper.succeed();
@@ -226,8 +229,8 @@ public final class StoveTests {
         Top top = stove(helper);
         BlockPos pos = top.station.pos();
         BlockState state = helper.getLevel().getBlockState(pos);
-        Item knife = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife"));
-        Item pot = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("cooking_pot"));
+        Item knife = BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("iron_knife"));
+        Item pot = BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("cooking_pot"));
         for (ItemStack held : List.of(ItemStack.EMPTY, new ItemStack(Items.BEEF), new ItemStack(knife), new ItemStack(Items.BOWL),
                 new ItemStack(Items.BREAD), new ItemStack(Items.CARROT), new ItemStack(Items.SWEET_BERRIES))) {
             top.cook.setItemInHand(InteractionHand.MAIN_HAND, held);
@@ -249,12 +252,12 @@ public final class StoveTests {
         Top top = stove(helper);
         Level level = helper.getLevel();
         List<String> refused = new ArrayList<>();
-        for (RecipeHolder<CampfireCookingRecipe> holder : level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {
+        for (RecipeHolder<CampfireCookingRecipe> holder : KitchenRecipes.all(level, RecipeType.CAMPFIRE_COOKING)) {
             CampfireCookingRecipe recipe = holder.value();
-            if (recipe.getIngredients().isEmpty() || recipe.getResultItem(level.registryAccess()).isEmpty()) {
+            if (RecipeParts.ingredients(recipe).isEmpty() || RecipeParts.result(recipe).isEmpty()) {
                 continue;
             }
-            for (ItemStack food : StoveCooking.grillable(recipe.getIngredients().get(0)).getItems()) {
+            for (ItemStack food : RecipeParts.items(StoveCooking.grillable(RecipeParts.ingredients(recipe).get(0)))) {
                 if (!food.isEmpty() && !food.is(Items.BARRIER) && !StoveCooking.takes(top.stove, food.copyWithCount(1))) {
                     refused.add(holder.id() + " (" + food.getItem() + ")");
                 }
@@ -274,8 +277,8 @@ public final class StoveTests {
         top.stove.placeFood(top.cook, egg, top.stove.getCookingRecipe(egg).orElseThrow());
         helper.assertTrue(top.on(0).is(Items.EGG) && !top.grill().byHand(0), "Farmer's Delight's right click is its own way");
         boolean eggRecipe = false;
-        for (RecipeHolder<CampfireCookingRecipe> holder : helper.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {
-            Ingredient food = holder.value().getIngredients().get(0);
+        for (RecipeHolder<CampfireCookingRecipe> holder : KitchenRecipes.all(helper.getLevel(), RecipeType.CAMPFIRE_COOKING)) {
+            Ingredient food = RecipeParts.ingredients(holder.value()).get(0);
             if (food.test(new ItemStack(Items.EGG))) {
                 eggRecipe = true;
                 helper.assertFalse(StoveCooking.grillable(food).test(new ItemStack(Items.EGG)), "the book shows no egg");
@@ -335,10 +338,10 @@ public final class StoveTests {
         }
 
         /** The effects sent, for the tests to look at. */
-        final java.util.List<ResourceLocation> effects = new java.util.ArrayList<>();
+        final java.util.List<Identifier> effects = new java.util.ArrayList<>();
 
         @Override
-        public void effect(ResourceLocation effect, String node, CompoundTag data) {
+        public void effect(Identifier effect, String node, CompoundTag data) {
             effects.add(effect);
         }
     }

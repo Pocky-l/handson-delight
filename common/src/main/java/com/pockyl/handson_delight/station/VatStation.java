@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * inventory. A vat lying on its side or upside down keeps its own menu.
  */
 public final class VatStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("vat");
+    public static final Identifier ID = HandsOnDelight.id("vat");
 
     public static final String INGREDIENTS = "ingredients";
     /** The containers the result goes into: bottles, wafers. */
@@ -65,7 +65,7 @@ public final class VatStation {
     public static final SlotRef CONTAINER_SLOT = SlotRef.of(CONTAINER, 0);
     public static final SlotRef SERVED_SLOT = SlotRef.of(SERVED, 0);
     public static final SlotRef SERVINGS_SLOT = SlotRef.of(SERVINGS, 0);
-    public static final Supplier<Block> VAT = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(KitchenVat.MOD_ID, "vat"));
+    public static final Supplier<Block> VAT = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(KitchenVat.MOD_ID, "vat"));
 
     public static final StationSchema SCHEMA = StationSchema.builder()
             .slots(INGREDIENTS, KitchenVat.INGREDIENTS, SlotRules.DEFAULT.kept())

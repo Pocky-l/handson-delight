@@ -1,18 +1,18 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
 import com.pockyl.handson_delight.HandsOnDelight;
-import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -27,12 +27,12 @@ import java.util.WeakHashMap;
  * libraries nested in its jar, so they are read by name.
  */
 public final class YoukaiPotDishes {
-    private static final ResourceLocation COOKING = ResourceLocation.tryBuild(KitchenYoukaiPot.MOD_ID, "pot_cooking");
+    private static final Identifier COOKING = Identifier.tryBuild(KitchenYoukaiPot.MOD_ID, "pot_cooking");
     /**
      * Per recipe manager: the client's and the server's of a single-player game are two. Read again when the manager's map of recipes
      * is a new one (a reload, the server's recipes reaching a client).
      */
-    private static final Map<RecipeManager, Cached> READ = new WeakHashMap<>();
+    private static final Map<Object, Cached> READ = new WeakHashMap<>();
     private static boolean warned;
 
     private YoukaiPotDishes() {
@@ -42,13 +42,13 @@ public final class YoukaiPotDishes {
         if (level == null) {
             return List.of();
         }
-        RecipeManager manager = level.getRecipeManager();
-        Map<?, ?> recipes = ((RecipeManagerAccessor) manager).handson$byName();
+        Object source = KitchenRecipes.source(level);
+        Map<?, ?> recipes = KitchenRecipes.byName(level);
         synchronized (READ) {
-            Cached cached = READ.get(manager);
+            Cached cached = READ.get(source);
             if (cached == null || cached.from() != recipes) {
-                cached = new Cached(recipes, read(manager));
-                READ.put(manager, cached);
+                cached = new Cached(recipes, read(level));
+                READ.put(source, cached);
             }
             return cached.dishes();
         }
@@ -58,22 +58,22 @@ public final class YoukaiPotDishes {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static List<KitchenYoukaiPot.Dish> read(RecipeManager manager) {
+    private static List<KitchenYoukaiPot.Dish> read(Level level) {
         List<KitchenYoukaiPot.Dish> dishes = new ArrayList<>();
         Optional<RecipeType<?>> type = BuiltInRegistries.RECIPE_TYPE.getOptional(COOKING);
         if (type.isEmpty()) {
             return dishes;
         }
-        for (RecipeHolder<?> holder : (List<RecipeHolder<?>>) (List) manager.getAllRecipesFor((RecipeType) type.get())) {
+        for (RecipeHolder<?> holder : (List<RecipeHolder<?>>) (List) KitchenRecipes.all(level, (RecipeType) type.get())) {
             Object recipe = holder.value();
             try {
                 List<Ingredient> input = List.copyOf((List<Ingredient>) call(recipe, "getInput"));
                 ItemStack result = ((ItemStack) call(recipe, "getResult")).copy();
                 int ticks = (Integer) call(recipe, "getProcessTime");
                 // Its dishes name their pot as what crafting leaves of them (the item's own remainder, set by its properties).
-                Item pot = result.getItem().getCraftingRemainingItem();
+                Item pot = RecipeParts.remainder(result.getItem());
                 if (!result.isEmpty() && pot != null && pot != Items.AIR && !input.isEmpty()) {
-                    dishes.add(new KitchenYoukaiPot.Dish(holder.id(), result, input, ticks, pot));
+                    dishes.add(new KitchenYoukaiPot.Dish(holder.id().identifier(), result, input, ticks, pot));
                 }
             } catch (ReflectiveOperationException | RuntimeException e) {
                 if (!warned) {

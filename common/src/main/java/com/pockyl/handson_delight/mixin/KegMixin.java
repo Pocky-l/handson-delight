@@ -26,6 +26,7 @@ import umpaz.brewinandchewin.common.registry.BnCRecipeTypes;
 import umpaz.brewinandchewin.common.utility.AbstractedFluidStack;
 import umpaz.brewinandchewin.common.utility.FluidUnit;
 
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.station.KitchenKeg;
 
 import java.util.ArrayList;
@@ -176,7 +177,7 @@ abstract class KegMixin implements KitchenKeg {
         if (level == null) {
             return recipes;
         }
-        for (RecipeHolder<KegFermentingRecipe> holder : level.getRecipeManager().getAllRecipesFor(BnCRecipeTypes.FERMENTING)) {
+        for (RecipeHolder<KegFermentingRecipe> holder : KitchenRecipes.all(level, BnCRecipeTypes.FERMENTING)) {
             KegFermentingRecipe recipe = holder.value();
             Optional<FluidIngredientWithAmount> base = recipe.getFluidIngredient();
             Fluid baseFluid = base.flatMap(ingredient -> ingredient.ingredient().displayStacks().stream().findFirst())
@@ -214,7 +215,7 @@ abstract class KegMixin implements KitchenKeg {
     private List<KegPouringRecipe> handson$pouring() {
         Level level = handson$level();
         return level == null ? List.of()
-                : level.getRecipeManager().getAllRecipesFor(BnCRecipeTypes.KEG_POURING).stream().map(RecipeHolder::value).toList();
+                : KitchenRecipes.all(level, BnCRecipeTypes.KEG_POURING).stream().map(RecipeHolder::value).toList();
     }
 
     @Unique

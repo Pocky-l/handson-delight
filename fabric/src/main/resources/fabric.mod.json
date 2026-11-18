@@ -15,9 +15,6 @@
   "entrypoints": {
     "main": ["com.pockyl.handson_delight.fabric.HandsOnDelightFabric"],
     "client": ["com.pockyl.handson_delight.fabric.HandsOnDelightFabricClient"],
-    "jei_mod_plugin": ["com.pockyl.handson_delight.compat.jei.HandsOnJeiPlugin"],
-    "emi": ["com.pockyl.handson_delight.compat.emi.HandsOnEmiPlugin"],
-    "rei_client": ["com.pockyl.handson_delight.fabric.rei.HandsOnReiPlugin"],
     "fabric-gametest": ["com.pockyl.handson_delight.fabric.FabricPotTests", "com.pockyl.handson_delight.fabric.FabricBoardTests",
       "com.pockyl.handson_delight.fabric.FabricSkilletTests",
       "com.pockyl.handson_delight.fabric.FabricStoveTests", "com.pockyl.handson_delight.fabric.FabricKegTests",
@@ -29,7 +26,7 @@
     "fabricloader": ">=${fabric_loader_version}",
     "fabric-api": ">=${fabric_api_version}",
     "minecraft": "${minecraft_version}",
-    "java": ">=21",
+    "java": ">=25",
     "farmersdelight": ">=${farmers_delight_version}",
     "diegesis": ">=${diegesis_version}"
   }

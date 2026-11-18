@@ -1,13 +1,13 @@
 package com.pockyl.handson_delight.mixin;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
@@ -35,27 +35,28 @@ import com.pockyl.handson_delight.station.SteamerTower;
  */
 @Mixin(BlockEntityRenderDispatcher.class)
 abstract class StationRenderersMixin {
-    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    private void handson$drawnByScene(BlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffers,
-            CallbackInfo callback) {
+    /** Since Minecraft 26.x a block entity is drawn from the look the dispatcher reads of it: none read, nothing drawn. */
+    @Inject(method = "tryExtractRenderState", at = @At("HEAD"), cancellable = true)
+    private void handson$drawnByScene(BlockEntity blockEntity, float partialTicks, ModelFeatureRenderer.CrumblingOverlay breakProgress,
+            boolean isGloballyRendered, CallbackInfoReturnable<BlockEntityRenderState> callback) {
         boolean drawnByScene = blockEntity instanceof AbstractStoveBlockEntity || blockEntity instanceof SkilletBlockEntity
                 || blockEntity instanceof CookingPotBlockEntity || KitchenGrill.isGrill(blockEntity)
                 || KitchenBasin.isBasin(blockEntity) || blockEntity instanceof KitchenCuisine
                 || blockEntity instanceof KitchenBoard board && !board.handson$isCarving() && !board.handson$rendersBoard();
         if (drawnByScene && HandsOnDelightClient.isSceneDrawn(blockEntity.getBlockPos())) {
-            callback.cancel();
+            callback.setReturnValue(null);
             return;
         }
         // A keg or Youkai's Feasts' fermentation tank: while its scene stands in for the block, it draws the liquid and what lies in it.
         if (blockEntity instanceof KitchenKeg && HandsOnDelightClient.isSceneDrawn(blockEntity.getBlockPos())
                 && HandsOnDelightClient.isBlockHidden(blockEntity.getBlockPos())) {
-            callback.cancel();
+            callback.setReturnValue(null);
             return;
         }
         // Youkai's Feasts' steamer: every block of the tower is drawn by the scene of the pot under it while somebody works there.
         if (blockEntity instanceof KitchenSteamer && blockEntity.getLevel() != null && HandsOnDelightClient.isSceneDrawn(
                 SteamerTower.potUnder(blockEntity.getLevel(), blockEntity.getBlockPos(), blockEntity.getBlockState()))) {
-            callback.cancel();
+            callback.setReturnValue(null);
         }
     }
 }

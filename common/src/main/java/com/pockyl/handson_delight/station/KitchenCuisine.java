@@ -1,6 +1,6 @@
 package com.pockyl.handson_delight.station;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -24,7 +24,7 @@ public interface KitchenCuisine {
     }
 
     /** A recipe of the board: every step in the order it goes on, an empty ingredient for a step done by hand, and the dish. */
-    record Dish(ResourceLocation id, ItemStack result, List<Ingredient> steps) {
+    record Dish(Identifier id, ItemStack result, List<Ingredient> steps) {
         /** How many of the steps are done by hand: shaping, rolling, closing. */
         public long handSteps() {
             return steps.stream().filter(Ingredient::isEmpty).count();
@@ -79,10 +79,10 @@ public interface KitchenCuisine {
     ItemStack handson$takeBack(Player player);
 
     /** The models the board's own renderer draws for what lies on it, in its own block space (facing south). */
-    List<ResourceLocation> handson$models();
+    List<Identifier> handson$models();
 
     /** The models of {@code contents} laid on an empty board, or null when the board would not take them in that order. */
-    List<ResourceLocation> handson$modelsOf(List<ItemStack> contents);
+    List<Identifier> handson$modelsOf(List<ItemStack> contents);
 
     /** What the board takes next; an empty ingredient is the hand. */
     List<Ingredient> handson$hints();

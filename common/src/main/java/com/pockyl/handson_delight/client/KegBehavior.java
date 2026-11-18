@@ -8,7 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
@@ -73,7 +73,7 @@ public final class KegBehavior implements StationBehavior {
     /** The badge over the keg: its plate, the bar and the thermometer. */
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "thermo", "thermo_now", "preview"};
     private static final String[] SHOWN_IN_USE = {"keg", "lid", "drink", "tap", "mouth", "served"};
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
+    private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /**
      * The lid is taken off and set down on the floor on the cook's right, leaning on the keg's side, and put back when the last
      * one goes: lifted clear of the rim, carried over in an arc while it is turned on its edge, set down. Seconds each way; where
@@ -327,7 +327,7 @@ public final class KegBehavior implements StationBehavior {
         } else if (event instanceof SceneEvent.Click click && click.node().equals("book_open")) {
             book.click(view, click.button());
         } else if (event instanceof SceneEvent.Click click && click.node().equals(drawnAt()) && click.button() == 0 && !offered.isEmpty()) {
-            boolean all = Screen.hasShiftDown();
+            boolean all = Minecraft.getInstance().hasShiftDown();
             if (hasTap()) {
                 draw(view, offered, false, all);
             } else {
@@ -472,8 +472,8 @@ public final class KegBehavior implements StationBehavior {
     }
 
     @Override
-    public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
-        Fluid fluid = fluidOf(data.getString(KegStation.FLUID));
+    public void onEffect(StationView view, Identifier effect, String node, CompoundTag data) {
+        Fluid fluid = fluidOf(data.getStringOr(KegStation.FLUID, ""));
         int color = 0xFF000000 | colourOf(view, keg(view), fluid) & 0xFFFFFF;
         if (KegStation.EFFECT_POURED.equals(effect)) {
             poured(view, data, color);
@@ -483,9 +483,9 @@ public final class KegBehavior implements StationBehavior {
                 view.playSound(SoundEvents.BOTTLE_FILL, "drink", 0.5F, 1.0F);
             }
         } else if (KegStation.EFFECT_TAPPED.equals(effect) && fluid != Fluids.EMPTY) {
-            Item vessel = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(data.getString(KegStation.VESSEL)));
+            Item vessel = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(data.getStringOr(KegStation.VESSEL, "")));
             draughts.tapped(view, new ItemStack(vessel), BuiltInRegistries.FLUID.getKey(fluid), colourOf(view, keg(view), fluid),
-                    KegLiquids.of(fluid).orElse(null), data.getInt(KegStation.COUNT));
+                    KegLiquids.of(fluid).orElse(null), data.getIntOr(KegStation.COUNT, 0));
         }
     }
 
@@ -494,7 +494,7 @@ public final class KegBehavior implements StationBehavior {
      * waiting for it. Without a container to show, it only splashes.
      */
     private void poured(StationView view, CompoundTag data, int color) {
-        Item vessel = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(data.getString(KegStation.VESSEL)));
+        Item vessel = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(data.getStringOr(KegStation.VESSEL, "")));
         NodeView hand = view.node("pour_hand").orElse(null);
         if (hand == null || vessel == null || vessel == Items.AIR || !view.isFocused()) {
             view.node("drink").ifPresent(drink -> drink.ripple(shape.middleX(), shape.middleZ(), 0.6F));
@@ -517,8 +517,8 @@ public final class KegBehavior implements StationBehavior {
     }
 
     private static Fluid fluidOf(String id) {
-        ResourceLocation key = ResourceLocation.tryParse(id);
-        return key == null || id.isEmpty() ? Fluids.EMPTY : BuiltInRegistries.FLUID.get(key);
+        Identifier key = Identifier.tryParse(id);
+        return key == null || id.isEmpty() ? Fluids.EMPTY : BuiltInRegistries.FLUID.getValue(key);
     }
 
     /** Where a drink leaves the tap's hole in the scene, turned with the keg, just out of the stave; the middle of a tank's drink. */
@@ -680,7 +680,7 @@ public final class KegBehavior implements StationBehavior {
             return WATER_ALPHA << 24;
         }
         if (fluid.isSame(Fluids.WATER)) {
-            return WATER_ALPHA << 24 | blend(BiomeColors.getAverageWaterColor(view.level(), view.pos()), WATER_IN_WOOD, 0.5F) & 0xFFFFFF;
+            return WATER_ALPHA << 24 | blend(BiomeColors.getAverageWaterColor((net.minecraft.client.multiplayer.ClientLevel) view.level(), view.pos()), WATER_IN_WOOD, 0.5F) & 0xFFFFFF;
         }
         Optional<KegLiquids.Drink> known = KegLiquids.of(fluid);
         if (known.isPresent()) {
@@ -716,7 +716,7 @@ public final class KegBehavior implements StationBehavior {
             ItemStack drink = keg.handson$drinkOf(keg.handson$fluid());
             Component name = drink.isEmpty() ? Component.literal(BuiltInRegistries.FLUID.getKey(keg.handson$fluid()).getPath())
                     : drink.getHoverName();
-            int left = view.state().data().getInt(KegStation.LEFT);
+            int left = view.state().data().getIntOr(KegStation.LEFT, 0);
             node.setTooltip(left > 0 && view.state().getControl(KegStation.PROGRESS) > 0.0F
                     ? fermenting(name, Math.max(1, Mth.ceil(left / 20.0F)))
                     : Component.translatable("handson_delight.keg.holds", name, keg.handson$amount()));
@@ -739,7 +739,7 @@ public final class KegBehavior implements StationBehavior {
         // The keg comes shut, as it stands; the cook takes the lid off.
         boolean lidOff = inUse && isLidOff(view);
         if (lidOff && !wasOpen) {
-            view.playSound(SoundEvents.BARREL_OPEN, "lid", 0.45F, 1.05F + view.level().random.nextFloat() * 0.1F);
+            view.playSound(SoundEvents.BARREL_OPEN, "lid", 0.45F, 1.05F + view.level().getRandom().nextFloat() * 0.1F);
             if (view.state().getControl(KegStation.PROGRESS) > 0.0F || ready) {
                 ferment.opened(view, this::kegPoint, shape, view.state().getTank(KegStation.DRINK).amount() == 0, foamColor());
             }
@@ -810,9 +810,9 @@ public final class KegBehavior implements StationBehavior {
         float before = lid;
         lid = Mth.clamp(lid + (off ? dt : -dt) / LID_MOVE, 0.0F, 1.0F);
         if (before < 1.0F && lid >= 1.0F) {
-            view.playSound(SoundEvents.WOOD_PLACE, "lid", 0.35F, 1.1F + view.level().random.nextFloat() * 0.1F);
+            view.playSound(SoundEvents.WOOD_PLACE, "lid", 0.35F, 1.1F + view.level().getRandom().nextFloat() * 0.1F);
         } else if (before > 0.0F && lid <= 0.0F) {
-            view.playSound(SoundEvents.BARREL_CLOSE, "lid", 0.4F, 1.0F + view.level().random.nextFloat() * 0.1F);
+            view.playSound(SoundEvents.BARREL_CLOSE, "lid", 0.4F, 1.0F + view.level().getRandom().nextFloat() * 0.1F);
         }
         float k = KitchenMotions.smooth(lid);
         float knock = lid <= 0.0F ? ferment.bump() : 0.0F;
@@ -897,7 +897,7 @@ public final class KegBehavior implements StationBehavior {
                 // Bobbing on it, each now and then sends a small ring out.
                 ringIn[i] -= dt;
                 if (ringIn[i] <= 0.0F) {
-                    ringIn[i] = BOB_RING_EVERY + view.level().random.nextFloat() * BOB_RING_SPREAD;
+                    ringIn[i] = BOB_RING_EVERY + view.level().getRandom().nextFloat() * BOB_RING_SPREAD;
                     ringsAt(view, new Vector3f(at).add(8.0F, 0.0F, 8.0F), BOB_RINGS);
                 }
             }
@@ -1024,7 +1024,7 @@ public final class KegBehavior implements StationBehavior {
         boolean shown = cookHere && !dish.isEmpty();
         view.node("badge").ifPresent(plate -> plate.setVisible(shown));
         float progress = view.state().getControl(KegStation.PROGRESS);
-        int left = view.state().data().getInt(KegStation.LEFT);
+        int left = view.state().data().getIntOr(KegStation.LEFT, 0);
         int seconds = progress > 0.0F && left > 0 ? Math.max(1, Mth.ceil(left / 20.0F)) : 0;
         int bar = ready ? BAR_LENGTH : Math.round(progress * BAR_LENGTH);
         String text = seconds >= 60 ? seconds / 60 + ":" + String.format("%02d", seconds % 60) : seconds > 0 ? Integer.toString(seconds)

@@ -128,13 +128,13 @@ public final class Grill {
     }
 
     public void load(CompoundTag tag) {
-        ListTag places = tag.getList("places", Tag.TAG_COMPOUND);
+        ListTag places = tag.getListOrEmpty("places");
         for (int place = 0; place < PLACES; place++) {
-            CompoundTag one = place < places.size() ? places.getCompound(place) : new CompoundTag();
-            byHand[place] = one.getBoolean("by_hand");
-            ready[place] = one.getBoolean("ready");
-            down[place] = one.getFloat("down");
-            up[place] = one.getFloat("up");
+            CompoundTag one = place < places.size() ? places.getCompoundOrEmpty(place) : new CompoundTag();
+            byHand[place] = one.getBooleanOr("by_hand", false);
+            ready[place] = one.getBooleanOr("ready", false);
+            down[place] = one.getFloatOr("down", 0.0F);
+            up[place] = one.getFloatOr("up", 0.0F);
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -15,6 +15,7 @@ import com.pockyl.diegesis.api.state.SlotStorage;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public final class OvenLogic implements StationLogic {
     /** The tray is being shared out: its own changes do not share it out again. */
     private boolean arranging;
     /** The recipe the cook last picked in the book: the oven's choice while the tray's food makes it, until the tray is empty. */
-    private net.minecraft.resources.ResourceLocation picked;
+    private net.minecraft.resources.Identifier picked;
 
     public OvenLogic(StationContext station) {
         oven = KitchenOven.of(station.blockEntity());
@@ -137,7 +138,7 @@ public final class OvenLogic implements StationLogic {
     @Override
     public void onTaken(StationContext station, Player player, SlotRef slot, ItemStack stack) {
         if (slot.equals(OvenStation.SERVED_SLOT)) {
-            stack.onCraftedBy(station.level(), player, stack.getCount());
+            stack.onCraftedBy(player, stack.getCount());
         }
     }
 
@@ -147,21 +148,21 @@ public final class OvenLogic implements StationLogic {
             return;
         }
         if (OvenStation.ACTION_DOOR.equals(action)) {
-            setDoor(station, data.getBoolean(OvenStation.OPEN));
+            setDoor(station, data.getBooleanOr(OvenStation.OPEN, false));
         } else if (OvenStation.ACTION_LAY.equals(action)) {
             if (!isOpen(station) && oven.progress() == 0) {
                 // The cook came with food to an oven that bakes nothing: its door is open for them before anything else.
                 setDoor(station, true);
             }
             if (isOpen(station)) {
-                lay(player, data.getInt(OvenStation.FROM));
+                lay(player, data.getIntOr(OvenStation.FROM, 0));
             }
         } else if (OvenStation.ACTION_FILL.equals(action)) {
-            ResourceLocation id = ResourceLocation.tryParse(data.getString(OvenStation.DISH));
+            Identifier id = Identifier.tryParse(data.getStringOr(OvenStation.DISH, ""));
             KitchenOven.recipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).findFirst().ifPresent(recipe -> {
                 // A recipe picked in the book opens the door for its ingredients to go in.
                 setDoor(station, true);
-                fill(player, recipe, data.getBoolean(OvenStation.ALL) ? FILL_MOST : 1);
+                fill(player, recipe, data.getBooleanOr(OvenStation.ALL, false) ? FILL_MOST : 1);
             });
         }
     }
@@ -274,7 +275,7 @@ public final class OvenLogic implements StationLogic {
             return;
         }
         int[] places = places(recipe);
-        List<Ingredient> wanted = recipe.isShaped() ? recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList()
+        List<Ingredient> wanted = recipe.isShaped() ? recipe.ingredients().stream().filter(ingredient -> !RecipeParts.isGap(ingredient)).toList()
                 : recipe.ingredients();
         if (places == null || wanted.isEmpty()) {
             return;
@@ -422,7 +423,7 @@ public final class OvenLogic implements StationLogic {
         CompoundTag own = state.data().copy();
         // In whole seconds, as the badge tells it.
         int left = time > 0 && total > 0 ? Mth.ceil((total - time) / 20.0F) * 20 : 0;
-        if (own.getInt(OvenStation.LEFT) != left) {
+        if (own.getIntOr(OvenStation.LEFT, 0) != left) {
             own.putInt(OvenStation.LEFT, left);
             state.setData(own);
         }

@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -34,7 +34,7 @@ public final class YoukaiKettleTests {
 
     @SuppressWarnings("removal")
     private static Item feasts(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KettleStation.YOUKAI_MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KettleStation.YOUKAI_MOD_ID, path));
     }
 
     private record Setup(PotTests.TestStation station, KettleLogic logic, KitchenKettle kettle) {
@@ -165,7 +165,7 @@ public final class YoukaiKettleTests {
             helper.assertTrue(boil > 0.0F && boil < 1.0F, "the water warms, got " + boil);
             helper.assertTrue(setup.kettle.handson$data().get(0) == 0, "nothing brews before the boil");
             setup.logic.tick(setup.station);
-            int left = setup.station.state().data().getInt(KettleStation.LEFT);
+            int left = setup.station.state().data().getIntOr(KettleStation.LEFT, 0);
             helper.assertTrue(left > 45 * 20, "the time left counts the boil, got " + left + " ticks");
             // The rest of the boil is skipped: the kettle is told its water is that hot.
             setup.kettle.handson$data().set(2, 999);

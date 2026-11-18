@@ -5,6 +5,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
 import com.pockyl.handson_delight.HandsOnConfig;
@@ -175,7 +177,7 @@ public final class PotCooking {
         return taken;
     }
 
-    public void save(CompoundTag tag) {
+    public void save(ValueOutput tag) {
         if (byHand) {
             tag.putBoolean(BY_HAND, true);
         }
@@ -184,9 +186,9 @@ public final class PotCooking {
         }
     }
 
-    public void load(CompoundTag tag) {
-        byHand = tag.getBoolean(BY_HAND);
-        bonusCarried = tag.getFloat(BONUS);
+    public void load(ValueInput tag) {
+        byHand = tag.getBooleanOr(BY_HAND, false);
+        bonusCarried = tag.getFloatOr(BONUS, 0.0F);
         // What a loaded pot holds was there before: only what comes in from now on says who feeds it.
         fed = -1;
     }

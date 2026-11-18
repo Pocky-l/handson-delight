@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
@@ -12,6 +12,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.lang.reflect.Field;
@@ -33,8 +35,8 @@ public final class KitchenOven {
     public static final int GRID = 3;
     public static final int OUTPUT_SLOT = 9;
     /** Its two recipe types: a set of ingredients in any slots, and one laid out in the grid as at a crafting table. */
-    public static final ResourceLocation BAKING = ResourceLocation.fromNamespaceAndPath(MOD_ID, "baking");
-    public static final ResourceLocation BAKING_SHAPED = ResourceLocation.fromNamespaceAndPath(MOD_ID, "baking_shaped");
+    public static final Identifier BAKING = Identifier.fromNamespaceAndPath(MOD_ID, "baking");
+    public static final Identifier BAKING_SHAPED = Identifier.fromNamespaceAndPath(MOD_ID, "baking_shaped");
 
     private static Class<?> entityClass;
     private static Field progressField;
@@ -140,14 +142,14 @@ public final class KitchenOven {
      * A baking recipe: what goes in and what comes out after {@code ticks}. {@code width} 0: any slots; otherwise laid out
      * {@code width} x {@code height} as at a crafting table, {@code ingredients} row by row with empty places.
      */
-    public record Baking(ResourceLocation id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks) {
+    public record Baking(Identifier id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks) {
         public boolean isShaped() {
             return width > 0;
         }
 
         /** What goes in, without the empty places of a laid-out recipe. */
         public List<Ingredient> needed() {
-            return ingredients.stream().filter(ingredient -> !ingredient.isEmpty()).toList();
+            return ingredients.stream().filter(ingredient -> !RecipeParts.isGap(ingredient)).toList();
         }
     }
 
@@ -155,23 +157,23 @@ public final class KitchenOven {
     public static List<Baking> recipes(Level level) {
         List<Baking> shaped = new ArrayList<>();
         List<Baking> loose = new ArrayList<>();
-        for (RecipeHolder<?> holder : level.getRecipeManager().getRecipes()) {
+        for (RecipeHolder<?> holder : KitchenRecipes.recipes(level)) {
             Recipe<?> recipe = holder.value();
-            ResourceLocation type = BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType());
+            Identifier type = BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType());
             boolean isShaped = BAKING_SHAPED.equals(type);
             if (!isShaped && !BAKING.equals(type)) {
                 continue;
             }
-            ItemStack result = recipe.getResultItem(level.registryAccess());
+            ItemStack result = RecipeParts.result(recipe);
             if (result.isEmpty()) {
                 continue;
             }
             int ticks = call(recipe, "getCookTime", 200);
             if (isShaped) {
-                shaped.add(new Baking(holder.id(), List.copyOf(recipe.getIngredients()), call(recipe, "getWidth", 0),
+                shaped.add(new Baking(holder.id().identifier(), List.copyOf(RecipeParts.ingredients(recipe)), call(recipe, "getWidth", 0),
                         call(recipe, "getHeight", 0), result.copy(), ticks));
             } else {
-                loose.add(new Baking(holder.id(), List.copyOf(recipe.getIngredients()), 0, 0, result.copy(), ticks));
+                loose.add(new Baking(holder.id().identifier(), List.copyOf(RecipeParts.ingredients(recipe)), 0, 0, result.copy(), ticks));
             }
         }
         shaped.removeIf(recipe -> recipe.width() <= 0 || recipe.height() <= 0 || recipe.width() * recipe.height() != recipe.ingredients().size());
@@ -214,7 +216,7 @@ public final class KitchenOven {
             for (int y = 0; y < GRID; y++) {
                 ItemStack there = grid[x + y * GRID];
                 boolean inside = x >= left && x < left + recipe.width() && y >= top && y < top + recipe.height();
-                Ingredient wanted = inside ? recipe.ingredients().get(x - left + (y - top) * recipe.width()) : Ingredient.EMPTY;
+                Ingredient wanted = inside ? recipe.ingredients().get(x - left + (y - top) * recipe.width()) : RecipeParts.NOTHING;
                 if (inside ? !wanted.test(there) : !there.isEmpty()) {
                     return false;
                 }

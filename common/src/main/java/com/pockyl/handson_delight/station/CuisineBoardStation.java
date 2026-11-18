@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * also for passers-by, and every step goes through the board's own code.
  */
 public final class CuisineBoardStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("youkai_board");
+    public static final Identifier ID = HandsOnDelight.id("youkai_board");
 
     /** Where a stack let go over the board is caught: one slot that never keeps anything. */
     public static final String HAND = "hand";
@@ -63,17 +63,17 @@ public final class CuisineBoardStation {
      * Steps went on: {@link #STEPS} (each a compound with {@link #STACK}, empty for the hand, and {@link #AFTER}, what lay on the
      * board after it), {@link #BOOK} when the book laid them, from the inventory rather than the cursor.
      */
-    public static final ResourceLocation EFFECT_LAID = HandsOnDelight.id("youkai_board_laid");
+    public static final Identifier EFFECT_LAID = HandsOnDelight.id("youkai_board_laid");
     /** The dish went to the cook: {@link #STACK}. With {@link #AFTER} the dish was one of a batch and the board starts again. */
-    public static final ResourceLocation EFFECT_TAKEN = HandsOnDelight.id("youkai_board_taken");
+    public static final Identifier EFFECT_TAKEN = HandsOnDelight.id("youkai_board_taken");
     /** The last step came off: {@link #STACK} what went back, {@link #AFTER} what lies there now. */
-    public static final ResourceLocation EFFECT_BACK = HandsOnDelight.id("youkai_board_back");
+    public static final Identifier EFFECT_BACK = HandsOnDelight.id("youkai_board_back");
     /** A mark was cut ({@link #MARK}), not the last one. */
-    public static final ResourceLocation EFFECT_CHOPPED = HandsOnDelight.id("youkai_board_chopped");
+    public static final Identifier EFFECT_CHOPPED = HandsOnDelight.id("youkai_board_chopped");
     /** The dish was cut through at its last mark: {@link #STACK} the dish, {@link #TOOL} the knife, {@link #RESULTS} the pieces. */
-    public static final ResourceLocation EFFECT_CUT = HandsOnDelight.id("youkai_board_cut");
+    public static final Identifier EFFECT_CUT = HandsOnDelight.id("youkai_board_cut");
     /** What the board would not take: {@link #STACK}. */
-    public static final ResourceLocation EFFECT_REFUSED = HandsOnDelight.id("youkai_board_refused");
+    public static final Identifier EFFECT_REFUSED = HandsOnDelight.id("youkai_board_refused");
     public static final String STEPS = "steps";
     public static final String STACK = "stack";
     public static final String AFTER = "after";
@@ -85,7 +85,7 @@ public final class CuisineBoardStation {
             .slots(HAND, 1, SlotRules.DEFAULT)
             .build();
 
-    public static final Supplier<Block> BOARD = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(KitchenCuisine.MOD_ID,
+    public static final Supplier<Block> BOARD = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(KitchenCuisine.MOD_ID,
             "cuisine_board"));
 
     /**

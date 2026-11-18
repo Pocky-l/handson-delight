@@ -1,13 +1,12 @@
 package com.pockyl.handson_delight.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -23,24 +22,24 @@ import java.util.List;
  * model, the pack and the renderer in the log, so a player's report says which mod it is.
  */
 final class PotLookCheck {
-    private static final ResourceLocation STATE_FILE = ResourceLocation.fromNamespaceAndPath("farmersdelight", "blockstates/cooking_pot.json");
+    private static final Identifier STATE_FILE = Identifier.fromNamespaceAndPath("farmersdelight", "blockstates/cooking_pot.json");
     /** The top of this mod's floor ({@code body.json}, element {@code floor}), in block units. */
     private static final float FLOOR = 2.0F / 16.0F;
     private static final float EPSILON = 1.0E-4F;
 
-    private static BakedModel checked;
+    private static BlockStateModel checked;
 
     private PotLookCheck() {
     }
 
     static void check(BlockState state, BlockEntity pot) {
         Minecraft minecraft = Minecraft.getInstance();
-        BakedModel model = minecraft.getBlockRenderer().getBlockModel(state);
+        BlockStateModel model = com.pockyl.diegesis.impl.client.render.SceneDraw.blockModel(state);
         if (model == checked) {
             return;
         }
         checked = model;
-        BlockEntityRenderer<BlockEntity> renderer = pot == null ? null : minecraft.getBlockEntityRenderDispatcher().getRenderer(pot);
+        BlockEntityRenderer<BlockEntity, ?> renderer = pot == null ? null : minecraft.getBlockEntityRenderDispatcher().getRenderer(pot);
         boolean ours = hasOurFloor(model, state);
         if (ours && renderer == null) {
             return;
@@ -55,22 +54,19 @@ final class PotLookCheck {
     }
 
     /** Whether the model has the up face of this mod's floor: a square at the floor's height. */
-    private static boolean hasOurFloor(BakedModel model, BlockState state) {
-        RandomSource random = RandomSource.create(42L);
-        for (Direction side : new Direction[] {Direction.UP, null}) {
-            for (BakedQuad quad : model.getQuads(state, side, random)) {
-                if (quad.getDirection() == Direction.UP && allAt(quad.getVertices(), FLOOR)) {
-                    return true;
-                }
+    private static boolean hasOurFloor(BlockStateModel model, BlockState state) {
+        boolean[] found = {false};
+        com.pockyl.diegesis.impl.client.render.SceneDraw.forEachQuad(model, quad -> {
+            if (quad.direction() == Direction.UP && allAt(quad, FLOOR)) {
+                found[0] = true;
             }
-        }
-        return false;
+        });
+        return found[0];
     }
 
-    private static boolean allAt(int[] vertices, float y) {
-        int stride = vertices.length / 4;
+    private static boolean allAt(BakedQuad quad, float y) {
         for (int vertex = 0; vertex < 4; vertex++) {
-            if (Math.abs(Float.intBitsToFloat(vertices[vertex * stride + 1]) - y) > EPSILON) {
+            if (Math.abs(quad.position(vertex).y() - y) > EPSILON) {
                 return false;
             }
         }

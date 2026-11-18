@@ -2,21 +2,21 @@ package com.pockyl.handson_delight.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.util.LightCoordsUtil;
+import com.pockyl.diegesis.api.client.SceneBuffers;
+import com.pockyl.diegesis.impl.client.render.SceneDraw;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.FormattedCharSequence;
@@ -30,7 +30,6 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import org.lwjgl.glfw.GLFW;
 
 import com.pockyl.diegesis.api.client.DiegesisClient;
 import com.pockyl.diegesis.api.client.NodePainter;
@@ -40,6 +39,7 @@ import com.pockyl.diegesis.api.scene.Transform;
 import com.pockyl.handson_delight.Cookable;
 import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.PotLogic;
 
 import java.util.ArrayList;
@@ -58,16 +58,16 @@ import java.util.Optional;
  */
 final class RecipeBook implements NodePainter {
     /** The page's paper, a unit to a texel, and the ribbon beside it. */
-    private static final ResourceLocation PAPER = HandsOnDelight.id("textures/entity/recipe_book_paper.png");
-    private static final ResourceLocation PAGE_FORWARD = ResourceLocation.parse("textures/gui/sprites/widget/page_forward.png");
-    private static final ResourceLocation PAGE_FORWARD_LIT = ResourceLocation.parse("textures/gui/sprites/widget/page_forward_highlighted.png");
-    private static final ResourceLocation PAGE_BACKWARD = ResourceLocation.parse("textures/gui/sprites/widget/page_backward.png");
-    private static final ResourceLocation PAGE_BACKWARD_LIT = ResourceLocation.parse("textures/gui/sprites/widget/page_backward_highlighted.png");
+    private static final Identifier PAPER = HandsOnDelight.id("textures/entity/recipe_book_paper.png");
+    private static final Identifier PAGE_FORWARD = Identifier.parse("textures/gui/sprites/widget/page_forward.png");
+    private static final Identifier PAGE_FORWARD_LIT = Identifier.parse("textures/gui/sprites/widget/page_forward_highlighted.png");
+    private static final Identifier PAGE_BACKWARD = Identifier.parse("textures/gui/sprites/widget/page_backward.png");
+    private static final Identifier PAGE_BACKWARD_LIT = Identifier.parse("textures/gui/sprites/widget/page_backward_highlighted.png");
     /**
      * The flat sprite that wells and bars are tinted from: this mod's own, in the off-white of white concrete that their colours were
      * chosen against, so that a resource pack that retextures concrete does not show through the book.
      */
-    private static final ResourceLocation WHITE = HandsOnDelight.id("block/white");
+    private static final Identifier WHITE = HandsOnDelight.id("block/white");
     private static final Quaternionf LYING = new Matrix3f(0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F).getNormalizedRotation(new Quaternionf());
     /** How big against the model's own pixels. */
     private static final float SIZE = 0.72F;
@@ -255,7 +255,7 @@ final class RecipeBook implements NodePainter {
     private float reach;
     private float time;
     /** The light the book is drawn in: where it hangs, never darker than a lit kitchen, so it stays readable. */
-    private int shade = LightTexture.FULL_BRIGHT;
+    private int shade = LightCoordsUtil.FULL_BRIGHT;
     /** The last time the player's statistics were asked for, milliseconds. */
     private long statsAsked;
     /** The dish's name broken into lines, for the entry it was broken for. */
@@ -871,7 +871,10 @@ final class RecipeBook implements NodePainter {
      * and the station is one: it always says up there.
      */
     private static boolean leftHeld() {
-        return GLFW.glfwGetMouseButton(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+            // SDL's mask of the buttons down: the left one is its first bit (SDL_BUTTON_LMASK).
+            return (org.lwjgl.sdl.SDLMouse.SDL_GetMouseState(stack.mallocFloat(1), stack.mallocFloat(1)) & 1) != 0;
+        }
     }
 
     /** The size the book is drawn at, against its own: as given, and a little bigger while it is held. */
@@ -1302,8 +1305,8 @@ final class RecipeBook implements NodePainter {
     }
 
     @Override
-    public void paint(PoseStack poseStack, MultiBufferSource buffers, int light) {
-        shade = LightTexture.pack(Math.max(LightTexture.block(light), LIT), Math.max(LightTexture.sky(light), LIT));
+    public void paint(PoseStack poseStack, SceneBuffers buffers, int light) {
+        shade = LightCoordsUtil.pack(Math.max(LightCoordsUtil.block(light), LIT), Math.max(LightCoordsUtil.sky(light), LIT));
         if (model == null) {
             model = RecipeBookModel.bake();
         }
@@ -1312,18 +1315,18 @@ final class RecipeBook implements NodePainter {
         // How far each cover has turned from shut, as the enchanting table's book turns them.
         float angle = 1.25F * OPEN * eased;
         poseStack.pushPose();
-        poseStack.mulPose(LYING);
+        poseStack.rotate(LYING);
         poseStack.scale(16.0F * SIZE, 16.0F * SIZE, 16.0F * SIZE);
-        poseStack.mulPose(new Quaternionf().rotationY(CLOSED_TURN * closed));
+        poseStack.rotate(new Quaternionf().rotationY(CLOSED_TURN * closed));
         poseStack.translate(-CLOSED_SHIFT * closed, 0.0F, 0.0F);
         model.setupAnim(angle);
         // Cut out: the brass corners are triangles on square caps.
-        model.render(poseStack, buffers.getBuffer(RenderType.entityCutout(RecipeBookModel.TEXTURE)), shade, OverlayTexture.NO_OVERLAY);
+        model.render(poseStack, buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.entityCutout(RecipeBookModel.TEXTURE)), shade, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
         if (open > 0.0F) {
             // The sheets go with the model: the same turn from closed, the same angle of the pages all the way open.
             poseStack.pushPose();
-            poseStack.mulPose(new Quaternionf().rotationZ(CLOSED_TURN * closed));
+            poseStack.rotate(new Quaternionf().rotationZ(CLOSED_TURN * closed));
             poseStack.translate(0.0F, -CLOSED_SHIFT * 16.0F * SIZE * closed, 0.0F);
             spread(poseStack, buffers, Mth.HALF_PI - angle, (Mth.sin(angle) + PAGE_GAP) * SIZE);
             poseStack.popPose();
@@ -1334,7 +1337,7 @@ final class RecipeBook implements NodePainter {
      * The open pages. Turning, three are on show: a sheet goes over from one side to the other with one page on its face and the next on
      * its back, and the page it uncovers lies ready under it, so nothing appears or goes away.
      */
-    private void spread(PoseStack poseStack, MultiBufferSource buffers, float tilt, float height) {
+    private void spread(PoseStack poseStack, SceneBuffers buffers, float tilt, float height) {
         if (flip >= 1.0F) {
             side(poseStack, buffers, true, tilt, height, page, true);
             side(poseStack, buffers, false, -tilt, height, page, false);
@@ -1357,11 +1360,11 @@ final class RecipeBook implements NodePainter {
     }
 
     /** One side of a sheet, turned about the fold: units run right and down as on a screen. {@code resting}: the tabs stand on it. */
-    private void side(PoseStack poseStack, MultiBufferSource buffers, boolean left, float turn, float height, int listPage,
+    private void side(PoseStack poseStack, SceneBuffers buffers, boolean left, float turn, float height, int listPage,
             boolean resting) {
         poseStack.pushPose();
         poseStack.translate(0.0F, height, 0.0F);
-        poseStack.mulPose(new Quaternionf().rotationZ(turn));
+        poseStack.rotate(new Quaternionf().rotationZ(turn));
         Matrix4f sheet = new Matrix4f(-UNIT, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, -UNIT, 0.0F, 0.0F, UNIT, 0.0F, 0.0F, left ? PAGE_WIDTH : 0.0F, 0.0F, PAGE_HEIGHT / 2.0F, 1.0F);
         poseStack.last().pose().mul(sheet);
         Sheet canvas = new Sheet(poseStack, buffers);
@@ -1480,7 +1483,7 @@ final class RecipeBook implements NodePainter {
             int inRow = Math.min(3, count - i / 3 * 3);
             float x = middle - (inRow * PITCH - (PITCH - WELL_SIZE)) / 2.0F + i % 3 * PITCH;
             float y = top + (i / 3 - firstRow) * PITCH;
-            ItemStack[] choices = entry.ingredients().get(i).getItems();
+            ItemStack[] choices = RecipeParts.items(entry.ingredients().get(i));
             if (choices.length > 0) {
                 canvas.rect(x, y, WELL_SIZE, WELL_SIZE, WELL_LIFT, entry.found()[i] ? WELL_READY : WELL);
                 ItemStack choice = choices[(int) (second % choices.length)];
@@ -1536,22 +1539,22 @@ final class RecipeBook implements NodePainter {
     /** Drawing on a page. */
     private final class Sheet {
         private final PoseStack poseStack;
-        private final MultiBufferSource buffers;
+        private final SceneBuffers buffers;
         private final TextureAtlasSprite white;
 
-        Sheet(PoseStack poseStack, MultiBufferSource buffers) {
+        Sheet(PoseStack poseStack, SceneBuffers buffers) {
             this.poseStack = poseStack;
             this.buffers = buffers;
-            white = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(WHITE);
+            white = com.pockyl.diegesis.impl.client.render.SceneDraw.blockSprite(WHITE);
         }
 
         void paper(boolean mirrored) {
-            VertexConsumer consumer = buffers.getBuffer(RenderType.text(PAPER));
+            VertexConsumer consumer = buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(PAPER));
             quad(consumer, 0.0F, 0.0F, UNITS_WIDE, UNITS_HIGH, 0.0F, 0xFFFFFFFF, mirrored ? PAPER_U1 : 0.0F, mirrored ? 0.0F : PAPER_U1, 0.0F, PAPER_V1);
         }
 
         void rect(float x, float y, float width, float height, float lift, int argb) {
-            VertexConsumer consumer = buffers.getBuffer(RenderType.text(TextureAtlas.LOCATION_BLOCKS));
+            VertexConsumer consumer = buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(TextureAtlas.LOCATION_BLOCKS));
             quad(consumer, x, y, x + width, y + height, lift, argb, white.getU0(), white.getU1(), white.getV0(), white.getV1());
         }
 
@@ -1566,7 +1569,7 @@ final class RecipeBook implements NodePainter {
             float bottom = chosen ? 1.0F : 0.0F;
             float u0 = TAB_PAPER_U / PAPER_SIZE;
             float v0 = TAB_PAPER_V / PAPER_SIZE;
-            quad(buffers.getBuffer(RenderType.text(PAPER)), x, -high, x + TAB_WIDE, bottom, chosen ? 0.05F : 0.0F, paper, u0,
+            quad(buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(PAPER)), x, -high, x + TAB_WIDE, bottom, chosen ? 0.05F : 0.0F, paper, u0,
                     u0 + TAB_WIDE / PAPER_SIZE, v0, v0 + (bottom + high) / PAPER_SIZE);
             rect(x + 1.0F, -high, TAB_WIDE - 2.0F, 1.0F, 0.1F, TAB_EDGE);
             rect(x, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
@@ -1577,7 +1580,7 @@ final class RecipeBook implements NodePainter {
         /** The ribbon from the paper texture, its forked end frayed; lighter under the cursor. */
         void ribbon(boolean lit) {
             float u = (lit ? RIBBON_LIT_U : RIBBON_U) / PAPER_SIZE;
-            quad(buffers.getBuffer(RenderType.text(PAPER)), RIBBON_X, 0.0F, RIBBON_X + RIBBON_WIDTH, RIBBON_HEIGHT, COVER_LIFT, 0xFFFFFFFF, u,
+            quad(buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(PAPER)), RIBBON_X, 0.0F, RIBBON_X + RIBBON_WIDTH, RIBBON_HEIGHT, COVER_LIFT, 0xFFFFFFFF, u,
                     u + RIBBON_WIDTH / PAPER_SIZE, 0.0F, RIBBON_HEIGHT / PAPER_SIZE);
         }
 
@@ -1591,8 +1594,8 @@ final class RecipeBook implements NodePainter {
         /** Vanilla's page arrow: since 1.20.2 its own sprite, no longer in the book's texture. */
         void arrow(float x, float y, boolean forward) {
             boolean over = cursorX >= x && cursorX < x + ARROW_WIDTH && cursorY >= y && cursorY < y + ARROW_HEIGHT;
-            ResourceLocation sprite = (forward ? (over ? PAGE_FORWARD_LIT : PAGE_FORWARD) : (over ? PAGE_BACKWARD_LIT : PAGE_BACKWARD));
-            quad(buffers.getBuffer(RenderType.text(sprite)), x, y, x + ARROW_WIDTH, y + ARROW_HEIGHT, WELL_LIFT, 0xFFFFFFFF, 0.0F, 1.0F, 0.0F, 1.0F);
+            Identifier sprite = (forward ? (over ? PAGE_FORWARD_LIT : PAGE_FORWARD) : (over ? PAGE_BACKWARD_LIT : PAGE_BACKWARD));
+            quad(buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(sprite)), x, y, x + ARROW_WIDTH, y + ARROW_HEIGHT, WELL_LIFT, 0xFFFFFFFF, 0.0F, 1.0F, 0.0F, 1.0F);
         }
 
         private void quad(VertexConsumer consumer, float x0, float y0, float x1, float y1, float lift, int argb, float u0, float u1, float v0, float v1) {
@@ -1615,18 +1618,16 @@ final class RecipeBook implements NodePainter {
         void item(ItemStack stack, float x, float y, float size, boolean faded) {
             poseStack.pushPose();
             poseStack.translate(x + size / 2.0F, y + size / 2.0F, ITEM_LIFT);
-            ItemRenderer renderer = Minecraft.getInstance().getItemRenderer();
-            BakedModel model = renderer.getModel(stack, station.level(), null, 0);
+            // As the GUI shows it (its GUI transform), drawn into the book's buffers, not as a GUI item: mods that decorate every GUI
+            // item (Shadow Drop's shadows and its shift) would take its world pose for a screen's and move or cover the icon.
+            boolean blockLight = SceneDraw.itemState(stack, ItemDisplayContext.GUI, station.level(), 0).usesBlockLight();
             Matrix3f facing = new Matrix3f(poseStack.last().normal());
-            poseStack.scale(size, -size, model.isGui3d() ? BLOCK_DEPTH : ITEM_DEPTH);
+            poseStack.scale(size, -size, blockLight ? BLOCK_DEPTH : ITEM_DEPTH);
             // As in the GUI, the flip and the depth leave the normals alone: IconLight lights the faces as the GUI does.
             poseStack.last().normal().set(facing);
-            // The icon looks as in a GUI, but is drawn as no GUI item: mods that decorate every GUI item (Shadow Drop's shadows and
-            // its shift) take its world pose for a screen's and move or cover the icon.
-            BakedModel shown = ClientPlatform.INSTANCE.guiModel(model, poseStack);
-            MultiBufferSource lit = IconLight.of(buffers, facing, model.usesBlockLight());
-            renderer.render(stack, ItemDisplayContext.NONE, false, poseStack, faded ? DiegesisClient.tinted(lit, FADED) : lit, shade,
-                    OverlayTexture.NO_OVERLAY, shown);
+            SceneBuffers lit = IconLight.of(buffers, facing, blockLight);
+            SceneDraw.item(stack, ItemDisplayContext.GUI, shade, OverlayTexture.NO_OVERLAY, poseStack,
+                    faded ? DiegesisClient.tinted(lit, FADED) : lit, station.level(), 0);
             poseStack.popPose();
         }
 
@@ -1635,8 +1636,9 @@ final class RecipeBook implements NodePainter {
         }
 
         void text(FormattedCharSequence text, float x, float y) {
-            Matrix4f matrix = new Matrix4f(poseStack.last().pose()).translate(0.0F, 0.0F, ITEM_LIFT);
-            Minecraft.getInstance().font.drawInBatch(text, x, y, INK, false, matrix, buffers, Font.DisplayMode.NORMAL, 0, shade);
+            PoseStack at = new PoseStack();
+            at.last().pose().set(poseStack.last().pose()).translate(0.0F, 0.0F, ITEM_LIFT);
+            buffers.submits().submitText(at, x, y, text, false, Font.DisplayMode.NORMAL, shade, INK, 0, 0);
         }
     }
 }

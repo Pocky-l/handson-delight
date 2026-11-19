@@ -5,13 +5,17 @@ import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
 import com.pockyl.handson_delight.station.BasinStation;
+import com.pockyl.handson_delight.station.BowlStation;
+import com.pockyl.handson_delight.station.ChoppingBlockStation;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
+import com.pockyl.handson_delight.station.EdVatStation;
 import com.pockyl.handson_delight.station.CuisineBoardStation;
 import com.pockyl.handson_delight.station.GrillStation;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.OvenStation;
 import com.pockyl.handson_delight.station.KettleStation;
+import com.pockyl.handson_delight.station.MeltingPotStation;
 import com.pockyl.handson_delight.station.SkilletStation;
 import com.pockyl.handson_delight.station.StoveStation;
 import com.pockyl.handson_delight.station.SteamerStation;
@@ -53,6 +57,12 @@ public final class HandsOnDelight {
         if (HandsOnConfig.vat()) {
             VatStation.register();
         }
+        if (HandsOnConfig.meltingPot()) {
+            MeltingPotStation.register();
+        }
+        if (HandsOnConfig.cask()) {
+            KegStation.registerCask();
+        }
         if (HandsOnConfig.grill()) {
             GrillStation.register();
         }
@@ -65,11 +75,20 @@ public final class HandsOnDelight {
         if (HandsOnConfig.cuisineBoard()) {
             CuisineBoardStation.register();
         }
+        if (HandsOnConfig.choppingBlock()) {
+            ChoppingBlockStation.register();
+        }
         if (HandsOnConfig.youkaiPots()) {
             YoukaiPotStation.register();
         }
         if (HandsOnConfig.youkaiSteamer()) {
             SteamerStation.register();
+        }
+        if (HandsOnConfig.mixingBowl()) {
+            BowlStation.register();
+        }
+        if (HandsOnConfig.edVat()) {
+            EdVatStation.register();
         }
     }
 

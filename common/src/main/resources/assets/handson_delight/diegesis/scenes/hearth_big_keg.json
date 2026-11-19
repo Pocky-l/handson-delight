@@ -1,0 +1,458 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Eight of Hearth and Harvest's kegs built into a big keg, a cube of 32. The station lives at its block low at the front on the right of a cook at its tap and turns with the keg's facing, so the whole keg is always at x and z 0..32 of the scene. It hides the eight blocks while it is used and shows the keg here, a model for each of its blocks so that each is lit by its own block: walls 1 px thick, floor y 1, a hatch in the middle of its top (x and z 8..24) whose lid is taken off with a click and leant on the keg's right side; its tap where the two lower front blocks meet, turning down. The liquid and the mouth are children of the keg in its own frame (origin at its middle, 16, 16). Full (8000 mB), the liquid stands three quarters up the inside (y 23.5). Nothing shows while nobody uses it. The camera looks from the front and high, as at Brewin' and Chewin's keg: into the hatch and at the tap in one shot.",
+  "work_plane": 16,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      -3.19,
+      133.05,
+      -37.73
+    ],
+    "target": [
+      16,
+      18,
+      15
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C",
+    "carry_size": 6.0
+  },
+  "nodes": [
+    {
+      "id": "keg",
+      "pos": [
+        16,
+        0,
+        16
+      ],
+      "pickable": false,
+      "children": [
+        {
+          "id": "cell_000",
+          "pos": [
+            -8,
+            0,
+            -8
+          ],
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_big_keg/cell_000",
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "cell_001",
+          "pos": [
+            -8,
+            0,
+            8
+          ],
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_big_keg/cell_001",
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "cell_100",
+          "pos": [
+            8,
+            0,
+            -8
+          ],
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_big_keg/cell_100",
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "cell_101",
+          "pos": [
+            8,
+            0,
+            8
+          ],
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_big_keg/cell_101",
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "cell_010",
+          "pos": [
+            -8,
+            16,
+            -8
+          ],
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_big_keg/cell_010",
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "cell_011",
+          "pos": [
+            -8,
+            16,
+            8
+          ],
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_big_keg/cell_011",
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "cell_110",
+          "pos": [
+            8,
+            16,
+            -8
+          ],
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_big_keg/cell_110",
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "cell_111",
+          "pos": [
+            8,
+            16,
+            8
+          ],
+          "pickable": false,
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_big_keg/cell_111",
+            "lit_as_block": true
+          }
+        },
+        {
+          "id": "lid",
+          "pos": [
+            0,
+            31.5,
+            0
+          ],
+          "visual": {
+            "model": "handson_delight:diegesis/hearth_big_keg/lid",
+            "anchor": [
+              16,
+              31.5,
+              16
+            ],
+            "lit_as_block": true
+          },
+          "collider": {
+            "from": [
+              -8,
+              -0.6,
+              -8
+            ],
+            "to": [
+              8,
+              1.1,
+              8
+            ]
+          }
+        },
+        {
+          "id": "tap",
+          "pos": [
+            0,
+            7.5,
+            -17.75
+          ],
+          "collider": {
+            "from": [
+              -2,
+              -2,
+              -2
+            ],
+            "to": [
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "id": "drink",
+          "pickable": false,
+          "tank": {
+            "tank": "drink",
+            "inner": {
+              "from": [
+                -15,
+                1,
+                -15
+              ],
+              "to": [
+                15,
+                23.5,
+                15
+              ]
+            }
+          }
+        },
+        {
+          "id": "mouth",
+          "drop_zone": "ingredients",
+          "collider": {
+            "from": [
+              -8,
+              1,
+              -8
+            ],
+            "to": [
+              8,
+              33,
+              8
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "item_0",
+      "pos": [
+        16,
+        0,
+        16
+      ],
+      "slot": {
+        "slot": "ingredients[0]",
+        "size": 6.0,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "item_1",
+      "pos": [
+        16,
+        0,
+        16
+      ],
+      "slot": {
+        "slot": "ingredients[1]",
+        "size": 6.0,
+        "counts": "hover",
+        "highlight": false
+      }
+    },
+    {
+      "id": "served",
+      "pos": [
+        16,
+        0,
+        16
+      ],
+      "slot": {
+        "slot": "served",
+        "size": 6.0,
+        "highlight": false
+      }
+    },
+    {
+      "id": "offer",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": 0.35,
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "$comment": "The vessel a drink is drawn into at the tap, shown as its item (Hearth and Harvest's drinks go into bottles): a glass bottle comes under the tap as the bottle of the drink it is filled into. Moved under the tap by the code.",
+      "id": "mug",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "scale": 0.75,
+      "hidden": true,
+      "pickable": false,
+      "tank": {
+        "tank": "drink",
+        "inner": {
+          "from": [
+            -1.45,
+            1.02,
+            -1.45
+          ],
+          "to": [
+            1.45,
+            7,
+            1.45
+          ]
+        }
+      }
+    },
+    {
+      "$comment": "The bucket or bottle a hand tips over the opening as it pours, moved by the code in scene pixels.",
+      "id": "pour_hand",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -2.8,
+        92.33,
+        -8.88
+      ],
+      "rotation": [
+        -26.0,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -2.81,
+        92.34,
+        -8.9
+      ],
+      "rotation": [
+        -26.0,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -2.82,
+        92.37,
+        -8.92
+      ],
+      "rotation": [
+        -26.0,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "thermo",
+      "pos": [
+        -2.81,
+        92.34,
+        -8.9
+      ],
+      "rotation": [
+        -26.0,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "thermo_now",
+      "pos": [
+        -2.82,
+        92.37,
+        -8.92
+      ],
+      "rotation": [
+        -26.0,
+        20.0,
+        0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -2.83,
+        92.42,
+        -8.94
+      ],
+      "rotation": [
+        64.0,
+        20.0,
+        0
+      ],
+      "scale": 0.156,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        8.64,
+        109.74,
+        -29.58
+      ],
+      "rotation": [
+        -26.0,
+        20.0,
+        0
+      ],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -5.3,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          5.3,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

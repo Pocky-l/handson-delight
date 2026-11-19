@@ -121,6 +121,38 @@ final class KegLiquids {
         tea(respite, "melon_juice", 0xDF4233, 0xC8);
         drink(respite, "hot_cocoa", Drink.of(0xF88D553A).thick(0.4F).cloudy(0.2F).foam(0.12F, 0xF0E8D2BC));
         drink(respite, "strong_hot_cocoa", Drink.of(0xFA6E3F28).thick(0.5F).cloudy(0.2F).foam(0.1F, 0xF0E0C8B0));
+        // Hearth and Harvest's keg: each in the colour of its own fluid's texture, so that a juice turns to its wine, water to beer.
+        String hearth = "hearthandharvest";
+        drink(hearth, "beer", Drink.of(0xD8AB851A).foam(0.55F, HEAD).fizz(1.6F).asBrew());
+        drink(hearth, "root_beer", Drink.of(0xEC392400).foam(0.45F, 0xF2C8A07A).fizz(1.2F).asBrew());
+        drink(hearth, "hard_cider", Drink.of(0xD2663308).foam(0.15F, 0xF0F0DCA0).fizz(0.8F).asBrew());
+        drink(hearth, "mead", Drink.of(0xE07B4E0D).fizz(0.3F).thick(0.25F));
+        drink(hearth, "moonshine", Drink.of(0x93AB7A01));
+        drink(hearth, "apple_cider", Drink.of(0xD2804A0A).cloudy(0.15F));
+        drink(hearth, "red_grape_wine", Drink.of(0xE72E0A32));
+        drink(hearth, "green_grape_wine", Drink.of(0xB45E7605));
+        drink(hearth, "blueberry_wine", Drink.of(0xE00A0576));
+        drink(hearth, "cherry_wine", Drink.of(0xE06D0D19));
+        drink(hearth, "glow_berry_wine", Drink.of(0xD2C57C08).glowing());
+        drink(hearth, "melon_wine", Drink.of(0xD2940E29));
+        drink(hearth, "raspberry_wine", Drink.of(0xD289113D));
+        drink(hearth, "sweet_berry_wine", Drink.of(0xD2780211));
+        drink(hearth, "lemon_wine", Drink.of(0xD2E0AF02));
+        drink(hearth, "red_grape_juice", Drink.of(0xE7370C3D).cloudy(0.15F));
+        drink(hearth, "green_grape_juice", Drink.of(0xB4718D06).cloudy(0.15F));
+        drink(hearth, "blueberry_juice", Drink.of(0xD20C068D).cloudy(0.15F));
+        drink(hearth, "cherry_juice", Drink.of(0xD283101E).cloudy(0.15F));
+        drink(hearth, "glow_berry_juice", Drink.of(0xD2F49F17).cloudy(0.15F).glowing());
+        drink(hearth, "melon_juice", Drink.of(0xD2C3082E).cloudy(0.15F));
+        drink(hearth, "raspberry_juice", Drink.of(0xD2A41549).cloudy(0.15F));
+        drink(hearth, "sweet_berry_juice", Drink.of(0xD2900314).cloudy(0.15F));
+        drink(hearth, "lemonade", Drink.of(0xD2FCCC1E).cloudy(0.2F).fizz(0.4F));
+        drink(hearth, "brine", Drink.of(0xB99EBFC8).cloudy(0.3F));
+        drink(hearth, "goat_milk", Drink.of(0xFAD8D6CF).thick(0.1F));
+        drink(hearth, "syrup", Drink.of(0xFF8E592F).thick(0.85F));
+        drink(hearth, "sap", Drink.of(0xF0C98E1C).thick(0.6F));
+        drink(hearth, "cooking_sap", Drink.of(0xFFC08138).thick(0.7F));
+        drink(hearth, "cooking_oil", Drink.of(0xD2E7C84D).thick(0.4F));
     }
 
     /** A drink of the kettle and its long (with milk) and strong (darker) kin, as Farmer's Respite brews them. */

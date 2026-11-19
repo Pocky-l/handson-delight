@@ -1,10 +1,12 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -20,6 +22,7 @@ import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.platform.Platform;
 
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -27,7 +30,9 @@ import java.util.function.Supplier;
  * Brewin' and Chewin's keg as a station: its lid opens on the liquid and what ferments in it, buckets pour in at the opening, drinks
  * are drawn at the tap. It ferments as Brewin' and Chewin' ferments it, whoever is at it; the station only shows it and does by hand
  * what its menu did. Youkai's Feasts' fermentation tank ({@link #TANK_TYPE}) is the same station: eight things, one each, in water or
- * a juice under its own lid, its drinks dipped out at the opening, as it has no tap.
+ * a juice under its own lid, its drinks dipped out at the opening, as it has no tap. Hearth and Harvest's keg ({@link #HEARTH_TYPE})
+ * is the keg's station with two slots and a tank of its own for the drink; its cask ({@link #CASK_TYPE}) one with no liquid, its
+ * lid its block's seal, what has aged given out sealed.
  */
 public final class KegStation {
     public static final String MOD_ID = "brewinandchewin";
@@ -36,6 +41,15 @@ public final class KegStation {
     public static final Identifier STANDING_ID = HandsOnDelight.id("standing_keg");
     public static final String TANK_MOD_ID = "youkaisfeasts";
     public static final Identifier TANK_ID = HandsOnDelight.id("youkai_tank");
+    public static final String HEARTH_MOD_ID = "hearthandharvest";
+    /** Hearth and Harvest's keg, on its own: eight of them stacked as a big keg keep its menu. */
+    public static final Identifier HEARTH_ID = HandsOnDelight.id("hearth_keg");
+    /** Eight of Hearth and Harvest's kegs built into a big keg: one station, opened from any of its blocks. */
+    public static final Identifier BIG_KEG_ID = HandsOnDelight.id("hearth_big_keg");
+    /** Hearth and Harvest's cask: four places for what ages, its lid its block's seal. */
+    public static final Identifier CASK_ID = HandsOnDelight.id("hearth_cask");
+    /** Hearth and Harvest's keg has two slots, read in any order, each a stack. */
+    public static final int HEARTH_INGREDIENTS = 2;
     /** The tank holds eight things, one in each slot, as its own container does. */
     public static final int TANK_INGREDIENTS = 8;
 
@@ -87,6 +101,8 @@ public final class KegStation {
 
     public static final Supplier<Block> KEG = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(MOD_ID, "keg"));
     public static final Supplier<Block> TANK = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(TANK_MOD_ID, "fermentation_tank"));
+    public static final Supplier<Block> HEARTH_KEG = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(HEARTH_MOD_ID, "keg"));
+    public static final Supplier<Block> CASK = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(HEARTH_MOD_ID, "cask"));
 
     public static final StationSchema SCHEMA = schema(KitchenKeg.INGREDIENTS, SlotRules.DEFAULT.kept());
     public static final StationSchema TANK_SCHEMA = schema(TANK_INGREDIENTS, SlotRules.DEFAULT.kept().maxStack(1));
@@ -94,6 +110,24 @@ public final class KegStation {
     public static final StationType TYPE = type(ID, KEG, SCHEMA, state -> !isStanding(state));
     public static final StationType STANDING_TYPE = type(STANDING_ID, KEG, SCHEMA, KegStation::isStanding);
     public static final StationType TANK_TYPE = type(TANK_ID, TANK, TANK_SCHEMA, state -> true);
+    public static final StationType HEARTH_TYPE = type(HEARTH_ID, HEARTH_KEG, schema(HEARTH_INGREDIENTS, SlotRules.DEFAULT.kept()),
+            KegStation::isSingle);
+    /**
+     * The big keg: its station lives at the block low at the front on the right of a cook at its tap, so that the scene, turned to
+     * the keg's facing, always has the whole keg in the same place (x and z 0..32 from that block); the other seven are hidden with it.
+     */
+    public static final StationType BIG_KEG_TYPE = Diegesis.station(BIG_KEG_ID)
+            .block(HEARTH_KEG)
+            .when(state -> !isSingle(state))
+            .schema(schema(HEARTH_INGREDIENTS, SlotRules.DEFAULT.kept()))
+            .logic(KegLogic::new)
+            .orientation(StationType.Orientation.BLOCK)
+            .anchor(KegStation::bigKegAnchor)
+            .hidesBlocks(KegStation::bigKegRest)
+            .openWhen(KegStation::opens)
+            .idleLogic()
+            .build();
+    public static final StationType CASK_TYPE = type(CASK_ID, CASK, schema(KitchenKeg.INGREDIENTS, SlotRules.DEFAULT.kept()), state -> true);
 
     private KegStation() {
     }
@@ -129,6 +163,58 @@ public final class KegStation {
             Diegesis.register(TYPE);
             Diegesis.register(STANDING_TYPE);
         }
+        if (Platform.INSTANCE.isLoaded(HEARTH_MOD_ID)) {
+            Diegesis.register(HEARTH_TYPE);
+            Diegesis.register(BIG_KEG_TYPE);
+        }
+    }
+
+    /** From a big keg's controller (its lowest, most north-western block) to the block its station lives at, by its facing. */
+    private static BlockPos frontRight(Direction facing) {
+        return switch (facing) {
+            case SOUTH -> new BlockPos(1, 0, 1);
+            case EAST -> new BlockPos(1, 0, 0);
+            case WEST -> new BlockPos(0, 0, 1);
+            default -> BlockPos.ZERO;
+        };
+    }
+
+    private static Direction facing(BlockState state) {
+        for (Property<?> property : state.getProperties()) {
+            // Since 1.21.2 a facing is an enum property of Direction, no longer a class of its own.
+            if (property.getName().equals("facing") && property.getValueClass() == Direction.class) {
+                Direction value = (Direction) state.getValue(property);
+                return value.getAxis().isHorizontal() ? value : Direction.NORTH;
+            }
+        }
+        return Direction.NORTH;
+    }
+
+    private static BlockPos bigKegAnchor(BlockGetter level, BlockPos pos, BlockState state) {
+        KitchenKeg keg = KitchenKeg.of(level.getBlockEntity(pos));
+        return keg == null ? pos : keg.handson$home().offset(frontRight(facing(state)));
+    }
+
+    private static List<BlockPos> bigKegRest(BlockGetter level, BlockPos anchor) {
+        BlockPos corner = anchor.subtract(frontRight(facing(level.getBlockState(anchor))));
+        List<BlockPos> rest = new java.util.ArrayList<>();
+        for (int dy = 0; dy <= 1; dy++) {
+            for (int dx = 0; dx <= 1; dx++) {
+                for (int dz = 0; dz <= 1; dz++) {
+                    BlockPos cell = corner.offset(dx, dy, dz);
+                    if (!cell.equals(anchor)) {
+                        rest.add(cell);
+                    }
+                }
+            }
+        }
+        return rest;
+    }
+
+    public static void registerCask() {
+        if (Platform.INSTANCE.isLoaded(HEARTH_MOD_ID)) {
+            Diegesis.register(CASK_TYPE);
+        }
     }
 
     public static void registerTank() {
@@ -147,6 +233,20 @@ public final class KegStation {
         return false;
     }
 
+    /** Whether a Hearth and Harvest keg stands on its own: its {@code multiblock_part} property, read by name, is {@code none}. */
+    public static boolean isSingle(BlockState state) {
+        for (Property<?> property : state.getProperties()) {
+            if (property.getName().equals("multiblock_part")) {
+                return "none".equals(valueName(state, property));
+            }
+        }
+        return true;
+    }
+
+    private static <T extends Comparable<T>> String valueName(BlockState state, Property<T> property) {
+        return property.getName(state.getValue(property));
+    }
+
     /**
      * Sneaking keeps the keg's own menu (the tank's: its contents tipped out); a container that fills or pours in the hand keeps its
      * quick use in the world.
@@ -158,6 +258,6 @@ public final class KegStation {
         KitchenKeg keg = KitchenKeg.of(player.level().getBlockEntity(pos));
         ItemStack held = player.getMainHandItem();
         // No keg of ours: a version of the addon its station does not fit, which keeps its own use.
-        return keg != null && !keg.handson$canTap(held) && !keg.handson$canPour(held);
+        return keg != null && (!keg.handson$quickUse() || !keg.handson$canTap(held) && !keg.handson$canPour(held));
     }
 }

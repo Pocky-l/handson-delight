@@ -6,6 +6,11 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.util.ARGB;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
@@ -59,8 +64,20 @@ final class FoodColors {
         }
     }
 
+    /** RGB of a block atlas texture, such as a fluid's still texture; 0 when it is not there. */
+    static int ofTexture(Identifier texture) {
+        TextureAtlasSprite sprite = com.pockyl.diegesis.impl.client.render.SceneDraw.blockSprite(texture);
+        if (sprite == null || sprite.contents().name().equals(MissingTextureAtlasSprite.getLocation())) {
+            return 0;
+        }
+        return sample(sprite.contents());
+    }
+
     private static int sample(ItemStack stack) {
-        SpriteContents contents = contents(stack);
+        return sample(contents(stack));
+    }
+
+    private static int sample(SpriteContents contents) {
         NativeImage image = ((SpriteContentsAccessor) contents).handson$originalImage();
         long red = 0;
         long green = 0;

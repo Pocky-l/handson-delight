@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -12,9 +14,9 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import vectorwing.farmersdelight.common.block.AbstractStoveBlock;
-import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import com.pockyl.diegesis.api.Diegesis;
 import com.pockyl.handson_delight.HandsOnConfig;
@@ -42,17 +44,36 @@ public final class StoveCooking {
     private StoveCooking() {
     }
 
-    public static Grill grill(AbstractStoveBlockEntity stove) {
-        return ((StoveTop) stove).handson$grill();
+    /** The stove's top as the station works it: every stove of {@link StoveStation#STOVES} has one (a mixin). */
+    public static StoveTop top(BlockEntity stove) {
+        return (StoveTop) stove;
+    }
+
+    /** Whether {@code blockEntity} is a stove the station works: Farmer's Delight's, or an addon's with a top of its own. */
+    public static boolean isStove(BlockEntity blockEntity) {
+        return blockEntity instanceof StoveTop;
+    }
+
+    public static Grill grill(BlockEntity stove) {
+        return top(stove).handson$grill();
+    }
+
+    /** What lies on {@code place} of the stove's own inventory. */
+    public static ItemStack item(BlockEntity stove, int place) {
+        return top(stove).handson$item(place);
+    }
+
+    public static void setItem(BlockEntity stove, int place, ItemStack stack) {
+        top(stove).handson$setItem(place, stack);
     }
 
     /**
      * The places this stove has, at most the grill's six: an addon's stove sizes its top itself. Its slots can be fewer than its
      * cooking counts: Farmer's Delight takes the slot count saved with the stove when it loads.
      */
-    public static int places(AbstractStoveBlockEntity stove) {
-        int counts = Math.min(Grill.PLACES, ((StoveTop) stove).handson$progress().length);
-        return (int) Math.min(counts, stove.streamItems().count());
+    public static int places(BlockEntity stove) {
+        int counts = Math.min(Grill.PLACES, top(stove).handson$progress().length);
+        return Math.min(counts, top(stove).handson$slots());
     }
 
     /** Ticks one side of a piece takes, for a recipe Farmer's Delight's stove cooks in {@code ticks}, {@code times} as long as usual. */
@@ -60,35 +81,34 @@ public final class StoveCooking {
         return Math.max(1, Math.round(ticks * times / PACE / 2.0F));
     }
 
-    public static boolean isLit(AbstractStoveBlockEntity stove) {
+    public static boolean isLit(BlockEntity stove) {
         BlockState state = stove.getBlockState();
-        return state.hasProperty(AbstractStoveBlock.LIT) && state.getValue(AbstractStoveBlock.LIT);
+        return state.hasProperty(BlockStateProperties.LIT) && state.getValue(BlockStateProperties.LIT);
     }
 
-    /** Whether something stands on the stove (a pot, a skillet): then its top is no grill, and Farmer's Delight drops what lay there. */
-    public static boolean isCovered(AbstractStoveBlockEntity stove) {
-        Level level = stove.getLevel();
-        return level != null && AbstractStoveBlock.isStoveTopCovered(level, stove.getBlockPos(), stove.getBlockState());
+    /** Whether something stands on the stove (a pot, a skillet): then its top is no grill, and the stove drops what lay there. */
+    public static boolean isCovered(BlockEntity stove) {
+        return stove.getLevel() != null && top(stove).handson$covered();
     }
 
     /**
      * Every tick of the stove on the server, before Farmer's Delight's own: an emptied place starts over, and on a lit stove the pieces
      * laid by hand grill, Farmer's Delight's count for them held at nothing.
      */
-    public static void tick(AbstractStoveBlockEntity stove) {
+    public static void tick(BlockEntity stove) {
         Level level = stove.getLevel();
         if (level == null) {
             return;
         }
         finishLeft(stove);
         Grill grill = grill(stove);
-        int[] progress = ((StoveTop) stove).handson$progress();
-        int[] times = ((StoveTop) stove).handson$times();
+        int[] progress = top(stove).handson$progress();
+        int[] times = top(stove).handson$times();
         boolean lit = isLit(stove);
         boolean changed = false;
         int places = places(stove);
         for (int place = 0; place < places; place++) {
-            ItemStack stack = Platform.INSTANCE.getItem(stove, place);
+            ItemStack stack = item(stove, place);
             if (stack.isEmpty()) {
                 if (grill.byHand(place) || grill.down(place) > 0.0F || grill.up(place) > 0.0F) {
                     grill.farmersDelightsWay(place);
@@ -116,16 +136,22 @@ public final class StoveCooking {
             if (recipe.isEmpty()) {
                 continue;
             }
+            int ticks = MazeStove.ticks(stove.getBlockState(), RecipeParts.result(recipe.get()),
+                    recipe.get().cookingTime());
             if (SkilletCooking.isOneSided(stack)) {
-                grill.grillThrough(place, 0.5F / sideTicks(recipe.get().cookingTime(), HandsOnConfig.stoveTime()));
+                grill.grillThrough(place, 0.5F / sideTicks(ticks, HandsOnConfig.stoveTime()));
             } else {
-                grill.grill(place, 1.0F / sideTicks(recipe.get().cookingTime(), HandsOnConfig.stoveTime()));
+                grill.grill(place, 1.0F / sideTicks(ticks, HandsOnConfig.stoveTime()));
             }
             if (grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
-                // Done on both sides: Farmer's Delight's own code cooks it this very tick (see beforeFarmersDelightCooks).
+                // Done on both sides: the stove's own code cooks it this very tick (see beforeFarmersDelightCooks).
                 times[place] = 1;
-                ((StoveTop) stove).handson$cookingNow()[place] = true;
+                top(stove).handson$cookingNow()[place] = true;
             }
+        }
+        if (!top(stove).handson$cooksForTheStation()) {
+            // Its own code would throw the piece off the grill: it is done here, as the campfire makes it.
+            finishLeft(stove);
         }
         send(stove, changed);
     }
@@ -135,12 +161,12 @@ public final class StoveCooking {
      * piece done already at once. For a player who cannot turn or take them: one whose client has no Hands-On Delight sees Farmer's
      * Delight's stove, where nothing is taken by hand.
      */
-    public static void handToFarmersDelight(AbstractStoveBlockEntity stove) {
+    public static void handToFarmersDelight(BlockEntity stove) {
         Grill grill = grill(stove);
         boolean changed = false;
         int places = places(stove);
         for (int place = 0; place < places; place++) {
-            if (grill.byHand(place) && !Platform.INSTANCE.getItem(stove, place).isEmpty()) {
+            if (grill.byHand(place) && !item(stove, place).isEmpty()) {
                 handOver(stove, place);
                 changed = true;
             }
@@ -149,17 +175,31 @@ public final class StoveCooking {
     }
 
     /**
+     * {@code player} used the stove at {@code pos} in the world. One whose client has no Hands-On Delight sees the stove's own block,
+     * which gives nothing back by hand: the pieces a cook laid at the station go its way, so they cook and pop off as everything such
+     * a player lays does. Not while a cook works at the station.
+     */
+    public static void usedInTheWorld(Player player, Level level, BlockPos pos) {
+        if (player instanceof ServerPlayer server && !Platform.INSTANCE.hasThisMod(server)) {
+            BlockEntity stove = level.getBlockEntity(pos);
+            if (isStove(stove) && Diegesis.activeStation(server.level(), pos).map(station -> station.users().isEmpty()).orElse(true)) {
+                handToFarmersDelight(stove);
+            }
+        }
+    }
+
+    /**
      * The piece at {@code place} cooks Farmer's Delight's way from now on, a done one comes off at once. It was laid at the station, so
      * it keeps the station's cooking time; with the station turned off that is Farmer's Delight's.
      */
-    private static void handOver(AbstractStoveBlockEntity stove, int place) {
+    private static void handOver(BlockEntity stove, int place) {
         if (grill(stove).ready(place)) {
             // Done already: it comes off the grill as Farmer's Delight's food does, instead of cooking on into what the fire makes of it.
             popOff(stove, place);
             return;
         }
         int time = farmersDelightsTime(stove, place);
-        ((StoveTop) stove).handson$times()[place] = time <= 1 ? time : HandsOnConfig.scaled(time, HandsOnConfig.stoveTime());
+        top(stove).handson$times()[place] = time <= 1 ? time : HandsOnConfig.scaled(time, HandsOnConfig.stoveTime());
         grill(stove).farmersDelightsWay(place);
     }
 
@@ -168,8 +208,8 @@ public final class StoveCooking {
      * endless one, so that in a world opened without this mod it cooks, or comes off the grill once done, as Farmer's Delight does.
      * With the mod the station's time comes back on the next tick.
      */
-    public static int[] savedTimes(AbstractStoveBlockEntity stove) {
-        int[] times = ((StoveTop) stove).handson$times().clone();
+    public static int[] savedTimes(BlockEntity stove) {
+        int[] times = top(stove).handson$times().clone();
         Grill grill = grill(stove);
         int places = Math.min(times.length, places(stove));
         for (int place = 0; place < places; place++) {
@@ -181,14 +221,16 @@ public final class StoveCooking {
     }
 
     /** How long Farmer's Delight takes for the piece at {@code place}: its recipe's time, or a tick for one done (nothing cooks it). */
-    private static int farmersDelightsTime(AbstractStoveBlockEntity stove, int place) {
+    private static int farmersDelightsTime(BlockEntity stove, int place) {
         Level level = stove.getLevel();
-        ItemStack stack = Platform.INSTANCE.getItem(stove, place);
+        ItemStack stack = item(stove, place);
         Grill grill = grill(stove);
         if (level == null || stack.isEmpty() || grill.ready(place) || grill.down(place) >= 1.0F && grill.up(place) >= 1.0F) {
             return 1;
         }
-        return SkilletCooking.recipe(level, stack).map(CampfireCookingRecipe::cookingTime).filter(time -> time > 0).orElse(1);
+        return SkilletCooking.recipe(level, stack)
+                .map(recipe -> MazeStove.ticks(stove.getBlockState(), RecipeParts.result(recipe), recipe.cookingTime()))
+                .filter(time -> time > 0).orElse(1);
     }
 
     /** The drops of Farmer's Delight's cooking this tick are caught when the station has a piece in it; the slots as they were. */
@@ -198,8 +240,8 @@ public final class StoveCooking {
      * Farmer's Delight is about to cook what is due on the grill. A piece the station finished is cooked by its code, so that what
      * other mods add to its stove still happens (quality, experience); what it throws off the grill is caught.
      */
-    public static void beforeFarmersDelightCooks(AbstractStoveBlockEntity stove) {
-        boolean[] now = ((StoveTop) stove).handson$cookingNow();
+    public static void beforeFarmersDelightCooks(BlockEntity stove) {
+        boolean[] now = top(stove).handson$cookingNow();
         boolean any = false;
         for (boolean place : now) {
             any |= place;
@@ -210,7 +252,7 @@ public final class StoveCooking {
         int places = places(stove);
         ItemStack[] before = new ItemStack[places];
         for (int place = 0; place < places; place++) {
-            before[place] = Platform.INSTANCE.getItem(stove, place).copy();
+            before[place] = item(stove, place).copy();
         }
         BEFORE.set(before);
         CaughtDrops.begin();
@@ -221,7 +263,7 @@ public final class StoveCooking {
      * back on the grill as what was thrown, to wait for the cook; anything else (food cooked Farmer's Delight's way, an addon's extra
      * drop) is thrown into the world after all, as it would have been.
      */
-    public static void afterFarmersDelightCooks(AbstractStoveBlockEntity stove) {
+    public static void afterFarmersDelightCooks(BlockEntity stove) {
         ItemStack[] before = BEFORE.get();
         if (before == null) {
             return;
@@ -229,9 +271,9 @@ public final class StoveCooking {
         BEFORE.remove();
         List<CaughtDrops.Drop> drops = new ArrayList<>(CaughtDrops.end());
         Level level = stove.getLevel();
-        boolean[] now = ((StoveTop) stove).handson$cookingNow();
+        boolean[] now = top(stove).handson$cookingNow();
         for (int place = 0; place < before.length; place++) {
-            if (!now[place] || before[place].isEmpty() || !Platform.INSTANCE.getItem(stove, place).isEmpty()) {
+            if (!now[place] || before[place].isEmpty() || !item(stove, place).isEmpty()) {
                 continue;
             }
             now[place] = false;
@@ -267,16 +309,16 @@ public final class StoveCooking {
     }
 
     /** Places still marked to be cooked by Farmer's Delight (it did not run, or did not take them): finished here. */
-    private static void finishLeft(AbstractStoveBlockEntity stove) {
+    private static void finishLeft(BlockEntity stove) {
         Level level = stove.getLevel();
-        boolean[] now = ((StoveTop) stove).handson$cookingNow();
+        boolean[] now = top(stove).handson$cookingNow();
         int places = places(stove);
         for (int place = 0; place < places; place++) {
             if (!now[place]) {
                 continue;
             }
             now[place] = false;
-            ItemStack stack = Platform.INSTANCE.getItem(stove, place);
+            ItemStack stack = item(stove, place);
             Optional<CampfireCookingRecipe> recipe = level == null || stack.isEmpty() ? Optional.empty() : SkilletCooking.recipe(level, stack);
             if (recipe.isPresent()) {
                 grilled(stove, place, recipe.get().assemble(new SingleRecipeInput(stack.copyWithCount(1))));
@@ -287,11 +329,11 @@ public final class StoveCooking {
     }
 
     /** The piece at {@code place} is done on both sides and lies there as {@code done}, waiting for the cook. */
-    private static void grilled(AbstractStoveBlockEntity stove, int place, ItemStack done) {
-        Platform.INSTANCE.setItem(stove, place, done);
+    private static void grilled(BlockEntity stove, int place, ItemStack done) {
+        setItem(stove, place, done);
         grill(stove).done(place);
-        ((StoveTop) stove).handson$progress()[place] = 0;
-        ((StoveTop) stove).handson$times()[place] = Integer.MAX_VALUE;
+        top(stove).handson$progress()[place] = 0;
+        top(stove).handson$times()[place] = Integer.MAX_VALUE;
         CompoundTag data = new CompoundTag();
         data.putInt(StoveStation.PLACE, place);
         data.put(StoveStation.STACK, ItemNbt.save(done, stove.getLevel().registryAccess()));
@@ -302,7 +344,7 @@ public final class StoveCooking {
      * The stack on the cursor goes onto the grill: with {@code place} -1 one onto every free place, as many as there are; else one onto
      * that place. Returns how many went on. What would run through the bars (an egg cracked open) goes into a skillet, not here.
      */
-    public static int place(AbstractStoveBlockEntity stove, ItemStack carried, int place) {
+    public static int place(BlockEntity stove, ItemStack carried, int place) {
         if (!takes(stove, carried)) {
             return 0;
         }
@@ -310,14 +352,14 @@ public final class StoveCooking {
         int laid = 0;
         int places = places(stove);
         for (int at = 0; at < places && !carried.isEmpty(); at++) {
-            if (place >= 0 && at != place || !Platform.INSTANCE.getItem(stove, at).isEmpty()) {
+            if (place >= 0 && at != place || !item(stove, at).isEmpty()) {
                 continue;
             }
-            Platform.INSTANCE.setItem(stove, at, carried.split(1));
+            setItem(stove, at, carried.split(1));
             grill.farmersDelightsWay(at);
             grill.layByHand(at);
-            ((StoveTop) stove).handson$progress()[at] = 0;
-            ((StoveTop) stove).handson$times()[at] = Integer.MAX_VALUE;
+            top(stove).handson$progress()[at] = 0;
+            top(stove).handson$times()[at] = Integer.MAX_VALUE;
             laid++;
         }
         if (laid > 0) {
@@ -327,10 +369,10 @@ public final class StoveCooking {
     }
 
     /** The cook turns the piece on {@code place}. False with nothing there to turn, or while it is still in the air. */
-    public static boolean turn(AbstractStoveBlockEntity stove, int place) {
+    public static boolean turn(BlockEntity stove, int place) {
         Level level = stove.getLevel();
         Grill grill = grill(stove);
-        ItemStack stack = place >= 0 && place < places(stove) ? Platform.INSTANCE.getItem(stove, place) : ItemStack.EMPTY;
+        ItemStack stack = place >= 0 && place < places(stove) ? item(stove, place) : ItemStack.EMPTY;
         if (level == null || stack.isEmpty() || grill.ready(place) || SkilletCooking.recipe(level, stack).isEmpty()
                 || level.getGameTime() - grill.turnedAt(place) < TURN_GAP) {
             return false;
@@ -346,13 +388,13 @@ public final class StoveCooking {
     }
 
     /** The piece on {@code place} back to the cook, raw, half done or done. */
-    public static ItemStack take(AbstractStoveBlockEntity stove, int place) {
+    public static ItemStack take(BlockEntity stove, int place) {
         if (place < 0 || place >= places(stove)) {
             return ItemStack.EMPTY;
         }
-        ItemStack taken = Platform.INSTANCE.getItem(stove, place).copy();
+        ItemStack taken = item(stove, place).copy();
         if (!taken.isEmpty()) {
-            Platform.INSTANCE.setItem(stove, place, ItemStack.EMPTY);
+            setItem(stove, place, ItemStack.EMPTY);
             grill(stove).farmersDelightsWay(place);
             send(stove, true);
         }
@@ -364,14 +406,14 @@ public final class StoveCooking {
      * Whether the grill would take some of {@code stack} now: it grills it, nothing stands on the stove and a place is free. Opened by use
      * with anything else, the stove leaves it in the hand.
      */
-    public static boolean takes(AbstractStoveBlockEntity stove, ItemStack stack) {
+    public static boolean takes(BlockEntity stove, ItemStack stack) {
         Level level = stove.getLevel();
         if (stack.isEmpty() || level == null || isCovered(stove) || !canGrill(level, stack)) {
             return false;
         }
         int places = places(stove);
         for (int at = 0; at < places; at++) {
-            if (Platform.INSTANCE.getItem(stove, at).isEmpty()) {
+            if (item(stove, at).isEmpty()) {
                 return true;
             }
         }
@@ -409,10 +451,10 @@ public final class StoveCooking {
     }
 
     /** The piece on {@code place} jumps off the grill, as Farmer's Delight's stove throws what it has cooked. */
-    private static void popOff(AbstractStoveBlockEntity stove, int place) {
+    private static void popOff(BlockEntity stove, int place) {
         Level level = stove.getLevel();
-        ItemStack done = Platform.INSTANCE.getItem(stove, place).copy();
-        Platform.INSTANCE.setItem(stove, place, ItemStack.EMPTY);
+        ItemStack done = item(stove, place).copy();
+        setItem(stove, place, ItemStack.EMPTY);
         grill(stove).farmersDelightsWay(place);
         if (level != null && !done.isEmpty()) {
             BlockPos pos = stove.getBlockPos();
@@ -420,14 +462,14 @@ public final class StoveCooking {
         }
     }
 
-    private static void effect(AbstractStoveBlockEntity stove, Identifier effect, CompoundTag data) {
+    private static void effect(BlockEntity stove, Identifier effect, CompoundTag data) {
         if (stove.getLevel() instanceof ServerLevel server) {
             Diegesis.activeStation(server, stove.getBlockPos()).ifPresent(station -> station.effect(effect, "grill", data));
         }
     }
 
     /** Saves the stove and tells the clients around: always, or only when a piece got a step further. */
-    private static void send(AbstractStoveBlockEntity stove, boolean always) {
+    private static void send(BlockEntity stove, boolean always) {
         boolean due = grill(stove).dueToSend();
         if (!always && !due) {
             return;

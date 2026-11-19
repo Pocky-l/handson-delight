@@ -5,7 +5,7 @@ import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.state.SlotStorage;
@@ -20,10 +20,10 @@ public final class StoveLogic implements StationLogic {
     /** Doneness is told to the clients in steps this fine: the look moves smoothly between them. */
     private static final float STEP = 1.0F / 32.0F;
 
-    private final AbstractStoveBlockEntity stove;
+    private final BlockEntity stove;
 
     public StoveLogic(StationContext station) {
-        stove = (AbstractStoveBlockEntity) station.blockEntity();
+        stove = station.blockEntity();
         station.state().bindSlots(StoveStation.GRILL, new SlotStorage() {
             @Override
             public int size() {
@@ -33,13 +33,13 @@ public final class StoveLogic implements StationLogic {
             // The station shows six places; a smaller addon stove leaves the ones it lacks empty.
             @Override
             public ItemStack get(int index) {
-                return index < StoveCooking.places(stove) ? Platform.INSTANCE.getItem(stove, index) : ItemStack.EMPTY;
+                return index < StoveCooking.places(stove) ? StoveCooking.item(stove, index) : ItemStack.EMPTY;
             }
 
             @Override
             public void set(int index, ItemStack stack) {
                 if (index < StoveCooking.places(stove)) {
-                    Platform.INSTANCE.setItem(stove, index, stack);
+                    StoveCooking.setItem(stove, index, stack);
                 }
             }
         });
@@ -126,7 +126,7 @@ public final class StoveLogic implements StationLogic {
         CompoundTag data = new CompoundTag();
         int places = StoveCooking.places(stove);
         for (int place = 0; place < places; place++) {
-            if (!Platform.INSTANCE.getItem(stove, place).isEmpty()) {
+            if (!StoveCooking.item(stove, place).isEmpty()) {
                 data.putFloat(StoveStation.DOWN + place, steps(grill.down(place)));
                 data.putFloat(StoveStation.UP + place, steps(grill.up(place)));
                 data.putBoolean(StoveStation.BY_HAND + place, grill.byHand(place));

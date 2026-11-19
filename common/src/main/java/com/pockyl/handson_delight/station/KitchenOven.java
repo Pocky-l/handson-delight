@@ -2,147 +2,154 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
+import com.pockyl.diegesis.api.station.StationContext;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Cultural Delights' oven, as the station sees it. Its block entity keeps an item handler of the loader's own class (NeoForge's, or
- * Refabricated's on Fabric), so it is reached by name: the same field and method names in both of its builds, no class of that mod
- * needed. Slots as its menu has them: nine for what bakes, a 3 x 3 grid, then the output. It bakes by itself, a set of one of each
- * slot at a time, while the block under it is a heat source of Farmer's Delight; the station only reads it and puts things in and out.
+ * An oven as the oven station sees it, whichever mod it comes from: a tray or rack of places where things bake, the places the baked
+ * things wait in, and what else the oven has (a fuel slot, tool places on top). Each mod's oven is an adapter onto its own block
+ * entity, the way {@link KitchenPot} serves several pots: Cooking for Blockheads' ({@link CfbOven}), each place baking alone, and
+ * Cultural Delights' ({@link CulturalOven}), whose tray bakes as one set into a dish, and Extra Delight's ({@link EdOven}), whose set bakes
+ * in the bakeware standing in it. The station, its door, tray, piles, glow, badge and book are
+ * the same for all of them ({@link OvenLogic}, {@code OvenBehavior}, {@code OvenBook}).
  */
-public final class KitchenOven {
-    public static final String MOD_ID = "culturaldelights";
-    private static final String ENTITY = "com.baisylia.culturaldelights.block.entity.custom.OvenBlockEntity";
-    public static final int INGREDIENTS = 9;
-    public static final int GRID = 3;
-    public static final int OUTPUT_SLOT = 9;
-    /** Its two recipe types: a set of ingredients in any slots, and one laid out in the grid as at a crafting table. */
-    public static final Identifier BAKING = Identifier.fromNamespaceAndPath(MOD_ID, "baking");
-    public static final Identifier BAKING_SHAPED = Identifier.fromNamespaceAndPath(MOD_ID, "baking_shaped");
+public interface KitchenOven {
+    /** The places on the tray, row by row from the back, column 0 on the cook's left, as the oven's grid has them. */
+    int GRID = 3;
 
-    private static Class<?> entityClass;
-    private static Field progressField;
-    private static Field totalField;
-    private static Method handlerMethod;
-    private static boolean broken;
+    BlockEntity blockEntity();
 
-    private final BlockEntity entity;
-    private final Object handler;
+    /** How many places the tray has (a 3 x 3 grid). */
+    int places();
 
-    private KitchenOven(BlockEntity entity, Object handler) {
-        this.entity = entity;
-        this.handler = handler;
+    ItemStack place(int index);
+
+    void setPlace(int index, ItemStack stack);
+
+    /** How many slots the baked things wait in. */
+    int outputs();
+
+    ItemStack output(int index);
+
+    void setOutput(int index, ItemStack stack);
+
+    /** Whether it burns fuel of its own (one slot); an oven without heats from what it stands on. */
+    default boolean burnsFuel() {
+        return false;
     }
 
-    /** The oven of a block entity, or null for anything else. */
-    public static KitchenOven of(BlockEntity entity) {
-        if (entity == null || broken || !entity.getClass().getName().equals(ENTITY) || !resolve(entity.getClass())) {
-            return null;
-        }
-        try {
-            return new KitchenOven(entity, handlerMethod.invoke(entity));
-        } catch (ReflectiveOperationException e) {
-            fail(e);
-            return null;
-        }
+    default ItemStack fuel() {
+        return ItemStack.EMPTY;
     }
 
-    private static synchronized boolean resolve(Class<?> type) {
-        if (type == entityClass) {
-            return true;
-        }
-        try {
-            Field progress = type.getDeclaredField("progress");
-            Field total = type.getDeclaredField("maxProgress");
-            Method handler = type.getMethod("getItemHandler");
-            progress.setAccessible(true);
-            total.setAccessible(true);
-            progressField = progress;
-            totalField = total;
-            handlerMethod = handler;
-            entityClass = type;
-            return true;
-        } catch (ReflectiveOperationException | RuntimeException e) {
-            fail(e);
-            return false;
-        }
+    default void setFuel(ItemStack stack) {
     }
 
-    private static void fail(Exception e) {
-        if (!broken) {
-            broken = true;
-            HandsOnDelight.LOGGER.warn("Cultural Delights' oven is not what the oven station knows; it keeps its own menu", e);
-        }
+    default boolean isFuel(ItemStack stack) {
+        return false;
     }
 
-    public BlockEntity blockEntity() {
-        return entity;
+    /** Tool places on top of it (bakeware, a pot, a skillet), none by default. */
+    default int tools() {
+        return 0;
     }
 
-    public ItemStack getItem(int slot) {
-        return Platform.INSTANCE.handlerItem(handler, slot);
+    default ItemStack tool(int index) {
+        return ItemStack.EMPTY;
     }
 
-    public void setItem(int slot, ItemStack stack) {
-        Platform.INSTANCE.setHandlerItem(handler, slot, stack);
-        entity.setChanged();
+    default void setTool(int index, ItemStack stack) {
     }
 
-    /** Ticks baked of what is in it, 0 while it bakes nothing. */
-    public int progress() {
-        return read(progressField);
-    }
-
-    public void setProgress(int ticks) {
-        try {
-            progressField.setInt(entity, ticks);
-        } catch (IllegalAccessException e) {
-            fail(e);
-        }
-    }
-
-    /** Ticks what is in it takes to bake. */
-    public int total() {
-        return read(totalField);
-    }
-
-    private int read(Field field) {
-        try {
-            return field.getInt(entity);
-        } catch (IllegalAccessException e) {
-            fail(e);
-            return 0;
-        }
-    }
-
-    /** Whether the block under it heats it: the oven lights itself by that every tick. */
-    public static boolean isHeated(BlockState state) {
-        return state.hasProperty(BlockStateProperties.LIT) && state.getValue(BlockStateProperties.LIT);
+    default boolean isTool(ItemStack stack) {
+        return false;
     }
 
     /**
-     * A baking recipe: what goes in and what comes out after {@code ticks}. {@code width} 0: any slots; otherwise laid out
-     * {@code width} x {@code height} as at a crafting table, {@code ingredients} row by row with empty places.
+     * Whether what bakes goes into bakeware of its own (a sheet, a pie dish, a loaf pan) that stands in the oven: one slot, which every
+     * recipe names ({@link Baking#bakeware}). None by default.
      */
-    public record Baking(Identifier id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks) {
+    default boolean usesBakeware() {
+        return false;
+    }
+
+    default ItemStack bakeware() {
+        return ItemStack.EMPTY;
+    }
+
+    default void setBakeware(ItemStack stack) {
+    }
+
+    default boolean isBakeware(ItemStack stack) {
+        return false;
+    }
+
+    /**
+     * Whether each place bakes on its own (one thing a place, each into what it bakes to), or the whole tray is one set that bakes into
+     * a dish ({@link #recipes} of several ingredients).
+     */
+    boolean bakesEachPlace();
+
+    /** The most things one place holds. */
+    int perPlace();
+
+    /** Whether {@code stack} may go on a place: what it bakes, or anything for an oven that bakes sets. */
+    boolean takes(ItemStack stack);
+
+    /** How far what lies on the place has baked, 0 to 1; 1 for what is done and waits there. */
+    float progress(int place);
+
+    /** Ticks until what lies on the place is baked, 0 when nothing bakes there. */
+    int ticksLeft(int place);
+
+    /** Whether it is hot: its fire burns, or the heat under it is on. */
+    boolean isHot();
+
+    /** Whether things on it wait for heat that is not there: no fuel burning, no heat under it. */
+    boolean waitsForHeat();
+
+    /** The oven's recipes as this level knows them (a client too): what goes in, what it bakes to, how long. */
+    List<Baking> recipes(Level level);
+
+    /** The oven's own hooks for something baked the cook takes out (experience, its events). */
+    default void onTaken(Player player, ItemStack stack) {
+        stack.onCraftedBy(player, stack.getCount());
+    }
+
+    /**
+     * Called every server tick of the station with the door open or shut: an oven that keeps its heat only shut holds its baking here
+     * while the door is open. Nothing by default: the oven bakes as it always does.
+     */
+    default void whileDoor(StationContext station, boolean open) {
+    }
+
+    /**
+     * A recipe: what goes in and what comes out after {@code ticks}. {@code width} 0: any places; otherwise laid out {@code width} x
+     * {@code height} as at a crafting table, {@code ingredients} row by row with empty places. {@code kind} names the book's tab.
+     * {@code bakeware}: what it bakes in, for an oven that {@link KitchenOven#usesBakeware uses bakeware} (empty for any other), and
+     * whether a bake uses one of it up ({@code usesUp}: a bowl that goes with the dish) or leaves it in the oven.
+     */
+    record Baking(Identifier id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks, String kind,
+            ItemStack bakeware, boolean usesUp) {
+        public Baking(Identifier id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks, String kind) {
+            this(id, ingredients, width, height, result, ticks, kind, ItemStack.EMPTY, false);
+        }
+
         public boolean isShaped() {
             return width > 0;
         }
@@ -151,46 +158,15 @@ public final class KitchenOven {
         public List<Ingredient> needed() {
             return ingredients.stream().filter(ingredient -> !RecipeParts.isGap(ingredient)).toList();
         }
-    }
 
-    /** The oven's recipes as this level knows them (a client knows them too): the laid-out ones first, as the oven tries them. */
-    public static List<Baking> recipes(Level level) {
-        List<Baking> shaped = new ArrayList<>();
-        List<Baking> loose = new ArrayList<>();
-        for (RecipeHolder<?> holder : KitchenRecipes.recipes(level)) {
-            Recipe<?> recipe = holder.value();
-            Identifier type = BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType());
-            boolean isShaped = BAKING_SHAPED.equals(type);
-            if (!isShaped && !BAKING.equals(type)) {
-                continue;
-            }
-            ItemStack result = RecipeParts.result(recipe);
-            if (result.isEmpty()) {
-                continue;
-            }
-            int ticks = call(recipe, "getCookTime", 200);
-            if (isShaped) {
-                shaped.add(new Baking(holder.id().identifier(), List.copyOf(RecipeParts.ingredients(recipe)), call(recipe, "getWidth", 0),
-                        call(recipe, "getHeight", 0), result.copy(), ticks));
-            } else {
-                loose.add(new Baking(holder.id().identifier(), List.copyOf(RecipeParts.ingredients(recipe)), 0, 0, result.copy(), ticks));
-            }
-        }
-        shaped.removeIf(recipe -> recipe.width() <= 0 || recipe.height() <= 0 || recipe.width() * recipe.height() != recipe.ingredients().size());
-        shaped.addAll(loose);
-        return shaped;
-    }
-
-    private static int call(Recipe<?> recipe, String method, int otherwise) {
-        try {
-            return (int) recipe.getClass().getMethod(method).invoke(recipe);
-        } catch (ReflectiveOperationException | RuntimeException e) {
-            return otherwise;
+        /** Whether it bakes in {@code there}: its own bakeware, or anything for a recipe that names none. */
+        public boolean bakesIn(ItemStack there) {
+            return bakeware.isEmpty() || there.is(bakeware.getItem());
         }
     }
 
-    /** The recipe the grid (nine stacks, row by row) bakes, as the oven finds it: a laid-out recipe first. */
-    public static Optional<Baking> matching(List<Baking> recipes, ItemStack[] grid) {
+    /** The recipe the tray (its places, row by row) bakes as one set, as such an oven finds it: a laid-out recipe first. */
+    static Optional<Baking> matching(List<Baking> recipes, ItemStack[] grid) {
         for (Baking recipe : recipes) {
             if (recipe.isShaped() ? matchesShaped(recipe, grid) : matchesLoose(recipe, grid)) {
                 return Optional.of(recipe);
@@ -199,7 +175,20 @@ public final class KitchenOven {
         return Optional.empty();
     }
 
-    /** Laid out anywhere in the grid, unturned, unmirrored, nothing else in it: the oven's own rule. */
+    /** The recipe the tray bakes as one set in the bakeware standing in the oven ({@code bakeware}, empty for none). */
+    static Optional<Baking> matching(List<Baking> recipes, ItemStack[] grid, ItemStack bakeware) {
+        return matching(recipes.stream().filter(recipe -> recipe.bakesIn(bakeware)).toList(), grid);
+    }
+
+    /** What each place of an oven that bakes each place alone turns into, empty for what it does not bake. */
+    static Optional<Baking> bakingOf(List<Baking> recipes, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return Optional.empty();
+        }
+        return recipes.stream().filter(recipe -> recipe.ingredients().size() == 1 && recipe.ingredients().get(0).test(stack)).findFirst();
+    }
+
+    /** Laid out anywhere in the grid, unturned, unmirrored, nothing else in it. */
     private static boolean matchesShaped(Baking recipe, ItemStack[] grid) {
         for (int left = 0; left <= GRID - recipe.width(); left++) {
             for (int top = 0; top <= GRID - recipe.height(); top++) {
@@ -225,7 +214,7 @@ public final class KitchenOven {
         return true;
     }
 
-    /** One stack for each ingredient, in any slots, and nothing more. */
+    /** One stack for each ingredient, in any places, and nothing more. */
     private static boolean matchesLoose(Baking recipe, ItemStack[] grid) {
         List<ItemStack> items = new ArrayList<>();
         for (ItemStack stack : grid) {
@@ -238,7 +227,7 @@ public final class KitchenOven {
             return false;
         }
         int[] holder = new int[items.size()];
-        java.util.Arrays.fill(holder, -1);
+        Arrays.fill(holder, -1);
         for (int ingredient = 0; ingredient < wanted.size(); ingredient++) {
             if (!assign(ingredient, wanted, items, holder, new boolean[items.size()])) {
                 return false;
@@ -247,7 +236,7 @@ public final class KitchenOven {
         return true;
     }
 
-    /** Finds a stack for {@code ingredient}, moving earlier ones to other stacks where they fit (a matching, as the oven's own). */
+    /** Finds a stack for {@code ingredient}, moving earlier ones to other stacks where they fit (a matching). */
     private static boolean assign(int ingredient, List<Ingredient> wanted, List<ItemStack> items, int[] holder, boolean[] seen) {
         for (int item = 0; item < items.size(); item++) {
             if (seen[item] || !wanted.get(ingredient).test(items.get(item))) {
@@ -260,5 +249,15 @@ public final class KitchenOven {
             }
         }
         return false;
+    }
+
+    /** The oven of a block entity, from whichever mod it comes, or null for anything else. */
+    static KitchenOven of(BlockEntity entity) {
+        KitchenOven cfb = CfbOven.of(entity);
+        if (cfb != null) {
+            return cfb;
+        }
+        KitchenOven extra = EdOven.of(entity);
+        return extra != null ? extra : CulturalOven.of(entity);
     }
 }

@@ -20,4 +20,14 @@ public interface ClientPlatform {
     default BlockStateModel model(Identifier id) {
         return null;
     }
+
+    /** The colour a fluid is drawn in, ARGB, as its own client look tints it; 0 where the loader cannot tell. */
+    default int fluidColor(net.minecraft.world.level.material.Fluid fluid) {
+        return 0;
+    }
+
+    /** The block atlas texture a still pool of the fluid is drawn with, or null where the loader cannot tell. */
+    default Identifier fluidTexture(net.minecraft.world.level.material.Fluid fluid) {
+        return null;
+    }
 }

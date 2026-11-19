@@ -10,7 +10,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Vector3f;
-import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
 import com.pockyl.diegesis.api.client.DiegesisParticles;
 import com.pockyl.diegesis.api.client.NodeView;
@@ -110,8 +109,8 @@ public final class StoveBehavior implements StationBehavior {
         // What the grill will not take now (an egg, a full grill) stays in the hand, unrefused.
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()
-                && view.level().getBlockEntity(view.pos()) instanceof AbstractStoveBlockEntity stove
-                && StoveCooking.takes(stove, player.getMainHandItem())) {
+                && StoveCooking.isStove(view.level().getBlockEntity(view.pos()))
+                && StoveCooking.takes(view.level().getBlockEntity(view.pos()), player.getMainHandItem())) {
             onInventoryShiftClick(view, player.getInventory().getSelectedSlot(), player.getMainHandItem());
         }
     }
@@ -398,6 +397,17 @@ public final class StoveBehavior implements StationBehavior {
             view.playSound(FarmersDelightContent.SKILLET_ADD_FOOD, "grill", 0.5F, 1.0F + random.nextFloat() * 0.15F);
             view.spawnParticles(DiegesisParticles.STEAM, onPiece(place), new Vector3f(0.0F, 3.0F, 0.0F), 0.8F, 2, 0x50FFFFFF);
         });
+    }
+
+    /** Keys go to the book first: its search while it is typed, its page keys. */
+    @Override
+    public boolean onKey(StationView view, int keyCode, int scanCode, int modifiers) {
+        return book.key(view, keyCode, modifiers);
+    }
+
+    @Override
+    public boolean onChar(StationView view, char character, int modifiers) {
+        return book.typed(view, character);
     }
 
     /** The wheel over the recipe book goes through its ingredients or its list. */

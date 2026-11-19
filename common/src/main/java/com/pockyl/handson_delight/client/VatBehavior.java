@@ -36,8 +36,6 @@ import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.KitchenVat;
 import com.pockyl.handson_delight.station.VatStation;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,11 +50,12 @@ import java.util.Optional;
  */
 public final class VatBehavior implements StationBehavior {
     private static final int SLOTS = KitchenVat.INGREDIENTS;
-    private static final String[] ITEM_NODES = {"item_0", "item_1", "item_2", "item_3", "item_4", "item_5"};
     /** The badge over the vat: its plate, the bar, the thermometer and the icon. */
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "thermo", "thermo_now", "preview"};
     /** The parts the block's own model has too: drawn by the scene only while the block is hidden. */
     private static final String[] VAT_PARTS = {"body", "lid"};
+    /** The parts that lie as the block does in the world, not as the scene is turned to the cook. */
+    private static final String[] WORLD_PARTS = {"body", "frost", "lid", "frost_ring"};
     private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /** The lid swings up this far about its hinge, degrees, in this many seconds, and settles with a little bounce. */
     private static final float LID_OPEN = 110.0F;
@@ -66,38 +65,9 @@ public final class VatBehavior implements StationBehavior {
     private static final float FLOOR = 4.0F;
     private static final float DEPTH = 12.0F;
     private static final float RIM = 16.0F;
-    /** Dry, things of one kind lie in a pile, each a little higher and turned further, the piles spread over the floor. */
-    private static final float PILE_STEP = 0.3F;
-    private static final float PILE_TURN = 38.0F;
-    private static final float[][][] PILES = {
-            {{0.0F, 0.0F}},
-            {{2.6F, 0.0F}, {-2.6F, 0.0F}},
-            {{2.8F, 1.6F}, {-2.8F, 1.6F}, {0.0F, -2.6F}},
-            {{2.6F, 2.4F}, {-2.6F, 2.4F}, {2.6F, -2.4F}, {-2.6F, -2.4F}},
-            {{3.2F, 2.8F}, {-3.2F, 2.8F}, {3.2F, -2.6F}, {-3.2F, -2.6F}, {0.0F, 0.1F}},
-            {{3.4F, 2.8F}, {0.0F, 3.2F}, {-3.4F, 2.8F}, {3.4F, -2.6F}, {0.0F, -2.9F}, {-3.4F, -2.6F}}};
-    /** The piles lie a little towards the back, clear of the near wall in the camera's view. */
-    private static final float PILE_BACK = 1.6F;
-    /**
-     * Afloat, each kind goes slowly round on the current, the kinds evenly spread round a circle about the middle; radians a second
-     * for a still vat, a hot one; nothing turns in a frozen one. Pixels from the middle, bobbing.
-     */
-    private static final float FLOAT_RADIUS = 3.0F;
+    /** Afloat, what is in it goes round on the current, radians a second for a still vat, a hot one; nothing turns in a frozen one. */
     private static final float CALM_CURRENT = 0.22F;
     private static final float HOT_CURRENT = 0.55F;
-    private static final float FLOAT_BOB = 0.15F;
-    private static final float SETTLE = 6.0F;
-    private static final float WAKE_EVERY = 0.12F;
-    /** Things coming in: how far above the vat they set off from the player, the arc of their hop, seconds in the air, between them. */
-    private static final float ARRIVE_FROM = 10.0F;
-    private static final float ARRIVE_ARC = 3.0F;
-    private static final float ARRIVE_TIME = 0.4F;
-    private static final float ARRIVE_STAGGER = 0.14F;
-    /** Liquids are poured and powders shaken a little to the right of the middle, the hand coming from the cook's side. */
-    private static final float POUR_X = 6.6F;
-    private static final float POUR_Z = 7.4F;
-    private static final float POUR_SPREAD = 1.6F;
-    private static final float HAND_SIZE = 3.4F;
     /** A drink is drawn into a container this high, pixels, dipped in on the right of the middle. */
     private static final float DIP_SIZE = 3.6F;
     private static final Vector3f DIP_AT = new Vector3f(6.0F, 0.0F, 8.6F);
@@ -165,6 +135,7 @@ public final class VatBehavior implements StationBehavior {
     private static final int TEXT_TOP = 13;
     private static final String[] COLON = {".", "#", ".", "#", "."};
     private static final String[] TIMES = {"...", "#.#", ".#.", "#.#", "..."};
+    private static final String[] DAYS = {"..#", "..#", "###", "#.#", "###"};
     private static final float DONE_SWELL = 0.35F;
     private static final float DONE_TIME = 0.6F;
     private static final float READY_BREATH = 0.04F;
@@ -177,24 +148,11 @@ public final class VatBehavior implements StationBehavior {
     private final RecipeBook book = new RecipeBook(new VatBook());
     private final UsableCache usable = new UsableCache();
     private List<KitchenVat.Aging> recipes = List.of();
-    private final ItemStack[] shown = new ItemStack[SLOTS];
-    /** Where each thing lies dry, its node's pixels from the middle of the floor, and how far turned; where it is now. */
-    private final Vector3f[] laidAt = new Vector3f[SLOTS];
-    private final float[] laidTurn = new float[SLOTS];
-    /** Afloat: which kind each thing is of, how many kinds, its layer in its kind's pile; each kind's share of the circle as it eases. */
-    private final int[] kindOf = new int[SLOTS];
-    private final int[] layerOf = new int[SLOTS];
-    private int kinds;
-    private final float[] share = new float[SLOTS];
-    private final Vector3f[] at = new Vector3f[SLOTS];
-    private final Item[] drawnFood = new Item[SLOTS];
-    /** Seconds until each thing sets off from the player (NaN: not coming), and its seconds in the air once it has. */
-    private final float[] arriveIn = new float[SLOTS];
-    private final float[] flying = new float[SLOTS];
-    private final Vector3f[] arriveFrom = new Vector3f[SLOTS];
-    private final KitchenMotions.Motion[] going = new KitchenMotions.Motion[SLOTS];
+    private final VatContents contents = new VatContents(SLOTS, FLOOR, RIM, this::surface);
     private KitchenMotions.Dip dip;
     private float time;
+    /** The turn {@link #turnToWorld} gave the vat's parts last; NaN: none yet. */
+    private float shownTurn = Float.NaN;
     /** How far the lid is up, 0 shut to 1. */
     private float lid;
     private boolean wasOpening;
@@ -205,7 +163,6 @@ public final class VatBehavior implements StationBehavior {
     private int baseColor = 0xFF3F76E4;
     private int shownColor;
     private float turned;
-    private float wakeClock;
     /** How thick the rime is, 0 to 1. */
     private float frost;
     private float steam;
@@ -236,24 +193,17 @@ public final class VatBehavior implements StationBehavior {
     private float rising;
 
     public VatBehavior(StationView view) {
-        Arrays.fill(shown, ItemStack.EMPTY);
-        Arrays.fill(arriveIn, Float.NaN);
-        Arrays.fill(flying, Float.NaN);
-        for (int i = 0; i < SLOTS; i++) {
-            laidAt[i] = new Vector3f();
-            at[i] = new Vector3f();
-            arriveFrom[i] = new Vector3f();
-        }
     }
 
     @Override
     public void onSceneReady(StationView view) {
+        shownTurn = Float.NaN;
         drawnDial = "";
         drawnThermo = "";
         shownDish = null;
         drawnServed = null;
         shownColor = 0;
-        Arrays.fill(drawnFood, null);
+        contents.sceneReady();
         recipes = KitchenVat.recipes(view.level());
         view.node("dial").ifPresent(dial -> dial.setTint(DIAL_COLOR));
         view.node("dial_track").ifPresent(track -> track.setTint(TRACK_COLOR));
@@ -270,9 +220,6 @@ public final class VatBehavior implements StationBehavior {
             view.node(part).ifPresent(node -> node.setOnTop(true));
         }
         view.node("book_open").ifPresent(node -> node.setPainter(book));
-        // The lid lies as the block's lid lies, whichever side the scene is turned to: its handle stays where it is in the world.
-        float turn = lidTurn(view.facing());
-        view.node("lid").ifPresent(node -> node.rotateTo(0.0F, turn, 0.0F, 0.0F));
         view.node("brew").ifPresent(brew -> {
             brew.setWakeLook(1.8F, 0.45F);
             brew.setFloatingWake(0.0F);
@@ -280,9 +227,27 @@ public final class VatBehavior implements StationBehavior {
         refresh(view);
     }
 
-    /** The turn about the vertical that undoes the scene's own turn towards the cook. */
+    /**
+     * The turn about the vertical that undoes the scene's own turn towards the cook: Diegesis turns a scene facing {@code facing} into
+     * the world by minus its yaw (north 0, east 90, south 180, west 270), so a node turned by plus that yaw lies as in the world.
+     */
     static float lidTurn(Direction facing) {
-        return Mth.wrapDegrees(180.0F - facing.toYRot());
+        return Mth.wrapDegrees(facing.toYRot() + 180.0F);
+    }
+
+    /**
+     * The vat's own parts lie as the block's do, whichever side the cook came from: its lid's handle, the stone and the rime stay where
+     * they are in the world. Read every frame: the scene is made ready before anybody opens it, from whatever side it faced then.
+     */
+    private void turnToWorld(StationView view) {
+        float turn = lidTurn(view.facing());
+        if (turn == shownTurn) {
+            return;
+        }
+        shownTurn = turn;
+        for (String part : WORLD_PARTS) {
+            view.node(part).ifPresent(node -> node.rotateTo(0.0F, turn, 0.0F, 0.0F));
+        }
     }
 
     @Override
@@ -362,6 +327,17 @@ public final class VatBehavior implements StationBehavior {
         } else if (event instanceof SceneEvent.Click click && click.button() == 0) {
             clicked(view, click.node());
         }
+    }
+
+    /** Keys go to the book first: its search while it is typed, its page keys. */
+    @Override
+    public boolean onKey(StationView view, int keyCode, int scanCode, int modifiers) {
+        return book.key(view, keyCode, modifiers);
+    }
+
+    @Override
+    public boolean onChar(StationView view, char character, int modifiers) {
+        return book.typed(view, character);
     }
 
     /** The wheel over the recipe book goes through its ingredients or its list. */
@@ -452,7 +428,7 @@ public final class VatBehavior implements StationBehavior {
             return;
         }
         Vector3f over = new Vector3f(DIP_AT.x, surface() + 3.0F, DIP_AT.z);
-        Vector3f away = FromPlayer.point(view, RIM + ARRIVE_FROM, 0, 1).orElse(new Vector3f(8.0F, RIM + 8.0F, 0.0F));
+        Vector3f away = FromPlayer.point(view, RIM + VatContents.ARRIVE_FROM, 0, 1).orElse(new Vector3f(8.0F, RIM + 8.0F, 0.0F));
         KitchenMotions.showItem(node.get(), empty, DIP_SIZE, 0xFFFFFFFF);
         node.get().moveTo(over.x, over.y, over.z, 0.0F);
         node.get().rotateTo(0.0F, 0.0F, 0.0F, 0.0F);
@@ -485,82 +461,10 @@ public final class VatBehavior implements StationBehavior {
             usable.clear();
         }
         lastServings = servingsNow.copy();
-        ItemStack[] items = state.getItems(VatStation.INGREDIENTS);
-        // Things shared out over the places come from where they lay, not from the player: only more in the vat is an arrival.
-        boolean more = Arrays.stream(items).mapToInt(ItemStack::getCount).sum() > Arrays.stream(shown).mapToInt(ItemStack::getCount).sum();
-        List<Integer> arrivals = new ArrayList<>();
-        for (int i = 0; i < SLOTS && i < items.length; i++) {
-            if (!items[i].isEmpty() && (shown[i].isEmpty() || !ItemStack.isSameItem(items[i], shown[i])) && view.isFocused() && more) {
-                arrivals.add(i);
-            }
-            if (items[i].isEmpty()) {
-                arriveIn[i] = Float.NaN;
-                flying[i] = Float.NaN;
-                if (going[i] != null) {
-                    going[i].stop();
-                    going[i] = null;
-                }
-            }
-            shown[i] = items[i].copy();
-        }
-        layOut();
-        for (int k = 0; k < arrivals.size(); k++) {
-            int index = arrivals.get(k);
-            Optional<Vector3f> from = FromPlayer.point(view, RIM + ARRIVE_FROM, k, arrivals.size());
-            if (from.isPresent()) {
-                arriveIn[index] = k * ARRIVE_STAGGER;
-                arriveFrom[index].set(from.get());
-                view.node(ITEM_NODES[index]).ifPresent(node -> node.setVisible(false));
-            }
-        }
+        contents.update(view, state.getItems(VatStation.INGREDIENTS));
         baseColor = mixedColor(view);
         served(view);
         badgeState(view);
-    }
-
-    /** Whether {@code stack} goes in as a liquid, poured out of its container: it is the vat's liquid, nothing that floats. */
-    private static boolean isPoured(ItemStack stack) {
-        return KitchenTags.is(stack, KitchenTags.POURED);
-    }
-
-    /** Whether {@code stack} is shaken in and dissolves: salt, sugar, powders. */
-    private static boolean dissolves(ItemStack stack) {
-        return KitchenTags.is(stack, KitchenTags.DISSOLVES);
-    }
-
-    private static boolean isSeen(ItemStack stack) {
-        return !stack.isEmpty() && !isPoured(stack) && !dissolves(stack);
-    }
-
-    /**
-     * Where each thing lies: dry, things of one kind in a pile, the piles spread over the floor; afloat, each kind's pile goes round on
-     * the current (worked out every frame). Poured and dissolved things are the liquid: their click places lie on it near the cook.
-     */
-    private void layOut() {
-        List<Item> seen = new ArrayList<>();
-        for (ItemStack stack : shown) {
-            if (isSeen(stack) && !seen.contains(stack.getItem())) {
-                seen.add(stack.getItem());
-            }
-        }
-        kinds = seen.size();
-        int[] layers = new int[Math.max(1, kinds)];
-        int hidden = 0;
-        for (int i = 0; i < SLOTS; i++) {
-            if (!isSeen(shown[i])) {
-                laidAt[i].set(-2.0F + 2.0F * hidden++, 0.0F, -2.5F);
-                laidTurn[i] = 0.0F;
-                kindOf[i] = -1;
-                continue;
-            }
-            int kind = seen.indexOf(shown[i].getItem());
-            float[] place = PILES[Math.min(kinds, PILES.length) - 1][Math.min(kind, PILES.length - 1)];
-            int layer = layers[kind]++;
-            kindOf[i] = kind;
-            layerOf[i] = layer;
-            laidAt[i].set(place[0], PILE_STEP * layer, place[1] + PILE_BACK);
-            laidTurn[i] = PILE_TURN * layer + 25.0F * kind;
-        }
     }
 
     /**
@@ -589,8 +493,8 @@ public final class VatBehavior implements StationBehavior {
             b += (color & 0xFF) * w;
             weight += w;
         }
-        for (ItemStack stack : shown) {
-            if (stack.isEmpty() || !isPoured(stack)) {
+        for (ItemStack stack : contents.shown()) {
+            if (stack.isEmpty() || !VatContents.isPoured(stack)) {
                 continue;
             }
             int color = KitchenLooks.liquidColor(stack);
@@ -616,7 +520,7 @@ public final class VatBehavior implements StationBehavior {
     }
 
     /** A colour as a liquid shows it in bulk: more saturated than the few pixels of an icon, as beer is amber and not beige. */
-    private static int vivid(int rgb) {
+    static int vivid(int rgb) {
         float[] hsb = java.awt.Color.RGBtoHSB(rgb >> 16 & 0xFF, rgb >> 8 & 0xFF, rgb & 0xFF, null);
         return 0xFF000000 | java.awt.Color.HSBtoRGB(hsb[0], Math.min(1.0F, hsb[1] * 1.6F + 0.1F), Math.min(1.0F, hsb[2] * 0.95F));
     }
@@ -637,12 +541,12 @@ public final class VatBehavior implements StationBehavior {
                     node.setVisual(Visual.ofBlock(((BlockItem) item).getBlock().defaultBlockState()));
                     node.rotateTo(0.0F, 0.0F, 0.0F, 0.0F);
                     node.scaleTo(Math.min(DISH_BLOCK_SCALE, DISH_BLOCK / extent), 0.0F);
-                    node.moveTo(0.0F, 0.0F, PILE_BACK, 0.0F);
+                    node.moveTo(0.0F, 0.0F, VatContents.PILE_BACK, 0.0F);
                 } else {
                     node.setVisual(Visual.ofItem(item).withAnchor(ICON_MIDDLE));
                     node.rotateTo(-90.0F, 0.0F, 0.0F, 0.0F);
                     node.scaleTo(DISH_ITEM / ITEM_PIXELS, 0.0F);
-                    node.moveTo(0.0F, 0.15F, PILE_BACK, 0.0F);
+                    node.moveTo(0.0F, 0.15F, VatContents.PILE_BACK, 0.0F);
                 }
             });
         }
@@ -718,6 +622,7 @@ public final class VatBehavior implements StationBehavior {
         time += dt;
         boolean inUse = view.isInUse();
         boolean open = inUse && isLidOpen(view);
+        turnToWorld(view);
         swing(view, dt, open);
         boolean whole = view.isBlockHidden();
         for (String part : VAT_PARTS) {
@@ -733,17 +638,7 @@ public final class VatBehavior implements StationBehavior {
         turned += dt * current;
         view.node("brew").ifPresent(brew -> brew.setCurrent(current));
         boolean reachable = open && lid >= 1.0F;
-        for (int i = 0; i < SLOTS; i++) {
-            food(view, i);
-            arrive(view, i, dt);
-            place(view, i, dt, inside, wet);
-            boolean enabled = reachable && Float.isNaN(arriveIn[i]) && Float.isNaN(flying[i]);
-            view.node(ITEM_NODES[i]).ifPresent(node -> node.setEnabled(enabled));
-            if (going[i] != null && !going[i].frame(view, dt)) {
-                going[i] = null;
-            }
-        }
-        wakes(view, dt, inside && wet && current > 0.0F);
+        contents.frame(view, dt, time, turned, level, shownColor, inside, wet, inside && wet && current > 0.0F, reachable);
         if (dip != null && !dip.frame(view, dt)) {
             dip = null;
         }
@@ -970,137 +865,6 @@ public final class VatBehavior implements StationBehavior {
         return FLOOR + DEPTH * level;
     }
 
-    /** The thing in place {@code index}, drawn by its food node: an item lying flat; nothing for what is poured or dissolved. */
-    private void food(StationView view, int index) {
-        Item item = isSeen(shown[index]) ? shown[index].getItem() : null;
-        if (item == drawnFood[index]) {
-            return;
-        }
-        drawnFood[index] = item;
-        view.node("food_" + index).ifPresent(node -> {
-            node.setVisible(item != null);
-            if (item != null) {
-                node.setVisual(Visual.ofItem(item).withAnchor(ICON_MIDDLE));
-            }
-        });
-    }
-
-    /**
-     * A thing on its way from the player waits its turn hidden; then a liquid is poured from its container, a powder shaken out, and
-     * anything else hops in from where it set off.
-     */
-    private void arrive(StationView view, int index, float dt) {
-        if (!Float.isNaN(arriveIn[index])) {
-            arriveIn[index] -= dt;
-            if (arriveIn[index] > 0.0F) {
-                return;
-            }
-            arriveIn[index] = Float.NaN;
-            ItemStack stack = shown[index];
-            NodeView hand = view.node("hand_" + index).orElse(null);
-            NodeView brew = view.node("brew").orElse(null);
-            java.util.function.DoubleSupplier surface = this::surface;
-            Vector3f onto = new Vector3f(POUR_X, 0.0F, POUR_Z + POUR_SPREAD * (index % 3 - 1));
-            if (hand != null && isPoured(stack)) {
-                if (brew != null) {
-                    brew.holdLevel(KitchenMotions.Pour.pouredBy(stack) - 0.5F, 0.6F);
-                }
-                going[index] = new KitchenMotions.Pour(hand, "pour_" + index, stack, arriveFrom[index], onto, surface, "brew", HAND_SIZE,
-                        -1.0F, 0.0F).lipAtLeast(RIM + 1.0F);
-            } else if (hand != null && dissolves(stack)) {
-                going[index] = new KitchenMotions.Shake(hand, stack, arriveFrom[index], onto, surface, brew, HAND_SIZE * 0.8F, -1.0F, 0.0F);
-            } else {
-                flying[index] = 0.0F;
-                Vector3f start = new Vector3f(arriveFrom[index]).sub(8.0F, FLOOR, 8.0F);
-                at[index].set(start);
-                view.node(ITEM_NODES[index]).ifPresent(node -> {
-                    node.moveTo(start.x, start.y, start.z, 0.0F);
-                    node.setVisible(true);
-                });
-            }
-            return;
-        }
-        if (Float.isNaN(flying[index])) {
-            return;
-        }
-        float before = flying[index];
-        flying[index] += dt;
-        if (before < ARRIVE_TIME && flying[index] >= ARRIVE_TIME) {
-            flying[index] = Float.NaN;
-            boolean wet = level > 0.02F;
-            Vector3f where = new Vector3f(at[index]).add(8.0F, FLOOR, 8.0F);
-            if (wet) {
-                view.node("brew").ifPresent(brew -> brew.ripple(where.x, where.z, 0.45F));
-                view.spawnParticles(DiegesisParticles.SPLASH, where, new Vector3f(0.0F, 5.0F, 0.0F), 0.6F, 4, 0xFF000000 | shownColor);
-                view.playSound(SoundEvents.GENERIC_SPLASH, ITEM_NODES[index], 0.15F, 1.6F);
-            } else {
-                view.playSound(SoundEvents.STONE_HIT, ITEM_NODES[index], 0.25F, 1.5F);
-            }
-        }
-    }
-
-    /** Where thing {@code index} goes now, its node's pixels from the middle of the floor: its pile, on the floor or afloat on the current. */
-    private Vector3f home(int index, boolean wet) {
-        if (!wet || kindOf[index] < 0) {
-            Vector3f dry = new Vector3f(laidAt[index]);
-            if (wet) {
-                dry.y = surface() - FLOOR + 0.1F;
-            }
-            return dry;
-        }
-        share[kindOf[index]] = Mth.lerp(0.08F, share[kindOf[index]], kindOf[index] * Mth.TWO_PI / Math.max(1, kinds));
-        float angle = turned + share[kindOf[index]];
-        float radius = kinds == 1 ? FLOAT_RADIUS * 0.7F : FLOAT_RADIUS;
-        float bob = FLOAT_BOB * Mth.sin(time * 2.1F + index * 1.7F);
-        return new Vector3f(Mth.cos(angle) * radius, surface() - FLOOR + 0.1F + PILE_STEP * layerOf[index] + bob,
-                Mth.sin(angle) * radius + PILE_BACK);
-    }
-
-    /**
-     * Each thing goes where it belongs: a hop from the player while it comes in, then its pile on the floor, or round on the current
-     * afloat, rising and falling with the liquid.
-     */
-    private void place(StationView view, int index, float dt, boolean inside, boolean wet) {
-        Optional<NodeView> node = view.node(ITEM_NODES[index]);
-        if (node.isEmpty() || !Float.isNaN(arriveIn[index])) {
-            return;
-        }
-        Vector3f to = home(index, wet && level > 0.02F);
-        if (!Float.isNaN(flying[index])) {
-            float k = Math.min(1.0F, flying[index] / ARRIVE_TIME);
-            Vector3f from = new Vector3f(arriveFrom[index]).sub(8.0F, FLOOR, 8.0F);
-            at[index].set(from).lerp(to, KitchenMotions.smooth(k)).add(0.0F, ARRIVE_ARC * Mth.sin(Mth.PI * k), 0.0F);
-        } else {
-            at[index].lerp(to, Math.min(1.0F, dt * SETTLE));
-        }
-        node.get().moveTo(at[index].x, at[index].y, at[index].z, 0.0F);
-        // Afloat, a thing turns slowly with the current it rides on.
-        float spin = wet && kindOf[index] >= 0 ? turned * Mth.RAD_TO_DEG * 0.6F : 0.0F;
-        node.get().rotateTo(0.0F, laidTurn[index] + spin, 0.0F, 0.0F);
-        boolean coming = going[index] != null;
-        node.get().setVisible(inside && !coming || !Float.isNaN(flying[index]));
-    }
-
-    /** What goes round on the liquid leaves a trail behind it. */
-    private void wakes(StationView view, float dt, boolean moving) {
-        wakeClock -= dt;
-        if (!moving || wakeClock > 0.0F) {
-            return;
-        }
-        wakeClock = WAKE_EVERY;
-        view.node("brew").ifPresent(brew -> {
-            boolean[] done = new boolean[SLOTS];
-            for (int i = 0; i < SLOTS; i++) {
-                int kind = kindOf[i];
-                if (kind < 0 || shown[i].isEmpty() || done[kind] || !Float.isNaN(flying[i])) {
-                    continue;
-                }
-                done[kind] = true;
-                brew.leaveWake(at[i].x + 8.0F, at[i].z + 8.0F, 1.6F, 0.6F);
-            }
-        });
-    }
-
     float badgeSwell() {
         float since = time - doneAt;
         if (since >= 0.0F && since < DONE_TIME) {
@@ -1168,14 +932,15 @@ public final class VatBehavior implements StationBehavior {
         preview(view, shown, seconds);
     }
 
-    private static void text(MeshShape.Builder shape, String text) {
+    /** The badge's line of text under its bar, in pixel glyphs: digits, a colon, {@code x} for servings, {@code d} for days. */
+    static void text(MeshShape.Builder shape, String text) {
         int width = -1;
         for (char c : text.toCharArray()) {
             width += (c == ':' ? 1 : 3) + 1;
         }
         int x = -width / 2 - width % 2;
         for (char c : text.toCharArray()) {
-            String[] glyph = c == ':' ? COLON : c == 'x' ? TIMES : PotBehavior.DIGITS[c - '0'];
+            String[] glyph = c == ':' ? COLON : c == 'x' ? TIMES : c == 'd' ? DAYS : PotBehavior.DIGITS[c - '0'];
             glyph(shape, glyph, x, TEXT_TOP);
             x += glyph[0].length() + 1;
         }

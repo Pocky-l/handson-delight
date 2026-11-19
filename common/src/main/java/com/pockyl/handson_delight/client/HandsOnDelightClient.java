@@ -12,18 +12,23 @@ import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.assembly.BoardDishes;
 import com.pockyl.handson_delight.station.BasinStation;
+import com.pockyl.handson_delight.station.BowlStation;
 import com.pockyl.handson_delight.station.CookingPotStation;
+import com.pockyl.handson_delight.station.ChoppingBlockStation;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 import com.pockyl.handson_delight.station.CuisineBoardStation;
 import com.pockyl.handson_delight.station.GrillStation;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.OvenStation;
 import com.pockyl.handson_delight.station.KettleStation;
+import com.pockyl.handson_delight.station.MeltingPotLogic;
+import com.pockyl.handson_delight.station.MeltingPotStation;
 import com.pockyl.handson_delight.station.SkilletStation;
 import com.pockyl.handson_delight.station.StoveStation;
 import com.pockyl.handson_delight.station.SteamerStation;
 import com.pockyl.handson_delight.station.VatLogic;
 import com.pockyl.handson_delight.station.VatStation;
+import com.pockyl.handson_delight.station.EdVatStation;
 import com.pockyl.handson_delight.station.YoukaiPotStation;
 
 import java.util.ArrayList;
@@ -52,10 +57,14 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(KegStation.ID, KegBehavior::lying);
         DiegesisClient.registerBehavior(KegStation.STANDING_ID, KegBehavior::standing);
         DiegesisClient.registerBehavior(KegStation.TANK_ID, KegBehavior::tank);
+        DiegesisClient.registerBehavior(KegStation.HEARTH_ID, KegBehavior::hearth);
+        DiegesisClient.registerBehavior(KegStation.CASK_ID, KegBehavior::cask);
+        DiegesisClient.registerBehavior(KegStation.BIG_KEG_ID, KegBehavior::big);
         DiegesisClient.registerLiquid(HandsOnDelight.id("drink"), LiquidLook.of(0xC0B08850));
         KegLiquids.register();
-        DiegesisClient.registerBehavior(OvenStation.ID, OvenBehavior::new);
+        DiegesisClient.registerBehavior(OvenStation.ID, OvenBehavior::cultural);
         DiegesisClient.registerBehavior(VatStation.ID, VatBehavior::new);
+        DiegesisClient.registerBehavior(EdVatStation.ID, EdVatBehavior::new);
         DiegesisClient.registerBehavior(KettleStation.ID, KettleBehavior::new);
         DiegesisClient.registerBehavior(KettleStation.YOUKAI_ID, KettleBehavior::new);
         DiegesisClient.registerBehavior(GrillStation.ID, GrillBehavior::new);
@@ -64,15 +73,24 @@ public final class HandsOnDelightClient {
         // Ice cream in the vat: opaque, grainy as snow, so thick that it hardly moves.
         DiegesisClient.registerLiquid(VatLogic.CREAM_LIQUID,
                 new LiquidLook(0xFFF6EEDC, Identifier.withDefaultNamespace("block/snow"), false, 0.95F));
+        DiegesisClient.registerBehavior(MeltingPotStation.ID, MeltingPotBehavior::new);
+        // What has melted in the melting pot (chocolate syrup, marshmallow fluff), coloured by the code; thick, so that it moves slowly.
+        DiegesisClient.registerLiquid(MeltingPotLogic.MELTED_LIQUID, LiquidLook.of(0xF0FFFFFF).thick(0.8F));
         DiegesisClient.registerBehavior(CuisineBoardStation.ID, CuisineBehavior::new);
         DiegesisClient.registerLiquid(YoukaiPotBehavior.SOUP_LIQUID, LiquidLook.of(0x96FFFFFF));
         DiegesisClient.registerBehavior(YoukaiPotStation.SMALL_ID, view -> new YoukaiPotBehavior(view, YoukaiPotBehavior.Size.SMALL));
         DiegesisClient.registerBehavior(YoukaiPotStation.SHORT_ID, view -> new YoukaiPotBehavior(view, YoukaiPotBehavior.Size.SHORT));
         DiegesisClient.registerBehavior(YoukaiPotStation.STOCKPOT_ID, view -> new YoukaiPotBehavior(view, YoukaiPotBehavior.Size.STOCKPOT));
         DiegesisClient.registerBehavior(SteamerStation.ID, SteamerBehavior::new);
+        DiegesisClient.registerBehavior(BowlStation.ID, BowlBehavior::new);
+        // What is mixed in the bowl: thick, nearly opaque; its colour is set by the scene.
+        DiegesisClient.registerLiquid(BowlStation.BATTER_LIQUID, LiquidLook.of(0xF0E8D8B8).thick(0.8F));
         DiegesisClient.registerBehavior(CuttingBoardStation.ID, BoardBehavior::new);
+        DiegesisClient.registerBehavior(ChoppingBlockStation.ID, view -> new BoardBehavior(view, true));
         DiegesisClient.registerBehavior(SkilletStation.ID, SkilletBehavior::new);
         DiegesisClient.registerBehavior(StoveStation.ID, StoveBehavior::new);
+        DiegesisClient.registerBehavior(OvenStation.CFB_ID, OvenBehavior::cfb);
+        DiegesisClient.registerBehavior(OvenStation.ED_ID, OvenBehavior::extra);
         DiegesisClient.registerLiquid(HandsOnDelight.id("broth"), LiquidLook.of(0xE0B0A070).thick(0.6F));
         registerParticles();
     }

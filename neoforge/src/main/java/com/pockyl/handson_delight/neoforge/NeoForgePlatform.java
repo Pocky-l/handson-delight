@@ -136,4 +136,10 @@ public final class NeoForgePlatform implements Platform {
     public Ingredient unwrap(Ingredient ingredient) {
         return ingredient;
     }
+
+    /** Extra Delight's classes are touched only once it is known to be there. */
+    @Override
+    public com.pockyl.handson_delight.station.KitchenEdVat.Access edVats() {
+        return isLoaded(com.pockyl.handson_delight.station.KitchenEdVat.MOD_ID) ? EdVats.INSTANCE : null;
+    }
 }

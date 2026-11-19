@@ -2,9 +2,13 @@ package com.pockyl.handson_delight.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -15,8 +19,10 @@ import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.RecipeParts;
+import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.station.BoardLogic;
+import com.pockyl.handson_delight.station.ChoppingBlockStation;
 import com.pockyl.handson_delight.station.Cutting;
 import com.pockyl.handson_delight.station.CuttingBoardStation;
 
@@ -30,7 +36,8 @@ import java.util.Map;
  * The board's book: what can be cut, listed by what comes off (a cabbage leaf: a cabbage and a knife, with everything else the cut
  * gives at the foot), and the dishes put together on it, what goes down first first. The dishes come from the station's data: a
  * dedicated server
- * sends their recipes nowhere else.
+ * sends their recipes nowhere else. A tree's stump ({@code stump}) puts no dish together and splits logs with an axe: its book has
+ * no dishes, and a page per log to split instead of Farmer's Delight's stripping.
  */
 final class BoardBook implements RecipeBook.Source {
     /** The dishes' recipes as the server last sent them ({@code CuttingBoardStation.EFFECT_BOOK}): the same for every board. */
@@ -45,6 +52,11 @@ final class BoardBook implements RecipeBook.Source {
     private List<Ingredient> unlisted = List.of();
     /** Goes up each time the dishes are read anew: what the drawer shows depends on them. */
     private int version;
+    private final boolean stump;
+
+    BoardBook(boolean stump) {
+        this.stump = stump;
+    }
 
     @Override
     public List<RecipeBook.Page> pages(StationView view) {
@@ -52,7 +64,7 @@ final class BoardBook implements RecipeBook.Source {
         List<RecipeBook.Page> pages = new ArrayList<>(dishes(view));
         for (CuttingBoardRecipe recipe : Cutting.all(level)) {
             List<ItemStack> results = RecipeParts.results(recipe);
-            if (results.isEmpty()) {
+            if (results.isEmpty() || stump && splitHere(level, recipe)) {
                 continue;
             }
             List<Ingredient> ingredients = List.of(RecipeParts.ingredients(recipe).get(0), Cutting.tool(recipe));
@@ -60,7 +72,32 @@ final class BoardBook implements RecipeBook.Source {
             pages.add(new RecipeBook.Page(Cutting.id(level, recipe), results.get(0).copy(), ingredients, foot, null, false,
                     toolKind(recipe)));
         }
+        if (stump) {
+            for (Holder<Item> log : BuiltInRegistries.ITEM.getTagOrEmpty(ItemTags.LOGS)) {
+                ItemStack planks = ChoppingBlockStation.planks(level, new ItemStack(log));
+                if (!planks.isEmpty()) {
+                    List<Ingredient> takes = List.of(Ingredient.of(log.value()), Ingredient.of(BuiltInRegistries.ITEM.getOrThrow(ItemTags.AXES)));
+                    pages.add(new RecipeBook.Page(splitKey(log.value()), planks, takes, List.of(), null, false, TOOLS));
+                }
+            }
+        }
         return pages;
+    }
+
+    /** Whether the stump splits what {@code recipe} cuts (a log Farmer's Delight strips): the axe splits it there instead. */
+    private static boolean splitHere(Level level, CuttingBoardRecipe recipe) {
+        for (ItemStack input : RecipeParts.items(RecipeParts.ingredients(recipe).get(0))) {
+            if (ChoppingBlockStation.splits(level, input)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The page of a log split on the stump. */
+    private static Identifier splitKey(Item log) {
+        Identifier id = BuiltInRegistries.ITEM.getKey(log);
+        return HandsOnDelight.id("split/" + id.getNamespace() + "/" + id.getPath());
     }
 
     /**
@@ -71,31 +108,46 @@ final class BoardBook implements RecipeBook.Source {
     public List<RecipeBook.Tab> tabs(StationView view) {
         List<RecipeBook.Tab> tabs = new ArrayList<>();
         // Everything under a compass, as in vanilla's recipe book.
-        tabs.add(new RecipeBook.Tab(null, new ItemStack(Items.COMPASS)));
+        tabs.add(new RecipeBook.Tab(null, new ItemStack(Items.COMPASS), Component.translatable("handson_delight.book.tab.all")));
         if (!dishes(view).isEmpty()) {
-            tabs.add(new RecipeBook.Tab(DISHES, new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("hamburger")))));
+            tabs.add(new RecipeBook.Tab(DISHES, new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("hamburger"))),
+                    Component.translatable("handson_delight.book.tab.dishes")));
         }
         Map<Item, Integer> others = new HashMap<>();
         boolean knife = false;
         for (CuttingBoardRecipe recipe : Cutting.all(view.level())) {
+            if (stump && splitHere(view.level(), recipe)) {
+                continue;
+            }
             if (toolKind(recipe).equals(KNIFE)) {
                 knife = true;
             } else {
                 others.merge(RecipeParts.items(Cutting.tool(recipe))[0].getItem(), 1, Integer::sum);
             }
         }
+        if (stump) {
+            // Every log is split with an axe.
+            int logs = 0;
+            for (Holder<Item> log : BuiltInRegistries.ITEM.getTagOrEmpty(ItemTags.LOGS)) {
+                logs += ChoppingBlockStation.splits(view.level(), new ItemStack(log)) ? 1 : 0;
+            }
+            if (logs > 0) {
+                others.merge(Items.IRON_AXE, logs, Integer::sum);
+            }
+        }
         if (knife) {
-            tabs.add(new RecipeBook.Tab(KNIFE, new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("iron_knife")))));
+            tabs.add(new RecipeBook.Tab(KNIFE, new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("iron_knife"))),
+                    Component.translatable("handson_delight.book.tab.knife")));
         }
         others.entrySet().stream().max(Map.Entry.<Item, Integer>comparingByValue()
                         .thenComparing(entry -> BuiltInRegistries.ITEM.getKey(entry.getKey()).toString(), Comparator.reverseOrder()))
-                .ifPresent(most -> tabs.add(new RecipeBook.Tab(TOOLS, new ItemStack(most.getKey()))));
+                .ifPresent(most -> tabs.add(new RecipeBook.Tab(TOOLS, new ItemStack(most.getKey()), Component.translatable("handson_delight.book.tab.tools"))));
         return tabs;
     }
 
     @Override
     public String memory() {
-        return CuttingBoardStation.ID.toString();
+        return (stump ? ChoppingBlockStation.ID : CuttingBoardStation.ID).toString();
     }
 
     /** What a cut is made with: the knife, or another tool. */
@@ -113,6 +165,9 @@ final class BoardBook implements RecipeBook.Source {
     }
 
     private List<RecipeBook.Page> dishes(StationView view) {
+        if (stump) {
+            return List.of();
+        }
         ListTag book = received;
         if (book != readFrom) {
             readFrom = book;
@@ -175,6 +230,9 @@ final class BoardBook implements RecipeBook.Source {
             }
         }
         ItemStack onBoard = view.state().getItem(CuttingBoardStation.BOARD_SLOT);
+        if (stump && ChoppingBlockStation.splits(view.level(), onBoard)) {
+            return splitKey(onBoard.getItem());
+        }
         return Cutting.recipesFor(view.level(), onBoard).stream().findFirst().map(recipe -> Cutting.id(view.level(), recipe)).orElse(null);
     }
 

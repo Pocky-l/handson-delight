@@ -10,14 +10,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.pockyl.handson_delight.client.HandsOnDelightClient;
 
 /**
- * The stoves of End's Delight, My Nether's Delight and Dungeons Delight are stations too, and puff the same dark smoke over their food as Farmer's
- * Delight's, from a method of their own that {@link StoveSmokeMixin} does not reach. Quiet where the scene shows the grill, as there.
+ * The stoves of End's Delight, My Nether's Delight, Dungeons Delight and Twilight's Flavor & Delight are stations too, and puff the
+ * same dark smoke over their food as Farmer's Delight's, from a method of their own that {@link StoveSmokeMixin} does not reach. Quiet
+ * where the scene shows the grill, as there.
  * Applied only with the addon installed ({@code OptionalMixins}).
  */
 @Pseudo
 @Mixin(targets = {"cn.foggyhillside.ends_delight.block.entity.EndStoveBlockEntity",
         "com.soytutta.mynethersdelight.common.block.entity.NetherStoveBlockEntity",
-        "net.yirmiri.dungeonsdelight.common.block.entity.DungeonStoveBlockEntity"}, remap = false)
+        "net.yirmiri.dungeonsdelight.common.block.entity.DungeonStoveBlockEntity",
+        "dev.xkmc.twilightdelight.content.block.MazeStoveBlockEntity"}, remap = false)
 abstract class AddonStoveSmokeMixin {
     @Inject(method = "addSmokeParticles", at = @At("HEAD"), cancellable = true, require = 0)
     private void handson$quietWhileShown(CallbackInfo callback) {

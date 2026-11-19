@@ -30,7 +30,8 @@ neoForge {
             type = 'gameTestServer'
             // Own directory: in run/ it would share the folder with the dev client.
             gameDirectory = project.file('run/gametest')
-            systemProperty 'neoforge.enabledGameTestNamespaces', providers.gradleProperty('meals').isPresent() ? 'handson_meals' : project.mod_id
+            systemProperty 'neoforge.enabledGameTestNamespaces', providers.gradleProperty('meals').isPresent() ? 'handson_meals'
+                    : providers.gradleProperty('extradelight').isPresent() ? 'handson_extradelight' : project.mod_id
         }
 
         configureEach {
@@ -43,6 +44,19 @@ neoForge {
         "${mod_id}" {
             sourceSet(sourceSets.main)
         }
+    }
+}
+
+// Sable Trees is on CurseForge only: its jar comes from the Curse Maven, nothing else does.
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Curse Maven'
+                url = 'https://cursemaven.com'
+            }
+        }
+        filter { includeGroup('curse.maven') }
     }
 }
 
@@ -76,6 +90,12 @@ dependencies {
     // Youkai's Feasts' kettle, cuisine board and pots are stations too: compiled against it only (its drinks; its blocks are reached
     // by name, as their classes build on the L2 libraries nested in its jar).
     compileOnly "maven.modrinth:gensokyo-delight-youkais-feasts:${youkais_feasts_version}"
+    // Extra Delight's mixing bowl, vat and melting pot are stations too: compiled against it only.
+    compileOnly "maven.modrinth:extradelight:${extra_delight_version}"
+    // Hearth and Harvest's keg and cask are stations too: compiled against it only.
+    compileOnly "maven.modrinth:hearth-and-harvest:${hearth_and_harvest_version}"
+    // Sable Trees' chopping block (the stump of a felled tree) is a board station too: compiled against it only.
+    compileOnly "curse.maven:sable-trees-1744089:${sable_trees_version}"
 }
 
 // -Pmeals runs only the game tests of Modest Meals' meals at the board, with Modest Meals: it makes Farmer's Delight's burgers,
@@ -91,6 +111,35 @@ if (meals) {
     }
     sourceSets.main.java.srcDir 'src/meals/java'
     sourceSets.main.resources.srcDir 'src/meals/resources'
+}
+
+// -Pextradelight runs only the game tests of Extra Delight's stations, with Extra Delight: it overrides Farmer's Delight's stews,
+// cocoa, pies and dough and adds pot recipes of the same food (stir-fry), so 20 other tests fail with it by design. Its tests and
+// their template are in src/extradelight, under a game test namespace of their own. It goes with -Paddons=wide too.
+var extraDelight = providers.gradleProperty('extradelight').isPresent()
+if (extraDelight) {
+    dependencies {
+        localRuntime "maven.modrinth:extradelight:${extra_delight_version}" // Extra Delight 2.7.1
+    }
+    sourceSets.main.java.srcDir 'src/extradelight/java'
+    sourceSets.main.resources.srcDir 'src/extradelight/resources'
+}
+
+// -Ptwilight runs the game tests with Twilight's Flavor & Delight and the Twilight Forest it needs: its maze stove is a stove station that
+// grills Twilight dishes twice as fast. Its own flag, as the Twilight Forest is a whole dimension, not a kitchen addon. The Twilight
+// Forest is only on CurseForge: its jar comes from CurseForge's CDN once, into the build folder.
+if (providers.gradleProperty('twilight').isPresent()) {
+    var forest = layout.buildDirectory.file('addon-jars/twilightforest-1.21.1-4.7.3196-universal.jar').get().asFile
+    if (!forest.exists()) {
+        forest.parentFile.mkdirs()
+        new URL('https://edge.forgecdn.net/files/6472/889/twilightforest-1.21.1-4.7.3196-universal.jar').withInputStream { input ->
+            forest.withOutputStream { it << input }
+        }
+    }
+    dependencies {
+        localRuntime 'maven.modrinth:twilight-delight:MFC7tDeW'           // Twilight's Flavor & Delight 3.2.9
+        localRuntime files(forest)                                        // The Twilight Forest 4.7.3196 (CurseForge 6472889)
+    }
 }
 
 // -Paddons runs the game and the game tests with the most downloaded Farmer's Delight addons that have a NeoForge 1.21.1 build
@@ -115,7 +164,14 @@ if (providers.gradleProperty('addons').isPresent()) {
                 'runiclib:tk5EQpUG',              // RunicLib 5.0.7, needed by Dungeons Delight
                 "choppers-delight:${choppers_delight_version}",      // Chopper's Delight 1.2.2: cutting boards of every wood, Farmer's Delight's own block
                 "farmers-respite-unofficial-port:${farmers_respite_version}", // Farmer's Respite Unofficial Port 3.0.1: its kettle
+                'sable:fg9dTRz9',                 // Sable 2.0.6+mc1.21.1, needed by Sable Trees
+                'cooking-for-blockheads:ZjiYlt4A', // Cooking for Blockheads 21.1.25+neoforge-1.21.1: its oven
+                'balm:gMedgtzL',                  // Balm 21.0.67+neoforge-1.21.1, needed by Cooking for Blockheads
+                "hearth-and-harvest:${hearth_and_harvest_version}", // Hearth and Harvest 1.4.3: its keg and cask
+                'trailtales-delight:t7NVzCoW',    // Trail&Tales Delight 2.40 for Farmer's Delight 1.3: its mud stove and pottery pot
         ].each { localRuntime "maven.modrinth:${it}" }
+        // Sable Trees 0.5.1 (CurseForge only): its chopping block.
+        localRuntime "curse.maven:sable-trees-1744089:${sable_trees_version}"
         // -Paddons=wide adds the next most downloaded addons that need no other mods: more food, own crafts and tags. Vintage
         // Delight, in the 1.20.1 list, has no NeoForge 1.21.1 build.
         if (providers.gradleProperty('addons').get() == 'wide') {

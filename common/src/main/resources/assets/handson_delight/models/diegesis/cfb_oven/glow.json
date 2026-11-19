@@ -1,0 +1,25 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "cookingforblockheads:block/white_oven_front_active",
+    "glow": "cookingforblockheads:block/white_oven_front_active"
+  },
+  "elements": [
+    {
+      "name": "glow_back",
+      "from": [2, 1, 14.45],
+      "to": [14, 7, 14.45],
+      "faces": {
+        "north": {"uv": [2, 7, 14, 13], "texture": "#glow"}
+      }
+    },
+    {
+      "name": "glow_floor",
+      "from": [2, 1.05, 8],
+      "to": [14, 1.05, 14],
+      "faces": {
+        "up": {"uv": [2, 7, 14, 13], "texture": "#glow"}
+      }
+    }
+  ]
+}

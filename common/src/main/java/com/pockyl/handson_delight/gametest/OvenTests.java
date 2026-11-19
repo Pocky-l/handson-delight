@@ -1,62 +1,61 @@
 package com.pockyl.handson_delight.gametest;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.HopperBlock;
+import net.minecraft.world.level.block.entity.HopperBlockEntity;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
+import net.minecraft.world.level.GameType;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.handson_delight.platform.Platform;
-import com.pockyl.handson_delight.station.StationRecipes;
+import com.pockyl.handson_delight.station.CfbOven;
 import com.pockyl.handson_delight.station.KitchenOven;
 import com.pockyl.handson_delight.station.OvenLogic;
 import com.pockyl.handson_delight.station.OvenStation;
 
-import java.util.Optional;
-
 /**
- * Cultural Delights' oven at the station: things laid on the tray, recipes filled from the book, baking with the door shut over the
- * heat as the oven bakes, waiting while it is open. Each test passes at once where Cultural Delights is not there.
+ * Cooking for Blockheads' oven at the station: food laid on the rack bakes over burning fuel as the oven bakes it, the door keeps the
+ * rack shut, fuel goes in from the hand or the inventory, a pick in the book fills the free places, and hoppers still fill and empty
+ * it. Each test passes at once where Cooking for Blockheads is not there.
  */
 public final class OvenTests {
     private OvenTests() {
     }
 
-    private static Item farmers(String path) {
-        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("farmersdelight", path));
+    @SuppressWarnings("removal")
+    private static Block cfb(String path) {
+        return BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(CfbOven.MOD_ID, path));
     }
 
-    private static Item cultural(String path) {
-        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KitchenOven.MOD_ID, path));
+    private record Setup(PotTests.TestStation station, OvenLogic logic, CfbOven oven) {
     }
 
-    private static final String PIE = "culturaldelights:baking/butterscotch_cinnamon_pie";
-
-    private record Setup(PotTests.TestStation station, OvenLogic logic, KitchenOven oven, BlockPos pos) {
-    }
-
-    /** An oven on a campfire, Farmer's Delight's heat source, with the logic the station would make for it; null without the mod. */
-    private static Setup oven(GameTestHelper helper) {
-        if (!Platform.INSTANCE.isLoaded(KitchenOven.MOD_ID)) {
+    /** An oven of Cooking for Blockheads with the logic the station would make for it; null without that mod. */
+    private static Setup oven(GameTestHelper helper, BlockPos at) {
+        if (!Platform.INSTANCE.isLoaded(CfbOven.MOD_ID)) {
             helper.succeed();
             return null;
         }
-        BlockPos at = new BlockPos(1, 2, 1);
-        helper.setBlock(at.below(), Blocks.CAMPFIRE);
-        helper.setBlock(at, OvenStation.OVEN.get());
+        helper.setBlock(at, cfb("white_oven"));
         BlockPos pos = helper.absolutePos(at);
-        PotTests.TestStation station = new PotTests.TestStation(helper.getLevel(), pos, OvenStation.TYPE);
-        KitchenOven oven = KitchenOven.of(helper.getLevel().getBlockEntity(pos));
-        helper.assertTrue(oven != null, "the oven is a kitchen oven");
-        return new Setup(station, new OvenLogic(station), oven, pos);
+        PotTests.TestStation station = new PotTests.TestStation(helper.getLevel(), pos, OvenStation.CFB_TYPE);
+        CfbOven oven = CfbOven.of(helper.getLevel().getBlockEntity(pos));
+        helper.assertTrue(oven != null, "the block entity is Cooking for Blockheads' oven as the station knows it");
+        return new Setup(station, new OvenLogic(station), oven);
+    }
+
+    private static Setup oven(GameTestHelper helper) {
+        return oven(helper, new BlockPos(1, 2, 1));
     }
 
     private static void door(Setup setup, Player player, boolean open) {
@@ -65,171 +64,208 @@ public final class OvenTests {
         setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_DOOR, data);
     }
 
-    private static void fill(Setup setup, Player player, String recipe, boolean all) {
-        CompoundTag data = new CompoundTag();
-        data.putString(OvenStation.DISH, recipe);
-        data.putBoolean(OvenStation.ALL, all);
-        setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_FILL, data);
-    }
-
-    /** Every recipe of no grid the oven has, its food laid on the tray or picked in the book: see {@link StationAudit}. */
-    public static void everyLooseBakingFromItsFoodLaidOn(GameTestHelper helper) {
-        if (!Platform.INSTANCE.isLoaded(KitchenOven.MOD_ID)) {
-            helper.succeed();
-            return;
-        }
-        java.util.List<KitchenOven.Baking> loose = KitchenOven.recipes(helper.getLevel()).stream().filter(recipe -> !recipe.isShaped()).toList();
-        StationAudit.audit(helper, "oven", StationRecipes.candidates(loose, KitchenOven.Baking::id, KitchenOven.Baking::ingredients),
-                recipe -> null, KitchenOven.INGREDIENTS);
-    }
-
-    /**
-     * The oven's recipes are read as it has them: its own pie of five things in some time. On NeoForge it bakes Farmer's Delight's
-     * pies too, nine things in its grid (the Fabric build leaves those to Farmer's Delight's crafting).
-     */
+    /** The oven's recipes are its furnace food: raw beef bakes, cobblestone does not go on the rack. */
     public static void theOvenReadsItsRecipes(GameTestHelper helper) {
         Setup setup = oven(helper);
         if (setup == null) {
             return;
         }
-        Optional<KitchenOven.Baking> own = KitchenOven.recipes(helper.getLevel()).stream()
-                .filter(recipe -> recipe.id().toString().equals(PIE)).findFirst();
-        helper.assertTrue(own.isPresent() && own.get().needed().size() == 5 && own.get().ticks() > 0
-                && own.get().result().is(cultural("butterscotch_cinnamon_pie")), "its own pie is read with five things and a time");
-        KitchenOven.recipes(helper.getLevel()).stream().filter(recipe -> recipe.result().is(farmers("apple_pie"))).findFirst()
-                .ifPresent(pie -> helper.assertTrue(pie.needed().size() == 9, "the apple pie takes nine things, got " + pie.needed().size()));
-        // The oven sends what lies in it to clients (OvenMixin): its update carries its inventory.
-        setup.oven.setItem(0, new ItemStack(Items.WHEAT));
-        helper.assertTrue(setup.oven.blockEntity().getUpdateTag(helper.getLevel().registryAccess()).contains("inventory"),
-                "the oven's update carries what lies in it");
+        helper.assertTrue(KitchenOven.bakingOf(setup.oven.recipes(helper.getLevel()), new ItemStack(Items.BEEF))
+                .map(recipe -> recipe.result().is(Items.COOKED_BEEF)).orElse(false), "raw beef bakes into steak");
+        helper.assertTrue(setup.oven.takes(new ItemStack(Items.BEEF)), "the rack takes raw beef");
+        helper.assertFalse(setup.oven.takes(new ItemStack(Items.COBBLESTONE)), "and no cobblestone, which is no food");
+        helper.assertFalse(setup.oven.takes(new ItemStack(Items.COOKED_BEEF)), "nor what is baked already");
+        helper.assertTrue(setup.oven.isFuel(new ItemStack(Items.COAL)), "coal burns in it");
+        helper.assertTrue(KitchenOven.of(new FurnaceBlockEntity(BlockPos.ZERO, Blocks.FURNACE.defaultBlockState())) == null,
+                "a furnace is no oven of the station");
         helper.succeed();
     }
 
     /**
-     * The cook comes: the door opens on an oven that bakes nothing. Things go on and come off the tray only with it open; shut, nothing
-     * does. Left alone, the oven shuts itself, and the block's own {@code open} follows the door.
+     * The door is the station's: shut, nothing goes on the rack; the cook comes with food to an oven where nothing bakes and it
+     * opens for them. One thing a place, each a window on the oven's own rack slots.
      */
-    public static void theDoorKeepsTheTrayShut(GameTestHelper helper) {
+    public static void theDoorKeepsTheRackShut(GameTestHelper helper) {
         Setup setup = oven(helper);
         if (setup == null) {
             return;
         }
-        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-        setup.station.users.add(player);
-        setup.logic.onOpen(setup.station, player);
-        SlotRef first = SlotRef.of(OvenStation.INGREDIENTS, 0);
-        helper.assertTrue(OvenLogic.isOpen(setup.station), "the door opens for the cook");
-        helper.assertTrue(helper.getLevel().getBlockState(setup.pos).getValue(BlockStateProperties.OPEN), "the block shows it open");
-        helper.assertTrue(setup.logic.mayPlace(setup.station, player, first, new ItemStack(Items.WHEAT)), "food goes on the open tray");
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        helper.assertFalse(setup.logic.mayPlace(setup.station, player, SlotRef.of(OvenStation.INGREDIENTS, 0), new ItemStack(Items.BEEF)),
+                "the door is shut: nothing goes on the rack");
+        player.inventoryMenu.setCarried(new ItemStack(Items.BEEF, 12));
+        setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_LAY, new CompoundTag());
+        helper.assertTrue(OvenLogic.isOpen(setup.station), "food brought to an oven where nothing bakes opens its door");
+        for (int place = 0; place < CfbOven.PLACES; place++) {
+            helper.assertTrue(setup.oven.place(place).is(Items.BEEF) && setup.oven.place(place).getCount() == 1,
+                    "one raw beef on place " + place);
+        }
+        helper.assertTrue(player.inventoryMenu.getCarried().getCount() == 3, "three stay in the hand, got "
+                + player.inventoryMenu.getCarried().getCount());
+        helper.assertTrue(setup.station.state().getItem(SlotRef.of(OvenStation.INGREDIENTS, 4)).is(Items.BEEF),
+                "the station's places are the oven's rack");
+        helper.assertFalse(setup.logic.mayPlace(setup.station, player, SlotRef.of(OvenStation.INGREDIENTS, 0),
+                new ItemStack(Items.COBBLESTONE)), "cobblestone goes on no place");
         door(setup, player, false);
-        helper.assertFalse(setup.logic.mayPlace(setup.station, player, first, new ItemStack(Items.WHEAT)), "nothing goes in through the door");
-        helper.assertFalse(setup.logic.mayTake(setup.station, player, first), "nothing comes out through the door");
+        helper.assertFalse(setup.logic.mayTake(setup.station, player, SlotRef.of(OvenStation.INGREDIENTS, 0)),
+                "shut, nothing comes off the rack");
+        helper.assertTrue(setup.logic.mayTake(setup.station, player, SlotRef.of(OvenStation.TOOLS, 0)), "the tools on top stay in reach");
+        helper.succeed();
+    }
+
+    /** Food laid on the rack and coal put in from the hand: the oven bakes each place as it always does, into its output. */
+    public static void foodBakesOnTheRack(GameTestHelper helper) {
+        Setup setup = oven(helper);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
         door(setup, player, true);
+        player.inventoryMenu.setCarried(new ItemStack(Items.COAL, 2));
+        setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_FUEL, new CompoundTag());
+        helper.assertTrue(player.inventoryMenu.getCarried().isEmpty(), "the coal goes in");
+        player.inventoryMenu.setCarried(new ItemStack(Items.CHICKEN));
+        CompoundTag one = new CompoundTag();
+        one.putBoolean(OvenStation.ONE, true);
+        one.putInt(OvenStation.PLACE, 4);
+        setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_LAY, one);
+        helper.assertTrue(setup.oven.place(4).is(Items.CHICKEN), "a right click lays one on the place under the cursor");
+        player.getInventory().setItem(3, new ItemStack(Items.POTATO, 2));
+        CompoundTag from = new CompoundTag();
+        from.putInt(OvenStation.FROM, 3);
+        setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_LAY, from);
+        helper.assertTrue(player.getInventory().getItem(3).isEmpty(), "Shift + click lays the inventory's potatoes on free places");
+        door(setup, player, false);
+        helper.runAfterDelay(CfbOven.bakeTicks() / 2, () -> {
+            setup.logic.tick(setup.station);
+            helper.assertTrue(setup.station.state().data().getBooleanOr(OvenStation.HOT, false), "the station tells the fire burns");
+            helper.assertTrue(setup.station.state().getControl(OvenStation.PROGRESS) > 0.2F, "and how far it has baked");
+        });
+        helper.succeedWhen(() -> {
+            int chicken = 0;
+            int potatoes = 0;
+            for (int slot = 0; slot < CfbOven.OUTPUTS; slot++) {
+                ItemStack out = setup.oven.output(slot);
+                chicken += out.is(Items.COOKED_CHICKEN) ? out.getCount() : 0;
+                potatoes += out.is(Items.BAKED_POTATO) ? out.getCount() : 0;
+            }
+            helper.assertTrue(chicken == 1 && potatoes == 2, "baked: " + chicken + " chicken, " + potatoes + " potatoes");
+        });
+    }
+
+    /** An empty hand at the fire is offered the inventory's fuel: it goes in from there. */
+    public static void fuelComesFromTheInventory(GameTestHelper helper) {
+        Setup setup = oven(helper);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        door(setup, player, true);
+        player.getInventory().setItem(9, new ItemStack(Items.BEEF, 4));
+        player.getInventory().setItem(12, new ItemStack(Items.CHARCOAL, 5));
+        helper.assertTrue(OvenLogic.fuelSlot(setup.oven, player.getInventory()) == 12, "the charcoal is offered, not the beef");
+        CompoundTag data = new CompoundTag();
+        data.putBoolean(OvenStation.FROM_INVENTORY, true);
+        setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_FUEL, data);
+        helper.assertTrue(setup.oven.fuel().is(Items.CHARCOAL) && setup.oven.fuel().getCount() == 5, "all of it goes into the fuel slot");
+        helper.assertTrue(player.getInventory().getItem(12).isEmpty(), "out of the inventory");
+        helper.succeed();
+    }
+
+    /** A pick in the book: one onto a free place, with Shift onto every free place, from the inventory. */
+    public static void aPickInTheBookFillsTheRack(GameTestHelper helper) {
+        Setup setup = oven(helper);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        player.getInventory().setItem(20, new ItemStack(Items.MUTTON, 20));
+        KitchenOven.Baking mutton = KitchenOven.bakingOf(setup.oven.recipes(helper.getLevel()), new ItemStack(Items.MUTTON)).orElse(null);
+        helper.assertTrue(mutton != null, "mutton is in the oven's book");
+        CompoundTag pick = new CompoundTag();
+        pick.putString(OvenStation.DISH, mutton.id().toString());
+        setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_FILL, pick);
+        helper.assertTrue(OvenLogic.isOpen(setup.station), "a pick opens the door");
+        helper.assertTrue(player.getInventory().getItem(20).getCount() == 19, "one is laid");
+        pick.putBoolean(OvenStation.ALL, true);
+        setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_FILL, pick);
+        helper.assertTrue(player.getInventory().getItem(20).getCount() == 11, "with Shift every free place gets one, "
+                + player.getInventory().getItem(20).getCount() + " left");
+        helper.succeed();
+    }
+
+    /** The cook comes to an empty oven: its door opens; the last one leaves: it shuts behind them. */
+    public static void theDoorShutsBehindTheLastCook(GameTestHelper helper) {
+        Setup setup = oven(helper);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        setup.station.users.add(player);
+        setup.logic.onOpen(setup.station, player);
+        helper.assertTrue(OvenLogic.isOpen(setup.station), "an oven where nothing bakes opens for the cook");
         setup.logic.onClose(setup.station, player);
-        helper.assertFalse(OvenLogic.isOpen(setup.station), "the last cook to leave shuts the door");
-        door(setup, player, true);
-        setup.station.users.clear();
-        setup.logic.tick(setup.station);
-        helper.assertFalse(OvenLogic.isOpen(setup.station), "an oven left alone is shut");
-        helper.assertFalse(helper.getLevel().getBlockState(setup.pos).getValue(BlockStateProperties.OPEN), "the block shows it shut");
+        helper.assertFalse(OvenLogic.isOpen(setup.station), "and shuts behind them");
         helper.succeed();
     }
 
     /**
-     * Bread from wheat picked in the book: the wheat goes on the tray from the inventory; with the door open it does not bake; shut over
-     * the campfire it bakes in the oven's own time into bread in the output, which the cook takes.
+     * A skillet clicked on the oven's top stands on the burner under the click, though the oven's kitchen does not
+     * count it as a tool; an empty hand takes it back; a second skillet does not go onto a burner that has one.
      */
-    public static void breadBakesWithTheDoorShut(GameTestHelper helper) {
-        Setup setup = oven(helper);
+    @SuppressWarnings("removal")
+    public static void aSkilletStandsOnABurner(GameTestHelper helper) {
+        BlockPos at = new BlockPos(1, 2, 1);
+        Setup setup = oven(helper, at);
         if (setup == null) {
             return;
         }
-        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-        setup.station.users.add(player);
-        setup.logic.onOpen(setup.station, player);
-        player.getInventory().setItem(0, new ItemStack(Items.WHEAT, 5));
-        fill(setup, player, "farmersdelight:bread_from_wheat", false);
-        helper.assertTrue(setup.oven.getItem(0).is(Items.WHEAT) && setup.oven.getItem(2).is(Items.WHEAT), "the book laid the wheat");
-        helper.assertTrue(player.getInventory().countItem(Items.WHEAT) == 2, "one set of three from the inventory");
-        helper.onEachTick(() -> setup.logic.tick(setup.station));
-        helper.runAfterDelay(40, () -> {
-            helper.assertTrue(setup.oven.progress() <= 1, "nothing bakes with the door open, got " + setup.oven.progress());
-            door(setup, player, false);
-        });
-        helper.runAfterDelay(60, () -> helper.assertTrue(setup.oven.progress() > 0, "it bakes with the door shut"));
-        helper.runAfterDelay(300, () -> {
-            ItemStack served = setup.station.state().getItem(OvenStation.SERVED_SLOT);
-            helper.assertTrue(served.is(Items.BREAD), "bread is baked, got " + served);
-            helper.assertTrue(setup.oven.getItem(0).isEmpty(), "the wheat went into it");
-            helper.assertFalse(setup.logic.mayTake(setup.station, player, OvenStation.SERVED_SLOT), "the bread waits behind the door");
-            door(setup, player, true);
-            helper.assertTrue(setup.logic.mayTake(setup.station, player, OvenStation.SERVED_SLOT), "the open door gives it");
-            helper.succeed();
-        });
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        net.minecraft.world.item.Item skillet = BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("farmersdelight", "skillet"));
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(skillet));
+        BlockPos pos = helper.absolutePos(at);
+        net.minecraft.world.phys.BlockHitResult top = new net.minecraft.world.phys.BlockHitResult(
+                net.minecraft.world.phys.Vec3.atCenterOf(pos).add(0.25, 0.5, 0.25), Direction.UP, pos, false);
+        int burner = CfbOven.burnerAt(helper.getBlockState(at), pos, top.getLocation());
+        helper.getBlockState(at).useItemOn(player.getMainHandItem(), helper.getLevel(), player, net.minecraft.world.InteractionHand.MAIN_HAND, top);
+        helper.assertTrue(setup.oven.tool(burner).is(skillet) && player.getMainHandItem().isEmpty(),
+                "the skillet stands on burner " + burner);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(skillet));
+        helper.getBlockState(at).useItemOn(player.getMainHandItem(), helper.getLevel(), player, net.minecraft.world.InteractionHand.MAIN_HAND, top);
+        helper.assertTrue(player.getMainHandItem().is(skillet), "a second one does not go onto the same burner");
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        helper.getBlockState(at).useWithoutItem(helper.getLevel(), player, top);
+        helper.assertTrue(setup.oven.tool(burner).isEmpty() && player.getMainHandItem().is(skillet), "an empty hand takes it back");
+        helper.succeed();
     }
 
     /**
-     * A pie with shift: as many sets as the inventory has, each thing in its own place of the grid; a stack laid from the inventory
-     * goes onto the same thing on the tray.
+     * With the station there, the oven's automation is as before: a hopper on top fills it, one at its side feeds it, one under it takes
+     * out what it gives.
      */
-    public static void aPieIsLaidOutFromTheBook(GameTestHelper helper) {
-        Setup setup = oven(helper);
+    public static void hoppersFeedAndEmptyTheOven(GameTestHelper helper) {
+        BlockPos at = new BlockPos(1, 2, 1);
+        Setup setup = oven(helper, at);
         if (setup == null) {
             return;
         }
-        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-        setup.station.users.add(player);
-        setup.logic.onOpen(setup.station, player);
-        player.getInventory().setItem(0, new ItemStack(cultural("cinnamon"), 7));
-        player.getInventory().setItem(1, new ItemStack(cultural("butter"), 2));
-        player.getInventory().setItem(2, new ItemStack(farmers("pie_crust"), 3));
-        fill(setup, player, PIE, true);
-        int[] counts = new int[KitchenOven.INGREDIENTS];
-        for (int slot = 0; slot < counts.length; slot++) {
-            counts[slot] = setup.oven.getItem(slot).getCount();
-        }
-        helper.assertTrue(java.util.Arrays.equals(counts, new int[] {2, 2, 2, 2, 2, 0, 0, 0, 0}), "two sets in five places, got "
-                + java.util.Arrays.toString(counts));
-        helper.assertTrue(player.getInventory().countItem(cultural("cinnamon")) == 1 && player.getInventory().countItem(cultural("butter")) == 0,
-                "the inventory gave two sets");
-        Optional<KitchenOven.Baking> making = KitchenOven.matching(KitchenOven.recipes(helper.getLevel()),
-                setup.station.state().getItems(OvenStation.INGREDIENTS));
-        helper.assertTrue(making.isPresent() && making.get().id().toString().equals(PIE), "the tray makes the pie");
-        CompoundTag lay = new CompoundTag();
-        lay.putInt(OvenStation.FROM, 0);
-        setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_LAY, lay);
-        helper.assertTrue(setup.oven.getItem(0).is(cultural("cinnamon")) && setup.oven.getItem(0).getCount() == 3,
-                "the last cinnamon went onto the cinnamon, got " + setup.oven.getItem(0));
-        helper.succeed();
-    }
-
-    /** Three cinnamon sticks laid as one stack with the butter and the crust are shared out over three places: the pie is on the tray. */
-    public static void aStackIsSharedOutForItsRecipe(GameTestHelper helper) {
-        Setup setup = oven(helper);
-        if (setup == null) {
-            return;
-        }
-        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-        setup.station.users.add(player);
-        setup.logic.onOpen(setup.station, player);
-        player.getInventory().setItem(0, new ItemStack(cultural("cinnamon"), 3));
-        player.getInventory().setItem(1, new ItemStack(cultural("butter"), 1));
-        player.getInventory().setItem(2, new ItemStack(farmers("pie_crust"), 1));
-        for (int from = 0; from < 3; from++) {
-            CompoundTag lay = new CompoundTag();
-            lay.putInt(OvenStation.FROM, from);
-            setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_LAY, lay);
-        }
-        Optional<KitchenOven.Baking> making = KitchenOven.matching(KitchenOven.recipes(helper.getLevel()),
-                setup.station.state().getItems(OvenStation.INGREDIENTS));
-        helper.assertTrue(making.isPresent() && making.get().id().toString().equals(PIE), "the stack was shared out into the pie");
-        int sticks = 0;
-        for (int slot = 0; slot < KitchenOven.INGREDIENTS; slot++) {
-            ItemStack there = setup.oven.getItem(slot);
-            sticks += there.is(cultural("cinnamon")) && there.getCount() == 1 ? 1 : 0;
-        }
-        // The stack keeps its place and the sticks go to free places: what lies on the tray does not move about.
-        helper.assertTrue(sticks == 3, "one stick a place, three places, got " + sticks);
-        helper.succeed();
+        helper.setBlock(at.above(), Blocks.HOPPER.defaultBlockState().setValue(HopperBlock.FACING, Direction.DOWN));
+        helper.setBlock(at.east(), Blocks.HOPPER.defaultBlockState().setValue(HopperBlock.FACING, Direction.WEST));
+        helper.setBlock(at.below(), Blocks.HOPPER.defaultBlockState().setValue(HopperBlock.FACING, Direction.DOWN));
+        helper.setBlock(at.below(2), Blocks.STONE);
+        helper.getBlockEntity(at.above(), HopperBlockEntity.class).setItem(0, new ItemStack(Items.PORKCHOP, 2));
+        helper.getBlockEntity(at.east(), HopperBlockEntity.class).setItem(0, new ItemStack(Items.COAL, 1));
+        // Cooking for Blockheads 21.1 with Balm 21.0 gives hoppers its whole container whatever their side (the same without this
+        // mod): what the hoppers put in comes out again below, baked or not. The station keeps that as it is.
+        helper.succeedWhen(() -> {
+            HopperBlockEntity under = helper.getBlockEntity(at.below(), HopperBlockEntity.class);
+            int porkchops = 0;
+            for (int slot = 0; slot < under.getContainerSize(); slot++) {
+                ItemStack stack = under.getItem(slot);
+                porkchops += stack.is(Items.PORKCHOP) || stack.is(Items.COOKED_PORKCHOP) ? stack.getCount() : 0;
+            }
+            helper.assertTrue(helper.getBlockEntity(at.above(), HopperBlockEntity.class).isEmpty(), "the hopper on top filled the oven");
+            helper.assertTrue(porkchops == 2, "the hopper under the oven took out " + porkchops + " of 2 porkchops");
+        });
     }
 }

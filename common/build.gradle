@@ -16,6 +16,8 @@ neoForge {
 ext.compatSources = [
         'com/pockyl/handson_delight/compat/jei/**',
         'com/pockyl/handson_delight/compat/emi/**',
+        'com/pockyl/handson_delight/mixin/CfbOvenToolsMixin.java',
+        'com/pockyl/handson_delight/mixin/CfbOvenTopMixin.java',
         'com/pockyl/handson_delight/mixin/DecoratedBoardContentMixin.java',
         'com/pockyl/handson_delight/mixin/DecoratedBoardMixin.java',
         'com/pockyl/handson_delight/mixin/KegMixin.java',

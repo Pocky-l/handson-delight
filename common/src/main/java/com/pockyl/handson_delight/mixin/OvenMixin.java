@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.pockyl.handson_delight.HandsOnConfig;
-import com.pockyl.handson_delight.station.KitchenOven;
+import com.pockyl.handson_delight.station.CulturalOven;
 
 /**
  * Cultural Delights' oven sends what lies in it to the clients near it, which it does not do itself: the tray and what bakes on it
@@ -57,13 +57,13 @@ abstract class OvenMixin extends BlockEntity {
         if (level.isClientSide() || !HandsOnConfig.oven()) {
             return;
         }
-        KitchenOven oven = KitchenOven.of(entity);
+        CulturalOven oven = CulturalOven.of(entity);
         if (oven == null) {
             return;
         }
-        int key = oven.progress() / HANDSON_BAKING_EVERY;
-        for (int slot = 0; slot <= KitchenOven.OUTPUT_SLOT; slot++) {
-            ItemStack stack = oven.getItem(slot);
+        int key = oven.ticks() / HANDSON_BAKING_EVERY;
+        for (int slot = 0; slot <= CulturalOven.OUTPUT_SLOT; slot++) {
+            ItemStack stack = oven.item(slot);
             key = 31 * key + (stack.isEmpty() ? 0 : ItemStack.hashItemAndComponents(stack) * 67 + stack.getCount());
         }
         OvenMixin self = (OvenMixin) (Object) entity;

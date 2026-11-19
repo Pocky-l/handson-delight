@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link YoukaiTankTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
+ * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link HearthKegTests}, {@link HearthCaskTests}, {@link CulturalOvenTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link YoukaiTankTests}, {@link StumpTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
  * and {@link RecipeAudit} on NeoForge.
  */
 @GameTestHolder(HandsOnDelight.MOD_ID)
@@ -539,6 +539,11 @@ public final class ModGameTests {
         StoveTests.everyStoveOfTheTagIsAStation(helper);
     }
 
+    @GameTest(template = "empty")
+    public static void theMazeStoveGrillsTwilightFoodTwiceAsFast(GameTestHelper helper) {
+        StoveTests.theMazeStoveGrillsTwilightFoodTwiceAsFast(helper);
+    }
+
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void choppersDelightsBoardsAreStations(GameTestHelper helper) {
         BoardTests.choppersDelightsBoardsAreStations(helper);
@@ -721,7 +726,47 @@ public final class ModGameTests {
 
     @GameTest(template = "empty")
     public static void everyLooseBakingFromItsFoodLaidOn(GameTestHelper helper) {
-        OvenTests.everyLooseBakingFromItsFoodLaidOn(helper);
+        CulturalOvenTests.everyLooseBakingFromItsFoodLaidOn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theCfbOvenReadsItsRecipes(GameTestHelper helper) {
+        OvenTests.theOvenReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theCfbOvenDoorKeepsTheRackShut(GameTestHelper helper) {
+        OvenTests.theDoorKeepsTheRackShut(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void foodBakesOnTheCfbOvenRack(GameTestHelper helper) {
+        OvenTests.foodBakesOnTheRack(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void cfbOvenFuelComesFromTheInventory(GameTestHelper helper) {
+        OvenTests.fuelComesFromTheInventory(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aPickInTheBookFillsTheCfbOvenRack(GameTestHelper helper) {
+        OvenTests.aPickInTheBookFillsTheRack(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theCfbOvenDoorShutsBehindTheLastCook(GameTestHelper helper) {
+        OvenTests.theDoorShutsBehindTheLastCook(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aSkilletStandsOnACfbOvenBurner(GameTestHelper helper) {
+        OvenTests.aSkilletStandsOnABurner(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 700)
+    public static void hoppersFeedAndEmptyTheCfbOven(GameTestHelper helper) {
+        OvenTests.hoppersFeedAndEmptyTheOven(helper);
     }
 
     @GameTest(template = "empty")
@@ -731,27 +776,27 @@ public final class ModGameTests {
 
     @GameTest(template = "empty")
     public static void theOvenReadsItsRecipes(GameTestHelper helper) {
-        OvenTests.theOvenReadsItsRecipes(helper);
+        CulturalOvenTests.theOvenReadsItsRecipes(helper);
     }
 
     @GameTest(template = "empty")
     public static void theDoorKeepsTheTrayShut(GameTestHelper helper) {
-        OvenTests.theDoorKeepsTheTrayShut(helper);
+        CulturalOvenTests.theDoorKeepsTheTrayShut(helper);
     }
 
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void breadBakesWithTheDoorShut(GameTestHelper helper) {
-        OvenTests.breadBakesWithTheDoorShut(helper);
+        CulturalOvenTests.breadBakesWithTheDoorShut(helper);
     }
 
     @GameTest(template = "empty")
     public static void aPieIsLaidOutFromTheBook(GameTestHelper helper) {
-        OvenTests.aPieIsLaidOutFromTheBook(helper);
+        CulturalOvenTests.aPieIsLaidOutFromTheBook(helper);
     }
 
     @GameTest(template = "empty")
     public static void aStackIsSharedOutForItsRecipe(GameTestHelper helper) {
-        OvenTests.aStackIsSharedOutForItsRecipe(helper);
+        CulturalOvenTests.aStackIsSharedOutForItsRecipe(helper);
     }
 
     @GameTest(template = "empty")
@@ -840,6 +885,26 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void stumpCutsFoodLikeTheBoard(GameTestHelper helper) {
+        StumpTests.stumpCutsFoodLikeTheBoard(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void stumpTakesNoFoodAfterThirtyTwoCuts(GameTestHelper helper) {
+        StumpTests.stumpTakesNoFoodAfterThirtyTwoCuts(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void stumpSplitsALogWithTheAxe(GameTestHelper helper) {
+        StumpTests.stumpSplitsALogWithTheAxe(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void stumpStationIsQuietWithoutSableTrees(GameTestHelper helper) {
+        StumpTests.stumpStationIsQuietWithoutSableTrees(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void youkaiPotsReadTheirRecipes(GameTestHelper helper) {
         YoukaiPotTests.youkaiPotsReadTheirRecipes(helper);
     }
@@ -897,6 +962,56 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void youkaiFlaskIsFilledAtTheTank(GameTestHelper helper) {
         YoukaiTankTests.youkaiFlaskIsFilledAtTheTank(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthKegReadsItsRecipes(GameTestHelper helper) {
+        HearthKegTests.hearthKegReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 140)
+    public static void hearthWineFermentsAndIsTapped(GameTestHelper helper) {
+        HearthKegTests.hearthWineFermentsAndIsTapped(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthBookFillsCountsAndWaterGoesBack(GameTestHelper helper) {
+        HearthKegTests.hearthBookFillsCountsAndWaterGoesBack(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthBigKegIsOneStation(GameTestHelper helper) {
+        HearthKegTests.hearthBigKegIsOneStation(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 140)
+    public static void hearthBigKegBrewsBeer(GameTestHelper helper) {
+        HearthKegTests.hearthBigKegBrewsBeer(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void hearthPicklesWaitToBeTaken(GameTestHelper helper) {
+        HearthKegTests.hearthPicklesWaitToBeTaken(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthCaskReadsItsRecipes(GameTestHelper helper) {
+        HearthCaskTests.hearthCaskReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthCaskLidIsItsSeal(GameTestHelper helper) {
+        HearthCaskTests.hearthCaskLidIsItsSeal(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void hearthWineAgesSealed(GameTestHelper helper) {
+        HearthCaskTests.hearthWineAgesSealed(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void hearthCaskBookLaysJerky(GameTestHelper helper) {
+        HearthCaskTests.hearthCaskBookLaysJerky(helper);
     }
 
     @GameTest(template = "empty")

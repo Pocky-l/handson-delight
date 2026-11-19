@@ -1,10 +1,13 @@
 package com.pockyl.handson_delight.gametest;
 
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CampfireCookingRecipe;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -23,6 +26,9 @@ import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
+import com.pockyl.handson_delight.station.ChoppingBlockStation;
+import com.pockyl.handson_delight.station.CfbOven;
+import com.pockyl.handson_delight.station.KitchenOven;
 import com.pockyl.handson_delight.station.Cutting;
 
 import java.io.IOException;
@@ -161,6 +167,21 @@ public final class RecipeAudit {
                     + RecipeParts.results(recipe).stream().map(RecipeAudit::name).collect(Collectors.joining(", ")) + " | " + station + flags(look));
         }
 
+        // A tree's stump (Sable Trees' chopping block) cuts the same, but splits every log with an axe instead of stripping it.
+        List<String> splits = new ArrayList<>();
+        for (Holder<Item> log : BuiltInRegistries.ITEM.getTagOrEmpty(ItemTags.LOGS)) {
+            ItemStack planks = ChoppingBlockStation.planks(level, new ItemStack(log));
+            if (!planks.isEmpty()) {
+                List<String> stripped = Cutting.recipesFor(level, new ItemStack(log)).stream()
+                        .map(recipe -> String.valueOf(Cutting.id(level, recipe))).toList();
+                splits.add(name(new ItemStack(log)) + " | " + name(planks)
+                        + (stripped.isEmpty() ? "" : " | instead of " + String.join(", ", stripped)));
+            }
+        }
+        splits.sort(Comparator.naturalOrder());
+        section(report, "STUMP SPLITS (" + splits.size() + ")", "log | planks | the board's cut it takes the place of");
+        report.addAll(splits);
+
         List<RecipeHolder<CampfireCookingRecipe>> campfire = new ArrayList<>(KitchenRecipes.all(level, RecipeType.CAMPFIRE_COOKING));
         campfire.sort(Comparator.comparing(holder -> holder.id().toString()));
         section(report, "SKILLET AND STOVE (" + campfire.size() + ")", "id | input | result | time | look at");
@@ -175,6 +196,17 @@ public final class RecipeAudit {
             }
             report.add(holder.id() + " | " + name(input) + " | " + name(RecipeParts.result(recipe)) + " | "
                     + recipe.cookingTime() + flags(look));
+        }
+
+        if (Platform.INSTANCE.isLoaded(CfbOven.MOD_ID)) {
+            List<KitchenOven.Baking> oven = CfbOven.recipesOf(level);
+            section(report, "COOKING FOR BLOCKHEADS' OVEN (" + oven.size() + ")", "id | input | result | ticks");
+            for (KitchenOven.Baking recipe : oven) {
+                report.add(recipe.id() + " | " + name(recipe.ingredients().get(0)) + " | " + name(recipe.result()) + " | " + recipe.ticks());
+            }
+            List<String> bridged = ovenBridges(oven);
+            section(report, "CULINARY COMPAT'S CAMPFIRE DISHES FOR THE OVEN (" + bridged.size() + ")", "id | input | result | baked by the oven");
+            report.addAll(bridged);
         }
 
         section(report, "CRAFTING DISHES NOT ON THE BOARD (" + missed.size() + ")", "id -> result");
@@ -195,6 +227,32 @@ public final class RecipeAudit {
             return;
         }
         helper.succeed();
+    }
+
+    /**
+     * Culinary Compat's {@code campfire_oven} bridges, read by name: Farmer's Delight's campfire-only dishes it gives Cooking for
+     * Blockheads' kitchen, with whether the oven itself bakes their input.
+     */
+    @SuppressWarnings("unchecked")
+    private static List<String> ovenBridges(List<KitchenOven.Baking> oven) {
+        List<String> lines = new ArrayList<>();
+        try {
+            Class<?> bridges = Class.forName("io.github.smokahs.culinarycompat.bridges.Bridges");
+            for (Object entry : (Collection<Object>) bridges.getMethod("getAll").invoke(null)) {
+                if (!"campfire_oven".equals(entry.getClass().getMethod("source").invoke(entry))) {
+                    continue;
+                }
+                List<Ingredient> inputs = (List<Ingredient>) entry.getClass().getMethod("inputs").invoke(entry);
+                ItemStack output = (ItemStack) entry.getClass().getMethod("output").invoke(entry);
+                ItemStack input = inputs.isEmpty() || RecipeParts.items(inputs.get(0)).length == 0 ? ItemStack.EMPTY : RecipeParts.items(inputs.get(0))[0];
+                lines.add(entry.getClass().getMethod("bridgeId").invoke(entry) + " | " + name(input) + " | " + name(output) + " | "
+                        + KitchenOven.bakingOf(oven, input).isPresent());
+            }
+        } catch (ReflectiveOperationException | RuntimeException absent) {
+            // No Culinary Compat.
+        }
+        lines.sort(Comparator.naturalOrder());
+        return lines;
     }
 
     /** The same rule as the board's: food, or a block of food put down whole. */

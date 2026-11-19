@@ -14,6 +14,7 @@ import com.pockyl.handson_delight.CookingTimes;
 import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.Grill;
+import com.pockyl.handson_delight.station.MazeStove;
 import com.pockyl.handson_delight.station.SkilletCooking;
 import com.pockyl.handson_delight.station.StoveCooking;
 import com.pockyl.handson_delight.station.StoveStation;
@@ -37,7 +38,8 @@ final class StoveBook implements RecipeBook.Source {
             if (food.isEmpty()) {
                 continue;
             }
-            int ticks = 2 * StoveCooking.sideTicks(recipe.cookingTime(), CookingTimes.stove());
+            int time = MazeStove.ticks(level.getBlockState(view.pos()), dish, recipe.cookingTime());
+            int ticks = 2 * StoveCooking.sideTicks(time, CookingTimes.stove());
             Component seconds = Component.translatable("handson_delight.book.seconds", Math.round(ticks / 20.0F));
             pages.add(new RecipeBook.Page(holder.id().identifier(), dish.copy(), List.of(food),
                     List.of(new ItemStack(Items.CLOCK)), seconds, false));

@@ -52,7 +52,7 @@ public final class StoveTests {
     private StoveTests() {
     }
 
-    private record Top(Station station, StoveLogic logic, AbstractStoveBlockEntity stove, Player cook) {
+    private record Top(Station station, StoveLogic logic, BlockEntity stove, Player cook) {
         void act(String action, CompoundTag data) {
             logic.onCustomAction(station, cook, action, data);
         }
@@ -69,7 +69,7 @@ public final class StoveTests {
         }
 
         ItemStack on(int place) {
-            return Platform.INSTANCE.getItem(stove, place);
+            return StoveCooking.item(stove, place);
         }
 
         Grill grill() {
@@ -78,13 +78,17 @@ public final class StoveTests {
     }
 
     private static Top stove(GameTestHelper helper) {
+        return stove(helper, FarmersDelightContent.STOVE.get());
+    }
+
+    private static Top stove(GameTestHelper helper, Block block) {
         BlockPos at = new BlockPos(1, 1, 1);
-        helper.setBlock(at, FarmersDelightContent.STOVE.get().defaultBlockState().setValue(AbstractStoveBlock.LIT, true));
+        helper.setBlock(at, block.defaultBlockState().setValue(AbstractStoveBlock.LIT, true));
         // 1.21's test frame lays its barrier ceiling right above: the top would count as covered.
         helper.setBlock(at.above(), Blocks.AIR);
         BlockPos pos = helper.absolutePos(at);
         Station station = new Station(helper.getLevel(), pos);
-        AbstractStoveBlockEntity stove = (AbstractStoveBlockEntity) helper.getLevel().getBlockEntity(pos);
+        BlockEntity stove = helper.getLevel().getBlockEntity(pos);
         return new Top(station, new StoveLogic(station), stove, helper.makeMockPlayer(GameType.CREATIVE));
     }
 
@@ -171,7 +175,8 @@ public final class StoveTests {
     public static void farmersDelightsWayStaysItsOwn(GameTestHelper helper) {
         Top top = stove(helper);
         ItemStack beef = new ItemStack(Items.BEEF);
-        top.stove.placeFood(top.cook, beef, top.stove.getCookingRecipe(beef).orElseThrow());
+        AbstractStoveBlockEntity farmers = (AbstractStoveBlockEntity) top.stove;
+        farmers.placeFood(top.cook, beef, farmers.getCookingRecipe(beef).orElseThrow());
         helper.assertTrue(top.on(0).is(Items.BEEF) && !top.grill().byHand(0), "Farmer's Delight's own right click: its way");
         helper.runAfterDelay(20, () -> {
             helper.assertTrue(((StoveTop) top.stove).handson$progress()[0] > 10, "and it counts its own time");
@@ -214,9 +219,48 @@ public final class StoveTests {
             BlockState state = block.defaultBlockState();
             helper.setBlock(at, state);
             helper.assertTrue(StoveStation.TYPE.matches(state), BuiltInRegistries.BLOCK.getKey(block) + " opens as the station");
-            helper.assertTrue(helper.getBlockEntity(at, BlockEntity.class) instanceof AbstractStoveBlockEntity,
+            helper.assertTrue(StoveCooking.isStove(helper.getBlockEntity(at, net.minecraft.world.level.block.entity.BlockEntity.class)),
                     BuiltInRegistries.BLOCK.getKey(block) + " grills on a stove's block entity");
         }
+        helper.succeed();
+    }
+
+    /**
+     * Twilight's Flavor & Delight's maze stove grills the Twilight Forest's food in half its time, as it does food put on its own way,
+     * and other food in the usual time; handed to its own way, the piece keeps the half. Passes at once without the addon.
+     */
+    public static void theMazeStoveGrillsTwilightFoodTwiceAsFast(GameTestHelper helper) {
+        Block maze = BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath("twilightdelight", "maze_stove"));
+        if (maze == net.minecraft.world.level.block.Blocks.AIR) {
+            helper.succeed();
+            return;
+        }
+        Level level = helper.getLevel();
+        // 1.21.1's maze stove halves the time by the dish's mod, 1.20.1's by the raw food's.
+        CampfireCookingRecipe twilight = KitchenRecipes.all(level, RecipeType.CAMPFIRE_COOKING).stream()
+                .map(RecipeHolder::value)
+                .filter(recipe -> !RecipeParts.ingredients(recipe).isEmpty() && RecipeParts.items(RecipeParts.ingredients(recipe).get(0)).length > 0
+                        && BuiltInRegistries.ITEM.getKey(RecipeParts.result(recipe).getItem()).getNamespace()
+                        .equals("twilightforest"))
+                .findFirst().orElse(null);
+        helper.assertTrue(twilight != null, "the Twilight Forest has food for the fire");
+        Item food = RecipeParts.items(RecipeParts.ingredients(twilight).get(0))[0].getItem();
+        Top top = stove(helper, maze);
+        top.place(food, 1);
+        top.place(Items.BEEF, 1);
+        helper.assertTrue(top.on(0).is(food) && top.on(1).is(Items.BEEF), "both lie on the maze stove");
+        float[] steps = new float[2];
+        StoveCooking.tick(top.stove);
+        steps[0] = top.grill().down(0);
+        steps[1] = top.grill().down(1);
+        int half = twilight.cookingTime() / 2;
+        float times = HandsOnConfig.stoveTime();
+        helper.assertTrue(Math.abs(steps[0] - 1.0F / StoveCooking.sideTicks(half, times)) < 1.0E-6F,
+                food + " grills in half its " + twilight.cookingTime() + " ticks, got a step of " + steps[0]);
+        helper.assertTrue(Math.abs(steps[1] - 1.0F / StoveCooking.sideTicks(600, times)) < 1.0E-6F,
+                "beef in its usual time, got a step of " + steps[1]);
+        int[] saved = StoveCooking.savedTimes(top.stove);
+        helper.assertTrue(saved[0] == half && saved[1] == 600, "its own way keeps the half: " + saved[0] + ", " + saved[1]);
         helper.succeed();
     }
 
@@ -274,7 +318,8 @@ public final class StoveTests {
         helper.assertTrue(top.station.effects.contains(StoveStation.EFFECT_REFUSED), "it bounces back to the hand");
         helper.assertFalse(StoveCooking.takes(top.stove, new ItemStack(Items.EGG)), "opened by use with an egg, it stays in the hand");
         ItemStack egg = new ItemStack(Items.EGG);
-        top.stove.placeFood(top.cook, egg, top.stove.getCookingRecipe(egg).orElseThrow());
+        AbstractStoveBlockEntity farmers = (AbstractStoveBlockEntity) top.stove;
+        farmers.placeFood(top.cook, egg, farmers.getCookingRecipe(egg).orElseThrow());
         helper.assertTrue(top.on(0).is(Items.EGG) && !top.grill().byHand(0), "Farmer's Delight's right click is its own way");
         boolean eggRecipe = false;
         for (RecipeHolder<CampfireCookingRecipe> holder : KitchenRecipes.all(helper.getLevel(), RecipeType.CAMPFIRE_COOKING)) {

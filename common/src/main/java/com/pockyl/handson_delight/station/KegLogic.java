@@ -22,7 +22,10 @@ import com.pockyl.diegesis.api.station.StationLogic;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.RecipeParts;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * The keg's menu by hand: the slots are the keg's own, buckets and drinks go through the keg's own use, and what the station shows
@@ -121,7 +124,7 @@ public final class KegLogic implements StationLogic {
                 wanted = null;
             }
             // Things one a slot lie as they were put in, and the tank reads its recipes whatever their order.
-            if (keg.handson$perSlot() > 1 && (unsorted || keg.handson$fluid() != arrangedFor)) {
+            if (keg.handson$perSlot() > 1 && keg.handson$laysOut() && (unsorted || keg.handson$fluid() != arrangedFor)) {
                 unsorted = false;
                 arrangedFor = keg.handson$fluid();
                 arrange();
@@ -221,10 +224,13 @@ public final class KegLogic implements StationLogic {
         return isOpen(station) && !keg.handson$isVessel(stack);
     }
 
-    /** What lies under the block's own lid is taken out only with the lid off, as everything goes in. */
+    /**
+     * What lies under the block's own lid is taken out only with the lid off, as everything goes in. What is done is taken whatever
+     * the lid: Hearth and Harvest's cask gives out what has aged sealed, and a keg's own lid never kept it.
+     */
     @Override
     public boolean mayTake(StationContext station, Player player, SlotRef slot) {
-        return keg.handson$lidOff() == null || isOpen(station);
+        return keg.handson$lidOff() == null || isOpen(station) || slot.group().equals(KegStation.SERVED);
     }
 
     @Override
@@ -239,7 +245,7 @@ public final class KegLogic implements StationLogic {
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
         if (StationRecipes.ACTION_OFFER.equals(action)) {
             // A stack clicked onto a keg whose slots hold other food: in, when the food still makes a drink with it.
-            if (keg.handson$perSlot() > 1 && StationRecipes.offerCarried(station, this, player, KegStation.INGREDIENTS, ingredients,
+            if (keg.handson$perSlot() > 1 && keg.handson$laysOut() && StationRecipes.offerCarried(station, this, player, KegStation.INGREDIENTS, ingredients,
                     data.getBooleanOr(StationRecipes.ONE, false), this::partsWith)) {
                 unsorted = true;
             }
@@ -262,7 +268,14 @@ public final class KegLogic implements StationLogic {
             // A recipe picked in the book takes the lid off for its ingredients to go in.
             setLid(station, true);
             keg.handson$recipes().stream().filter(recipe -> recipe.id().equals(id)).findFirst()
-                    .ifPresent(recipe -> fill(player, recipe, data.getBooleanOr(KegStation.ALL, false) ? FILL_MOST : 1));
+                    .ifPresent(recipe -> {
+                        int sets = data.getBooleanOr(KegStation.ALL, false) ? FILL_MOST : 1;
+                        if (keg.handson$laysOut()) {
+                            fill(player, recipe, sets);
+                        } else {
+                            fillCounted(player, recipe, sets);
+                        }
+                    });
         }
     }
 
@@ -275,13 +288,15 @@ public final class KegLogic implements StationLogic {
             return;
         }
         ItemStack carried = from >= 0 ? player.getInventory().getItem(from) : player.inventoryMenu.getCarried();
-        if (tap ? !keg.handson$canTap(carried) : !keg.handson$canPour(carried)) {
+        // An empty container at the opening of a keg with a tank for the drink takes back what has not fermented yet.
+        boolean drawBack = !tap && !keg.handson$canPour(carried) && keg.handson$canDrawBack(carried);
+        if (tap ? !keg.handson$canTap(carried) : !keg.handson$canPour(carried) && !drawBack) {
             return;
         }
-        Fluid drawn = keg.handson$fluid();
-        int before = keg.handson$amount();
+        Fluid ran = tap ? keg.handson$drawn() : keg.handson$fluid();
+        int before = keg.handson$shownAmount();
         ItemStack vessel = carried.copyWithCount(1);
-        List<ItemStack> back = useWhile(carried, tap, all, player.getAbilities().instabuild);
+        List<ItemStack> back = useWhile(carried, tap, all, player.getAbilities().instabuild, drawBack ? keg::handson$canDrawBack : null);
         boolean handFree = carried.isEmpty();
         for (ItemStack stack : back) {
             if (handFree) {
@@ -295,8 +310,8 @@ public final class KegLogic implements StationLogic {
         if (handFree) {
             KettleLogic.putBack(player, from, ItemStack.EMPTY);
         }
-        station.effect(tap ? KegStation.EFFECT_TAPPED : KegStation.EFFECT_POURED, tap ? KegStation.TAP : KegStation.MOUTH,
-                used(tap ? drawn : keg.handson$fluid(), Math.abs(keg.handson$amount() - before), vessel, back.size()));
+        station.effect(tap || drawBack ? KegStation.EFFECT_TAPPED : KegStation.EFFECT_POURED, tap ? KegStation.TAP : KegStation.MOUTH,
+                used(tap || drawBack ? ran : keg.handson$fluid(), Math.abs(keg.handson$shownAmount() - before), vessel, back.size()));
     }
 
     /** What an effect at the keg tells the clients: which liquid ran, how much of it (how long its stream runs), and into how many. */
@@ -313,26 +328,28 @@ public final class KegLogic implements StationLogic {
      * Uses {@code stack} on the keg once, or with {@code all} for as long as it still fills or pours, one at a time: the keg's own use
      * of several at once does not look at how much drink is left. What comes back, without what is left of {@code stack} itself. A
      * player in creative mode pours without emptying the bucket, as Brewin' and Chewin' does, but draws at the tap as anybody does:
-     * its own creative use drains the keg and hands out nothing.
+     * its own creative use drains the keg and hands out nothing. {@code again}, when given, tells whether the stack is used once more
+     * at the opening in place of {@link KitchenKeg#handson$canPour} (a container drawing back what has not fermented).
      */
-    private List<ItemStack> useWhile(ItemStack stack, boolean tap, boolean all, boolean creative) {
+    private List<ItemStack> useWhile(ItemStack stack, boolean tap, boolean all, boolean creative, Predicate<ItemStack> again) {
         List<ItemStack> back = new java.util.ArrayList<>();
         int uses = 0;
         do {
             int count = stack.getCount();
-            int amount = keg.handson$amount();
+            int amount = keg.handson$shownAmount();
             int returned = back.size();
-            for (ItemStack got : keg.handson$use(stack, 1, creative && !tap)) {
+            for (ItemStack got : keg.handson$useAt(stack, 1, creative && !tap, tap)) {
                 if (got != stack) {
                     back.add(got);
                 }
             }
             // Stops when a use changed nothing: Brewin' and Chewin' leaves everything as it is while its own output slot is full
             // (or holds another drink), which the checks below don't see, and the loop would never end on the server thread.
-            if (stack.getCount() == count && keg.handson$amount() == amount && back.size() == returned) {
+            if (stack.getCount() == count && keg.handson$shownAmount() == amount && back.size() == returned) {
                 break;
             }
-        } while (all && ++uses < MAX_USES && !stack.isEmpty() && (tap ? keg.handson$canTap(stack) : keg.handson$canPour(stack)));
+        } while (all && ++uses < MAX_USES && !stack.isEmpty()
+                && (tap ? keg.handson$canTap(stack) : again != null ? again.test(stack) : keg.handson$canPour(stack)));
         return back;
     }
 
@@ -350,16 +367,16 @@ public final class KegLogic implements StationLogic {
         }
         ItemStack container = player.getInventory().getItem(slot);
         ItemStack vessel = container.copyWithCount(1);
-        Fluid drawn = keg.handson$fluid();
-        int before = keg.handson$amount();
-        List<ItemStack> back = useWhile(container, true, all, player.getAbilities().instabuild);
+        Fluid drawn = keg.handson$drawn();
+        int before = keg.handson$shownAmount();
+        List<ItemStack> back = useWhile(container, true, all, player.getAbilities().instabuild, null);
         for (ItemStack stack : back) {
             if (!player.getInventory().add(stack)) {
                 player.drop(stack, false, Prediction.SERVER_ONLY);
             }
         }
         player.getInventory().setChanged();
-        station.effect(KegStation.EFFECT_TAPPED, KegStation.TAP, used(drawn, Math.abs(keg.handson$amount() - before), vessel, back.size()));
+        station.effect(KegStation.EFFECT_TAPPED, KegStation.TAP, used(drawn, Math.abs(keg.handson$shownAmount() - before), vessel, back.size()));
     }
 
     /** Brewin' and Chewin's own rule of which of the keg's temperatures, 1 to 5, a recipe that wants {@code wanted} takes. */
@@ -409,6 +426,139 @@ public final class KegLogic implements StationLogic {
         }
     }
 
+    /**
+     * {@link #fill} for a keg that reads its slots in any order and several of a kind from one slot: each ingredient of the recipe, as
+     * many as one set takes, goes into the slot that holds its kind already, or a free one; up to {@code sets} sets, while the
+     * inventory has them and the slots have room.
+     */
+    private void fillCounted(Player player, KitchenKeg.Fermenting recipe, int sets) {
+        List<Ingredient> kinds = new ArrayList<>();
+        List<Integer> counts = new ArrayList<>();
+        for (Ingredient ingredient : recipe.ingredients()) {
+            if (ingredient.isEmpty()) {
+                continue;
+            }
+            int index = indexOfSame(kinds, ingredient);
+            if (index < 0) {
+                kinds.add(ingredient);
+                counts.add(1);
+            } else {
+                counts.set(index, counts.get(index) + 1);
+            }
+        }
+        if (kinds.size() > ingredients.size()) {
+            return;
+        }
+        Inventory inventory = player.getInventory();
+        boolean any = false;
+        for (int set = 0; set < sets; set++) {
+            int[] slots = new int[kinds.size()];
+            ItemStack[] takes = new ItemStack[kinds.size()];
+            boolean[] chosen = new boolean[ingredients.size()];
+            Arrays.fill(slots, -1);
+            for (int k = 0; k < kinds.size(); k++) {
+                int count = counts.get(k);
+                for (int i = 0; i < ingredients.size() && slots[k] < 0; i++) {
+                    ItemStack lying = ingredients.get(i);
+                    if (!chosen[i] && !lying.isEmpty() && kinds.get(k).test(lying) && lying.getCount() + count <= lying.getMaxStackSize()
+                            && countOf(inventory, lying) >= count) {
+                        slots[k] = i;
+                        takes[k] = lying.copyWithCount(count);
+                    }
+                }
+                ItemStack found = slots[k] < 0 ? mostOf(inventory, kinds.get(k), count) : ItemStack.EMPTY;
+                for (int i = 0; i < ingredients.size() && slots[k] < 0 && !found.isEmpty(); i++) {
+                    if (!chosen[i] && ingredients.get(i).isEmpty()) {
+                        slots[k] = i;
+                        takes[k] = found.copyWithCount(count);
+                    }
+                }
+                if (slots[k] < 0) {
+                    break;
+                }
+                chosen[slots[k]] = true;
+            }
+            if (Arrays.stream(slots).anyMatch(slot -> slot < 0)) {
+                break;
+            }
+            for (int k = 0; k < kinds.size(); k++) {
+                take(inventory, takes[k]);
+                ItemStack lying = ingredients.get(slots[k]);
+                ingredients.set(slots[k], lying.isEmpty() ? takes[k].copy() : lying.copyWithCount(lying.getCount() + takes[k].getCount()));
+            }
+            any = true;
+        }
+        if (any) {
+            wanted = recipe.id();
+            inventory.setChanged();
+        }
+    }
+
+    /** The place in {@code kinds} of an ingredient that takes the same things as {@code ingredient}, or -1. */
+    private static int indexOfSame(List<Ingredient> kinds, Ingredient ingredient) {
+        for (int i = 0; i < kinds.size(); i++) {
+            ItemStack[] a = RecipeParts.items(kinds.get(i));
+            ItemStack[] b = RecipeParts.items(ingredient);
+            boolean same = kinds.get(i) == ingredient || a.length == b.length;
+            for (int j = 0; same && kinds.get(i) != ingredient && j < a.length; j++) {
+                same = ItemStack.matches(a[j], b[j]);
+            }
+            if (same) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** How many of {@code stack}'s kind the inventory holds. */
+    private static int countOf(Inventory inventory, ItemStack stack) {
+        int count = 0;
+        for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
+            if (ItemStack.isSameItemSameComponents(inventory.getItem(slot), stack)) {
+                count += inventory.getItem(slot).getCount();
+            }
+        }
+        return count;
+    }
+
+    /** The kind of what {@code ingredient} takes that the inventory holds most of, at least {@code count}; empty for none. */
+    private static ItemStack mostOf(Inventory inventory, Ingredient ingredient, int count) {
+        ItemStack best = ItemStack.EMPTY;
+        int most = count - 1;
+        for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (!stack.isEmpty() && ingredient.test(stack)) {
+                int held = countOf(inventory, stack);
+                if (held > most) {
+                    most = held;
+                    best = stack;
+                }
+            }
+        }
+        return best;
+    }
+
+    /** Takes as many of {@code wanted}'s kind as its count out of the inventory. */
+    private static void take(Inventory inventory, ItemStack wanted) {
+        int left = wanted.getCount();
+        for (int slot = 0; slot < Inventory.INVENTORY_SIZE && left > 0; slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (ItemStack.isSameItemSameComponents(stack, wanted)) {
+                int used = Math.min(left, stack.getCount());
+                stack.shrink(used);
+                left -= used;
+            }
+        }
+    }
+
+    /**
+     * The liquid the keg looks full of: its own; in a keg with a tank of its own for the drink, the drink as soon as there is any (beer
+     * with what water is left under it is beer to the eye, and a container dipped in takes the beer).
+     */
+    public static Fluid shownFluid(KitchenKeg keg) {
+        return keg.handson$keepsDrinkApart() && keg.handson$drawn() != Fluids.EMPTY ? keg.handson$drawn() : keg.handson$fluid();
+    }
+
     private void refresh(StationContext station) {
         StationState state = station.state();
         ContainerData data = keg.handson$data();
@@ -426,13 +576,14 @@ public final class KegLogic implements StationLogic {
             state.setControl(KegStation.WANTED, keg.handson$wantedTemperature());
         }
         CompoundTag own = state.data().copy();
-        own.putString(KegStation.FLUID, keg.handson$fluid() == Fluids.EMPTY ? "" : BuiltInRegistries.FLUID.getKey(keg.handson$fluid()).toString());
+        Fluid shown = shownFluid(keg);
+        own.putString(KegStation.FLUID, shown == Fluids.EMPTY ? "" : BuiltInRegistries.FLUID.getKey(shown).toString());
         // In whole seconds, as the badge tells it.
         own.putInt(KegStation.LEFT, total > 0 ? Mth.ceil((total - time) / 20.0F) * 20 : 0);
         state.setData(own);
         int capacity = Math.max(1, keg.handson$capacity());
         // The tank holds the keg's own liquid, so that it looks like what it is (KegLiquids on the client).
-        Identifier liquid = keg.handson$fluid() == Fluids.EMPTY ? HandsOnDelight.id("drink") : BuiltInRegistries.FLUID.getKey(keg.handson$fluid());
-        state.setTank(KegStation.DRINK, TankContents.of(liquid, Math.round(100.0F * keg.handson$amount() / capacity)));
+        Identifier liquid = shown == Fluids.EMPTY ? HandsOnDelight.id("drink") : BuiltInRegistries.FLUID.getKey(shown);
+        state.setTank(KegStation.DRINK, TankContents.of(liquid, Math.min(100, Math.round(100.0F * keg.handson$shownAmount() / capacity))));
     }
 }

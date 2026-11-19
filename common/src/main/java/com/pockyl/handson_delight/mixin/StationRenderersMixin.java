@@ -13,13 +13,16 @@ import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.block.entity.SkilletBlockEntity;
 
 import com.pockyl.handson_delight.client.HandsOnDelightClient;
+import com.pockyl.handson_delight.station.CfbOven;
 import com.pockyl.handson_delight.station.KitchenCuisine;
 import com.pockyl.handson_delight.station.KitchenBoard;
 import com.pockyl.handson_delight.station.KitchenBasin;
+import com.pockyl.handson_delight.station.KitchenBowl;
 import com.pockyl.handson_delight.station.KitchenGrill;
 import com.pockyl.handson_delight.station.KitchenKeg;
 import com.pockyl.handson_delight.station.KitchenSteamer;
 import com.pockyl.handson_delight.station.SteamerTower;
+import com.pockyl.handson_delight.station.StoveCooking;
 
 /**
  * Where a scene shows the board, the skillet or the stove, it draws the food itself, so that a knife can cut it, it can fly and
@@ -30,7 +33,9 @@ import com.pockyl.handson_delight.station.SteamerTower;
  * it is stopped, in that renderer. Farmer's Delight gives the cooking pot no renderer; a mod that draws the pot's body from one (Vanilla
  * Delights' dyed pots) is stopped too, and the pot's scene calls that renderer itself before its soup ({@code PotBody}). Youkai's
  * Feasts' cuisine board's renderer is stopped as well: the scene draws the same models of what lies on it, and so is its steamer's,
- * whose racks the scene lifts apart; its fermentation tank's while its scene shows the block. Only while the scene is
+ * whose racks the scene lifts apart; its fermentation tank's while its scene shows the block; Extra Delight's mixing bowl's,
+ * whose scene draws what lies in it going round with the spoon; and Cooking for Blockheads' oven's, whose door and rack the
+ * scene opens. Only while the scene is
  * drawn: a station is kept a little farther away than its scene is drawn.
  */
 @Mixin(BlockEntityRenderDispatcher.class)
@@ -39,9 +44,9 @@ abstract class StationRenderersMixin {
     @Inject(method = "tryExtractRenderState", at = @At("HEAD"), cancellable = true)
     private void handson$drawnByScene(BlockEntity blockEntity, float partialTicks, ModelFeatureRenderer.CrumblingOverlay breakProgress,
             boolean isGloballyRendered, CallbackInfoReturnable<BlockEntityRenderState> callback) {
-        boolean drawnByScene = blockEntity instanceof AbstractStoveBlockEntity || blockEntity instanceof SkilletBlockEntity
+        boolean drawnByScene = StoveCooking.isStove(blockEntity) || blockEntity instanceof SkilletBlockEntity
                 || blockEntity instanceof CookingPotBlockEntity || KitchenGrill.isGrill(blockEntity)
-                || KitchenBasin.isBasin(blockEntity) || blockEntity instanceof KitchenCuisine
+                || KitchenBasin.isBasin(blockEntity) || blockEntity instanceof KitchenCuisine || blockEntity instanceof KitchenBowl
                 || blockEntity instanceof KitchenBoard board && !board.handson$isCarving() && !board.handson$rendersBoard();
         if (drawnByScene && HandsOnDelightClient.isSceneDrawn(blockEntity.getBlockPos())) {
             callback.setReturnValue(null);
@@ -51,6 +56,13 @@ abstract class StationRenderersMixin {
         if (blockEntity instanceof KitchenKeg && HandsOnDelightClient.isSceneDrawn(blockEntity.getBlockPos())
                 && HandsOnDelightClient.isBlockHidden(blockEntity.getBlockPos())) {
             callback.setReturnValue(null);
+            return;
+        }
+        // Cooking for Blockheads' oven: while its scene stands in for the block, it draws the door, the rack and the tools on top. Only
+        // then: the oven in the world stays as its own renderer draws it.
+        if (CfbOven.isOven(blockEntity) && HandsOnDelightClient.isSceneDrawn(blockEntity.getBlockPos())
+                && HandsOnDelightClient.isBlockHidden(blockEntity.getBlockPos())) {
+            callback.cancel();
             return;
         }
         // Youkai's Feasts' steamer: every block of the tower is drawn by the scene of the pot under it while somebody works there.

@@ -95,9 +95,12 @@ final class PotBook implements RecipeBook.Source {
         if (ScrollPot.of(view.level().getBlockEntity(view.pos())) == null) {
             return List.of();
         }
-        return List.of(new RecipeBook.Tab(null, new ItemStack(Items.COMPASS)),
-                new RecipeBook.Tab(OWN, new ItemStack(FarmersDelightContent.ALCHEMIST_POT.get())),
-                new RecipeBook.Tab(FARMERS_DELIGHT, new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("cooking_pot")))));
+        ItemStack own = new ItemStack(FarmersDelightContent.ALCHEMIST_POT.get());
+        ItemStack cookingPot = new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("cooking_pot")));
+        // Each pot's tab is named as its block is.
+        return List.of(new RecipeBook.Tab(null, new ItemStack(Items.COMPASS), Component.translatable("handson_delight.book.tab.all")),
+                new RecipeBook.Tab(OWN, own, own.getHoverName()),
+                new RecipeBook.Tab(FARMERS_DELIGHT, cookingPot, cookingPot.getHoverName()));
     }
 
     @Override

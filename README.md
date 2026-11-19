@@ -10,6 +10,7 @@
   <img alt="Minecraft 1.21.1" src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A">
   <a href="https://neoforged.net"><img alt="NeoForge" src="https://img.shields.io/badge/Loader-NeoForge-D7742F"></a>
   <a href="https://fabricmc.net"><img alt="Fabric" src="https://img.shields.io/badge/Loader-Fabric-C6BBA5"></a>
+  <a href="https://discord.gg/mGkPKccJEf"><img alt="Discord: Pocky's Kitchen" src="https://img.shields.io/badge/Discord-Pocky's%20Kitchen-5865F2?logo=discord&logoColor=white"></a>
   <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue">
 </p>
 
@@ -54,8 +55,10 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   a time.
 - **Stars.** Wide, steady rounds fill up to three stars over the dish. Two stars add a serving for every four, three
   stars one for every two. A dish opens its second star after 8 servings and its third after 32.
-- **Recipe book.** It hangs beside the station and puts what you can make now first. Click a dish and its ingredients
-  go into the pot from your inventory; Shift + click puts in up to sixteen sets.
+- **Recipe book.** It hangs beside the station and puts what you can make now first. Click a dish to read it, click it
+  again and its ingredients go into the pot from your inventory; Shift + click puts in up to sixteen sets. Search it by
+  name or mod, show only what you can make now, or open the dishes you made lately. Click an ingredient to see its own
+  recipe. Pages turn with the wheel, Page Up and Page Down, or a click on the page's foot.
 - **Cutting board.** Right-click it with food to lay the food down. The knife stays in your hand or inventory and shows
   over the food: chop on the dashed marks; each cut goes through sixteen items of the stack. Food is cut across its own
   length, a kelp roll in even slices and a pie in wedges, with one cut for each piece it gives, three at most. Everything
@@ -88,6 +91,15 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 - **Vat** of [Cultural Delights](https://modrinth.com/mod/cultural-delights). A stone tub under a lid that swings up.
   Pour water or milk in and drop the rest in to float, shut the lid and it ages at the warmth under it: it boils over a
   fire and frosts over on ice. The drink stays in the vat until you draw it with a bottle, beer under its head of foam.
+- **Vat** of [Extra Delight](https://modrinth.com/mod/extradelight). Its crock opens up: pour the brine in, drop the
+  vegetables in to float and shake in the salt or yeast each stage wants. Its lid comes off and goes back on as each
+  stage needs it, from your inventory when you leave. The badge shows the stages, what the one under way still wants and
+  the days left, and the book lists every recipe with its stages. What it makes waits in the vat, no jars or bowls needed
+  until you draw it into them.
+- **Melting pot** of [Extra Delight](https://modrinth.com/mod/extradelight). A double boiler, its upper pot open over the
+  heat: drop chocolate in and watch it soften, sink and melt into the syrup going round in it, while the water below
+  steams. Its book has everything it melts, with the time. Click the syrup with a bottle or a bucket to fill it; with an
+  empty hand a bottle is offered from your inventory.
 - **Kettle** of [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port). Lift its lid off onto the stove, pour
   a bucket in at the opening and drop the leaves in: they float, soak and sink, giving the water their colour while it
   brews over the fire, with steam rising from the spout. Done, the kettle whistles. Click the spout with a bottle and
@@ -107,6 +119,20 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 - **Fermentation tank** of [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts).
   Its lid comes off with a click, liquids are poured in and things dropped in, and it ferments under the lid with the
   badge counting down. The drink is dipped out with a bottle, and the book puts its recipes in from your inventory.
+- **Chopping block** of [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees), the stump a felled tree
+  leaves. Food laid on it is cut along its marks as on the board. A log stands on it one at a time and is split like a
+  pie: the axe comes down from high above on each of three dashed lines through its middle, the cuts open, and with the
+  third the wedges fall apart and the planks come to you, half as many again as the crafting table gives. Its dirt
+  grows with the food cut on it, and after 32 cuts it takes no more food.
+- **Keg** of [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest). Its lid comes off with a click: pour in a
+  juice, water, milk or brine and drop in what ferments. Under the lid it ferments a portion at a time, the liquid turning
+  to the drink's colour, and the wine is drawn into a bottle at its tap. An empty bucket or bottle at the opening takes back
+  what has not fermented, a jar of pickles or a cheese wheel waits to be taken, and the book puts in as many of each as a
+  recipe takes. Eight kegs built into a big keg open as one, from any of its blocks, with a lid in the middle of its top.
+- **Cask** of [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest). Lift its lid by the handle, lay in the
+  bottles to age, salt and meat for jerky or a cheese, and put the lid back on to seal it. Sealed, a wine ages a bottle at
+  a time into its next vintage, faster in a dark cellar; what is done waits before the cask and is taken without breaking
+  the seal. The book shows each recipe's time where the cask stands.
 - **Grill** of [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge). Two skewers lie over its fire.
   One smokes when its lower side is done: click it to turn it over, once. Click a skewer with a powder to shake it over
   or with a sauce to dab it on, and the seasoning stays on it. A skewer left on after it is done darkens, smokes and
@@ -119,6 +145,22 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   like the cooking pot. An [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) scroll
   clicked on it hangs over its rim and its school shows on the pot: a fire scroll burns under it and heats it. Dishes
   that need a school wait for their scroll, which blinks on the badge and stands with them in the book.
+- **Mixing bowl** of [Extra Delight](https://modrinth.com/mod/extradelight). Drop the food in, pour liquids from their
+  bottles and buckets, crack eggs over the rim (a right click cracks one for its white and gives you the yolk). Your
+  spoon or whisk stands in the bowl: click its handle and stir, each circle round the bowl is a stir, and everything in
+  it goes round and turns into the mixture. A whole bowlful is mixed at once. Done, a bowl or bottle from your inventory
+  dips in for it. Its book pours the liquids too.
+- **Oven** of [Extra Delight](https://modrinth.com/mod/extradelight). Its pan slides out of the open mouth: stand a sheet,
+  tray, pie dish or loaf pan in it, lay the food in, and click the mouth to push it back over the heat. What bakes browns
+  and rises, the walls glow, and the badge blinks the pan a recipe still waits for. The book brings the right pan and the
+  food from your inventory and has a tab for each pan. Sneak to open its own menu; hoppers work as before.
+- **Oven** of [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads), in every colour. Its door
+  drops open and the rack slides out over it: let raw food go over the rack and it fills the free places, or click one
+  place with the right button. Coal or wood let go over the rack goes onto the fire, and an empty hand at its controls is
+  offered fuel from your inventory. Each piece browns
+  and rises as it bakes, and what is done waits on the open door with a puff of steam. The book lays its furnace food
+  from your inventory. A skillet or a pot clicked on its top stands upright on the burner, and an empty hand takes it back.
+  Sneak to open its own menu; hoppers and its heating unit work as before.
 - **A kitchen.** Rest the cursor at the edge of the screen beside another station and the camera moves over to it. A, D
   and the arrow keys do the same.
 - **For everyone.** Players nearby see the soup simmer, the spoon go round and the food land on the board.
@@ -127,7 +169,7 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 | Action | How |
 |---|---|
-| Open a station | Right-click the pot, board, skillet, stove, keg, oven, vat, grill, basin or kettle |
+| Open a station | Right-click the pot, board, skillet, stove, keg, oven, vat, melting pot, grill, basin, kettle or mixing bowl |
 | Use the block as in Farmer's Delight | Sneak + right-click |
 | Stir | Click the spoon's handle, move the mouse, click again to put it down |
 | Serve | Click the soup with a bowl |
@@ -149,21 +191,75 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 [![Sodium](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/sodium.png)](https://modrinth.com/mod/sodium) ✅ **[Sodium](https://modrinth.com/mod/sodium)** and [![Iris](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/iris.png)](https://modrinth.com/mod/iris) **[Iris](https://modrinth.com/mod/iris)** (optional) - the stations draw as usual
 
+[![Extra Delight](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/extra-delight.png)](https://modrinth.com/mod/extradelight) ✅ **[Extra Delight](https://modrinth.com/mod/extradelight)** (optional) - its mixing bowl, vat, melting pot and oven are stations
+
 [![Create Aeronautics](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/create-aeronautics.png)](https://modrinth.com/mod/create-aeronautics) ✅ **[Create Aeronautics](https://modrinth.com/mod/create-aeronautics)** (optional) - the stations open on its flying ships and stay with the ship as it flies and turns
+
+<!-- stations:start -->
+### Station compatibility
+
+How much of each mod's kitchen opens as stations right in the world. A dash means the mod has no build for that version.
+
+<details><summary><b>Every mod with stations and the planned ones</b></summary>
+
+| Mod | Stations | 1.20.1 | 1.21.1 |
+|---|---|:---:|:---:|
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/farmers-delight.png" width="20" height="20" align="top"> [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/barbeques-delight-forge.png" width="20" height="20" align="top"> [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/brewin-and-chewin.png" width="20" height="20" align="top"> [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/choppers-delight.png" width="20" height="20" align="top"> [Chopper's Delight](https://modrinth.com/mod/choppers-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/cooking-for-blockheads.png" width="20" height="20" align="top"> [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/cultural-delights.png" width="20" height="20" align="top"> [Cultural Delights](https://modrinth.com/mod/cultural-delights) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | - | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/dungeons_delight.png" width="20" height="20" align="top"> [Dungeons Delight](https://modrinth.com/mod/dungeons_delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/ends-delight.png" width="20" height="20" align="top"> [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/extradelight.png" width="20" height="20" align="top"> [Extra Delight](https://modrinth.com/mod/extradelight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-67.png" width="64" height="8"> 67% | - | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/farmers-respite.png" width="20" height="20" align="top"> [Farmer's Respite](https://modrinth.com/mod/farmers-respite) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/farmers-spell.png" width="20" height="20" align="top"> [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/gensokyo-delight-youkais-feasts.png" width="20" height="20" align="top"> [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/hearth-and-harvest.png" width="20" height="20" align="top"> [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/miners-delight.png" width="20" height="20" align="top"> [Miner's Delight](https://modrinth.com/mod/miners-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/my-nethers-delight.png" width="20" height="20" align="top"> [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/nethers-delight.png" width="20" height="20" align="top"> [Nether's Delight](https://modrinth.com/mod/nethers-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | - |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/sable-trees.png" width="20" height="20" align="top"> [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | - | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/trailtales-delight.png" width="20" height="20" align="top"> [Trail&Tales Delight](https://modrinth.com/mod/trailtales-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-50.png" width="64" height="8"> 50% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/twilight-delight.png" width="20" height="20" align="top"> [Twilight's Flavor & Delight](https://modrinth.com/mod/twilight-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-50.png" width="64" height="8"> 50% | ✅ | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/youkaishomecoming.png" width="20" height="20" align="top"> [Youkai's Homecoming](https://modrinth.com/mod/youkaishomecoming) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-83.png" width="64" height="8"> 83% | ✅ | - |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/berries-and-cherries.png" width="20" height="20" align="top"> [Berries and Cherries Delight](https://modrinth.com/mod/berries-and-cherries) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/cuisine-delight.png" width="20" height="20" align="top"> [Cuisine Delight](https://modrinth.com/mod/cuisine-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/delightful.png" width="20" height="20" align="top"> [Delightful](https://modrinth.com/mod/delightful) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/enders-delight.png" width="20" height="20" align="top"> [Ender's Delight](https://modrinth.com/mod/enders-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/farmers-pizzeria.png" width="20" height="20" align="top"> [Farmer's Pizzeria](https://modrinth.com/mod/farmers-pizzeria) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/immortalers-delight.png" width="20" height="20" align="top"> [Immortalers Delight](https://modrinth.com/mod/immortalers-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/legendary-delicacies.png" width="20" height="20" align="top"> [Legendary Delicacies](https://www.curseforge.com/minecraft/mc-mods/legendary-delicacies) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/survivors-delight.png" width="20" height="20" align="top"> [Survivor's Delight](https://www.curseforge.com/minecraft/mc-mods/survivors-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/ubes-delight.png" width="20" height="20" align="top"> [Ube's Delight](https://modrinth.com/mod/ubes-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/vintage-delight.png" width="20" height="20" align="top"> [Vintage Delight](https://modrinth.com/mod/vintage-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-0.png" width="64" height="8"> *planned* | | |
+
+</details>
+<!-- stations:end -->
 
 Addons of Farmer's Delight work too: their dishes are made on the board, their pies and cakes are cut in wedges, and
 the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) and
 [My Nether's Delight](https://www.curseforge.com/minecraft/mc-mods/my-nethers-delight) open as stations. So do
 [Miner's Delight](https://modrinth.com/mod/miners-delight)'s copper pot,
-[Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot and dungeon stove, and every cutting board of
+[Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot and dungeon stove,
+[Twilight's Flavor & Delight](https://modrinth.com/mod/twilight-delight)'s maze stove (Twilight food still grills twice
+as fast on it), [Trail&Tales Delight](https://modrinth.com/mod/trailtales-delight)'s mud stove (its pottery cooking pot keeps Farmer's
+Delight's menu), and every cutting board of
 [Chopper's Delight](https://modrinth.com/mod/choppers-delight), the decorated one too, each in its own look.
 [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle opens as a station too, its tray on a stove
 drawn with Farmer's Delight's own, and so does [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)'s kettle,
-its cuisine board and its three pots.
+its cuisine board and its three pots. [Extra Delight](https://modrinth.com/mod/extradelight)'s mixing bowl opens as a
+station with its own recipes, spoons and whisk.
 [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell)'s alchemist pot opens as a pot station with
 its [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) scroll.
 [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s kebabs and bibimbap are put together on the
-board and keep the seasoning of their skewers.
+board and keep the seasoning of their skewers. [Extra Delight](https://modrinth.com/mod/extradelight)'s vat opens as a
+station too, in each of its looks, and so does its oven, with its pans.
+[Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block opens as a station of its own,
+for cutting food and splitting logs.
+[Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)'s oven opens as a station in each of its
+colours, its tools still standing on top, and so do [Hearth and Harvest](https://modrinth.com/mod/hearth-and-harvest)'s keg and cask.
 
 Hoppers, pipes and drops use the blocks' own inventories. A pot fed by automation cooks by itself, as in Farmer's Delight.
 
@@ -175,14 +271,19 @@ which each player sets in their own file.
 | Key | Default | What it does |
 |---|---|---|
 | `cooking_pot`, `cutting_board`, `skillet`, `stove` | `true` | The station of that block. Off, the block works as in Farmer's Delight. `cooking_pot` covers the addons' pots too (copper, monster, alchemist) |
-| `keg` | `true` | Brewin' and Chewin's keg as a station. Off, the keg keeps its own menu |
-| `oven`, `vat` | `true` | Cultural Delights' oven and vat as stations. Off, they keep their own menus |
+| `keg` | `true` | The kegs of Brewin' and Chewin' and Hearth and Harvest as stations. Off, each keg keeps its own menu. Hearth and Harvest's keeps its own fermenting times |
+| `oven`, `vat` | `true` | The ovens of Cultural Delights and Cooking for Blockheads, and Cultural Delights' vat, as stations. Off, they keep their own menus. Cooking for Blockheads' oven keeps its own baking time |
+| `ed_vat` | `true` | Extra Delight's vat as a station. Off, it keeps its own menu. It keeps its own aging times; on, it also ages with no jars or bowls in it and keeps what it made to be drawn into them |
+| `melting_pot` | `true` | Extra Delight's melting pot as a station. Off, it keeps its own menu. It keeps its own melting times |
 | `kettle` | `true` | The kettles of Farmer's Respite and Youkai's Feasts as stations. Off, each is used as before |
 | `grill`, `basin` | `true` | Barbeque's Delight's grill and ingredients basin as stations. Off, they are used as before |
 | `cuisine_board` | `true` | Youkai's Feasts' cuisine board as a station. Off, it is used as before |
+| `chopping_block` | `true` | Sable Trees' chopping block (a tree's stump) as a station. Off, it is used as before |
 | `youkai_pots` | `true` | Youkai's Feasts' small iron pot, short iron pot and stockpot as stations. Off, they are used as before. They keep their own cooking times |
 | `youkai_steamer` | `true` | Youkai's Feasts' steamer as a station. Off, it is used as before. It keeps its own steaming times |
 | `youkai_tank` | `true` | Youkai's Feasts' fermentation tank as a station. Off, it is used as before. It keeps its own fermenting times |
+| `mixing_bowl` | `true` | Extra Delight's mixing bowl as a station. Off, it keeps its own menu |
+| `cask` | `true` | Hearth and Harvest's cask as a station. Off, it keeps its own menu. It keeps its own aging times, faster in the dark |
 | `youkai_hints` | `false` | Youkai's Feasts' squares on the right of the screen while one of its blocks is looked at (what it takes next, what lies in it). Hidden unless on |
 | `remove_crafting_recipes` | `true` | Farmer's Delight's food crafts are made on the board only |
 | `stirring_required` | `true` | Food you put into the pot waits for the spoon while you are at it |
@@ -257,6 +358,9 @@ dishes.
    [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api).
 3. [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) and this mod in the `mods` folder, on the client and
    the server. A client without it keeps Farmer's Delight's own menus.
+
+Bug reports, questions and ideas for new stations are welcome in [Pocky's Kitchen](https://discord.gg/mGkPKccJEf), our
+Discord server.
 
 ## Building
 
@@ -338,6 +442,14 @@ The jars are written to `neoforge/build/libs/` and `fabric/build/libs/`.
   <tr>
     <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/diegesis"><img src="docs/more-mods/diegesis.png" width="48" alt="Diegesis"></a></td>
     <td><a href="https://www.curseforge.com/minecraft/mc-mods/diegesis"><b>Diegesis</b></a> - a library for interfaces you work with right on the block, with no menu screen (<a href="https://github.com/Pocky-l/diegesis">source</a>)</td>
+  </tr>
+  <tr>
+    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-furniture"><img src="docs/more-mods/handson_furniture.png" width="48" alt="Hands-On Furniture"></a></td>
+    <td><a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-furniture"><b>Hands-On Furniture</b></a> - open MrCrayfish's fridges, cabinets and drawers by hand and put food anywhere on their shelves (<a href="https://github.com/Pocky-l/handson-furniture">source</a>)</td>
+  </tr>
+  <tr>
+    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla"><img src="docs/more-mods/handson_vanilla.png" width="48" alt="Hands-On Vanilla"></a></td>
+    <td><a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla"><b>Hands-On Vanilla</b></a> - craft and smelt with your own hands, right on the crafting table and the furnace, client-side (<a href="https://github.com/Pocky-l/handson-vanilla">source</a>)</td>
   </tr>
 </table>
 

@@ -1,0 +1,289 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Extra Delight's melting pot, a double boiler over the heat, seen from the front and above into its open upper pot. What is dropped in melts there piece by piece into the liquid that stands in it and goes round; a bottle or bucket dips in and comes up full. While nobody uses it the block is the same pot, its steam rising.",
+  "work_plane": 12,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      8,
+      64.6,
+      -35.0
+    ],
+    "target": [
+      8,
+      11,
+      10
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "$comment": "Extra Delight's double boiler, as the block's: its lower pot as it has it, its upper pot open down to a floor at y 9. Shown only while the station hides the block.",
+      "id": "body",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/melting_pot/body",
+        "lit_as_block": true
+      }
+    },
+    {
+      "$comment": "Farmer's Delight's heating tray under it, when the block stands on one.",
+      "id": "tray",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "hidden": true,
+      "visual": {
+        "model": "handson_delight:diegesis/pot/tray",
+        "lit_as_block": true
+      }
+    },
+    {
+      "$comment": "What has melted, standing in the upper pot: 6000 mB fill it to just under its rim.",
+      "id": "melt",
+      "tank": {
+        "tank": "melt",
+        "inner": {
+          "from": [
+            4.05,
+            9,
+            4.05
+          ],
+          "to": [
+            11.95,
+            12.6,
+            11.95
+          ]
+        }
+      },
+      "pickable": false
+    },
+    {
+      "$comment": "The opening of the upper pot: a bottle or bucket clicked over it draws what has melted.",
+      "id": "mouth",
+      "collider": {
+        "from": [
+          4,
+          9,
+          4
+        ],
+        "to": [
+          12,
+          13,
+          12
+        ]
+      }
+    },
+    {
+      "$comment": "What melts: the piece melting now floats in the middle, goes soft and shrinks into the pool it lets out, the rest of the stack waits round it.",
+      "id": "input",
+      "pos": [
+        8,
+        9,
+        8
+      ],
+      "slot": {
+        "slot": "input[0]",
+        "display": "hidden",
+        "size": 4,
+        "highlight": true
+      },
+      "collider": {
+        "from": [
+          -3,
+          0,
+          -3
+        ],
+        "to": [
+          3,
+          4,
+          3
+        ]
+      },
+      "children": [
+        {
+          "$comment": "What the piece melting now has let out: a pool of it spreading under the piece, its sheen beside.",
+          "id": "blot",
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "id": "blot_sheen",
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "id": "piece_0",
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "id": "piece_1",
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "id": "piece_2",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "id": "dipper",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false,
+      "$comment": "A bottle or bucket brought over the pot, dipped in and taken away full; moved by the code."
+    },
+    {
+      "id": "flying",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -4.84,
+        27.94,
+        3.3
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -4.83,
+        27.950000000000003,
+        3.29
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -4.82,
+        27.96,
+        3.28
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "flame",
+      "pos": [
+        -4.82,
+        27.96,
+        3.28
+      ],
+      "rotation": [
+        -43.8,
+        0.9,
+        -13.1
+      ],
+      "pickable": false,
+      "scale": 1.495
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -4.81,
+        28.01,
+        3.23
+      ],
+      "rotation": [
+        46.0,
+        -13.1,
+        -0.9
+      ],
+      "scale": 0.187,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        22.36,
+        33.45,
+        -5.7
+      ],
+      "rotation": [
+        -40.6,
+        -0.2,
+        17.7
+      ],
+      "scale": 1.19,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -5.3,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          5.3,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

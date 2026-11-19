@@ -11,6 +11,7 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.Fluids;
 
 import com.pockyl.diegesis.api.client.StationView;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.KitchenKeg;
 
@@ -49,7 +50,10 @@ final class KegBook implements RecipeBook.Source {
         for (KitchenKeg.Fermenting recipe : keg.handson$recipes()) {
             ItemStack dish = recipe.resultItem().isEmpty() ? keg.handson$drinkOf(recipe.resultFluid()) : recipe.resultItem();
             List<Ingredient> ingredients = recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
-            if (dish.isEmpty() || ingredients.size() > keg.handson$ingredients()) {
+            // A keg that takes several of a kind from one slot needs a slot a kind only.
+            long slots = keg.handson$laysOut() ? ingredients.size() : ingredients.stream().map(ingredient -> List.of(RecipeParts.items(ingredient)).stream()
+                    .map(stack -> stack.getItem()).toList()).distinct().count();
+            if (dish.isEmpty() || slots > keg.handson$ingredients()) {
                 continue;
             }
             List<ItemStack> foot = new ArrayList<>();

@@ -19,7 +19,21 @@
     "YoukaiPotMixin",
     "YoukaiSteamerMixin",
     "YoukaiTankMixin",
-    "YoukaiFermentRecipeAccess"
+    "YoukaiFermentRecipeAccess",
+    "MixingBowlMixin",
+    "EdVatMixin",
+    "EdVatRecipeMixin",
+    "EdVatBlockMixin",
+    "MeltingPotMixin",
+    "EdOvenMixin",
+    "ChoppingBlockEntityMixin",
+    "ChoppingBlockAccess",
+    "StumpCutMixin",
+    "StumpSplitMixin",
+    "HearthKegMixin",
+    "HearthKegAccess",
+    "HearthCaskMixin",
+    "HearthCaskAccess"
   ],
   "client": [
     "CopperPotQuietMixin",
@@ -31,7 +45,8 @@
     "AlchemistPotSteamMixin",
     "YoukaiPotSoupMixin",
     "YoukaiHintsMixin",
-    "NoBoardRegisterMixin"
+    "NoBoardRegisterMixin",
+    "StumpContentMixin"
   ],
   "injectors": {
     "defaultRequire": 1

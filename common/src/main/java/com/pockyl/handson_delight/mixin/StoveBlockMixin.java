@@ -1,7 +1,6 @@
 package com.pockyl.handson_delight.mixin;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -14,10 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import vectorwing.farmersdelight.common.block.AbstractStoveBlock;
-import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
-import com.pockyl.diegesis.api.Diegesis;
-import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.StoveCooking;
 
 /**
@@ -30,10 +26,6 @@ abstract class StoveBlockMixin {
     @Inject(method = "useItemOn", at = @At("HEAD"))
     private void handson$handOverWithoutTheMod(ItemStack held, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit, CallbackInfoReturnable<InteractionResult> callback) {
-        if (player instanceof ServerPlayer server && !Platform.INSTANCE.hasThisMod(server)
-                && level.getBlockEntity(pos) instanceof AbstractStoveBlockEntity stove
-                && Diegesis.activeStation(server.level(), pos).map(station -> station.users().isEmpty()).orElse(true)) {
-            StoveCooking.handToFarmersDelight(stove);
-        }
+        StoveCooking.usedInTheWorld(player, level, pos);
     }
 }

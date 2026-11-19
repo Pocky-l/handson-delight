@@ -1,0 +1,539 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Extra Delight's mixing bowl: the block is the bowl, open on top (walls 1 px round an inside x,z 3..13, floor at y 1, rim at 6), drawn by the world. The scene adds what lies in it (the slots are click places that move with what they hold, the food drawn by the code), the liquid, the spoon and the badge. The camera stands to the bowl as the pot's to the pot, 4 px lower, so the book and the badge are at the same places on the screen.",
+  "work_plane": 6,
+  "camera": {
+    "position": [
+      8,
+      37,
+      -21
+    ],
+    "target": [
+      8,
+      2.5,
+      8
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "nodes": [
+    {
+      "$comment": "The bowl's inside, x,z 3..13 over its floor at y 1, its rim at 6: what is poured in and what the food is stirred into. Its colour is set by the code: the liquids poured, turning to the result's as it is stirred.",
+      "id": "batter",
+      "pickable": false,
+      "tank": {
+        "tank": "batter",
+        "inner": {
+          "from": [
+            3.05,
+            1,
+            3.05
+          ],
+          "to": [
+            12.95,
+            5.5,
+            12.95
+          ]
+        }
+      }
+    },
+    {
+      "id": "mouth",
+      "drop_zone": "ingredients",
+      "collider": {
+        "from": [
+          2,
+          1,
+          2
+        ],
+        "to": [
+          14,
+          9,
+          14
+        ]
+      }
+    },
+    {
+      "id": "item_0",
+      "pos": [
+        8,
+        1,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[0]",
+        "display": "hidden",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_0",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "id": "item_1",
+      "pos": [
+        8,
+        1,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[1]",
+        "display": "hidden",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_1",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "id": "item_2",
+      "pos": [
+        8,
+        1,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[2]",
+        "display": "hidden",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_2",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "id": "item_3",
+      "pos": [
+        8,
+        1,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[3]",
+        "display": "hidden",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_3",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "id": "item_4",
+      "pos": [
+        8,
+        1,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[4]",
+        "display": "hidden",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_4",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "id": "item_5",
+      "pos": [
+        8,
+        1,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[5]",
+        "display": "hidden",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_5",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "id": "item_6",
+      "pos": [
+        8,
+        1,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[6]",
+        "display": "hidden",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_6",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "id": "item_7",
+      "pos": [
+        8,
+        1,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[7]",
+        "display": "hidden",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_7",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "id": "item_8",
+      "pos": [
+        8,
+        1,
+        8
+      ],
+      "slot": {
+        "slot": "ingredients[8]",
+        "display": "hidden",
+        "size": 3.0,
+        "counts": "hover",
+        "highlight": true
+      },
+      "children": [
+        {
+          "id": "food_8",
+          "pickable": false,
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "$comment": "The spoon or whisk: its pivot is the end that stirs, moved by the code round the bowl; a press on its handle takes it in hand until the next click. Its item is the cook's own, set by the code, see-through while it is only offered from the inventory.",
+      "id": "spoon",
+      "pos": [
+        8,
+        1,
+        8
+      ],
+      "strokes": true,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -1.6,
+          1.0,
+          -1.6
+        ],
+        "to": [
+          1.6,
+          7.0,
+          1.6
+        ]
+      },
+      "children": [
+        {
+          "id": "spoon_item",
+          "pickable": false
+        }
+      ]
+    },
+    {
+      "$comment": "A container from the inventory brought over the bowl, dipped into it and taken away full, or what was made lifted out; moved by the code in scene pixels.",
+      "id": "dipper",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "$comment": "The yolk of an egg cracked for its white, going back to the cook.",
+      "id": "yolk",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_0",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_1",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_2",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "hand_3",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "spill_0",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "spill_1",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "spill_2",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "spill_3",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "hidden": true,
+      "pickable": false
+    },
+    {
+      "id": "badge",
+      "pos": [
+        -0.6,
+        10.5,
+        4.6
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        -0.6,
+        10.52,
+        4.58
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "dial",
+      "pos": [
+        -0.6,
+        10.54,
+        4.56
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "pickable": false
+    },
+    {
+      "id": "preview",
+      "pos": [
+        -0.6,
+        10.58,
+        4.52
+      ],
+      "rotation": [
+        40,
+        0,
+        0
+      ],
+      "scale": 0.125,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        16.33,
+        17.22,
+        -4
+      ],
+      "rotation": [
+        -50,
+        0,
+        0
+      ],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -5.3,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          5.3,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

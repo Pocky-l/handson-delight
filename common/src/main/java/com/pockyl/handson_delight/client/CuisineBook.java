@@ -65,10 +65,14 @@ final class CuisineBook implements RecipeBook.Source {
 
     @Override
     public List<RecipeBook.Tab> tabs(StationView view) {
-        return List.of(new RecipeBook.Tab(null, new ItemStack(net.minecraft.world.item.Items.COMPASS)),
-                new RecipeBook.Tab(SUSHI, icon("tuna_nigiri")),
-                new RecipeBook.Tab(ROLLS, icon("california_roll")),
-                new RecipeBook.Tab(BAMBOO, icon("raw_kaguya_hime")));
+        return List.of(new RecipeBook.Tab(null, new ItemStack(net.minecraft.world.item.Items.COMPASS), name("all")),
+                new RecipeBook.Tab(SUSHI, icon("tuna_nigiri"), name(SUSHI)),
+                new RecipeBook.Tab(ROLLS, icon("california_roll"), name(ROLLS)),
+                new RecipeBook.Tab(BAMBOO, icon("raw_kaguya_hime"), name(BAMBOO)));
+    }
+
+    private static Component name(String tab) {
+        return Component.translatable("handson_delight.book.tab." + tab);
     }
 
     @SuppressWarnings("removal")

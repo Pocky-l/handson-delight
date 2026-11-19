@@ -17,7 +17,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
 
 import com.pockyl.diegesis.api.Diegesis;
 import com.pockyl.diegesis.api.state.SlotRef;
@@ -78,7 +77,8 @@ public final class StoveStation {
 
     /**
      * Stoves that open as this station: Farmer's Delight's and addons' built on its class (End's Delight's End stove, My Nether's
-     * Delight's Nether stove, Dungeons Delight's dungeon stove). A pack adds its own.
+     * Delight's Nether stove, Dungeons Delight's dungeon stove, Trail&Tales Delight's mud stove), and Nether's Delight's blackstone
+     * stove, a copy of that class (a mixin of its own gives it the station's top). A pack adds its own only on Farmer's Delight's class.
      */
     public static final TagKey<Block> STOVES = TagKey.create(Registries.BLOCK, HandsOnDelight.id("stoves"));
 
@@ -109,8 +109,8 @@ public final class StoveStation {
      * set on it. A pot or skillet standing on it covers the grill: it is theirs to open.
      */
     public static boolean opens(Player player, BlockPos pos, BlockState state) {
-        if (player.isSecondaryUseActive() || !(player.level().getBlockEntity(pos) instanceof AbstractStoveBlockEntity stove)
-                || StoveCooking.isCovered(stove)) {
+        if (player.isSecondaryUseActive() || !StoveCooking.isStove(player.level().getBlockEntity(pos))
+                || StoveCooking.isCovered(player.level().getBlockEntity(pos))) {
             return false;
         }
         ItemStack held = player.getMainHandItem();

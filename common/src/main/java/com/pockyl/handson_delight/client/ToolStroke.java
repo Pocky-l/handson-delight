@@ -21,9 +21,9 @@ import java.util.Optional;
 
 /**
  * How a tool works what lies on the board, each the way it is used: the knife cuts on its marks (drawn by {@code BoardBehavior}
- * itself), an axe strips a log in one push along it or splits wood with a swing, a pickaxe strikes stone until it breaks, a shovel
- * digs into gravel and clay and levers a lump out, a hoe hooks a chest off a boat or a cart and pries it away, shears snip leather
- * along their line. Read from the recipe, so every viewer agrees.
+ * itself), an axe strips a log in one push along it or splits wood with a swing (a log on a stump with a blow from high above), a
+ * pickaxe strikes stone until it breaks, a shovel digs into gravel and clay and levers a lump out, a hoe hooks a chest off a boat or
+ * a cart and pries it away, shears snip leather along their line. Read from the recipe, so every viewer agrees.
  *
  * <p>Poses are in the frame of the scene's {@code tool_turn}: x along the mark (or across the cook's view over a block, growing to
  * the cook's left), y up, z away from the cook. The tool is held at its grip, its working point (an axe's edge, a pick's point, a shovel's tip) on the
@@ -36,6 +36,11 @@ enum ToolStroke {
     CHOP(Icon.AXE, 0.19F, 0.42F),
     /** An axe along a log: its blade flat against the near side, drawn from the top to the foot, the bark curling off under it. */
     STRIP(Icon.AXE, 0.27F, 0.42F),
+    /**
+     * An axe into a log standing on a stump: raised high over the head, brought down into the end grain, left in it while the log
+     * falls apart in two.
+     */
+    SPLIT(Icon.AXE, 0.28F, 0.62F),
     /** A pickaxe on stone: raised high, brought down hard on its point. */
     SMASH(Icon.PICKAXE, 0.19F, 0.40F),
     /** A shovel into gravel or clay: pushed in low from the near side, then levered so the lump comes up. */
@@ -170,6 +175,7 @@ enum ToolStroke {
             case CHOP -> chop(target, age);
             case SMASH -> smash(target, age);
             case STRIP -> strip(target, age);
+            case SPLIT -> split(target, age);
             case DIG -> dig(target, age);
             case PRY -> pry(target, age);
             case SNIP -> snip(target, age, snipFrom, snipTo);
@@ -182,6 +188,17 @@ enum ToolStroke {
         Vector3f handle = dir(-0.8F, 0.7F, -0.55F);
         Vector3f edge = dir(0.0F, -1.0F, 0.0F);
         float raise = Float.isNaN(age) ? 0.3F : raise(age, 0.3F, 0.95F, 0.13F, 0.24F);
+        return held(target, handle, plane(handle, edge), edge, raise, 0.0F, new Vector3f());
+    }
+
+    /**
+     * An axe held nearly upright over the log, its edge down: swung far back over the shoulder, brought down into the middle of the
+     * log's top, held there while the halves part, lifted.
+     */
+    private Pose split(Vector3f target, float age) {
+        Vector3f handle = dir(-0.6F, 0.8F, -0.05F);
+        Vector3f edge = dir(0.0F, -1.0F, 0.0F);
+        float raise = Float.isNaN(age) ? 0.35F : raise(age, 0.35F, 1.45F, 0.17F, 0.4F);
         return held(target, handle, plane(handle, edge), edge, raise, 0.0F, new Vector3f());
     }
 

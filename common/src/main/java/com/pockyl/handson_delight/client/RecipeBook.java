@@ -152,6 +152,8 @@ final class RecipeBook implements NodePainter {
     private static final int STAR_SHUT = 0x305A3C18;
     /** The paper texture: its size, the page in its corner (the fold on the left), the ribbon and the lit ribbon beside it. */
     private static final float PAPER_SIZE = 128.0F;
+    /** The paper's own colour, all over the page: what a see-through rect is laid on. */
+    private static final int PAPER_TONE = 0xF3EACB;
     private static final float PAPER_U1 = UNITS_WIDE / PAPER_SIZE;
     private static final float PAPER_V1 = UNITS_HIGH / PAPER_SIZE;
     private static final float RIBBON_U = 80.0F;
@@ -2323,7 +2325,23 @@ final class RecipeBook implements NodePainter {
 
         void rect(float x, float y, float width, float height, float lift, int argb) {
             VertexConsumer consumer = buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(TextureAtlas.LOCATION_BLOCKS));
-            quad(consumer, x, y, x + width, y + height, lift, argb, white.getU0(), white.getU1(), white.getV0(), white.getV1());
+            quad(consumer, x, y, x + width, y + height, lift, onPaper(argb), white.getU0(), white.getU1(), white.getV0(), white.getV1());
+        }
+
+        /**
+         * A see-through colour as it looks laid on the paper, solid. A shader pack (Complementary and others) draws what is partly
+         * see-through dithered and its temporal anti-aliasing moves the dither every frame, so the wells, the fold's shade and the
+         * rules flickered. Everything a rect is laid on is the paper, which is one colour ({@link #PAPER_TONE}).
+         */
+        private static int onPaper(int argb) {
+            int a = argb >>> 24;
+            if (a == 0xFF) {
+                return argb;
+            }
+            int red = ((argb >> 16 & 0xFF) * a + (PAPER_TONE >> 16 & 0xFF) * (0xFF - a)) / 0xFF;
+            int green = ((argb >> 8 & 0xFF) * a + (PAPER_TONE >> 8 & 0xFF) * (0xFF - a)) / 0xFF;
+            int blue = ((argb & 0xFF) * a + (PAPER_TONE & 0xFF) * (0xFF - a)) / 0xFF;
+            return 0xFF000000 | red << 16 | green << 8 | blue;
         }
 
         /**

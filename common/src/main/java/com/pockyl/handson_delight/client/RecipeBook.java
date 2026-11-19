@@ -139,7 +139,12 @@ final class RecipeBook implements NodePainter {
     private static final int WELL = 0x1E5A3C18;
     private static final int WELL_READY = 0x70E0A83C;
     private static final int WELL_PICKED = 0xFF8A5A2B;
-    private static final int FADED = 0x55FFFFFF;
+    /**
+     * What the player does not have yet: the icon dimmed toward the paper's brown, but solid. A see-through icon flickered under a
+     * shader pack (Complementary and others): it draws partly see-through things dithered, and its temporal anti-aliasing moves the
+     * dither every frame. Solid icons stay steady.
+     */
+    private static final int FADED = 0xFFB4A48C;
     private static final int RULE = 0x405A3C18;
     /** Stars on a page: open, the part of the next one already earned, still shut. */
     private static final int STAR_OPEN = 0xFFD08A1E;
@@ -2441,7 +2446,7 @@ final class RecipeBook implements NodePainter {
             item(stack, x, y, size, false);
         }
 
-        /** {@code faded}: what the player does not have yet, the icon itself see-through, as nothing laid over it would stay in its place. */
+        /** {@code faded}: what the player does not have yet, the icon itself dimmed ({@link #FADED}), solid so it stays steady under a shader pack. */
         void item(ItemStack stack, float x, float y, float size, boolean faded) {
             poseStack.pushPose();
             poseStack.translate(x + size / 2.0F, y + size / 2.0F, ITEM_LIFT);

@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.1+1.21.1] - Unreleased
+### Changed
+- The recipe book has a new cover and paper, drawn by Catalyst.
+- Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.14.
+
+### Fixed
+- [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle takes milk or water again once its drink is poured out at the station, and a bucket used on it no longer jerks the camera towards the kettle and back ([#31](https://github.com/Pocky-l/handson-delight/issues/31), [#44](https://github.com/Pocky-l/handson-delight/issues/44), [#45](https://github.com/Pocky-l/handson-delight/issues/45)).
+- [Brewin' and Chewin'](https://modrinth.com/mod/brewin-and-chewin)'s keg shows how warm it is at the station before anything is put in, and while what is in it makes nothing.
+
 ## [1.6.0+1.21.1] - 2026-11-19
 ### New
 - [Extra Delight](https://modrinth.com/mod/extradelight)'s mixing bowl, vat, melting pot and oven are stations: stir with the spoon, age in stages under the lid, melt chocolate, bake in its pans.

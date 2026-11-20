@@ -231,6 +231,8 @@ public final class KegBehavior implements StationBehavior {
     private float shownTurn = Float.NaN;
     private String drawnDial = "";
     private int drawnWarmth = -1;
+    /** The badge's plate as drawn: 1 whole, 0 only the thermometer's strip, -1 not yet. */
+    private int drawnPlate = -1;
     /** What the keg makes of what is in it, or what waits in its output: the badge's icon. */
     private ItemStack dish = ItemStack.EMPTY;
     private Item shownDish;
@@ -301,6 +303,7 @@ public final class KegBehavior implements StationBehavior {
     public void onSceneReady(StationView view) {
         drawnDial = "";
         drawnWarmth = -1;
+        drawnPlate = -1;
         shownDish = null;
         shownTurn = Float.NaN;
         if (pour != null) {
@@ -314,15 +317,7 @@ public final class KegBehavior implements StationBehavior {
         view.node("dial").ifPresent(dial -> dial.setTint(DIAL_COLOR));
         view.node("dial_track").ifPresent(track -> track.setTint(TRACK_COLOR));
         view.node("thermo").ifPresent(track -> track.setTint(TRACK_COLOR));
-        view.node("badge").ifPresent(plate -> {
-            plate.setTint(PLATE_COLOR);
-            MeshShape.Builder plateShape = MeshShape.builder();
-            // Taller than the pot's: the time runs under the bar.
-            PotBehavior.pixels(plateShape, -10, -16, 20, 35);
-            PotBehavior.pixels(plateShape, -9, -17, 18, 1);
-            PotBehavior.pixels(plateShape, -9, 19, 18, 1);
-            plate.setShape(plateShape.build(), BADGE_TEXTURE, true);
-        });
+        view.node("badge").ifPresent(plate -> plate.setTint(PLATE_COLOR));
         // The badge stays in sight over the keg, its lid and whatever stands beside it, as the pot's does.
         for (String part : BADGE_PARTS) {
             view.node(part).ifPresent(node -> node.setOnTop(true));
@@ -1113,11 +1108,22 @@ public final class KegBehavior implements StationBehavior {
 
     /**
      * The badge while something ferments or is ready: what it makes, how warm the keg is against what the recipe takes, how far it
-     * has fermented and the time left, or how many servings are ready.
+     * has fermented and the time left, or how many servings are ready. With nothing of that, how warm the keg is.
      */
     private void badge(StationView view, boolean cookHere, boolean lidOff) {
         boolean shown = cookHere && !dish.isEmpty();
-        view.node("badge").ifPresent(plate -> plate.setVisible(shown));
+        // The keg's warmth shows from the start, as on Brewin' and Chewin's own screen: where the keg stands decides what ferments
+        // there, before anything is put in and while what is in it makes nothing. A tank that ferments at any warmth has none.
+        KitchenKeg keg = keg(view);
+        boolean thermometer = cookHere && keg != null && keg.handson$feelsWarmth();
+        int plateNow = shown ? 1 : 0;
+        view.node("badge").ifPresent(node -> {
+            node.setVisible(shown || thermometer);
+            if (plateNow != drawnPlate) {
+                drawnPlate = plateNow;
+                node.setShape(plate(shown), BADGE_TEXTURE, true);
+            }
+        });
         float progress = view.state().getControl(KegStation.PROGRESS);
         int left = view.state().data().getInt(KegStation.LEFT);
         int seconds = progress > 0.0F && left > 0 ? Math.max(1, Mth.ceil(left / 20.0F)) : 0;
@@ -1162,14 +1168,24 @@ public final class KegBehavior implements StationBehavior {
         }
         view.node("dial_track").ifPresent(node -> node.setVisible(shown));
         view.node("dial").ifPresent(node -> node.setVisible(shown));
-        // The tank ferments at any warmth: no thermometer.
-        KitchenKeg keg = keg(view);
-        boolean warmth = shown && keg != null && keg.handson$feelsWarmth();
-        view.node("thermo").ifPresent(node -> node.setVisible(warmth));
+        view.node("thermo").ifPresent(node -> node.setVisible(thermometer));
         // The keg's own cell blinks while it is too cold or too warm for what is in it.
         boolean fits = wanted == 0 || KegLogic.fitsWarmth(now, wanted);
-        view.node("thermo_now").ifPresent(node -> node.setVisible(warmth && (fits || Mth.sin(time * 6.0F) > 0.0F)));
+        view.node("thermo_now").ifPresent(node -> node.setVisible(thermometer && (fits || Mth.sin(time * 6.0F) > 0.0F)));
         preview(view, shown, seconds);
+    }
+
+    /**
+     * The badge's dark plate with cut corners: whole, taller than the pot's as the time runs under the bar, or only the strip at its
+     * top that holds the thermometer, while nothing ferments or waits.
+     */
+    private static MeshShape plate(boolean whole) {
+        int rows = whole ? 35 : 7;
+        MeshShape.Builder shape = MeshShape.builder();
+        PotBehavior.pixels(shape, -10, -16, 20, rows);
+        PotBehavior.pixels(shape, -9, -17, 18, 1);
+        PotBehavior.pixels(shape, -9, -16 + rows, 18, 1);
+        return shape.build();
     }
 
     /** A line of digits, colons and "x" centred under the bar, a pixel between characters. */

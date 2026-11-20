@@ -3,6 +3,8 @@ package com.pockyl.handson_delight.neoforge.mixin;
 import com.farmersrespite.common.block.entity.KettleBlockEntity;
 import com.farmersrespite.common.crafting.KettleRecipe;
 import com.farmersrespite.core.registry.FRRecipeTypes;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.Item;
@@ -25,7 +27,9 @@ import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.station.KitchenKettle;
@@ -61,6 +65,18 @@ abstract class KettleMixin implements KitchenKettle {
             target = "Lcom/farmersrespite/common/crafting/KettleRecipe;getBrewTime()I"))
     private int handson$brewTime(KettleRecipe recipe) {
         return HandsOnConfig.scaled(recipe.getBrewTime(), HandsOnConfig.kettleTime());
+    }
+
+    /**
+     * The kettle writes no tank while it is empty and reads one only when it is written, so the copy a client loads from the server
+     * kept the last drink drawn at the station: that client took the empty kettle for full, opened the station on a bucket the
+     * server would pour in, and poured nothing there either. No tank written is an empty tank.
+     */
+    @Inject(method = "loadAdditional", at = @At("TAIL"))
+    private void handson$emptyWhenUnwritten(CompoundTag compound, HolderLookup.Provider registries, CallbackInfo info) {
+        if (!compound.contains("FluidTank")) {
+            fluidTank.setFluid(FluidStack.EMPTY);
+        }
     }
 
     @Unique

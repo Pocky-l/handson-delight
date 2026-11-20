@@ -1074,6 +1074,11 @@ public final class ModGameTests {
         KettleTests.leavesDroppedInLieAsTheRecipeWants(helper);
     }
 
+    @GameTest(template = "empty")
+    public static void theKettleClientsSeeEmptiesWithTheServers(GameTestHelper helper) {
+        KettleTests.theKettleClientsSeeEmptiesWithTheServers(helper);
+    }
+
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void kettleTimeScalesTheBrew(GameTestHelper helper) {
         KettleTests.kettleTimeScalesTheBrew(helper);

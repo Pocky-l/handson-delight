@@ -157,6 +157,9 @@ public final class KettleLogic implements StationLogic {
         } else if (KettleStation.ACTION_LID.equals(action)) {
             kettle.handson$setOpen(data.getBoolean(KettleStation.OPEN));
         } else if (KettleStation.ACTION_USE.equals(action)) {
+            // The client decided from its copy whether this pours or fills: every client gets it again, used or refused. The packet
+            // is made when the tick's changes go out, so it already holds what this use did.
+            ClientCopy.broadcast(kettle.handson$blockEntity());
             boolean spout = KettleStation.SPOUT.equals(data.getString(KettleStation.AT));
             if (!spout && !kettle.handson$isOpen()) {
                 // Nothing is poured in through the lid.

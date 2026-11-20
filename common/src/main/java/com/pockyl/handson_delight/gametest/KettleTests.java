@@ -1,6 +1,7 @@
 package com.pockyl.handson_delight.gametest;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.material.Fluids;
 
 import com.pockyl.diegesis.api.state.SlotRef;
@@ -206,6 +208,35 @@ public final class KettleTests {
         setup.kettle.handson$setItem(1, ItemStack.EMPTY);
         setup.logic.onSlotChanged(setup.station, SlotRef.of(KettleStation.INGREDIENTS, 0));
         helper.assertTrue(setup.kettle.handson$getItem(0).getCount() == 2, "what makes nothing stays as it lies");
+        helper.succeed();
+    }
+
+    /**
+     * A client's kettle is loaded from what the server sends. Drawn empty at the station, it must come out empty there too: a copy that
+     * keeps the last drink refuses the next bucket, and a bucket used on the kettle opens the station the server will not open.
+     */
+    public static void theKettleClientsSeeEmptiesWithTheServers(GameTestHelper helper) {
+        Setup setup = kettle(helper, false);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        lid(setup, player, true);
+        pourWater(setup, player);
+        BlockEntity server = setup.kettle.handson$blockEntity();
+        HolderLookup.Provider registries = helper.getLevel().registryAccess();
+        BlockEntity client = server.getType().create(server.getBlockPos(), server.getBlockState());
+        helper.assertTrue(client != null, "a client's kettle can be made");
+        client.loadWithComponents(server.getUpdateTag(registries), registries);
+        KitchenKettle copy = KitchenKettle.of(client);
+        helper.assertTrue(copy != null && copy.handson$amount() == 1000, "the client's kettle holds the water");
+        player.inventoryMenu.setCarried(new ItemStack(Items.BUCKET));
+        setup.logic.onCustomAction(setup.station, player, KettleStation.ACTION_USE, at(KettleStation.SPOUT, false));
+        helper.assertTrue(setup.kettle.handson$amount() == 0 && player.inventoryMenu.getCarried().is(Items.WATER_BUCKET),
+                "the bucket drew the water back, the kettle holds " + setup.kettle.handson$amount());
+        client.loadWithComponents(server.getUpdateTag(registries), registries);
+        helper.assertTrue(copy.handson$amount() == 0, "the client's kettle is empty too, it holds " + copy.handson$amount());
+        helper.assertTrue(copy.handson$canPour(new ItemStack(Items.WATER_BUCKET)), "and takes the next bucket");
         helper.succeed();
     }
 

@@ -250,6 +250,9 @@ public final class KegLogic implements StationLogic {
         } else if (KegStation.ACTION_LID.equals(action)) {
             setLid(station, data.getBoolean(KegStation.OPEN));
         } else if (KegStation.ACTION_USE.equals(action)) {
+            // The client decided from its copy whether this pours or fills: every client gets it again, used or refused. The packet
+            // is made when the tick's changes go out, so it already holds what this use did.
+            ClientCopy.broadcast(keg.handson$blockEntity());
             boolean tap = KegStation.TAP.equals(data.getString(KegStation.AT));
             if (!tap && !isOpen(station)) {
                 // Nothing is poured in through the lid.

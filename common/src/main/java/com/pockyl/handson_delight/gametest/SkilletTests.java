@@ -5,7 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -26,6 +26,8 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnConfig;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.Frying;
 import com.pockyl.handson_delight.station.SkilletCooking;
@@ -122,17 +124,17 @@ public final class SkilletTests {
         Pan pan = pan(helper);
         Level level = helper.getLevel();
         List<String> refused = new ArrayList<>();
-        for (RecipeHolder<CampfireCookingRecipe> holder : level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {
+        for (RecipeHolder<CampfireCookingRecipe> holder : KitchenRecipes.all(level, RecipeType.CAMPFIRE_COOKING)) {
             CampfireCookingRecipe recipe = holder.value();
-            if (recipe.getIngredients().isEmpty() || recipe.getResultItem(level.registryAccess()).isEmpty()) {
+            if (RecipeParts.ingredients(recipe).isEmpty() || RecipeParts.result(recipe).isEmpty()) {
                 continue;
             }
-            for (ItemStack food : recipe.getIngredients().get(0).getItems()) {
+            for (ItemStack food : RecipeParts.items(RecipeParts.ingredients(recipe).get(0))) {
                 if (food.isEmpty() || food.is(Items.BARRIER)) {
                     continue;
                 }
                 if (!SkilletCooking.takes(pan.skillet, food.copyWithCount(1))
-                        || SkilletCooking.recipe(level, food).map(found -> found.getResultItem(level.registryAccess()).isEmpty()).orElse(true)) {
+                        || SkilletCooking.recipe(level, food).map(found -> RecipeParts.result(found).isEmpty()).orElse(true)) {
                     refused.add(holder.id() + " (" + food.getItem() + ")");
                 }
             }
@@ -180,10 +182,10 @@ public final class SkilletTests {
             helper.assertTrue(SkilletCooking.isDone(helper.getLevel(), inPan, pan.frying().ready()), "and is done");
         });
         int next = moreDelight ? 2 * SkilletCooking.sideTicks(SkilletCooking.skilletTicks(helper.getLevel(),
-                new ItemStack(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("fried_egg"))), 0), 2, 1.0F) : 40;
+                new ItemStack(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("fried_egg"))), 0), 2, 1.0F) : 40;
         helper.runAfterDelay(ready + next + 20, () -> {
             ItemStack inPan = pan.skillet.getStoredStack();
-            helper.assertTrue(inPan.getCount() == 2 && (!moreDelight || inPan.is(BuiltInRegistries.ITEM.get(FarmersDelightContent.id("fried_egg")))),
+            helper.assertTrue(inPan.getCount() == 2 && (!moreDelight || inPan.is(BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("fried_egg")))),
                     "past what the next recipe would take, it is still what was fried, got " + inPan);
             helper.assertTrue(pan.frying().down() == 0.0F && pan.frying().up() == 0.0F, "and fries no further");
             pan.toss();
@@ -241,7 +243,7 @@ public final class SkilletTests {
 
     public static void farmersDelightsRightClickCooksItsWay(GameTestHelper helper) {
         Pan pan = pan(helper);
-        pan.skillet.addItemToCook(new ItemStack(Items.BEEF), pan.cook);
+        pan.skillet.addItemToCook(new ItemStack(Items.BEEF), pan.cook, helper.getLevel());
         helper.assertTrue(pan.skillet.getStoredStack().is(Items.BEEF), "Farmer's Delight takes it");
         helper.assertFalse(pan.frying().byHand(), "and cooks it");
         helper.runAfterDelay(130, () -> {
@@ -345,7 +347,7 @@ public final class SkilletTests {
         }
 
         @Override
-        public void effect(ResourceLocation effect, String node, CompoundTag data) {
+        public void effect(Identifier effect, String node, CompoundTag data) {
         }
     }
 }

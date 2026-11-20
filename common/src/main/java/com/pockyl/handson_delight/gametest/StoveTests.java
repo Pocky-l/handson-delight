@@ -5,7 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -31,6 +31,9 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnConfig;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
+import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.Grill;
 import com.pockyl.handson_delight.station.StoveCooking;
 import com.pockyl.handson_delight.station.StoveLogic;
@@ -216,7 +219,7 @@ public final class StoveTests {
             BlockState state = block.defaultBlockState();
             helper.setBlock(at, state);
             helper.assertTrue(StoveStation.TYPE.matches(state), BuiltInRegistries.BLOCK.getKey(block) + " opens as the station");
-            helper.assertTrue(StoveCooking.isStove(helper.getBlockEntity(at)),
+            helper.assertTrue(StoveCooking.isStove(helper.getBlockEntity(at, net.minecraft.world.level.block.entity.BlockEntity.class)),
                     BuiltInRegistries.BLOCK.getKey(block) + " grills on a stove's block entity");
         }
         helper.succeed();
@@ -227,21 +230,21 @@ public final class StoveTests {
      * and other food in the usual time; handed to its own way, the piece keeps the half. Passes at once without the addon.
      */
     public static void theMazeStoveGrillsTwilightFoodTwiceAsFast(GameTestHelper helper) {
-        Block maze = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("twilightdelight", "maze_stove"));
+        Block maze = BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath("twilightdelight", "maze_stove"));
         if (maze == net.minecraft.world.level.block.Blocks.AIR) {
             helper.succeed();
             return;
         }
         Level level = helper.getLevel();
         // 1.21.1's maze stove halves the time by the dish's mod, 1.20.1's by the raw food's.
-        CampfireCookingRecipe twilight = level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING).stream()
+        CampfireCookingRecipe twilight = KitchenRecipes.all(level, RecipeType.CAMPFIRE_COOKING).stream()
                 .map(RecipeHolder::value)
-                .filter(recipe -> !recipe.getIngredients().isEmpty() && recipe.getIngredients().get(0).getItems().length > 0
-                        && BuiltInRegistries.ITEM.getKey(recipe.getResultItem(level.registryAccess()).getItem()).getNamespace()
+                .filter(recipe -> !RecipeParts.ingredients(recipe).isEmpty() && RecipeParts.items(RecipeParts.ingredients(recipe).get(0)).length > 0
+                        && BuiltInRegistries.ITEM.getKey(RecipeParts.result(recipe).getItem()).getNamespace()
                         .equals("twilightforest"))
                 .findFirst().orElse(null);
         helper.assertTrue(twilight != null, "the Twilight Forest has food for the fire");
-        Item food = twilight.getIngredients().get(0).getItems()[0].getItem();
+        Item food = RecipeParts.items(RecipeParts.ingredients(twilight).get(0))[0].getItem();
         Top top = stove(helper, maze);
         top.place(food, 1);
         top.place(Items.BEEF, 1);
@@ -250,10 +253,10 @@ public final class StoveTests {
         StoveCooking.tick(top.stove);
         steps[0] = top.grill().down(0);
         steps[1] = top.grill().down(1);
-        int half = twilight.getCookingTime() / 2;
+        int half = twilight.cookingTime() / 2;
         float times = HandsOnConfig.stoveTime();
         helper.assertTrue(Math.abs(steps[0] - 1.0F / StoveCooking.sideTicks(half, times)) < 1.0E-6F,
-                food + " grills in half its " + twilight.getCookingTime() + " ticks, got a step of " + steps[0]);
+                food + " grills in half its " + twilight.cookingTime() + " ticks, got a step of " + steps[0]);
         helper.assertTrue(Math.abs(steps[1] - 1.0F / StoveCooking.sideTicks(600, times)) < 1.0E-6F,
                 "beef in its usual time, got a step of " + steps[1]);
         int[] saved = StoveCooking.savedTimes(top.stove);
@@ -270,8 +273,8 @@ public final class StoveTests {
         Top top = stove(helper);
         BlockPos pos = top.station.pos();
         BlockState state = helper.getLevel().getBlockState(pos);
-        Item knife = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("iron_knife"));
-        Item pot = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("cooking_pot"));
+        Item knife = BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("iron_knife"));
+        Item pot = BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("cooking_pot"));
         for (ItemStack held : List.of(ItemStack.EMPTY, new ItemStack(Items.BEEF), new ItemStack(knife), new ItemStack(Items.BOWL),
                 new ItemStack(Items.BREAD), new ItemStack(Items.CARROT), new ItemStack(Items.SWEET_BERRIES))) {
             top.cook.setItemInHand(InteractionHand.MAIN_HAND, held);
@@ -293,12 +296,12 @@ public final class StoveTests {
         Top top = stove(helper);
         Level level = helper.getLevel();
         List<String> refused = new ArrayList<>();
-        for (RecipeHolder<CampfireCookingRecipe> holder : level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {
+        for (RecipeHolder<CampfireCookingRecipe> holder : KitchenRecipes.all(level, RecipeType.CAMPFIRE_COOKING)) {
             CampfireCookingRecipe recipe = holder.value();
-            if (recipe.getIngredients().isEmpty() || recipe.getResultItem(level.registryAccess()).isEmpty()) {
+            if (RecipeParts.ingredients(recipe).isEmpty() || RecipeParts.result(recipe).isEmpty()) {
                 continue;
             }
-            for (ItemStack food : StoveCooking.grillable(recipe.getIngredients().get(0)).getItems()) {
+            for (ItemStack food : RecipeParts.items(StoveCooking.grillable(RecipeParts.ingredients(recipe).get(0)))) {
                 if (!food.isEmpty() && !food.is(Items.BARRIER) && !StoveCooking.takes(top.stove, food.copyWithCount(1))) {
                     refused.add(holder.id() + " (" + food.getItem() + ")");
                 }
@@ -319,8 +322,8 @@ public final class StoveTests {
         farmers.placeFood(top.cook, egg, farmers.getCookingRecipe(egg).orElseThrow());
         helper.assertTrue(top.on(0).is(Items.EGG) && !top.grill().byHand(0), "Farmer's Delight's right click is its own way");
         boolean eggRecipe = false;
-        for (RecipeHolder<CampfireCookingRecipe> holder : helper.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING)) {
-            Ingredient food = holder.value().getIngredients().get(0);
+        for (RecipeHolder<CampfireCookingRecipe> holder : KitchenRecipes.all(helper.getLevel(), RecipeType.CAMPFIRE_COOKING)) {
+            Ingredient food = RecipeParts.ingredients(holder.value()).get(0);
             if (food.test(new ItemStack(Items.EGG))) {
                 eggRecipe = true;
                 helper.assertFalse(StoveCooking.grillable(food).test(new ItemStack(Items.EGG)), "the book shows no egg");
@@ -380,10 +383,10 @@ public final class StoveTests {
         }
 
         /** The effects sent, for the tests to look at. */
-        final java.util.List<ResourceLocation> effects = new java.util.ArrayList<>();
+        final java.util.List<Identifier> effects = new java.util.ArrayList<>();
 
         @Override
-        public void effect(ResourceLocation effect, String node, CompoundTag data) {
+        public void effect(Identifier effect, String node, CompoundTag data) {
             effects.add(effect);
         }
     }

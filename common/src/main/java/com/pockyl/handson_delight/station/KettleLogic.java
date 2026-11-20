@@ -2,8 +2,9 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
@@ -35,7 +36,7 @@ public final class KettleLogic implements StationLogic {
     private final KitchenKettle kettle;
     private final SlotStorage ingredients;
     /** The recipe the cook last picked in the book: the kettle's choice while its leaves make it, until the kettle is empty. */
-    private ResourceLocation wanted;
+    private Identifier wanted;
 
     public KettleLogic(StationContext station) {
         kettle = (KitchenKettle) station.blockEntity();
@@ -141,7 +142,7 @@ public final class KettleLogic implements StationLogic {
         if (StationRecipes.ACTION_OFFER.equals(action)) {
             // A stack clicked onto a kettle whose slots hold other leaves: in, when they still brew a tea with it.
             if (kettle.handson$perSlot() > 1) {
-                StationRecipes.offerCarried(station, this, player, KettleStation.INGREDIENTS, ingredients, data.getBoolean(StationRecipes.ONE),
+                StationRecipes.offerCarried(station, this, player, KettleStation.INGREDIENTS, ingredients, data.getBooleanOr(StationRecipes.ONE, false),
                         kinds -> {
                             List<StationRecipes.Candidate<KitchenKettle.Brewing>> candidates = candidates();
                             List<ItemStack> inKettle = new ArrayList<>();
@@ -155,25 +156,25 @@ public final class KettleLogic implements StationLogic {
                         });
             }
         } else if (KettleStation.ACTION_LID.equals(action)) {
-            kettle.handson$setOpen(data.getBoolean(KettleStation.OPEN));
+            kettle.handson$setOpen(data.getBooleanOr(KettleStation.OPEN, false));
         } else if (KettleStation.ACTION_USE.equals(action)) {
             boolean spout = KettleStation.SPOUT.equals(data.getString(KettleStation.AT));
             if (!spout && !kettle.handson$isOpen()) {
                 // Nothing is poured in through the lid.
                 return;
             }
-            if (spout && data.getBoolean(KettleStation.FROM_INVENTORY)) {
-                serveFromInventory(station, player, data.getBoolean(KettleStation.ALL));
+            if (spout && data.getBooleanOr(KettleStation.FROM_INVENTORY, false)) {
+                serveFromInventory(station, player, data.getBooleanOr(KettleStation.ALL, false));
             } else {
-                useCarried(station, player, spout, data.getBoolean(KettleStation.ALL),
-                        data.contains(KettleStation.FROM) ? data.getInt(KettleStation.FROM) : -1);
+                useCarried(station, player, spout, data.getBooleanOr(KettleStation.ALL, false),
+                        data.contains(KettleStation.FROM) ? data.getIntOr(KettleStation.FROM, 0) : -1);
             }
         } else if (KettleStation.ACTION_FILL.equals(action)) {
-            ResourceLocation id = ResourceLocation.tryParse(data.getString(KettleStation.DISH));
+            Identifier id = Identifier.tryParse(data.getStringOr(KettleStation.DISH, ""));
             // A recipe picked in the book takes the lid off for its leaves to go in.
             kettle.handson$setOpen(true);
             kettle.handson$recipes().stream().filter(recipe -> recipe.id().equals(id)).findFirst()
-                    .ifPresent(recipe -> fill(player, recipe, data.getBoolean(KettleStation.ALL) ? FILL_MOST : 1));
+                    .ifPresent(recipe -> fill(player, recipe, data.getBooleanOr(KettleStation.ALL, false) ? FILL_MOST : 1));
         }
         refresh(station);
     }
@@ -201,7 +202,7 @@ public final class KettleLogic implements StationLogic {
                 putBack(player, from, stack);
                 handFree = false;
             } else if (!player.getInventory().add(stack)) {
-                player.drop(stack, false);
+                player.drop(stack, false, Prediction.SERVER_ONLY);
             }
         }
         if (handFree) {
@@ -249,7 +250,7 @@ public final class KettleLogic implements StationLogic {
         List<ItemStack> back = useWhile(container, true, all);
         for (ItemStack stack : back) {
             if (!player.getInventory().add(stack)) {
-                player.drop(stack, false);
+                player.drop(stack, false, Prediction.SERVER_ONLY);
             }
         }
         player.getInventory().setChanged();
@@ -273,8 +274,8 @@ public final class KettleLogic implements StationLogic {
      * the cursor still draws it.
      */
     public static int containerSlot(KitchenKettle kettle, Inventory inventory) {
-        if (offerable(kettle, inventory.getSelected())) {
-            return inventory.selected;
+        if (offerable(kettle, inventory.getSelectedItem())) {
+            return inventory.getSelectedSlot();
         }
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
             if (offerable(kettle, inventory.getItem(slot))) {
@@ -324,7 +325,7 @@ public final class KettleLogic implements StationLogic {
         state.setData(own);
         int capacity = Math.max(1, kettle.handson$capacity());
         // The tank holds the kettle's own liquid, so that it looks like what it is (KettleLiquids on the client).
-        ResourceLocation liquid = kettle.handson$fluid() == Fluids.EMPTY ? HandsOnDelight.id("drink") : BuiltInRegistries.FLUID.getKey(kettle.handson$fluid());
+        Identifier liquid = kettle.handson$fluid() == Fluids.EMPTY ? HandsOnDelight.id("drink") : BuiltInRegistries.FLUID.getKey(kettle.handson$fluid());
         state.setTank(KettleStation.DRINK, TankContents.of(liquid, Math.round(100.0F * kettle.handson$amount() / capacity)));
     }
 }

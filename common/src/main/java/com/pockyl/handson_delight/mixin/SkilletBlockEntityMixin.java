@@ -3,10 +3,13 @@ package com.pockyl.handson_delight.mixin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -41,7 +44,7 @@ abstract class SkilletBlockEntityMixin implements FryingPan {
     private boolean handson$cookingNow;
 
     @Shadow(remap = false)
-    private void cookAndOutputItems(ItemStack stack, Level level) {
+    private void cookAndOutputItems(ItemStack stack, ServerLevel level) {
         throw new AssertionError();
     }
 
@@ -59,7 +62,7 @@ abstract class SkilletBlockEntityMixin implements FryingPan {
     }
 
     @Override
-    public void handson$cookOneNow(Level level) {
+    public void handson$cookOneNow(ServerLevel level) {
         // Farmer's Delight counts one more tick, then cooks once its count reaches its total.
         cookingTime = Math.max(cookingTime, cookingTimeTotal);
         handson$cookingNow = true;
@@ -77,37 +80,37 @@ abstract class SkilletBlockEntityMixin implements FryingPan {
     }
 
     @Inject(method = "cookAndOutputItems", at = @At("HEAD"), cancellable = true, remap = false)
-    private void handson$fryByHand(ItemStack stack, Level level, CallbackInfo callback) {
+    private void handson$fryByHand(ItemStack stack, ServerLevel level, CallbackInfo callback) {
         if (!handson$cookingNow && SkilletCooking.fry((SkilletBlockEntity) (Object) this, stack)) {
             callback.cancel();
         }
     }
 
     @Inject(method = "cookingTick", at = @At("HEAD"), remap = false)
-    private static void handson$startOverWhenEmpty(Level level, BlockPos pos, BlockState state, SkilletBlockEntity skillet,
+    private static void handson$startOverWhenEmpty(ServerLevel level, BlockPos pos, BlockState state, SkilletBlockEntity skillet,
             CallbackInfo callback) {
         SkilletCooking.check(skillet);
     }
 
     /** Food right-clicked into an empty skillet is Farmer's Delight's to cook. */
     @Inject(method = "addItemToCook", at = @At("HEAD"), remap = false)
-    private void handson$farmersDelightsWay(ItemStack stack, Player player, CallbackInfoReturnable<ItemStack> callback) {
+    private void handson$farmersDelightsWay(ItemStack stack, Player player, ServerLevel level, CallbackInfoReturnable<ItemStack> callback) {
         if (((SkilletBlockEntity) (Object) this).getStoredStack().isEmpty()) {
             handson$frying.farmersDelightsWay();
         }
     }
 
     @Inject(method = "saveAdditional", at = @At("TAIL"))
-    private void handson$saveFrying(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo callback) {
+    private void handson$saveFrying(ValueOutput output, CallbackInfo callback) {
         CompoundTag frying = new CompoundTag();
         handson$frying.save(frying);
         if (!frying.isEmpty()) {
-            tag.put(FRYING, frying);
+            output.store(FRYING, CompoundTag.CODEC, frying);
         }
     }
 
     @Inject(method = "loadAdditional", at = @At("TAIL"))
-    private void handson$loadFrying(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo callback) {
-        handson$frying.load(tag.getCompound(FRYING));
+    private void handson$loadFrying(ValueInput input, CallbackInfo callback) {
+        handson$frying.load(input.read(FRYING, CompoundTag.CODEC).orElseGet(CompoundTag::new));
     }
 }

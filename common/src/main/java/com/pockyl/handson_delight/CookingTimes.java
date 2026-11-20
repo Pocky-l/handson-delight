@@ -57,6 +57,6 @@ public final class CookingTimes {
         if (times == null) {
             return own;
         }
-        return times.contains(key) ? times.getFloat(key) : 1.0F;
+        return times.contains(key) ? times.getFloatOr(key, 0.0F) : 1.0F;
     }
 }

@@ -7,7 +7,7 @@ import com.mojang.serialization.JsonOps;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -17,6 +17,8 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
 
@@ -34,17 +36,16 @@ public final class RecipeEditTests {
 
     /** Every dish of the board is a recipe the server has under its id, with the same ingredients and result. */
     public static void everyDishIsTheServersRecipe(GameTestHelper helper) {
-        RecipeManager manager = helper.getLevel().getRecipeManager();
         RegistryAccess access = helper.getLevel().registryAccess();
         DynamicOps<JsonElement> ops = access.createSerializationContext(JsonOps.INSTANCE);
         for (AssemblyRecipes.Assembly dish : AssemblyRecipes.all()) {
-            Optional<RecipeHolder<?>> live = manager.byKey(dish.id());
+            Optional<RecipeHolder<?>> live = KitchenRecipes.byId(helper.getLevel(), dish.id());
             helper.assertTrue(live.isPresent(), dish.id() + " is among the server's recipes");
             Recipe<?> recipe = live.get().value();
             helper.assertTrue(dish.recipe() == recipe, dish.id() + " is made by the server's own recipe");
             helper.assertTrue(ingredients(dish.recipe(), ops).equals(ingredients(recipe, ops)), dish.id() + " takes what the server's recipe takes");
-            ItemStack made = dish.recipe().getResultItem(access);
-            ItemStack server = recipe.getResultItem(access);
+            ItemStack made = RecipeParts.result(dish.recipe());
+            ItemStack server = RecipeParts.result(recipe);
             // Farmer's Delight's dough from water names no result of its own: the board knows what it makes.
             helper.assertTrue(same(made, server) && (server.isEmpty() || same(dish.result(), server)),
                     dish.id() + " makes what the server's recipe makes");
@@ -64,22 +65,22 @@ public final class RecipeEditTests {
                     "a recipe removed and added anew under its id is made as added");
         }
         if (Platform.INSTANCE.isLoaded("crafttweaker")) {
-            ResourceLocation chicken = FarmersDelightContent.id("chicken_sandwich");
-            helper.assertTrue(helper.getLevel().getRecipeManager().byKey(chicken).isEmpty(), "the script removed the recipe");
+            Identifier chicken = FarmersDelightContent.id("chicken_sandwich");
+            helper.assertTrue(KitchenRecipes.byId(helper.getLevel(), chicken).isEmpty(), "the script removed the recipe");
             helper.assertTrue(!AssemblyRecipes.isMadeOnTheBoard(chicken), "and the board does not make it");
         }
         helper.succeed();
     }
 
     private static AssemblyRecipes.Assembly dish(GameTestHelper helper, String path) {
-        ResourceLocation id = FarmersDelightContent.id(path);
+        Identifier id = FarmersDelightContent.id(path);
         Optional<AssemblyRecipes.Assembly> dish = AssemblyRecipes.all().stream().filter(it -> it.id().equals(id)).findFirst();
         helper.assertTrue(dish.isPresent(), id + " is made on the board");
         return dish.get();
     }
 
     private static Item fd(String path) {
-        return BuiltInRegistries.ITEM.get(FarmersDelightContent.id(path));
+        return BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id(path));
     }
 
     private static boolean same(ItemStack one, ItemStack other) {
@@ -91,7 +92,7 @@ public final class RecipeEditTests {
     }
 
     private static List<String> ingredients(Recipe<?> recipe, DynamicOps<JsonElement> ops) {
-        return recipe.getIngredients().stream()
+        return RecipeParts.ingredients(recipe).stream()
                 .map(ingredient -> Ingredient.CODEC.encodeStart(ops, ingredient).getOrThrow(JsonParseException::new).toString()).toList();
     }
 }

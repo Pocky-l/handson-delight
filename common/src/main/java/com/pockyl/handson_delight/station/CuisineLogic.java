@@ -3,8 +3,9 @@ package com.pockyl.handson_delight.station;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Prediction;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -13,6 +14,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
+
+import com.pockyl.handson_delight.ItemNbt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,16 +53,16 @@ public final class CuisineLogic implements StationLogic {
         if (board == null) {
             return;
         }
-        int from = data.contains(CuisineBoardStation.FROM) ? data.getInt(CuisineBoardStation.FROM) : -1;
-        boolean all = data.getBoolean(CuisineBoardStation.ALL);
+        int from = data.contains(CuisineBoardStation.FROM) ? data.getIntOr(CuisineBoardStation.FROM, 0) : -1;
+        boolean all = data.getBooleanOr(CuisineBoardStation.ALL, false);
         followDish(station);
         switch (action) {
             case CuisineBoardStation.ACTION_PUT -> put(station, player, from, all);
             case CuisineBoardStation.ACTION_SHAPE -> shape(station, player);
             case CuisineBoardStation.ACTION_TAKE -> take(station, player);
             case CuisineBoardStation.ACTION_BACK -> back(station, player);
-            case CuisineBoardStation.ACTION_CUT -> cut(station, player, from, data.getInt(CuisineBoardStation.MARK), all);
-            case CuisineBoardStation.ACTION_FILL -> fill(station, player, data.getString(CuisineBoardStation.DISH), all);
+            case CuisineBoardStation.ACTION_CUT -> cut(station, player, from, data.getIntOr(CuisineBoardStation.MARK, 0), all);
+            case CuisineBoardStation.ACTION_FILL -> fill(station, player, data.getStringOr(CuisineBoardStation.DISH, ""), all);
             default -> {
             }
         }
@@ -78,7 +81,7 @@ public final class CuisineLogic implements StationLogic {
     private void setCuts(StationContext station, int value) {
         cuts = value;
         CompoundTag data = station.state().data();
-        if (!data.contains(CuisineBoardStation.CUTS) || data.getInt(CuisineBoardStation.CUTS) != value) {
+        if (!data.contains(CuisineBoardStation.CUTS) || data.getIntOr(CuisineBoardStation.CUTS, 0) != value) {
             data.putInt(CuisineBoardStation.CUTS, value);
             station.state().setData(data);
         }
@@ -131,10 +134,10 @@ public final class CuisineLogic implements StationLogic {
         // What does not fit drops, and only that: the inventory keeps the part it took.
         ItemStack given = back.copy();
         if (!given.isEmpty() && !player.getInventory().add(given)) {
-            player.drop(given, false);
+            player.drop(given, false, Prediction.SERVER_ONLY);
         }
         CompoundTag data = new CompoundTag();
-        data.put(CuisineBoardStation.STACK, back.saveOptional(station.level().registryAccess()));
+        data.put(CuisineBoardStation.STACK, ItemNbt.save(back, station.level().registryAccess()));
         data.put(CuisineBoardStation.AFTER, contents());
         station.effect(CuisineBoardStation.EFFECT_BACK, "board", data);
     }
@@ -190,15 +193,15 @@ public final class CuisineLogic implements StationLogic {
         putBack(player, slot, knife);
         ListTag pieces = new ListTag();
         for (ItemStack result : results) {
-            pieces.add(result.saveOptional(station.level().registryAccess()));
+            pieces.add(ItemNbt.save(result, station.level().registryAccess()));
             ItemStack given = result.copy();
             if (!player.getInventory().add(given)) {
-                player.drop(given, false);
+                player.drop(given, false, Prediction.SERVER_ONLY);
             }
         }
         CompoundTag data = new CompoundTag();
-        data.put(CuisineBoardStation.STACK, finished.saveOptional(station.level().registryAccess()));
-        data.put(CuisineBoardStation.TOOL, shown.saveOptional(station.level().registryAccess()));
+        data.put(CuisineBoardStation.STACK, ItemNbt.save(finished, station.level().registryAccess()));
+        data.put(CuisineBoardStation.TOOL, ItemNbt.save(shown, station.level().registryAccess()));
         data.put(CuisineBoardStation.RESULTS, pieces);
         data.putInt(CuisineBoardStation.MARK, marks - 1);
         station.effect(CuisineBoardStation.EFFECT_CUT, "board", data);
@@ -212,7 +215,7 @@ public final class CuisineLogic implements StationLogic {
      * last stays on the board.
      */
     private void fill(StationContext station, Player player, String id, boolean all) {
-        ResourceLocation key = ResourceLocation.tryParse(id);
+        Identifier key = Identifier.tryParse(id);
         KitchenCuisine.Dish dish = board.handson$dishes().stream().filter(it -> it.id().equals(key)).findFirst().orElse(null);
         if (dish == null) {
             return;
@@ -286,8 +289,8 @@ public final class CuisineLogic implements StationLogic {
     }
 
     private int slotFor(Inventory inventory, Ingredient step) {
-        for (int slot = 0; slot < inventory.items.size(); slot++) {
-            ItemStack stack = inventory.items.get(slot);
+        for (int slot = 0; slot < inventory.getNonEquipmentItems().size(); slot++) {
+            ItemStack stack = inventory.getNonEquipmentItems().get(slot);
             if (!stack.isEmpty() && step.test(board.handson$asStep(stack)) && board.handson$takes(stack) > 0) {
                 return slot;
             }
@@ -302,7 +305,7 @@ public final class CuisineLogic implements StationLogic {
      */
     private static boolean hasSet(KitchenCuisine board, Player player, KitchenCuisine.Dish dish, List<ItemStack> laid) {
         List<ItemStack> left = new ArrayList<>();
-        for (ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
             // A flask of soy sauce counts as the bottles it gives: each set takes one more serving of it.
             left.add(board.handson$asStep(stack).copy());
         }
@@ -354,7 +357,7 @@ public final class CuisineLogic implements StationLogic {
 
     private CompoundTag step(ItemStack laid) {
         CompoundTag step = new CompoundTag();
-        step.put(CuisineBoardStation.STACK, laid.saveOptional(board.handson$blockEntity().getLevel().registryAccess()));
+        step.put(CuisineBoardStation.STACK, ItemNbt.save(laid, board.handson$blockEntity().getLevel().registryAccess()));
         step.put(CuisineBoardStation.AFTER, contents());
         return step;
     }
@@ -362,7 +365,7 @@ public final class CuisineLogic implements StationLogic {
     private ListTag contents() {
         ListTag list = new ListTag();
         for (ItemStack stack : board.handson$contents()) {
-            list.add(stack.saveOptional(board.handson$blockEntity().getLevel().registryAccess()));
+            list.add(ItemNbt.save(stack, board.handson$blockEntity().getLevel().registryAccess()));
         }
         return list;
     }
@@ -378,7 +381,7 @@ public final class CuisineLogic implements StationLogic {
 
     private void taken(StationContext station, ItemStack dish, boolean batch) {
         CompoundTag data = new CompoundTag();
-        data.put(CuisineBoardStation.STACK, dish.saveOptional(station.level().registryAccess()));
+        data.put(CuisineBoardStation.STACK, ItemNbt.save(dish, station.level().registryAccess()));
         if (batch) {
             data.put(CuisineBoardStation.AFTER, contents());
         }
@@ -387,7 +390,7 @@ public final class CuisineLogic implements StationLogic {
 
     private static void refused(StationContext station, ItemStack stack) {
         CompoundTag data = new CompoundTag();
-        data.put(CuisineBoardStation.STACK, stack.copyWithCount(1).saveOptional(station.level().registryAccess()));
+        data.put(CuisineBoardStation.STACK, ItemNbt.save(stack.copyWithCount(1), station.level().registryAccess()));
         station.effect(CuisineBoardStation.EFFECT_REFUSED, "board", data);
     }
 

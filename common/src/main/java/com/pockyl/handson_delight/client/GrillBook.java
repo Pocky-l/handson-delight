@@ -42,11 +42,11 @@ final class GrillBook implements RecipeBook.Source {
             return;
         }
         Inventory inventory = player.getInventory();
-        for (int slot = 0; slot < inventory.items.size(); slot++) {
-            if (page.ingredients().get(0).test(inventory.items.get(slot))) {
+        for (int slot = 0; slot < inventory.getNonEquipmentItems().size(); slot++) {
+            if (page.ingredients().get(0).test(inventory.getNonEquipmentItems().get(slot))) {
                 CompoundTag how = new CompoundTag();
                 how.putInt(GrillStation.FROM, slot);
-                if (!Screen.hasShiftDown()) {
+                if (!Minecraft.getInstance().hasShiftDown()) {
                     how.putBoolean(GrillStation.ONE, true);
                     how.putInt(GrillStation.PLACE, GrillBehavior.firstFree(view));
                 }

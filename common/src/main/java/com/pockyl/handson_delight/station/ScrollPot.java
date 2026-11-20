@@ -1,6 +1,6 @@
 package com.pockyl.handson_delight.station;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -19,15 +19,15 @@ import java.util.Optional;
  */
 public interface ScrollPot {
     @SuppressWarnings("removal")
-    ResourceLocation FIRE = ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "fire");
+    Identifier FIRE = Identifier.fromNamespaceAndPath("irons_spellbooks", "fire");
     @SuppressWarnings("removal")
-    ResourceLocation ICE = ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "ice");
+    Identifier ICE = Identifier.fromNamespaceAndPath("irons_spellbooks", "ice");
     @SuppressWarnings("removal")
-    ResourceLocation LIGHTNING = ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "lightning");
+    Identifier LIGHTNING = Identifier.fromNamespaceAndPath("irons_spellbooks", "lightning");
     @SuppressWarnings("removal")
-    ResourceLocation HOLY = ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "holy");
+    Identifier HOLY = Identifier.fromNamespaceAndPath("irons_spellbooks", "holy");
     @SuppressWarnings("removal")
-    ResourceLocation GLUTTONY = ResourceLocation.fromNamespaceAndPath("farmers_spell", "gluttony");
+    Identifier GLUTTONY = Identifier.fromNamespaceAndPath("farmers_spell", "gluttony");
 
     ItemStack handson$scroll();
 
@@ -37,25 +37,25 @@ public interface ScrollPot {
     boolean handson$isScroll(ItemStack stack);
 
     /** The school of a scroll's spell, or null for none. */
-    ResourceLocation handson$schoolOf(ItemStack scroll);
+    Identifier handson$schoolOf(ItemStack scroll);
 
     /** The school a recipe cooks only under, or null for none (Farmer's Delight's recipes and most of the pot's own). */
-    ResourceLocation handson$schoolFor(CookingPotRecipe recipe);
+    Identifier handson$schoolFor(CookingPotRecipe recipe);
 
     /** A scroll of every spell of {@code school}, to show where a recipe wants one; empty where there are none. */
-    List<ItemStack> handson$scrollsOf(ResourceLocation school);
+    List<ItemStack> handson$scrollsOf(Identifier school);
 
     /** Any scroll of {@code school}, for a recipe book: it shows one of every spell of that school. */
-    Ingredient handson$scrollIngredient(ResourceLocation school);
+    Ingredient handson$scrollIngredient(Identifier school);
 
     /** The colour of {@code school}, as Iron's Spells aims its spells, 0xRRGGBB. */
-    int handson$colorOf(ResourceLocation school);
+    int handson$colorOf(Identifier school);
 
     /** Whether the recipe is the pot's own (a tab of the book), not Farmer's Delight's. */
     boolean handson$isOwnRecipe(CookingPotRecipe recipe);
 
     /** The school of the scroll hanging in the pot, or null. */
-    default ResourceLocation handson$school() {
+    default Identifier handson$school() {
         ItemStack scroll = handson$scroll();
         return scroll.isEmpty() ? null : handson$schoolOf(scroll);
     }
@@ -67,12 +67,12 @@ public interface ScrollPot {
     Optional<RecipeHolder<CookingPotRecipe>> handson$waiting(Level level, List<ItemStack> items);
 
     /** The slot of the player's inventory holding a scroll of {@code school}: the one in hand first; -1 without one. */
-    default int scrollSlot(Inventory inventory, ResourceLocation school) {
+    default int scrollSlot(Inventory inventory, Identifier school) {
         if (school == null) {
             return -1;
         }
-        if (handson$isScroll(inventory.getSelected()) && school.equals(handson$schoolOf(inventory.getSelected()))) {
-            return inventory.selected;
+        if (handson$isScroll(inventory.getSelectedItem()) && school.equals(handson$schoolOf(inventory.getSelectedItem()))) {
+            return inventory.getSelectedSlot();
         }
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
             ItemStack stack = inventory.getItem(slot);

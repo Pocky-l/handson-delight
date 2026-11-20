@@ -1,11 +1,14 @@
 package com.pockyl.handson_delight.station;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -34,12 +37,12 @@ public interface KitchenBowl {
     }
 
     /** A liquid in the bowl: the fluid's id and how much of it, millibuckets. */
-    record Liquid(ResourceLocation fluid, int amount) {
+    record Liquid(Identifier fluid, int amount) {
     }
 
     /** A liquid a recipe wants: any of {@code fluids}, at least {@code amount}; {@code shown} is what it is poured from (a bottle). */
-    record LiquidNeed(List<ResourceLocation> fluids, int amount, ItemStack shown) {
-        public boolean takes(ResourceLocation fluid) {
+    record LiquidNeed(List<Identifier> fluids, int amount, ItemStack shown) {
+        public boolean takes(Identifier fluid) {
             return fluids.contains(fluid);
         }
 
@@ -59,7 +62,7 @@ public interface KitchenBowl {
      * A recipe of the bowl: what goes in (one of each, in any of the nine places), the liquids, the container the result goes into
      * (empty for none; {@link #containersPer} of it are used up a set), the utensil that mixes it, how many stirs, the result.
      */
-    record Mixing(ResourceLocation id, List<Ingredient> ingredients, List<LiquidNeed> liquids, ItemStack container, Ingredient utensil,
+    record Mixing(Identifier id, List<Ingredient> ingredients, List<LiquidNeed> liquids, ItemStack container, Ingredient utensil,
             int stirs, ItemStack result) {
         public boolean hasContainer() {
             return !container.isEmpty();
@@ -75,14 +78,14 @@ public interface KitchenBowl {
             List<Ingredient> all = new ArrayList<>(ingredients);
             for (LiquidNeed liquid : liquids) {
                 // A bucket once; bottles as many as it takes (three of water for 750 mB).
-                boolean bucket = liquid.shown().getItem().getCraftingRemainingItem() == net.minecraft.world.item.Items.BUCKET;
+                boolean bucket = RecipeParts.remainder(liquid.shown().getItem()) == net.minecraft.world.item.Items.BUCKET;
                 int times = bucket ? 1 : Math.max(1, (liquid.amount() + BOTTLE - 1) / BOTTLE);
                 for (int i = 0; i < times && !liquid.shown().isEmpty(); i++) {
-                    all.add(Ingredient.of(liquid.shown()));
+                    all.add(Ingredient.of(liquid.shown().getItem()));
                 }
             }
             if (hasContainer()) {
-                all.add(Ingredient.of(container.copyWithCount(1)));
+                all.add(Ingredient.of(container.getItem()));
             }
             return all;
         }
@@ -93,7 +96,7 @@ public interface KitchenBowl {
         List<Mixing> read(Level level);
 
         /** What a liquid is poured from: a bottle of it, or for a bucketful its bucket; empty when Extra Delight knows none. */
-        ItemStack shown(ResourceLocation fluid, int amount);
+        ItemStack shown(Identifier fluid, int amount);
     }
 
     /** The reader of the loader that has Extra Delight. */
@@ -116,7 +119,7 @@ public interface KitchenBowl {
             if (Mod.reader == null) {
                 return List.of();
             }
-            Object manager = level.getRecipeManager();
+            Object manager = KitchenRecipes.source(level);
             if (Mod.readFrom.get() != manager) {
                 Mod.read = List.copyOf(Mod.reader.read(level));
                 Mod.readFrom = new WeakReference<>(manager);
@@ -126,7 +129,7 @@ public interface KitchenBowl {
     }
 
     /** What {@code fluid} is poured from, for the book and the colour of the liquid. */
-    static ItemStack shown(ResourceLocation fluid, int amount) {
+    static ItemStack shown(Identifier fluid, int amount) {
         return Mod.reader == null ? ItemStack.EMPTY : Mod.reader.shown(fluid, amount);
     }
 

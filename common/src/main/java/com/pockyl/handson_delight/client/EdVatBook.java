@@ -3,7 +3,7 @@ package com.pockyl.handson_delight.client;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -11,6 +11,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluid;
 
 import com.pockyl.diegesis.api.client.StationView;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.EdVatStation;
 import com.pockyl.handson_delight.station.KitchenEdVat;
 
@@ -41,7 +42,7 @@ final class EdVatBook implements RecipeBook.Source {
                 boolean bucketful = recipe.amount() >= 1000;
                 containers.sort(java.util.Comparator.comparing(stack -> stack.getItem() instanceof BucketItem != bucketful));
                 if (!containers.isEmpty()) {
-                    needed.add(Ingredient.of(containers.stream()));
+                    needed.add(Ingredient.of(containers.stream().map(ItemStack::getItem)));
                 }
             }
             if (!recipe.container().isEmpty()) {
@@ -49,8 +50,8 @@ final class EdVatBook implements RecipeBook.Source {
             }
             List<ItemStack> foot = new ArrayList<>();
             for (KitchenEdVat.Stage stage : recipe.stages()) {
-                if (stage.wantsItem() && stage.ingredient().getItems().length > 0) {
-                    foot.add(stage.ingredient().getItems()[0].copyWithCount(1));
+                if (stage.wantsItem() && RecipeParts.items(stage.ingredient()).length > 0) {
+                    foot.add(RecipeParts.items(stage.ingredient())[0].copyWithCount(1));
                 }
                 if (stage.lid()) {
                     foot.add(new ItemStack(KitchenEdVat.lid()));
@@ -85,7 +86,7 @@ final class EdVatBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(EdVatStation.DISH, page.key().toString());
-        fill.putBoolean(EdVatStation.ALL, Screen.hasShiftDown());
+        fill.putBoolean(EdVatStation.ALL, net.minecraft.client.Minecraft.getInstance().hasShiftDown());
         view.sendAction(EdVatStation.ACTION_FILL, fill);
     }
 
@@ -94,10 +95,10 @@ final class EdVatBook implements RecipeBook.Source {
     public List<ItemStack> inStation(StationView view) {
         List<ItemStack> in = new ArrayList<>(Arrays.asList(view.state().getItems(EdVatStation.INGREDIENTS)));
         KitchenEdVat.Access access = KitchenEdVat.access();
-        String fluid = view.state().data().getString(EdVatStation.FLUID);
-        ResourceLocation key = fluid.isEmpty() ? null : ResourceLocation.tryParse(fluid);
+        String fluid = view.state().data().getStringOr(EdVatStation.FLUID, "");
+        Identifier key = fluid.isEmpty() ? null : Identifier.tryParse(fluid);
         if (access != null && key != null) {
-            Fluid inside = net.minecraft.core.registries.BuiltInRegistries.FLUID.get(key);
+            Fluid inside = net.minecraft.core.registries.BuiltInRegistries.FLUID.getValue(key);
             in.addAll(access.containersOf(inside));
         }
         return in;
@@ -106,9 +107,9 @@ final class EdVatBook implements RecipeBook.Source {
     /** The book opens at what is in the vat. */
     @Override
     public Object current(StationView view) {
-        String making = view.state().data().getString(EdVatStation.MAKING);
+        String making = view.state().data().getStringOr(EdVatStation.MAKING, "");
         if (!making.isEmpty()) {
-            return ResourceLocation.tryParse(making);
+            return Identifier.tryParse(making);
         }
         return KitchenEdVat.matchingPlaces(KitchenEdVat.recipes(view.level()), view.state().getItems(EdVatStation.INGREDIENTS))
                 .map(KitchenEdVat.Aging::id).orElse(null);

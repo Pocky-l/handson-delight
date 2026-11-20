@@ -5,7 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -34,7 +34,7 @@ public final class OvenTests {
 
     @SuppressWarnings("removal")
     private static Block cfb(String path) {
-        return BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(CfbOven.MOD_ID, path));
+        return BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(CfbOven.MOD_ID, path));
     }
 
     private record Setup(PotTests.TestStation station, OvenLogic logic, CfbOven oven) {
@@ -138,7 +138,7 @@ public final class OvenTests {
         door(setup, player, false);
         helper.runAfterDelay(CfbOven.bakeTicks() / 2, () -> {
             setup.logic.tick(setup.station);
-            helper.assertTrue(setup.station.state().data().getBoolean(OvenStation.HOT), "the station tells the fire burns");
+            helper.assertTrue(setup.station.state().data().getBooleanOr(OvenStation.HOT, false), "the station tells the fire burns");
             helper.assertTrue(setup.station.state().getControl(OvenStation.PROGRESS) > 0.2F, "and how far it has baked");
         });
         helper.succeedWhen(() -> {
@@ -221,7 +221,7 @@ public final class OvenTests {
             return;
         }
         Player player = helper.makeMockPlayer(GameType.CREATIVE);
-        net.minecraft.world.item.Item skillet = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("farmersdelight", "skillet"));
+        net.minecraft.world.item.Item skillet = BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("farmersdelight", "skillet"));
         player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(skillet));
         BlockPos pos = helper.absolutePos(at);
         net.minecraft.world.phys.BlockHitResult top = new net.minecraft.world.phys.BlockHitResult(
@@ -253,18 +253,18 @@ public final class OvenTests {
         helper.setBlock(at.east(), Blocks.HOPPER.defaultBlockState().setValue(HopperBlock.FACING, Direction.WEST));
         helper.setBlock(at.below(), Blocks.HOPPER.defaultBlockState().setValue(HopperBlock.FACING, Direction.DOWN));
         helper.setBlock(at.below(2), Blocks.STONE);
-        ((HopperBlockEntity) helper.getBlockEntity(at.above())).setItem(0, new ItemStack(Items.PORKCHOP, 2));
-        ((HopperBlockEntity) helper.getBlockEntity(at.east())).setItem(0, new ItemStack(Items.COAL, 1));
+        helper.getBlockEntity(at.above(), HopperBlockEntity.class).setItem(0, new ItemStack(Items.PORKCHOP, 2));
+        helper.getBlockEntity(at.east(), HopperBlockEntity.class).setItem(0, new ItemStack(Items.COAL, 1));
         // Cooking for Blockheads 21.1 with Balm 21.0 gives hoppers its whole container whatever their side (the same without this
         // mod): what the hoppers put in comes out again below, baked or not. The station keeps that as it is.
         helper.succeedWhen(() -> {
-            HopperBlockEntity under = (HopperBlockEntity) helper.getBlockEntity(at.below());
+            HopperBlockEntity under = helper.getBlockEntity(at.below(), HopperBlockEntity.class);
             int porkchops = 0;
             for (int slot = 0; slot < under.getContainerSize(); slot++) {
                 ItemStack stack = under.getItem(slot);
                 porkchops += stack.is(Items.PORKCHOP) || stack.is(Items.COOKED_PORKCHOP) ? stack.getCount() : 0;
             }
-            helper.assertTrue(((HopperBlockEntity) helper.getBlockEntity(at.above())).isEmpty(), "the hopper on top filled the oven");
+            helper.assertTrue(helper.getBlockEntity(at.above(), HopperBlockEntity.class).isEmpty(), "the hopper on top filled the oven");
             helper.assertTrue(porkchops == 2, "the hopper under the oven took out " + porkchops + " of 2 porkchops");
         });
     }

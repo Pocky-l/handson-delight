@@ -1,18 +1,20 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import com.pockyl.diegesis.api.station.StationContext;
+
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -29,15 +31,16 @@ import java.util.Set;
  */
 public final class EdOven implements KitchenOven {
     public static final String MOD_ID = "extradelight";
-    public static final ResourceLocation OVEN_ID = ResourceLocation.fromNamespaceAndPath(MOD_ID, "oven");
-    public static final ResourceLocation BAKING = ResourceLocation.fromNamespaceAndPath(MOD_ID, "oven");
+    public static final Identifier OVEN_ID = Identifier.fromNamespaceAndPath(MOD_ID, "oven");
+    public static final Identifier BAKING = Identifier.fromNamespaceAndPath(MOD_ID, "oven");
     public static final int PLACES = 9;
     public static final int BAKEWARE_SLOT = 10;
     public static final int OUTPUT_SLOT = 11;
     /** As its slots hold: a whole stack a place. */
     public static final int PER_PLACE = 64;
 
-    private static RecipeManager listedFor;
+    /** What the recipes were listed from: see {@link KitchenRecipes#source}. */
+    private static Object listedFor;
     private static List<Baking> listed = List.of();
     private static Set<Item> bakewareItems = Set.of();
 
@@ -224,20 +227,20 @@ public final class EdOven implements KitchenOven {
      * Listed once a recipe manager.
      */
     public static synchronized List<Baking> recipesOf(Level level) {
-        RecipeManager manager = level.getRecipeManager();
+        Object manager = KitchenRecipes.source(level);
         if (manager == listedFor) {
             return listed;
         }
         List<Baking> recipes = new ArrayList<>();
         Set<Item> bakeware = new HashSet<>();
-        for (RecipeHolder<?> holder : manager.getRecipes()) {
+        for (RecipeHolder<?> holder : KitchenRecipes.recipes(level)) {
             Recipe<?> recipe = holder.value();
             if (!BAKING.equals(BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType()))) {
                 continue;
             }
             try {
-                ItemStack result = recipe.getResultItem(level.registryAccess());
-                List<Ingredient> ingredients = List.copyOf(recipe.getIngredients());
+                ItemStack result = RecipeParts.result(recipe);
+                List<Ingredient> ingredients = List.copyOf(RecipeParts.ingredients(recipe));
                 ItemStack container = (ItemStack) recipe.getClass().getMethod("getOutputContainer").invoke(recipe);
                 int ticks = (Integer) recipe.getClass().getMethod("getCookTime").invoke(recipe);
                 boolean usesUp = (Boolean) recipe.getClass().getMethod("shouldConsumeContainer").invoke(recipe);
@@ -246,7 +249,7 @@ public final class EdOven implements KitchenOven {
                     continue;
                 }
                 String kind = BuiltInRegistries.ITEM.getKey(container.getItem()).toString();
-                recipes.add(new Baking(holder.id(), ingredients, 0, 0, result.copy(), ticks, kind, container.copyWithCount(1), usesUp));
+                recipes.add(new Baking(holder.id().identifier(), ingredients, 0, 0, result.copy(), ticks, kind, container.copyWithCount(1), usesUp));
                 bakeware.add(container.getItem());
             } catch (ReflectiveOperationException | RuntimeException e) {
                 // A recipe of a shape this does not know is left to the oven's own menu.

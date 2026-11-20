@@ -1,8 +1,8 @@
 package com.pockyl.handson_delight.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.resources.Identifier;
 
 import com.pockyl.handson_delight.platform.Platform;
 
@@ -14,16 +14,10 @@ public interface ClientPlatform {
     ClientPlatform INSTANCE = Platform.load(ClientPlatform.class);
 
     /**
-     * Applies the GUI transform of {@code model} to {@code poseStack} and gives the model to draw after it, as
-     * {@code ItemDisplayContext.NONE}: on NeoForge a model can give another one for the GUI.
-     */
-    BakedModel guiModel(BakedModel model, PoseStack poseStack);
-
-    /**
      * A model registered by its plain id (another mod's additional model), or null where the loader has no such lookup: vanilla
      * looks models up by {@code ModelResourceLocation} only.
      */
-    default BakedModel model(ResourceLocation id) {
+    default BlockStateModel model(Identifier id) {
         return null;
     }
 
@@ -33,7 +27,7 @@ public interface ClientPlatform {
     }
 
     /** The block atlas texture a still pool of the fluid is drawn with, or null where the loader cannot tell. */
-    default ResourceLocation fluidTexture(net.minecraft.world.level.material.Fluid fluid) {
+    default Identifier fluidTexture(net.minecraft.world.level.material.Fluid fluid) {
         return null;
     }
 }

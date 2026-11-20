@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -11,6 +12,8 @@ import com.pockyl.diegesis.api.state.SlotStorage;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
+
+import com.pockyl.handson_delight.ItemNbt;
 
 /**
  * The grill's actions at the station: a skewer on, turned, seasoned, taken. The grilling itself is the grill's: it ticks its skewers
@@ -65,10 +68,10 @@ public final class GrillLogic implements StationLogic {
         if (grill == null) {
             return;
         }
-        int place = data.contains(GrillStation.PLACE) ? data.getInt(GrillStation.PLACE) : -1;
-        int from = data.contains(GrillStation.FROM) ? data.getInt(GrillStation.FROM) : -1;
+        int place = data.contains(GrillStation.PLACE) ? data.getIntOr(GrillStation.PLACE, 0) : -1;
+        int from = data.contains(GrillStation.FROM) ? data.getIntOr(GrillStation.FROM, 0) : -1;
         switch (action) {
-            case GrillStation.ACTION_PLACE -> place(station, player, data.getBoolean(GrillStation.ONE) ? place : -1, from);
+            case GrillStation.ACTION_PLACE -> place(station, player, data.getBooleanOr(GrillStation.ONE, false) ? place : -1, from);
             case GrillStation.ACTION_TURN -> turn(station, place);
             case GrillStation.ACTION_TAKE -> take(station, player, place);
             case GrillStation.ACTION_SEASON -> season(station, player, place, from);
@@ -104,7 +107,7 @@ public final class GrillLogic implements StationLogic {
 
     private void refused(StationContext station, ItemStack stack) {
         CompoundTag data = new CompoundTag();
-        data.put(GrillStation.STACK, stack.copyWithCount(1).saveOptional(station.level().registryAccess()));
+        data.put(GrillStation.STACK, ItemNbt.save(stack.copyWithCount(1), station.level().registryAccess()));
         station.effect(GrillStation.EFFECT_REFUSED, "grill", data);
     }
 
@@ -122,10 +125,10 @@ public final class GrillLogic implements StationLogic {
         }
         CompoundTag data = new CompoundTag();
         data.putInt(GrillStation.PLACE, place);
-        data.put(GrillStation.STACK, taken.saveOptional(station.level().registryAccess()));
+        data.put(GrillStation.STACK, ItemNbt.save(taken, station.level().registryAccess()));
         station.effect(GrillStation.EFFECT_TAKEN, "grill", data);
         if (!player.getInventory().add(taken)) {
-            player.drop(taken, false);
+            player.drop(taken, false, Prediction.SERVER_ONLY);
         }
     }
 
@@ -151,7 +154,7 @@ public final class GrillLogic implements StationLogic {
         putBack(player, from, seasoning);
         CompoundTag data = new CompoundTag();
         data.putInt(GrillStation.PLACE, at);
-        data.put(GrillStation.STACK, before.saveOptional(station.level().registryAccess()));
+        data.put(GrillStation.STACK, ItemNbt.save(before, station.level().registryAccess()));
         station.effect(GrillStation.EFFECT_SEASONED, "grill", data);
     }
 

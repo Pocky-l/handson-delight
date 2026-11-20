@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -13,7 +13,7 @@ import java.util.Set;
  * laid at the station never pass that method, so the station halves their time itself, and so does its book.
  */
 public final class MazeStove {
-    private static final ResourceLocation BLOCK = ResourceLocation.fromNamespaceAndPath("twilightdelight", "maze_stove");
+    private static final Identifier BLOCK = Identifier.fromNamespaceAndPath("twilightdelight", "maze_stove");
     private static final Set<String> FAST = Set.of("twilightforest", "twilightdelight");
 
     private MazeStove() {

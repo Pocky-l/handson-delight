@@ -5,7 +5,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -40,7 +40,7 @@ import java.util.Optional;
 public final class MeltingPotBehavior implements StationBehavior {
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "flame", "preview"};
     private static final String[] POT_PARTS = {"body", "tray"};
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
+    private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
     private static final Vector3f ICON_MIDDLE = new Vector3f(8.0F, 8.0F, 8.0F);
     private static final float ITEM_PIXELS = 8.0F;
     /** The upper pot's floor and how deep the liquid stands in it when full, scene pixels; its middle. */
@@ -81,7 +81,7 @@ public final class MeltingPotBehavior implements StationBehavior {
     private static final float BLOT_CELL = 0.5F;
     private static final float BLOT_FADE = 0.9F;
     private static final float BLOT_LIFT = 0.04F;
-    private static final ResourceLocation BLOT_TEXTURE = HandsOnDelight.id("block/white");
+    private static final Identifier BLOT_TEXTURE = HandsOnDelight.id("block/white");
 
     private final RecipeBook book = new RecipeBook(new MeltingPotBook());
     private final UsableCache usable = new UsableCache();
@@ -119,9 +119,9 @@ public final class MeltingPotBehavior implements StationBehavior {
     }
 
     private static Fluid fluid(StationView view) {
-        String id = view.state().data().getString(MeltingPotStation.FLUID);
-        ResourceLocation key = id.isEmpty() ? null : ResourceLocation.tryParse(id);
-        return key == null ? Fluids.EMPTY : BuiltInRegistries.FLUID.get(key);
+        String id = view.state().data().getStringOr(MeltingPotStation.FLUID, "");
+        Identifier key = id.isEmpty() ? null : Identifier.tryParse(id);
+        return key == null ? Fluids.EMPTY : BuiltInRegistries.FLUID.getValue(key);
     }
 
     @Override
@@ -164,7 +164,7 @@ public final class MeltingPotBehavior implements StationBehavior {
         book.opened(view);
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty() && usable(player.getMainHandItem())) {
-            use(view, player.getInventory().selected);
+            use(view, player.getInventory().getSelectedSlot());
         }
     }
 
@@ -346,7 +346,7 @@ public final class MeltingPotBehavior implements StationBehavior {
         view.node("body").ifPresent(node -> node.setVisible(whole));
         view.node("tray").ifPresent(node -> node.setVisible(whole && onTray));
         StationState state = view.state();
-        boolean heated = state.data().getBoolean(MeltingPotStation.HEATED);
+        boolean heated = state.data().getBooleanOr(MeltingPotStation.HEATED, false);
         float progress = state.getControl(MeltingPotStation.PROGRESS);
         liquid(view, dt, heated);
         pieces(view, dt, progress);
@@ -405,7 +405,7 @@ public final class MeltingPotBehavior implements StationBehavior {
             return 0xFF000000 | tint;
         }
         // Untinted (Extra Delight's syrups): the colour is in the fluid's own texture. Its bottle would give the glass's blue.
-        ResourceLocation texture = ClientPlatform.INSTANCE.fluidTexture(fluid);
+        Identifier texture = ClientPlatform.INSTANCE.fluidTexture(fluid);
         int drawn = texture == null ? 0 : FoodColors.ofTexture(texture);
         if (drawn != 0) {
             return 0xFF000000 | drawn;
@@ -584,7 +584,7 @@ public final class MeltingPotBehavior implements StationBehavior {
         if (!heated) {
             return;
         }
-        RandomSource random = view.level().random;
+        RandomSource random = view.level().getRandom();
         steam += dt * STEAM_RATE;
         if (steam >= 1.0F) {
             steam -= 1.0F;
@@ -617,7 +617,7 @@ public final class MeltingPotBehavior implements StationBehavior {
         ItemStack dish = waiting ? pot.handson$containerOf(fluid(view)) : making;
         boolean shown = cookHere && !dish.isEmpty();
         view.node("badge").ifPresent(plate -> plate.setVisible(shown));
-        int left = view.state().data().getInt(MeltingPotStation.LEFT);
+        int left = view.state().data().getIntOr(MeltingPotStation.LEFT, 0);
         int seconds = !waiting && progress > 0.0F && left > 0 ? Math.max(1, Mth.ceil(left / 20.0F)) : 0;
         int bar = waiting ? 0 : Math.round(progress * BAR_LENGTH);
         String text = waiting ? "x" + Math.min(bottles, 99) : seconds >= 60 ? seconds / 60 + ":" + String.format("%02d", seconds % 60)

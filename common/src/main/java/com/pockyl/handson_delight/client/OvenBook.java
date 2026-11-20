@@ -1,10 +1,11 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -23,7 +24,7 @@ import java.util.Map;
  * stove for one that stands on it; the time in seconds. A pick fills the tray from the inventory.
  */
 final class OvenBook implements RecipeBook.Source {
-    private static final ResourceLocation STOVE = ResourceLocation.fromNamespaceAndPath("farmersdelight", "stove");
+    private static final Identifier STOVE = Identifier.fromNamespaceAndPath("farmersdelight", "stove");
     /** The tabs' names and icons, by kind. */
     private static final Map<String, ItemStack> ICONS = new LinkedHashMap<>();
 
@@ -77,7 +78,7 @@ final class OvenBook implements RecipeBook.Source {
             Map<String, Long> counts = new LinkedHashMap<>();
             oven.recipes(view.level()).forEach(recipe -> counts.merge(recipe.kind(), 1L, Long::sum));
             counts.entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed()).forEach(entry -> {
-                ItemStack icon = BuiltInRegistries.ITEM.getOptional(ResourceLocation.tryParse(entry.getKey())).map(ItemStack::new)
+                ItemStack icon = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(entry.getKey())).map(ItemStack::new)
                         .orElse(ItemStack.EMPTY);
                 if (!icon.isEmpty()) {
                     tabs.add(new RecipeBook.Tab(entry.getKey(), icon, icon.getHoverName()));
@@ -103,7 +104,7 @@ final class OvenBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(OvenStation.DISH, page.key().toString());
-        fill.putBoolean(OvenStation.ALL, Screen.hasShiftDown());
+        fill.putBoolean(OvenStation.ALL, Minecraft.getInstance().hasShiftDown());
         view.sendAction(OvenStation.ACTION_FILL, fill);
     }
 

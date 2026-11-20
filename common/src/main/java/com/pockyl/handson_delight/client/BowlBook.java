@@ -4,12 +4,13 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.BowlStation;
 import com.pockyl.handson_delight.station.KitchenBowl;
 
@@ -32,7 +33,7 @@ final class BowlBook implements RecipeBook.Source {
         List<RecipeBook.Page> pages = new ArrayList<>();
         for (KitchenBowl.Mixing recipe : KitchenBowl.recipes(view.level())) {
             List<ItemStack> foot = new ArrayList<>();
-            ItemStack[] utensils = recipe.utensil().getItems();
+            ItemStack[] utensils = RecipeParts.items(recipe.utensil());
             if (utensils.length > 0) {
                 foot.add(utensils[0].copyWithCount(1));
             }
@@ -82,7 +83,7 @@ final class BowlBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(BowlStation.DISH, page.key().toString());
-        fill.putBoolean(BowlStation.ALL, Screen.hasShiftDown());
+        fill.putBoolean(BowlStation.ALL, net.minecraft.client.Minecraft.getInstance().hasShiftDown());
         view.sendAction(BowlStation.ACTION_FILL, fill);
     }
 
@@ -105,7 +106,7 @@ final class BowlBook implements RecipeBook.Source {
     /** The book opens at what the bowl makes. */
     @Override
     public Object current(StationView view) {
-        String making = view.state().data().getString(BowlStation.MAKING);
-        return making.isEmpty() ? null : ResourceLocation.tryParse(making);
+        String making = view.state().data().getStringOr(BowlStation.MAKING, "");
+        return making.isEmpty() ? null : Identifier.tryParse(making);
     }
 }

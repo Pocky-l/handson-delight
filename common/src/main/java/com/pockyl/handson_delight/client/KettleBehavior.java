@@ -8,7 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -55,9 +55,9 @@ public final class KettleBehavior implements StationBehavior {
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "flame", "flame_lit", "preview"};
     private static final String[] SHOWN_IN_USE = {"kettle", "pot", "lid", "drink", "spout", "mouth"};
     @SuppressWarnings("removal")
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.withDefaultNamespace("block/white_concrete");
+    private static final Identifier BADGE_TEXTURE = Identifier.withDefaultNamespace("block/white_concrete");
     /** Farmer's Respite's own whistle for its kettle; this mod's for a kettle whose mod has none (Youkai's Feasts'). */
-    private static final SoundEvent WHISTLE = SoundEvent.createVariableRangeEvent(ResourceLocation.tryBuild(KettleStation.MOD_ID, "block.kettle.whistle"));
+    private static final SoundEvent WHISTLE = SoundEvent.createVariableRangeEvent(Identifier.tryBuild(KettleStation.MOD_ID, "block.kettle.whistle"));
     private static final SoundEvent OWN_WHISTLE = SoundEvent.createVariableRangeEvent(HandsOnDelight.id("kettle.whistle"));
 
     /**
@@ -300,7 +300,7 @@ public final class KettleBehavior implements StationBehavior {
         } else if (event instanceof SceneEvent.Click click && click.node().equals("book_open")) {
             book.click(view, click.button());
         } else if (event instanceof SceneEvent.Click click && click.node().equals("spout") && click.button() == 0 && !offered.isEmpty()) {
-            boolean all = Screen.hasShiftDown();
+            boolean all = Minecraft.getInstance().hasShiftDown();
             pourOut(view, offered, false, all);
             CompoundTag how = new CompoundTag();
             how.putString(KettleStation.AT, KettleStation.SPOUT);
@@ -430,17 +430,17 @@ public final class KettleBehavior implements StationBehavior {
     }
 
     @Override
-    public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
-        Fluid fluid = fluidOf(data.getString(KettleStation.FLUID));
+    public void onEffect(StationView view, Identifier effect, String node, CompoundTag data) {
+        Fluid fluid = fluidOf(data.getStringOr(KettleStation.FLUID, ""));
         KitchenKettle kettle = kettle(view);
         int color = 0xFF000000 | colourOf(view, kettle, fluid) & 0xFFFFFF;
-        Item vessel = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(data.getString(KettleStation.VESSEL)));
+        Item vessel = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(data.getStringOr(KettleStation.VESSEL, "")));
         if (KettleStation.EFFECT_POURED.equals(effect)) {
             poured(view, vessel, color);
         } else if (KettleStation.EFFECT_SERVED.equals(effect) && fluid != Fluids.EMPTY && kettle != null) {
             ItemStack cup = new ItemStack(vessel);
             cups.served(cup, filled(kettle, cup, fluid), BuiltInRegistries.FLUID.getKey(fluid), colourOf(view, kettle, fluid),
-                    data.getInt(KettleStation.COUNT));
+                    data.getIntOr(KettleStation.COUNT, 0));
         }
     }
 
@@ -465,8 +465,8 @@ public final class KettleBehavior implements StationBehavior {
     }
 
     private static Fluid fluidOf(String id) {
-        ResourceLocation key = ResourceLocation.tryParse(id);
-        return key == null || id.isEmpty() ? Fluids.EMPTY : BuiltInRegistries.FLUID.get(key);
+        Identifier key = Identifier.tryParse(id);
+        return key == null || id.isEmpty() ? Fluids.EMPTY : BuiltInRegistries.FLUID.getValue(key);
     }
 
     private float surfaceY() {
@@ -624,7 +624,7 @@ public final class KettleBehavior implements StationBehavior {
             return WATER_ALPHA << 24;
         }
         if (fluid.isSame(Fluids.WATER)) {
-            return WATER_ALPHA << 24 | blend(BiomeColors.getAverageWaterColor(view.level(), view.pos()), WATER_IN_COPPER, 0.5F) & 0xFFFFFF;
+            return WATER_ALPHA << 24 | blend(BiomeColors.getAverageWaterColor((net.minecraft.client.multiplayer.ClientLevel) view.level(), view.pos()), WATER_IN_COPPER, 0.5F) & 0xFFFFFF;
         }
         Optional<KegLiquids.Drink> known = KegLiquids.of(fluid);
         if (known.isPresent()) {
@@ -640,7 +640,7 @@ public final class KettleBehavior implements StationBehavior {
 
     /** The liquid in the kettle as the station tells it: the block's own data reaches this client later. */
     private static Fluid fluidIn(StationView view) {
-        return view.state().getTank(KettleStation.DRINK).amount() == 0 ? Fluids.EMPTY : fluidOf(view.state().data().getString(KettleStation.FLUID));
+        return view.state().getTank(KettleStation.DRINK).amount() == 0 ? Fluids.EMPTY : fluidOf(view.state().data().getStringOr(KettleStation.FLUID, ""));
     }
 
     /** The recipe what lies in the kettle makes: its ingredients there, its base the liquid in it. */
@@ -777,7 +777,7 @@ public final class KettleBehavior implements StationBehavior {
         float before = lid;
         lid = Mth.clamp(lid + (off ? dt : -dt) / LID_MOVE, 0.0F, 1.0F);
         if (before < 1.0F && lid >= 1.0F || before > 0.0F && lid <= 0.0F) {
-            view.playSound(SoundEvents.LANTERN_PLACE, "lid", 0.4F, 1.25F + view.level().random.nextFloat() * 0.1F);
+            view.playSound(SoundEvents.LANTERN_PLACE, "lid", 0.4F, 1.25F + view.level().getRandom().nextFloat() * 0.1F);
         }
         NodeView node = view.node("lid").orElse(null);
         if (node == null) {
@@ -1005,7 +1005,7 @@ public final class KettleBehavior implements StationBehavior {
         boolean shown = cookHere && !dish.isEmpty();
         view.node("badge").ifPresent(plate -> plate.setVisible(shown));
         float progress = view.state().getControl(KettleStation.PROGRESS);
-        int left = view.state().data().getInt(KettleStation.LEFT);
+        int left = view.state().data().getIntOr(KettleStation.LEFT, 0);
         boolean heated = view.state().getControl(KettleStation.HEATED) > 0.5F;
         boolean brewing = becoming != Fluids.EMPTY;
         float boil = view.state().getControl(KettleStation.BOIL);

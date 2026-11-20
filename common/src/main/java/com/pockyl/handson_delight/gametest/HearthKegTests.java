@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -32,18 +32,18 @@ public final class HearthKegTests {
 
     @SuppressWarnings("removal")
     private static Item hearth(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KegStation.HEARTH_MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KegStation.HEARTH_MOD_ID, path));
     }
 
     /** Its fermenting recipe that makes {@code path}. */
     @SuppressWarnings("removal")
     private static String recipe(String path) {
-        return ResourceLocation.fromNamespaceAndPath(KegStation.HEARTH_MOD_ID, "fermenting/" + path).toString();
+        return Identifier.fromNamespaceAndPath(KegStation.HEARTH_MOD_ID, "fermenting/" + path).toString();
     }
 
     @SuppressWarnings("removal")
     private static String fluid(String path) {
-        return ResourceLocation.fromNamespaceAndPath(KegStation.HEARTH_MOD_ID, path).toString();
+        return Identifier.fromNamespaceAndPath(KegStation.HEARTH_MOD_ID, path).toString();
     }
 
     private record Setup(PotTests.TestStation station, KegLogic logic, KitchenKeg keg, BlockPos pos) {
@@ -221,7 +221,10 @@ public final class HearthKegTests {
         }
         net.minecraft.world.level.block.state.BlockState facingEast = KegStation.HEARTH_KEG.get().defaultBlockState();
         for (net.minecraft.world.level.block.state.properties.Property<?> property : facingEast.getProperties()) {
-            if (property.getName().equals("facing") && property instanceof net.minecraft.world.level.block.state.properties.DirectionProperty facing) {
+            if (property.getName().equals("facing") && property.getValueClass() == net.minecraft.core.Direction.class) {
+                @SuppressWarnings("unchecked")
+                net.minecraft.world.level.block.state.properties.Property<net.minecraft.core.Direction> facing =
+                        (net.minecraft.world.level.block.state.properties.Property<net.minecraft.core.Direction>) property;
                 facingEast = facingEast.setValue(facing, net.minecraft.core.Direction.EAST);
             }
         }
@@ -332,7 +335,7 @@ public final class HearthKegTests {
             lid(setup, player, true);
             player.inventoryMenu.setCarried(new ItemStack(Items.GLASS_BOTTLE, 2));
             use(setup, player, KegStation.MOUTH, false);
-            ItemStack beer = player.getInventory().items.stream().filter(stack -> stack.is(hearth("beer"))).findFirst().orElse(ItemStack.EMPTY);
+            ItemStack beer = player.getInventory().getNonEquipmentItems().stream().filter(stack -> stack.is(hearth("beer"))).findFirst().orElse(ItemStack.EMPTY);
             helper.assertTrue(!beer.isEmpty() && setup.keg.handson$drawnAmount() == 0, "a bottle dipped in took the beer, got " + beer);
             helper.assertTrue(!beer.getComponentsPatch().isEmpty(), "an opened bottle: two glasses of four, got " + beer.getComponentsPatch());
             use(setup, player, KegStation.MOUTH, false);

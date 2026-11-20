@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -11,6 +11,9 @@ import net.minecraft.world.item.Items;
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
+
+import com.pockyl.handson_delight.ItemNbt;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -72,10 +75,10 @@ public final class SteamerLogic implements StationLogic {
         if (tower == null) {
             return;
         }
-        int rack = data.contains(SteamerStation.RACK) ? data.getInt(SteamerStation.RACK) : -1;
-        int place = data.contains(SteamerStation.PLACE) ? data.getInt(SteamerStation.PLACE) : -1;
-        int from = data.contains(SteamerStation.FROM) ? data.getInt(SteamerStation.FROM) : -1;
-        boolean all = data.getBoolean(SteamerStation.ALL);
+        int rack = data.contains(SteamerStation.RACK) ? data.getIntOr(SteamerStation.RACK, 0) : -1;
+        int place = data.contains(SteamerStation.PLACE) ? data.getIntOr(SteamerStation.PLACE, 0) : -1;
+        int from = data.contains(SteamerStation.FROM) ? data.getIntOr(SteamerStation.FROM, 0) : -1;
+        boolean all = data.getBooleanOr(SteamerStation.ALL, false);
         switch (action) {
             case SteamerStation.ACTION_PUT -> put(station, tower, player, rack, place, from, all, false);
             case SteamerStation.ACTION_TAKE -> take(station, tower, player, rack >= 0 ? rack : openRack(station, tower), place, all);
@@ -84,7 +87,7 @@ public final class SteamerLogic implements StationLogic {
             case SteamerStation.ACTION_RACK -> rack(station, tower, player, from);
             case SteamerStation.ACTION_LID -> lid(station, tower, player, from);
             case SteamerStation.ACTION_WATER -> water(station, tower, player, from);
-            case SteamerStation.ACTION_FILL -> fill(station, tower, player, data.getString(SteamerStation.DISH), all);
+            case SteamerStation.ACTION_FILL -> fill(station, tower, player, data.getStringOr(SteamerStation.DISH, ""), all);
             default -> {
             }
         }
@@ -149,7 +152,7 @@ public final class SteamerLogic implements StationLogic {
         CompoundTag one = new CompoundTag();
         one.putInt(SteamerStation.RACK, rack);
         one.putInt(SteamerStation.PLACE, place);
-        one.put(SteamerStation.STACK, stack.saveOptional(station.level().registryAccess()));
+        one.put(SteamerStation.STACK, ItemNbt.save(stack, station.level().registryAccess()));
         return one;
     }
 
@@ -254,7 +257,7 @@ public final class SteamerLogic implements StationLogic {
      * there are free places on it and things to lay.
      */
     private void fill(StationContext station, SteamerTower tower, Player player, String id, boolean all) {
-        ResourceLocation key = ResourceLocation.tryParse(id);
+        Identifier key = Identifier.tryParse(id);
         SteamerStation.Steaming recipe = SteamerStation.recipes(station.level()).stream().filter(it -> it.id().equals(key)).findFirst()
                 .orElse(null);
         if (recipe == null || tower.racks() == 0) {
@@ -262,12 +265,12 @@ public final class SteamerLogic implements StationLogic {
         }
         Inventory inventory = player.getInventory();
         int slot = -1;
-        for (int i = 0; i < inventory.items.size() && slot < 0; i++) {
-            ItemStack stack = inventory.items.get(i);
+        for (int i = 0; i < inventory.getNonEquipmentItems().size() && slot < 0; i++) {
+            ItemStack stack = inventory.getNonEquipmentItems().get(i);
             slot = !stack.isEmpty() && recipe.ingredient().test(stack) ? i : -1;
         }
         if (slot < 0) {
-            ItemStack[] options = recipe.ingredient().getItems();
+            ItemStack[] options = RecipeParts.items(recipe.ingredient());
             refused(station, options.length > 0 ? options[0] : recipe.result());
             return;
         }
@@ -283,7 +286,7 @@ public final class SteamerLogic implements StationLogic {
 
     private static void refused(StationContext station, ItemStack stack) {
         CompoundTag data = new CompoundTag();
-        data.put(SteamerStation.STACK, stack.copyWithCount(1).saveOptional(station.level().registryAccess()));
+        data.put(SteamerStation.STACK, ItemNbt.save(stack.copyWithCount(1), station.level().registryAccess()));
         station.effect(SteamerStation.EFFECT_REFUSED, "tower", data);
     }
 

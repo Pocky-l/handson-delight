@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -19,6 +19,7 @@ import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
+import com.pockyl.handson_delight.ItemNbt;
 import com.pockyl.handson_delight.station.BasinStation;
 import com.pockyl.handson_delight.station.KitchenBasin;
 
@@ -104,7 +105,7 @@ public final class BasinBehavior implements StationBehavior {
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
             ItemStack held = player.getMainHandItem();
             CompoundTag how = new CompoundTag();
-            how.putInt(BasinStation.FROM, player.getInventory().selected);
+            how.putInt(BasinStation.FROM, player.getInventory().getSelectedSlot());
             if (KitchenBasin.isTool(view.level(), held)) {
                 view.sendAction(BasinStation.ACTION_SKEWER, how);
             } else if (KitchenBasin.isFood(view.level(), held)) {
@@ -181,9 +182,9 @@ public final class BasinBehavior implements StationBehavior {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
             Inventory inventory = player.getInventory();
-            for (int slot = 0; slot < inventory.items.size() && stick.isEmpty(); slot++) {
-                if (KitchenBasin.isTool(view.level(), inventory.items.get(slot))) {
-                    stick = inventory.items.get(slot).copyWithCount(1);
+            for (int slot = 0; slot < inventory.getNonEquipmentItems().size() && stick.isEmpty(); slot++) {
+                if (KitchenBasin.isTool(view.level(), inventory.getNonEquipmentItems().get(slot))) {
+                    stick = inventory.getNonEquipmentItems().get(slot).copyWithCount(1);
                 }
             }
         }
@@ -246,7 +247,7 @@ public final class BasinBehavior implements StationBehavior {
         }
         if ("stick".equals(click.node())) {
             CompoundTag how = new CompoundTag();
-            how.putBoolean(BasinStation.ALL, Screen.hasShiftDown());
+            how.putBoolean(BasinStation.ALL, Minecraft.getInstance().hasShiftDown());
             view.sendAction(BasinStation.ACTION_SKEWER, how);
             return;
         }
@@ -333,7 +334,7 @@ public final class BasinBehavior implements StationBehavior {
     }
 
     @Override
-    public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
+    public void onEffect(StationView view, Identifier effect, String node, CompoundTag data) {
         if (BasinStation.EFFECT_SKEWERED.equals(effect)) {
             skewered(view, data);
         } else if (BasinStation.EFFECT_PUT.equals(effect)) {
@@ -341,7 +342,7 @@ public final class BasinBehavior implements StationBehavior {
         } else if (BasinStation.EFFECT_TAKEN.equals(effect)) {
             view.playSound(SoundEvents.ITEM_PICKUP, "basin", 0.3F, 1.5F);
         } else if (BasinStation.EFFECT_REFUSED.equals(effect)) {
-            ItemStack refused = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(BasinStation.STACK));
+            ItemStack refused = ItemNbt.parse(view.level().registryAccess(), data.getCompound(BasinStation.STACK));
             ghost(view, refused).ifPresent(ghost -> {
                 ghost.moveTo(0.0F, 4.0F, 0.0F, 0.0F);
                 ghost.moveTo(0.0F, 1.0F, 0.0F, 0.09F);
@@ -358,12 +359,12 @@ public final class BasinBehavior implements StationBehavior {
      * first going farthest, to the handle. The full skewer then goes to the cook as it is.
      */
     private void skewered(StationView view, CompoundTag data) {
-        ItemStack result = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(BasinStation.STACK));
-        ItemStack food = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(BasinStation.FOOD));
-        ItemStack side = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(BasinStation.SIDE));
-        int foodPlace = data.getInt(BasinStation.PLACE);
-        int foodCount = data.getInt(BasinStation.FOOD_COUNT);
-        int sideCount = side.isEmpty() ? 0 : data.getInt(BasinStation.SIDE_COUNT);
+        ItemStack result = ItemNbt.parse(view.level().registryAccess(), data.getCompound(BasinStation.STACK));
+        ItemStack food = ItemNbt.parse(view.level().registryAccess(), data.getCompound(BasinStation.FOOD));
+        ItemStack side = ItemNbt.parse(view.level().registryAccess(), data.getCompound(BasinStation.SIDE));
+        int foodPlace = data.getIntOr(BasinStation.PLACE, 0);
+        int foodCount = data.getIntOr(BasinStation.FOOD_COUNT, 0);
+        int sideCount = side.isEmpty() ? 0 : data.getIntOr(BasinStation.SIDE_COUNT, 0);
         if (result.isEmpty()) {
             return;
         }

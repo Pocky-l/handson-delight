@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.client;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
+import com.pockyl.diegesis.api.client.SceneBuffers;
 import net.minecraft.util.Mth;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -41,7 +41,7 @@ final class IconLight implements VertexConsumer {
      * Buffers for one icon. {@code facing}: the normal matrix the icon's model is drawn under, before the model's own GUI turn
      * (the icon's flip and depth must not be in it, as in the GUI); {@code blockLight}: the model's {@code usesBlockLight}.
      */
-    static MultiBufferSource of(MultiBufferSource buffers, Matrix3f facing, boolean blockLight) {
+    static SceneBuffers of(SceneBuffers buffers, Matrix3f facing, boolean blockLight) {
         Matrix3f toIcon = new Matrix3f(facing).invert();
         Vector3f[] lights = blockLight ? BLOCK_LIGHTS : FLAT_LIGHTS;
         return type -> new IconLight(buffers.getBuffer(type), toIcon, lights);
@@ -84,6 +84,23 @@ final class IconLight implements VertexConsumer {
     public VertexConsumer setColor(int red, int green, int blue, int alpha) {
         // Built piece by piece, the colour comes before the normal: such a vertex keeps its colour and is fully lit.
         delegate.setColor(red, green, blue, alpha);
+        return this;
+    }
+
+    @Override
+    public VertexConsumer setColor(int argb) {
+        return setColor(argb >> 16 & 0xFF, argb >> 8 & 0xFF, argb & 0xFF, argb >>> 24);
+    }
+
+    @Override
+    public VertexConsumer setLineWidth(float width) {
+        delegate.setLineWidth(width);
+        return this;
+    }
+
+    @Override
+    public VertexConsumer setUv3(float u, float v) {
+        delegate.setUv3(u, v);
         return this;
     }
 

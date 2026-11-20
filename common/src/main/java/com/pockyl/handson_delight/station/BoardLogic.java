@@ -5,8 +5,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Prediction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -20,6 +21,7 @@ import com.pockyl.diegesis.api.state.SlotStorage;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
+import com.pockyl.handson_delight.ItemNbt;
 import com.pockyl.handson_delight.assembly.Assembling;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
@@ -57,7 +59,7 @@ public final class BoardLogic implements StationLogic {
     private ItemStack cutting = ItemStack.EMPTY;
     private long lastChop = -CHOP_GAP;
     /** The dish the cook picked in the book: made at once when the layers make it. */
-    private ResourceLocation picked;
+    private Identifier picked;
 
     public BoardLogic(StationContext station) {
         board = (KitchenBoard) station.blockEntity();
@@ -164,7 +166,7 @@ public final class BoardLogic implements StationLogic {
         if (!free) {
             for (ItemStack stack : stacked) {
                 if (!player.getInventory().add(stack)) {
-                    player.drop(stack, false);
+                    player.drop(stack, false, Prediction.SERVER_ONLY);
                 }
             }
             return;
@@ -194,17 +196,17 @@ public final class BoardLogic implements StationLogic {
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
         switch (action) {
-            case CuttingBoardStation.ACTION_PLACE -> place(station, player, data.getBoolean(CuttingBoardStation.ONE),
-                    data.contains(CuttingBoardStation.FROM) ? data.getInt(CuttingBoardStation.FROM) : -1,
-                    data.getBoolean(CuttingBoardStation.BY_USE));
+            case CuttingBoardStation.ACTION_PLACE -> place(station, player, data.getBooleanOr(CuttingBoardStation.ONE, false),
+                    data.contains(CuttingBoardStation.FROM) ? data.getIntOr(CuttingBoardStation.FROM, 0) : -1,
+                    data.getBooleanOr(CuttingBoardStation.BY_USE, false));
             case CuttingBoardStation.ACTION_CARVE -> carve(station, player);
-            case CuttingBoardStation.ACTION_CHOP -> chop(station, player, data.getInt(CuttingBoardStation.MARK), data.getFloat(CuttingBoardStation.AT),
-                    data.contains(CuttingBoardStation.AT_X) ? data.getFloat(CuttingBoardStation.AT_X) : Float.NaN);
+            case CuttingBoardStation.ACTION_CHOP -> chop(station, player, data.getIntOr(CuttingBoardStation.MARK, 0), data.getFloatOr(CuttingBoardStation.AT, 0.0F),
+                    data.contains(CuttingBoardStation.AT_X) ? data.getFloatOr(CuttingBoardStation.AT_X, 0.0F) : Float.NaN);
             case CuttingBoardStation.ACTION_TAKE -> take(station, player);
             case CuttingBoardStation.ACTION_ASSEMBLE -> assemble(station, player);
             case CuttingBoardStation.ACTION_PICK -> {
-                ResourceLocation dish = ResourceLocation.tryParse(data.getString(CuttingBoardStation.DISH));
-                pick(station, player, dish, data.getBoolean(CuttingBoardStation.ALL));
+                Identifier dish = Identifier.tryParse(data.getStringOr(CuttingBoardStation.DISH, ""));
+                pick(station, player, dish, data.getBooleanOr(CuttingBoardStation.ALL, false));
             }
             default -> {
             }
@@ -455,7 +457,7 @@ public final class BoardLogic implements StationLogic {
      * A dish picked in the book is the one the board makes, and what it takes comes from the cook's inventory: onto an empty board one
      * set, or as many as a batch with {@code all}; onto layers already there, the rest of it for as many as lie there.
      */
-    private void pick(StationContext station, Player player, ResourceLocation id, boolean all) {
+    private void pick(StationContext station, Player player, Identifier id, boolean all) {
         Optional<AssemblyRecipes.Assembly> dish = AssemblyRecipes.all().stream().filter(assembly -> assembly.id().equals(id)).findFirst();
         if (dish.isEmpty() || stump != null) {
             return;
@@ -758,7 +760,7 @@ public final class BoardLogic implements StationLogic {
         made.layers().forEach(left -> give(player, left));
         made.leftovers().forEach(left -> give(player, left));
         for (ItemStack result : made.dishes()) {
-            result.onCraftedBy(station.level(), player, result.getCount());
+            result.onCraftedBy(player, result.getCount());
             ItemStack onBoard = board.handson$stored();
             if (onBoard.isEmpty() || ItemStack.isSameItemSameComponents(onBoard, result)) {
                 int room = Math.min(result.getMaxStackSize(), board.handson$maxStack()) - onBoard.getCount();
@@ -772,7 +774,7 @@ public final class BoardLogic implements StationLogic {
         }
         CompoundTag how = new CompoundTag();
         ListTag from = new ListTag();
-        layers.forEach(layer -> from.add(layer.copyWithCount(1).saveOptional(station.level().registryAccess())));
+        layers.forEach(layer -> from.add(ItemNbt.save(layer.copyWithCount(1), station.level().registryAccess())));
         how.put(CuttingBoardStation.LAYERS, from);
         how.putString(CuttingBoardStation.FINISH, dish.get().finish().name());
         how.putBoolean(CuttingBoardStation.BLOCK, dish.get().isBlock());
@@ -793,7 +795,7 @@ public final class BoardLogic implements StationLogic {
         }
         CompoundTag data = new CompoundTag();
         if (!stack.isEmpty()) {
-            data.put(CuttingBoardStation.STACK, stack.copyWithCount(1).saveOptional(station.level().registryAccess()));
+            data.put(CuttingBoardStation.STACK, ItemNbt.save(stack.copyWithCount(1), station.level().registryAccess()));
         }
         station.effect(CuttingBoardStation.EFFECT_REFUSED, "surface", data);
     }
@@ -804,7 +806,7 @@ public final class BoardLogic implements StationLogic {
      */
     private static void taken(StationContext station, ItemStack stack, int layer, boolean carved) {
         CompoundTag data = new CompoundTag();
-        data.put(CuttingBoardStation.STACK, stack.saveOptional(station.level().registryAccess()));
+        data.put(CuttingBoardStation.STACK, ItemNbt.save(stack, station.level().registryAccess()));
         data.putInt(CuttingBoardStation.AT, layer);
         if (carved) {
             data.putBoolean(CuttingBoardStation.CARVED, true);
@@ -947,7 +949,7 @@ public final class BoardLogic implements StationLogic {
         while (!stack.isEmpty()) {
             ItemStack part = stack.split(stack.getMaxStackSize());
             if (!player.getInventory().add(part)) {
-                player.drop(part, false);
+                player.drop(part, false, Prediction.SERVER_ONLY);
             }
         }
     }

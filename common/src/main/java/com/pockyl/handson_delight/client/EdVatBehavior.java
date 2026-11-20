@@ -7,7 +7,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
@@ -29,6 +29,7 @@ import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.EdVatLogic;
 import com.pockyl.handson_delight.station.EdVatStation;
 import com.pockyl.handson_delight.station.KitchenEdVat;
@@ -52,7 +53,7 @@ public final class EdVatBehavior implements StationBehavior {
     private static final String[] COLUMN_PARTS = {"cells", "want_item", "want_lid", "want_ok", "want_missing", "want_open"};
     /** The middle of Extra Delight's lid model, its own pixels: the lid icon turns about it. */
     private static final Vector3f LID_MIDDLE = new Vector3f(8.0F, 2.75F, 8.0F);
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
+    private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /** The crock's models, one for each of Extra Delight's looks of it, in the order of its {@code style}. */
     private static final String[] STYLES = {"copper_block", "white_terracotta", "light_gray_terracotta", "gray_terracotta",
             "black_terracotta", "brown_terracotta", "red_terracotta", "orange_terracotta", "yellow_terracotta", "lime_terracotta",
@@ -233,7 +234,7 @@ public final class EdVatBehavior implements StationBehavior {
         boolean drainsBatch = isEmptyContainer(held) && !KitchenEdVat.draws(recipes, waiting(view), held)
                 && Arrays.stream(view.state().getItems(EdVatStation.INGREDIENTS)).anyMatch(stack -> !stack.isEmpty());
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty() && usable(held) && !drainsBatch) {
-            use(view, player.getInventory().selected, held, false);
+            use(view, player.getInventory().getSelectedSlot(), held, false);
         }
         refresh(view);
     }
@@ -365,7 +366,7 @@ public final class EdVatBehavior implements StationBehavior {
                 data.putInt(EdVatStation.FROM, -2);
                 view.sendAction(EdVatStation.ACTION_LID, data);
             }
-            case "served" -> draw(view, Screen.hasShiftDown(), -1);
+            case "served" -> draw(view, net.minecraft.client.Minecraft.getInstance().hasShiftDown(), -1);
             default -> {
                 return false;
             }
@@ -446,9 +447,9 @@ public final class EdVatBehavior implements StationBehavior {
     // What the vat shows.
 
     private static Fluid fluid(StationView view) {
-        String id = view.state().data().getString(EdVatStation.FLUID);
-        ResourceLocation key = id.isEmpty() ? null : ResourceLocation.tryParse(id);
-        return key == null ? Fluids.EMPTY : BuiltInRegistries.FLUID.get(key);
+        String id = view.state().data().getStringOr(EdVatStation.FLUID, "");
+        Identifier key = id.isEmpty() ? null : Identifier.tryParse(id);
+        return key == null ? Fluids.EMPTY : BuiltInRegistries.FLUID.getValue(key);
     }
 
     private void refresh(StationView view) {
@@ -458,7 +459,7 @@ public final class EdVatBehavior implements StationBehavior {
             usable.clear();
         }
         lastWaiting = waitingNow.copy();
-        int amount = state.data().getInt(EdVatStation.AMOUNT);
+        int amount = state.data().getIntOr(EdVatStation.AMOUNT, 0);
         if ((amount > 0) != (lastAmount > 0)) {
             usable.clear();
         }
@@ -532,7 +533,7 @@ public final class EdVatBehavior implements StationBehavior {
         float progress = state.getControl(EdVatStation.PROGRESS);
         ItemStack waiting = waiting(view);
         ItemStack served = state.getItem(EdVatStation.SERVED_SLOT);
-        String id = state.data().getString(EdVatStation.MAKING);
+        String id = state.data().getStringOr(EdVatStation.MAKING, "");
         making = id.isEmpty() ? KitchenEdVat.matchingPlaces(recipes, places)
                 : recipes.stream().filter(recipe -> recipe.id().toString().equals(id)).findFirst();
         servings = 0;
@@ -546,7 +547,7 @@ public final class EdVatBehavior implements StationBehavior {
         } else {
             dish = ItemStack.EMPTY;
         }
-        if (progress > 0.0F || state.data().getInt(EdVatStation.STAGE_NOW) > 0) {
+        if (progress > 0.0F || state.data().getIntOr(EdVatStation.STAGE_NOW, 0) > 0) {
             sawAging = true;
         }
         int done = doneCount(state);
@@ -711,7 +712,7 @@ public final class EdVatBehavior implements StationBehavior {
 
     /** Whether the stage under way wants the lid on. */
     private boolean wantsLid(StationView view) {
-        int stage = view.state().data().getInt(EdVatStation.STAGE_NOW);
+        int stage = view.state().data().getIntOr(EdVatStation.STAGE_NOW, 0);
         return making.flatMap(recipe -> recipe.stage(stage)).map(KitchenEdVat.Stage::lid).orElse(false);
     }
 
@@ -747,9 +748,9 @@ public final class EdVatBehavior implements StationBehavior {
         float wanted = view.state().getTank(EdVatStation.BREW).amount() / 100.0F;
         level = Mth.lerp(Math.min(1.0F, dt * 3.0F), level, wanted);
         int target = baseColor(view);
-        int stages = Math.max(1, view.state().data().getInt(EdVatStation.STAGES));
+        int stages = Math.max(1, view.state().data().getIntOr(EdVatStation.STAGES, 0));
         float progress = view.state().getControl(EdVatStation.PROGRESS);
-        int stage = view.state().data().getInt(EdVatStation.STAGE_NOW);
+        int stage = view.state().data().getIntOr(EdVatStation.STAGE_NOW, 0);
         boolean aging = making.isPresent() && (progress > 0.0F || stage > 0);
         if (aging) {
             float along = Mth.clamp((stage + progress) / stages, 0.0F, 1.0F);
@@ -817,15 +818,15 @@ public final class EdVatBehavior implements StationBehavior {
         view.node("badge").ifPresent(plate -> plate.setVisible(shown));
         StationState state = view.state();
         float progress = state.getControl(EdVatStation.PROGRESS);
-        int left = state.data().getInt(EdVatStation.LEFT);
-        int stage = state.data().getInt(EdVatStation.STAGE_NOW);
+        int left = state.data().getIntOr(EdVatStation.LEFT, 0);
+        int stage = state.data().getIntOr(EdVatStation.STAGE_NOW, 0);
         int stages = making.map(recipe -> recipe.stages().size()).orElse(0);
         boolean aging = making.isPresent();
         Optional<KitchenEdVat.Stage> now = making.flatMap(recipe -> recipe.stage(stage));
         boolean itemFits = now.map(wanted -> wanted.fits(state.getItem(EdVatStation.STAGE_SLOT))).orElse(true);
         int lidNow = Math.round(state.getControl(EdVatStation.LID));
         boolean lidFits = now.map(wanted -> wanted.lid() == (lidNow == EdVatStation.LID_ON)).orElse(true);
-        boolean liquidFits = making.map(recipe -> recipe.takes(fluid(view), state.data().getInt(EdVatStation.AMOUNT))).orElse(true);
+        boolean liquidFits = making.map(recipe -> recipe.takes(fluid(view), state.data().getIntOr(EdVatStation.AMOUNT, 0))).orElse(true);
         boolean waiting = aging && (!itemFits || !lidFits || !liquidFits);
         int bar = aging ? Math.round(progress * BAR_LENGTH) : ready ? BAR_LENGTH : 0;
         String text = aging && left > 0 ? duration(left) : !aging && servings > 0 ? "x" + Math.min(servings, 99) : "";
@@ -870,7 +871,7 @@ public final class EdVatBehavior implements StationBehavior {
             node.setVisible(shown && stages > 1);
             node.setTint(stage >= stages ? PIP_DONE : PIP_NOW);
         });
-        Item want = now.filter(KitchenEdVat.Stage::wantsItem).map(wanted -> wanted.ingredient().getItems())
+        Item want = now.filter(KitchenEdVat.Stage::wantsItem).map(wanted -> RecipeParts.items(wanted.ingredient()))
                 .filter(items -> items.length > 0).map(items -> items[0].getItem()).orElse(null);
         boolean wantsLid = now.map(KitchenEdVat.Stage::lid).orElse(false);
         // The column right of the icon while a stage is under way: its thing in the upper place, the lid in the lower one, each

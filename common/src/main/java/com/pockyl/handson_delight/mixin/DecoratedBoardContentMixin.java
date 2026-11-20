@@ -3,7 +3,7 @@ package com.pockyl.handson_delight.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.phantomwing.choppersdelight.block.entity.DecoratedCuttingBoardBlockEntity;
 import com.phantomwing.choppersdelight.renderer.DecoratedCuttingBoardRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
+import com.pockyl.diegesis.api.client.SceneBuffers;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -24,7 +24,7 @@ import com.pockyl.handson_delight.client.HandsOnDelightClient;
 abstract class DecoratedBoardContentMixin {
     @Inject(method = "renderBoardContent", at = @At("HEAD"), cancellable = true)
     private void handson$drawnByScene(DecoratedCuttingBoardBlockEntity board, float partialTick, PoseStack poseStack,
-            MultiBufferSource buffers, int light, int overlay, CallbackInfo callback) {
+            SceneBuffers buffers, int light, int overlay, CallbackInfo callback) {
         if (!board.isItemCarvingBoard() && HandsOnDelightClient.isSceneDrawn(((BlockEntity) board).getBlockPos())) {
             callback.cancel();
         }

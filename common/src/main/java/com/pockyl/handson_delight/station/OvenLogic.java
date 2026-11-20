@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -17,6 +17,7 @@ import com.pockyl.diegesis.api.state.SlotStorage;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,7 +44,7 @@ public final class OvenLogic implements StationLogic {
     /** The tray is being shared out: its own changes do not share it out again. */
     private boolean arranging;
     /** The recipe the cook last picked in the book: the oven's choice while the tray's food makes it, until the tray is empty. */
-    private ResourceLocation picked;
+    private Identifier picked;
     /**
      * The cook changed what lies on the open tray or the bakeware standing there, at {@code changedAt} (game time): once it makes a dish
      * and lies still a moment, the oven takes it in ({@link #TAKE_IN_AFTER}). Off once it is in, and when the cook opens it by hand.
@@ -212,10 +213,10 @@ public final class OvenLogic implements StationLogic {
             case OvenStation.ACTION_DOOR -> {
                 // Opened or shut by hand: the cook decides, the oven takes nothing in by itself until they change the tray again. A
                 // request for what already is (the client opening for food the server already opened for) changes nothing.
-                if (isOpen(station) != data.getBoolean(OvenStation.OPEN)) {
+                if (isOpen(station) != data.getBooleanOr(OvenStation.OPEN, false)) {
                     armed = false;
                 }
-                setDoor(station, data.getBoolean(OvenStation.OPEN));
+                setDoor(station, data.getBooleanOr(OvenStation.OPEN, false));
             }
             case OvenStation.ACTION_LAY -> {
                 if (!isOpen(station) && (!isBaking() || !oven.bakesEachPlace())) {
@@ -223,22 +224,22 @@ public final class OvenLogic implements StationLogic {
                     setDoor(station, true);
                 }
                 if (isOpen(station)) {
-                    lay(player, data.contains(OvenStation.FROM) ? data.getInt(OvenStation.FROM) : -1,
-                            data.contains(OvenStation.PLACE) ? data.getInt(OvenStation.PLACE) : -1, data.getBoolean(OvenStation.ONE),
-                            data.getBoolean(OvenStation.ALL));
+                    lay(player, data.contains(OvenStation.FROM) ? data.getIntOr(OvenStation.FROM, 0) : -1,
+                            data.contains(OvenStation.PLACE) ? data.getIntOr(OvenStation.PLACE, 0) : -1, data.getBooleanOr(OvenStation.ONE, false),
+                            data.getBooleanOr(OvenStation.ALL, false));
                     bringBakeware(player, station.level());
                     changed(station.level());
                 }
             }
             case OvenStation.ACTION_FILL -> {
-                ResourceLocation id = ResourceLocation.tryParse(data.getString(OvenStation.DISH));
+                Identifier id = Identifier.tryParse(data.getStringOr(OvenStation.DISH, ""));
                 oven.recipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).findFirst().ifPresent(recipe -> {
                     // A recipe picked in the book opens the door for its ingredients to go in.
                     setDoor(station, true);
                     if (oven.bakesEachPlace()) {
-                        fillPlaces(player, recipe, data.getBoolean(OvenStation.ALL));
+                        fillPlaces(player, recipe, data.getBooleanOr(OvenStation.ALL, false));
                     } else {
-                        int sets = data.getBoolean(OvenStation.ALL) ? FILL_MOST : 1;
+                        int sets = data.getBooleanOr(OvenStation.ALL, false) ? FILL_MOST : 1;
                         if (oven.usesBakeware()) {
                             bakewareFor(player, recipe, sets);
                         }
@@ -249,7 +250,7 @@ public final class OvenLogic implements StationLogic {
             }
             case OvenStation.ACTION_FUEL -> {
                 if (isOpen(station) && oven.burnsFuel()) {
-                    fuel(player, data.getBoolean(OvenStation.FROM_INVENTORY), data.contains(OvenStation.FROM) ? data.getInt(OvenStation.FROM) : -1);
+                    fuel(player, data.getBooleanOr(OvenStation.FROM_INVENTORY, false), data.contains(OvenStation.FROM) ? data.getIntOr(OvenStation.FROM, 0) : -1);
                 }
             }
             default -> {
@@ -329,7 +330,7 @@ public final class OvenLogic implements StationLogic {
 
     private static void giveBack(Player player, ItemStack stack) {
         if (!player.getInventory().add(stack)) {
-            player.drop(stack, false);
+            player.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
         }
     }
 
@@ -807,8 +808,8 @@ public final class OvenLogic implements StationLogic {
         boolean cold = oven.waitsForHeat();
         ItemStack wanted = wantedBakeware(station.level());
         String wants = wanted.isEmpty() ? "" : BuiltInRegistries.ITEM.getKey(wanted.getItem()).toString();
-        if (own.getInt(OvenStation.LEFT) != seconds || !Arrays.equals(own.getByteArray(OvenStation.BAKED), baked)
-                || own.getBoolean(OvenStation.HOT) != hot || own.getBoolean(OvenStation.COLD) != cold
+        if (own.getIntOr(OvenStation.LEFT, 0) != seconds || !Arrays.equals(own.getByteArray(OvenStation.BAKED).orElse(new byte[0]), baked)
+                || own.getBooleanOr(OvenStation.HOT, false) != hot || own.getBooleanOr(OvenStation.COLD, false) != cold
                 || !own.getString(OvenStation.WANTS).equals(wants)) {
             own.putInt(OvenStation.LEFT, seconds);
             own.putByteArray(OvenStation.BAKED, baked);

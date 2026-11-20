@@ -1,12 +1,18 @@
 package com.pockyl.handson_delight.station;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
+import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.diegesis.api.station.StationContext;
 
 import java.util.ArrayList;
@@ -122,7 +128,7 @@ public interface KitchenOven {
 
     /** The oven's own hooks for something baked the cook takes out (experience, its events). */
     default void onTaken(Player player, ItemStack stack) {
-        stack.onCraftedBy(player.level(), player, stack.getCount());
+        stack.onCraftedBy(player, stack.getCount());
     }
 
     /**
@@ -138,9 +144,9 @@ public interface KitchenOven {
      * {@code bakeware}: what it bakes in, for an oven that {@link KitchenOven#usesBakeware uses bakeware} (empty for any other), and
      * whether a bake uses one of it up ({@code usesUp}: a bowl that goes with the dish) or leaves it in the oven.
      */
-    record Baking(ResourceLocation id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks, String kind,
+    record Baking(Identifier id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks, String kind,
             ItemStack bakeware, boolean usesUp) {
-        public Baking(ResourceLocation id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks, String kind) {
+        public Baking(Identifier id, List<Ingredient> ingredients, int width, int height, ItemStack result, int ticks, String kind) {
             this(id, ingredients, width, height, result, ticks, kind, ItemStack.EMPTY, false);
         }
 
@@ -150,7 +156,7 @@ public interface KitchenOven {
 
         /** What goes in, without the empty places of a laid-out recipe. */
         public List<Ingredient> needed() {
-            return ingredients.stream().filter(ingredient -> !ingredient.isEmpty()).toList();
+            return ingredients.stream().filter(ingredient -> !RecipeParts.isGap(ingredient)).toList();
         }
 
         /** Whether it bakes in {@code there}: its own bakeware, or anything for a recipe that names none. */
@@ -199,7 +205,7 @@ public interface KitchenOven {
             for (int y = 0; y < GRID; y++) {
                 ItemStack there = grid[x + y * GRID];
                 boolean inside = x >= left && x < left + recipe.width() && y >= top && y < top + recipe.height();
-                Ingredient wanted = inside ? recipe.ingredients().get(x - left + (y - top) * recipe.width()) : Ingredient.EMPTY;
+                Ingredient wanted = inside ? recipe.ingredients().get(x - left + (y - top) * recipe.width()) : RecipeParts.NOTHING;
                 if (inside ? !wanted.test(there) : !there.isEmpty()) {
                     return false;
                 }

@@ -2,11 +2,12 @@ package com.pockyl.handson_delight.client;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import com.pockyl.diegesis.api.client.StationView;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.KitchenYoukaiPot;
 import com.pockyl.handson_delight.station.YoukaiPotLogic;
 import com.pockyl.handson_delight.station.YoukaiPotStation;
@@ -22,7 +23,7 @@ final class YoukaiPotBook implements RecipeBook.Source {
     private final String memory;
 
     /** {@code station}: the pot's station type, under whose name the book remembers its place. */
-    YoukaiPotBook(ResourceLocation station) {
+    YoukaiPotBook(Identifier station) {
         this.memory = station.toString();
     }
 
@@ -32,7 +33,7 @@ final class YoukaiPotBook implements RecipeBook.Source {
         // An empty pot lists its dishes too: water goes in first, then a dish picked here.
         for (KitchenYoukaiPot.Dish dish : YoukaiPotStation.dishes(view.level(), view.level().getBlockState(view.pos()))) {
             // An ingredient nothing in the game fits (a tag no mod fills) makes a dish nobody can cook: it is not shown.
-            if (dish.ingredients().stream().anyMatch(ingredient -> ingredient.getItems().length == 0)) {
+            if (dish.ingredients().stream().anyMatch(ingredient -> RecipeParts.items(ingredient).length == 0)) {
                 continue;
             }
             // Its times are its own: the config's cooking times do not scale them.

@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -40,7 +41,7 @@ final class BasinBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(BasinStation.DISH, page.key().toString());
-        fill.putBoolean(BasinStation.ALL, Screen.hasShiftDown());
+        fill.putBoolean(BasinStation.ALL, Minecraft.getInstance().hasShiftDown());
         view.sendAction(BasinStation.ACTION_FILL, fill);
     }
 

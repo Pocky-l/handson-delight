@@ -3,7 +3,7 @@ package com.pockyl.handson_delight.gametest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -31,7 +31,7 @@ public final class GrillTests {
     }
 
     private static Item barbeque(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KitchenGrill.MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KitchenGrill.MOD_ID, path));
     }
 
     private record Setup(PotTests.TestStation station, GrillLogic logic, KitchenGrill grill, BlockPos pos) {
@@ -121,7 +121,7 @@ public final class GrillTests {
             act(setup, player, GrillStation.ACTION_TURN, 1, -1);
             helper.assertTrue(setup.grill.turned(1), "at its half it turns");
             setup.logic.tick(setup.station);
-            helper.assertTrue(setup.station.state().data().getBoolean(GrillStation.TURNED + 1), "the clients are told it was turned");
+            helper.assertTrue(setup.station.state().data().getBooleanOr(GrillStation.TURNED + 1, false), "the clients are told it was turned");
             helper.runAfterDelay(half + 2, () -> {
                 helper.assertTrue(setup.grill.getItem(1).is(barbeque("grilled_vegetable_skewer")),
                         "done after its full time, got " + setup.grill.getItem(1));

@@ -5,7 +5,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
@@ -48,14 +48,14 @@ public final class BowlLogic implements StationLogic {
     private static final float LEVEL_PER_BUCKET = 45.0F;
     private static final int LEVEL_MOST = 80;
     private static final int LEVEL_PER_PLACE = 5;
-    public static final TagKey<Item> EGGS = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "eggs"));
+    public static final TagKey<Item> EGGS = TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("c", "eggs"));
     /** Extra Delight's egg white: what an egg cracked for its white gives. */
-    public static final ResourceLocation EGG_WHITE = ResourceLocation.fromNamespaceAndPath(KitchenBowl.MOD_ID, "egg_white_fluid");
+    public static final Identifier EGG_WHITE = Identifier.fromNamespaceAndPath(KitchenBowl.MOD_ID, "egg_white_fluid");
 
     private final KitchenBowl bowl;
     private boolean arranging;
     /** The recipe the cook last picked in the book: the bowl's choice while its food makes it, until it is empty. */
-    private ResourceLocation picked;
+    private Identifier picked;
     /** Where the spoon's end was round the middle last, radians (NaN: not round the wall), and how far it has gone round since a stir. */
     private float lastAngle = Float.NaN;
     private float turned;
@@ -121,7 +121,7 @@ public final class BowlLogic implements StationLogic {
         refresh(station);
         // A bowlful stirred through waits for its containers: it is given as soon as a cook here has them.
         CompoundTag data = station.state().data();
-        if (data.getInt(BowlStation.NEED) > 0 && data.getInt(BowlStation.STIRRED) >= data.getInt(BowlStation.NEED) && now % 10 == 0) {
+        if (data.getIntOr(BowlStation.NEED, 0) > 0 && data.getIntOr(BowlStation.STIRRED, 0) >= data.getIntOr(BowlStation.NEED, 0) && now % 10 == 0) {
             for (Player player : List.copyOf(station.users())) {
                 Optional<KitchenBowl.Mixing> recipe = making(station.level());
                 if (recipe.isPresent() && finish(station, player, recipe.get(), utensilFor(player, recipe.get()))) {
@@ -191,17 +191,17 @@ public final class BowlLogic implements StationLogic {
             return;
         }
         switch (action) {
-            case BowlStation.ACTION_PUT -> put(station, player, data.contains(BowlStation.FROM) ? data.getInt(BowlStation.FROM) : -1,
-                    data.getBoolean(BowlStation.ONE), data.getBoolean(BowlStation.SEPARATE));
-            case BowlStation.ACTION_DRAW -> draw(station, player, data.contains(BowlStation.FROM) ? data.getInt(BowlStation.FROM) : -1,
-                    data.getBoolean(BowlStation.ALL));
+            case BowlStation.ACTION_PUT -> put(station, player, data.contains(BowlStation.FROM) ? data.getIntOr(BowlStation.FROM, 0) : -1,
+                    data.getBooleanOr(BowlStation.ONE, false), data.getBooleanOr(BowlStation.SEPARATE, false));
+            case BowlStation.ACTION_DRAW -> draw(station, player, data.contains(BowlStation.FROM) ? data.getIntOr(BowlStation.FROM, 0) : -1,
+                    data.getBooleanOr(BowlStation.ALL, false));
             case BowlStation.ACTION_FILL -> {
-                ResourceLocation id = ResourceLocation.tryParse(data.getString(BowlStation.DISH));
+                Identifier id = Identifier.tryParse(data.getStringOr(BowlStation.DISH, ""));
                 KitchenBowl.recipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).findFirst()
-                        .ifPresent(recipe -> fill(station, player, recipe, data.getBoolean(BowlStation.ALL) ? FILL_MOST : 1));
+                        .ifPresent(recipe -> fill(station, player, recipe, data.getBooleanOr(BowlStation.ALL, false) ? FILL_MOST : 1));
             }
-            case BowlStation.ACTION_STIR -> stir(station, player, data.getFloat(BowlStation.X), data.getFloat(BowlStation.Z),
-                    data.contains(BowlStation.FROM) ? data.getInt(BowlStation.FROM) : -1);
+            case BowlStation.ACTION_STIR -> stir(station, player, data.getFloatOr(BowlStation.X, 0.0F), data.getFloatOr(BowlStation.Z, 0.0F),
+                    data.contains(BowlStation.FROM) ? data.getIntOr(BowlStation.FROM, 0) : -1);
             default -> {
             }
         }
@@ -315,7 +315,7 @@ public final class BowlLogic implements StationLogic {
         CompoundTag data = station.state().data();
         ListTag list = new ListTag();
         poured.forEach(id -> list.add(StringTag.valueOf(id)));
-        pouredCount = Math.max(pouredCount, data.getInt(BowlStation.POURED_COUNT)) + 1;
+        pouredCount = Math.max(pouredCount, data.getIntOr(BowlStation.POURED_COUNT, 0)) + 1;
         data.putInt(BowlStation.POURED_COUNT, pouredCount);
         data.put(BowlStation.POURED, list);
         station.state().setData(data);
@@ -353,7 +353,7 @@ public final class BowlLogic implements StationLogic {
 
     private static void give(Player player, ItemStack stack) {
         if (!stack.isEmpty() && !player.getInventory().add(stack)) {
-            player.drop(stack, false);
+            player.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
         }
     }
 
@@ -465,7 +465,7 @@ public final class BowlLogic implements StationLogic {
             return false;
         }
         data.remove(BowlStation.WANTS);
-        data.putInt(BowlStation.MADE_COUNT, data.getInt(BowlStation.MADE_COUNT) + 1);
+        data.putInt(BowlStation.MADE_COUNT, data.getIntOr(BowlStation.MADE_COUNT, 0) + 1);
         data.putString(BowlStation.MADE, BuiltInRegistries.ITEM.getKey(recipe.result().getItem()).toString());
         data.putInt(BowlStation.MADE_HOW_MANY, made * recipe.result().getCount());
         station.state().setData(data);
@@ -545,7 +545,7 @@ public final class BowlLogic implements StationLogic {
         List<KitchenBowl.Liquid> liquids = bowl.handson$liquids();
         // Recipes whose liquids are all in the bowl first: the same food may make two things, by what was poured.
         List<KitchenBowl.Mixing> wet = recipes.stream().filter(recipe -> KitchenBowl.liquidsFit(recipe, liquids)).toList();
-        ResourceLocation found = making(level).map(KitchenBowl.Mixing::id).orElse(null);
+        Identifier found = making(level).map(KitchenBowl.Mixing::id).orElse(null);
         StationRecipes.Choice<KitchenBowl.Mixing> choice = StationRecipes.choose(StationRecipes.candidates(wet, KitchenBowl.Mixing::id,
                 KitchenBowl.Mixing::ingredients), kinds, KitchenBowl.PLACES, picked, found, false);
         if (choice == null) {
@@ -677,8 +677,8 @@ public final class BowlLogic implements StationLogic {
         }
         CompoundTag data = state.data();
         String making = recipe.map(mixing -> mixing.id().toString()).orElse("");
-        boolean changed = data.getInt(BowlStation.NEED) != need || data.getInt(BowlStation.STIRRED) != stirred
-                || data.getInt(BowlStation.SETS) != sets || !data.getString(BowlStation.MAKING).equals(making);
+        boolean changed = data.getIntOr(BowlStation.NEED, 0) != need || data.getIntOr(BowlStation.STIRRED, 0) != stirred
+                || data.getIntOr(BowlStation.SETS, 0) != sets || !data.getStringOr(BowlStation.MAKING, "").equals(making);
         if (stirred < need && data.contains(BowlStation.WANTS)) {
             data.remove(BowlStation.WANTS);
             changed = true;

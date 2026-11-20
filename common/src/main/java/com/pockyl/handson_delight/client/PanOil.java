@@ -4,12 +4,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+import com.pockyl.diegesis.api.client.SceneBuffers;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
 import com.pockyl.diegesis.api.client.NodePainter;
@@ -21,7 +21,7 @@ import com.pockyl.handson_delight.HandsOnDelight;
  */
 final class PanOil implements NodePainter {
     /** A block-atlas sprite: the scene keeps everything see-through on the block sheet, in one sorted batch. */
-    private static final ResourceLocation SPRITE = HandsOnDelight.id("block/oil_film");
+    private static final Identifier SPRITE = HandsOnDelight.id("block/oil_film");
     /** A puddle reaches this far past its piece's own size, times. */
     private static final float SPREAD = 1.3F;
     /** Seconds the fat takes to run out to its full puddle, and to dry off. */
@@ -48,12 +48,12 @@ final class PanOil implements NodePainter {
     }
 
     @Override
-    public void paint(PoseStack poseStack, MultiBufferSource buffers, int light) {
+    public void paint(PoseStack poseStack, SceneBuffers buffers, int light) {
         if (amount <= 0.0F || places.length == 0) {
             return;
         }
-        VertexConsumer consumer = buffers.getBuffer(Sheets.translucentCullBlockSheet());
-        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(SPRITE);
+        VertexConsumer consumer = buffers.getBuffer(com.pockyl.diegesis.impl.client.render.DiegesisRenderTypes.translucentCullBlockSheet());
+        TextureAtlasSprite sprite = com.pockyl.diegesis.impl.client.render.SceneDraw.blockSprite(SPRITE);
         // Grows from the middle of each piece, so the fat seems to run out from under it.
         float grown = Mth.sqrt(amount);
         for (int i = 0; i < places.length; i++) {
@@ -63,7 +63,7 @@ final class PanOil implements NodePainter {
             poseStack.pushPose();
             poseStack.translate(places[i][0], 0.0F, places[i][1]);
             // Quarter turns only: pixels turned by any other angle break the grid they share with the pan.
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F * i));
+            poseStack.rotate(Axis.YP.rotationDegrees(90.0F * i));
             quad(consumer, poseStack.last(), sprite, half, alpha, light);
             poseStack.popPose();
         }

@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.BlockGetter;
@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
@@ -34,8 +35,8 @@ public interface KitchenEdVat {
     int OUTPUT_SLOT = 10;
     /** What its tank holds, millibuckets. */
     int CAPACITY = 1000;
-    ResourceLocation VAT_ID = ResourceLocation.fromNamespaceAndPath(MOD_ID, "vat");
-    ResourceLocation LID_ID = ResourceLocation.fromNamespaceAndPath(MOD_ID, "lid");
+    Identifier VAT_ID = Identifier.fromNamespaceAndPath(MOD_ID, "vat");
+    Identifier LID_ID = Identifier.fromNamespaceAndPath(MOD_ID, "lid");
 
     ItemStack handson$item(int slot);
 
@@ -87,11 +88,11 @@ public interface KitchenEdVat {
     }
 
     static Block vat() {
-        return BuiltInRegistries.BLOCK.get(VAT_ID);
+        return BuiltInRegistries.BLOCK.getValue(VAT_ID);
     }
 
     static Block lid() {
-        return BuiltInRegistries.BLOCK.get(LID_ID);
+        return BuiltInRegistries.BLOCK.getValue(LID_ID);
     }
 
     static boolean isLid(BlockState state) {
@@ -123,7 +124,7 @@ public interface KitchenEdVat {
      * An aging recipe: what goes in (one of each, in any of the six places), the liquid it stands in and how much of it, the containers
      * the result goes into (as many as it makes), what comes out, and its stages.
      */
-    record Aging(ResourceLocation id, List<Ingredient> ingredients, List<Fluid> fluids, int amount, ItemStack container, ItemStack result,
+    record Aging(Identifier id, List<Ingredient> ingredients, List<Fluid> fluids, int amount, ItemStack container, ItemStack result,
             List<Stage> stages) {
         public boolean takes(Fluid fluid, int mb) {
             return mb >= amount && fluids.stream().anyMatch(wanted -> wanted.isSame(fluid));
@@ -185,7 +186,7 @@ public interface KitchenEdVat {
             if (access == null) {
                 return List.of();
             }
-            Object manager = level.getRecipeManager();
+            Object manager = KitchenRecipes.source(level);
             if (readFrom.get() != manager) {
                 read = List.copyOf(access.read(level));
                 readFrom = new java.lang.ref.WeakReference<>(manager);

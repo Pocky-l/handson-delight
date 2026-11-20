@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -53,7 +53,7 @@ final class PotScroll {
     private static final float GLUTTONY_BOIL = 1.7F;
 
     private ItemStack shown = ItemStack.EMPTY;
-    private ResourceLocation school;
+    private Identifier school;
     private int color = 0xFFFFFFFF;
     private float hangAge = Float.NaN;
     private float time;
@@ -62,7 +62,7 @@ final class PotScroll {
     private float sparkWait;
     private Item badgeItem;
     /** The school {@link #badgeItem} was picked for: another dish waits for another school's scroll. */
-    private ResourceLocation badgeSchool;
+    private Identifier badgeSchool;
 
     /** What hangs there when the scene is first seen hangs already. */
     void ready(StationView view) {
@@ -125,7 +125,7 @@ final class PotScroll {
     }
 
     /** The scroll a dish waits for blinks at the badge's corner while the badge shows. */
-    void badge(StationView view, boolean shown, ResourceLocation wanted) {
+    void badge(StationView view, boolean shown, Identifier wanted) {
         view.node("badge_scroll").ifPresent(node -> {
             boolean on = shown && wanted != null && Mth.sin(time * 6.0F) > 0.0F;
             node.setVisible(on);

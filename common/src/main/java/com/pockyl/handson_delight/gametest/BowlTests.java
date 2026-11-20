@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -32,11 +32,11 @@ public final class BowlTests {
     }
 
     private static final String EGG_MIX = "extradelight:mixing/egg_mix";
-    private static final ResourceLocation MILK = ResourceLocation.withDefaultNamespace("milk");
-    private static final ResourceLocation WATER = ResourceLocation.withDefaultNamespace("water");
+    private static final Identifier MILK = Identifier.withDefaultNamespace("milk");
+    private static final Identifier WATER = Identifier.withDefaultNamespace("water");
 
     private static Item item(String id) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.parse(id));
+        return BuiltInRegistries.ITEM.getValue(Identifier.parse(id));
     }
 
     private record Setup(PotTests.TestStation station, BowlLogic logic, KitchenBowl bowl, BlockPos pos) {
@@ -100,7 +100,7 @@ public final class BowlTests {
         });
     }
 
-    private static int amount(KitchenBowl bowl, ResourceLocation fluid) {
+    private static int amount(KitchenBowl bowl, Identifier fluid) {
         return bowl.handson$liquids().stream().filter(liquid -> liquid.fluid().equals(fluid)).mapToInt(KitchenBowl.Liquid::amount).sum();
     }
 
@@ -287,7 +287,7 @@ public final class BowlTests {
         helper.assertTrue(setup.bowl.handson$item(0).is(Items.EGG) && setup.bowl.handson$item(1).is(Items.EGG), "two eggs went in");
         helper.assertTrue(amount(setup.bowl, MILK) == KitchenBowl.BOTTLE && player.getInventory().countItem(Items.GLASS_BOTTLE) == 1,
                 "one bottle of milk was poured");
-        helper.assertTrue(setup.station.state().data().getInt(BowlStation.POURED_COUNT) == 1, "the pouring is told to the clients");
+        helper.assertTrue(setup.station.state().data().getIntOr(BowlStation.POURED_COUNT, 0) == 1, "the pouring is told to the clients");
         Setup peaks = bowlBeside(helper, setup);
         Player other = cook(peaks, helper);
         other.getInventory().setItem(0, new ItemStack(Items.EGG, 2));

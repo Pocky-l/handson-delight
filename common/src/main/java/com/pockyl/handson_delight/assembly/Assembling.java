@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.assembly;
 
 import net.minecraft.core.NonNullList;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -36,7 +36,7 @@ public final class Assembling {
      * {@link #dishOf(List, Level)}, the dish {@code picked} in the book first (null: none): it wins over another dish of the same layers
      * (Ender's Delight's and Vanilla Delights' chorus pies are one craft).
      */
-    public static Optional<AssemblyRecipes.Assembly> dishOf(List<ItemStack> layers, Level level, ResourceLocation picked) {
+    public static Optional<AssemblyRecipes.Assembly> dishOf(List<ItemStack> layers, Level level, Identifier picked) {
         List<AssemblyRecipes.Assembly> all = AssemblyRecipes.all();
         for (AssemblyRecipes.Assembly dish : all) {
             if (dish.id().equals(picked) && makes(dish, layers, level)) {
@@ -68,7 +68,7 @@ public final class Assembling {
             if (!dish.recipe().matches(grid.input(), level)) {
                 break;
             }
-            ItemStack made = dish.recipe().assemble(grid.input(), level.registryAccess());
+            ItemStack made = dish.recipe().assemble(grid.input());
             if (made.isEmpty()) {
                 break;
             }

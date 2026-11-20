@@ -17,10 +17,10 @@ public final class Cookable {
 
     /** Whether some item is {@code ingredient}; a gap (an empty ingredient of a shaped recipe) asks for none. */
     public static boolean ingredient(Ingredient ingredient) {
-        if (ingredient.isEmpty()) {
+        if (ingredient == RecipeParts.NOTHING) {
             return true;
         }
-        for (ItemStack stack : ingredient.getItems()) {
+        for (ItemStack stack : RecipeParts.items(ingredient)) {
             // Forge and NeoForge stand a named barrier in for an empty tag.
             if (!stack.isEmpty() && !stack.is(Items.BARRIER)) {
                 return true;

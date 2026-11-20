@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * the grill's own: it grills them its way, the station shows them and does by hand what clicks on the grill did.
  */
 public final class GrillStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("grill");
+    public static final Identifier ID = HandsOnDelight.id("grill");
 
     /** What lies on the grill: its two places, one skewer each. */
     public static final String GRILL = "grill";
@@ -61,14 +61,14 @@ public final class GrillStation {
     public static final String PLACE = "place";
 
     /** Effects for everybody who sees the grill. Data: {@link #PLACE}, and {@link #STACK} of what it is about. */
-    public static final ResourceLocation EFFECT_PLACED = HandsOnDelight.id("grill_placed");
-    public static final ResourceLocation EFFECT_REFUSED = HandsOnDelight.id("grill_refused");
-    public static final ResourceLocation EFFECT_TURNED = HandsOnDelight.id("grill_turned");
+    public static final Identifier EFFECT_PLACED = HandsOnDelight.id("grill_placed");
+    public static final Identifier EFFECT_REFUSED = HandsOnDelight.id("grill_refused");
+    public static final Identifier EFFECT_TURNED = HandsOnDelight.id("grill_turned");
     /** A turn the grill did not take (the lower side is not done yet): the skewer only twitches. */
-    public static final ResourceLocation EFFECT_UNTURNED = HandsOnDelight.id("grill_unturned");
-    public static final ResourceLocation EFFECT_TAKEN = HandsOnDelight.id("grill_taken");
+    public static final Identifier EFFECT_UNTURNED = HandsOnDelight.id("grill_unturned");
+    public static final Identifier EFFECT_TAKEN = HandsOnDelight.id("grill_taken");
     /** A seasoning went over a skewer: {@link #STACK} the seasoning, as it was before the use. */
-    public static final ResourceLocation EFFECT_SEASONED = HandsOnDelight.id("grill_seasoned");
+    public static final Identifier EFFECT_SEASONED = HandsOnDelight.id("grill_seasoned");
     public static final String STACK = "stack";
 
     public static final StationSchema SCHEMA = StationSchema.builder()
@@ -76,7 +76,7 @@ public final class GrillStation {
             .slots(HAND, 1, SlotRules.DEFAULT)
             .build();
 
-    public static final Supplier<Block> GRILL_BLOCK = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(KitchenGrill.MOD_ID,
+    public static final Supplier<Block> GRILL_BLOCK = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(KitchenGrill.MOD_ID,
             "grill"));
 
     /**

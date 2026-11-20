@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * into the syrup that stands in it, and a bottle or bucket brought to it dips in and comes up full. Sneaking keeps its own menu.
  */
 public final class MeltingPotStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("melting_pot");
+    public static final Identifier ID = HandsOnDelight.id("melting_pot");
 
     /** What melts: one stack, a piece at a time. */
     public static final String INPUT = "input";
@@ -45,7 +45,7 @@ public final class MeltingPotStation {
     public static final String FLUID = "fluid";
     public static final String HEATED = "heated";
     public static final SlotRef INPUT_SLOT = SlotRef.of(INPUT, 0);
-    public static final Supplier<Block> POT = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(KitchenMeltingPot.MOD_ID,
+    public static final Supplier<Block> POT = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(KitchenMeltingPot.MOD_ID,
             "melting_pot"));
 
     public static final StationSchema SCHEMA = StationSchema.builder()

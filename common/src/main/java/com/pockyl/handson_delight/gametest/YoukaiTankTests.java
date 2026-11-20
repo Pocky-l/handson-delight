@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -39,11 +39,11 @@ public final class YoukaiTankTests {
 
     @SuppressWarnings("removal")
     private static Item feasts(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KegStation.TANK_MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KegStation.TANK_MOD_ID, path));
     }
 
     private static Item rice() {
-        return BuiltInRegistries.ITEM.get(FarmersDelightContent.id("rice"));
+        return BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("rice"));
     }
 
     private record Setup(PotTests.TestStation station, KegLogic logic, KitchenKeg tank, BlockPos pos) {

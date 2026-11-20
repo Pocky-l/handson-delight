@@ -16,7 +16,7 @@ import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import com.pockyl.handson_delight.assembly.AssemblyRecipes.Assembly;
 import com.pockyl.handson_delight.assembly.BoardDishes;
@@ -45,7 +45,7 @@ public final class HandsOnReiPlugin implements REIClientPlugin {
         for (Assembly dish : BoardDishes.all()) {
             registry.add(new AssemblyDisplay(dish));
         }
-        Set<ResourceLocation> ids = BoardDishes.ids();
+        Set<Identifier> ids = BoardDishes.ids();
         registry.registerVisibilityPredicate((category, display) -> category.getCategoryIdentifier().equals(CRAFTING)
                 && display.getDisplayLocation().filter(ids::contains).isPresent() ? EventResult.interruptFalse() : EventResult.pass());
     }

@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -21,6 +21,8 @@ import com.pockyl.diegesis.api.state.StationSchema;
 import com.pockyl.diegesis.api.state.TankSpec;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.ArrayList;
@@ -36,7 +38,7 @@ import java.util.function.Supplier;
  * before, through its own code: the station shows it and does by hand what its clicks did.
  */
 public final class SteamerStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("youkai_steamer");
+    public static final Identifier ID = HandsOnDelight.id("youkai_steamer");
 
     /** Where a stack let go over the open rack is caught: one slot that never keeps anything. */
     public static final String HAND = "hand";
@@ -79,17 +81,17 @@ public final class SteamerStation {
      * Things went onto racks: {@link #LAID}, each with its {@link #RACK}, {@link #PLACE} and {@link #STACK}; {@link #BOOK} when the
      * book laid them.
      */
-    public static final ResourceLocation EFFECT_IN = HandsOnDelight.id("steamer_in");
+    public static final Identifier EFFECT_IN = HandsOnDelight.id("steamer_in");
     /** Things came off to the cook: {@link #LAID} as for {@link #EFFECT_IN}. */
-    public static final ResourceLocation EFFECT_TAKEN = HandsOnDelight.id("steamer_taken");
+    public static final Identifier EFFECT_TAKEN = HandsOnDelight.id("steamer_taken");
     /** What the steamer would not take: {@link #STACK}. */
-    public static final ResourceLocation EFFECT_REFUSED = HandsOnDelight.id("steamer_refused");
+    public static final Identifier EFFECT_REFUSED = HandsOnDelight.id("steamer_refused");
     /** A rack went on top: {@link #RACK} is the new one. */
-    public static final ResourceLocation EFFECT_RACK = HandsOnDelight.id("steamer_rack");
+    public static final Identifier EFFECT_RACK = HandsOnDelight.id("steamer_rack");
     /** The lid went on. */
-    public static final ResourceLocation EFFECT_LID = HandsOnDelight.id("steamer_lid");
+    public static final Identifier EFFECT_LID = HandsOnDelight.id("steamer_lid");
     /** Water went into the pot. */
-    public static final ResourceLocation EFFECT_WATER = HandsOnDelight.id("steamer_water");
+    public static final Identifier EFFECT_WATER = HandsOnDelight.id("steamer_water");
     public static final String LAID = "laid";
     public static final String STACK = "stack";
     public static final String BOOK = "book";
@@ -121,7 +123,7 @@ public final class SteamerStation {
             .build();
 
     /** A steaming recipe: what goes on a rack, what it becomes, and the ticks it takes with the steam of a covered tower. */
-    public record Steaming(ResourceLocation id, Ingredient ingredient, ItemStack result, int ticks) {
+    public record Steaming(Identifier id, Ingredient ingredient, ItemStack result, int ticks) {
     }
 
     private SteamerStation() {
@@ -160,15 +162,15 @@ public final class SteamerStation {
     @SuppressWarnings({"unchecked", "rawtypes", "removal"})
     public static List<Steaming> recipes(Level level) {
         List<Steaming> found = new ArrayList<>();
-        Optional<RecipeType<?>> type = BuiltInRegistries.RECIPE_TYPE.getOptional(ResourceLocation.fromNamespaceAndPath(KitchenSteamer.MOD_ID, "steaming"));
+        Optional<RecipeType<?>> type = BuiltInRegistries.RECIPE_TYPE.getOptional(Identifier.fromNamespaceAndPath(KitchenSteamer.MOD_ID, "steaming"));
         if (type.isEmpty()) {
             return found;
         }
-        for (RecipeHolder<?> holder : (List<RecipeHolder<?>>) (List) level.getRecipeManager().getAllRecipesFor((RecipeType) type.get())) {
-            if (holder.value() instanceof AbstractCookingRecipe cooking && !cooking.getIngredients().isEmpty()) {
-                ItemStack result = cooking.getResultItem(level.registryAccess()).copy();
+        for (RecipeHolder<?> holder : (List<RecipeHolder<?>>) (List) KitchenRecipes.all(level, (RecipeType) type.get())) {
+            if (holder.value() instanceof AbstractCookingRecipe cooking && !RecipeParts.ingredients(cooking).isEmpty()) {
+                ItemStack result = RecipeParts.result(cooking).copy();
                 if (!result.isEmpty()) {
-                    found.add(new Steaming(holder.id(), cooking.getIngredients().get(0), result, cooking.getCookingTime()));
+                    found.add(new Steaming(holder.id().identifier(), RecipeParts.ingredients(cooking).get(0), result, cooking.cookingTime()));
                 }
             }
         }

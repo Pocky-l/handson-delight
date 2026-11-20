@@ -4,7 +4,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -20,7 +20,7 @@ import java.util.List;
  * Farmer's Delight's heat, and for how long.
  */
 final class MeltingPotBook implements RecipeBook.Source {
-    private static final ResourceLocation STOVE = ResourceLocation.fromNamespaceAndPath("farmersdelight", "stove");
+    private static final Identifier STOVE = Identifier.fromNamespaceAndPath("farmersdelight", "stove");
 
     @Override
     public List<RecipeBook.Page> pages(StationView view) {
@@ -51,7 +51,7 @@ final class MeltingPotBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(MeltingPotStation.DISH, page.key().toString());
-        fill.putBoolean(MeltingPotStation.ALL, Screen.hasShiftDown());
+        fill.putBoolean(MeltingPotStation.ALL, net.minecraft.client.Minecraft.getInstance().hasShiftDown());
         view.sendAction(MeltingPotStation.ACTION_FILL, fill);
     }
 

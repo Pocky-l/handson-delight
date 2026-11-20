@@ -1,20 +1,20 @@
 package com.pockyl.handson_delight.gametest;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.Vec2;
 import vectorwing.farmersdelight.common.block.AbstractStoveBlock;
 import vectorwing.farmersdelight.common.block.entity.AbstractStoveBlockEntity;
+import vectorwing.farmersdelight.common.block.entity.StoveBlockEntity;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.platform.Platform;
@@ -40,9 +40,8 @@ public final class SmallStoveTests {
         // 1.21's test frame lays its barrier ceiling right above: the top would count as covered.
         helper.setBlock(at.above(), Blocks.AIR);
         BlockPos pos = helper.absolutePos(at);
-        @SuppressWarnings("removal")
-        BlockEntityType<?> type = BuiltInRegistries.BLOCK_ENTITY_TYPE.get(FarmersDelightContent.id("stove"));
-        AbstractStoveBlockEntity stove = new AbstractStoveBlockEntity(type, pos, lit, RecipeType.CAMPFIRE_COOKING) {
+        // Farmer's Delight's stove ticker takes its own stove class since 26.x: the small stove is one, with fewer places.
+        AbstractStoveBlockEntity stove = new StoveBlockEntity(pos, lit) {
             @Override
             protected int getInventorySlotCount() {
                 return PLACES;
@@ -63,7 +62,7 @@ public final class SmallStoveTests {
         // Saved by the small stove and loaded by Farmer's Delight's own: it takes the slot count saved, its cooking counts stay six.
         AbstractStoveBlockEntity reloaded = (AbstractStoveBlockEntity) helper.getLevel().getBlockEntity(pos);
         helper.assertTrue(reloaded != null && reloaded != stove, "Farmer's Delight's stove stands there");
-        reloaded.loadWithComponents(stove.saveWithoutMetadata(helper.getLevel().registryAccess()), helper.getLevel().registryAccess());
+        reloaded.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), stove.saveWithoutMetadata(helper.getLevel().registryAccess())));
         StoveCooking.tick(reloaded);
         StoveCooking.place(reloaded, new ItemStack(Items.BEEF, 6), -1);
         StoveCooking.tick(reloaded);

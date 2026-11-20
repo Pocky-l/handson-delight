@@ -1,6 +1,7 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -11,6 +12,8 @@ import com.pockyl.diegesis.api.state.SlotStorage;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
+import com.pockyl.handson_delight.ItemNbt;
+import com.pockyl.handson_delight.platform.Platform;
 
 /** The stove's actions at the station: food on, a piece turned, a piece taken. The grilling itself is {@link StoveCooking}'s. */
 public final class StoveLogic implements StationLogic {
@@ -60,10 +63,10 @@ public final class StoveLogic implements StationLogic {
 
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
-        int place = data.contains(StoveStation.PLACE) ? data.getInt(StoveStation.PLACE) : -1;
+        int place = data.contains(StoveStation.PLACE) ? data.getIntOr(StoveStation.PLACE, 0) : -1;
         switch (action) {
-            case StoveStation.ACTION_PLACE -> place(station, player, data.getBoolean(StoveStation.ONE) ? place : -1,
-                    data.contains(StoveStation.FROM) ? data.getInt(StoveStation.FROM) : -1);
+            case StoveStation.ACTION_PLACE -> place(station, player, data.getBooleanOr(StoveStation.ONE, false) ? place : -1,
+                    data.contains(StoveStation.FROM) ? data.getIntOr(StoveStation.FROM, 0) : -1);
             case StoveStation.ACTION_TURN -> turn(station, place);
             case StoveStation.ACTION_TAKE -> take(station, player, place);
             default -> {
@@ -84,7 +87,7 @@ public final class StoveLogic implements StationLogic {
         int laid = StoveCooking.place(stove, carried, place);
         if (laid == 0) {
             CompoundTag data = new CompoundTag();
-            data.put(StoveStation.STACK, carried.copyWithCount(1).saveOptional(station.level().registryAccess()));
+            data.put(StoveStation.STACK, ItemNbt.save(carried.copyWithCount(1), station.level().registryAccess()));
             station.effect(StoveStation.EFFECT_REFUSED, "grill", data);
             return;
         }
@@ -109,10 +112,10 @@ public final class StoveLogic implements StationLogic {
         }
         CompoundTag data = new CompoundTag();
         data.putInt(StoveStation.PLACE, place);
-        data.put(StoveStation.STACK, taken.saveOptional(station.level().registryAccess()));
+        data.put(StoveStation.STACK, ItemNbt.save(taken, station.level().registryAccess()));
         station.effect(StoveStation.EFFECT_TAKEN, "grill", data);
         if (!player.getInventory().add(taken)) {
-            player.drop(taken, false);
+            player.drop(taken, false, Prediction.SERVER_ONLY);
         }
     }
 

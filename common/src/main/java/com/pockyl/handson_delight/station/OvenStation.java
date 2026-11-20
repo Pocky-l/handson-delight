@@ -3,8 +3,9 @@ package com.pockyl.handson_delight.station;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -34,11 +35,11 @@ import java.util.function.Supplier;
  */
 public final class OvenStation {
     /** Cultural Delights' oven. */
-    public static final ResourceLocation ID = HandsOnDelight.id("oven");
+    public static final Identifier ID = HandsOnDelight.id("oven");
     /** Cooking for Blockheads' oven, of every colour. */
-    public static final ResourceLocation CFB_ID = HandsOnDelight.id("cfb_oven");
+    public static final Identifier CFB_ID = HandsOnDelight.id("cfb_oven");
     /** Extra Delight's oven. */
-    public static final ResourceLocation ED_ID = HandsOnDelight.id("ed_oven");
+    public static final Identifier ED_ID = HandsOnDelight.id("ed_oven");
 
     public static final String INGREDIENTS = "ingredients";
     /** What is baked waits in the oven's output slots. */
@@ -99,7 +100,7 @@ public final class OvenStation {
 
     /** Cooking for Blockheads' ovens, its sixteen colours: on 1.21.1 it tags them as items only. */
     public static final TagKey<Block> CFB_OVENS = TagKey.create(Registries.BLOCK, HandsOnDelight.id("cfb_ovens"));
-    public static final Supplier<Block> OVEN = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(CulturalOven.MOD_ID, "oven"));
+    public static final Supplier<Block> OVEN = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(CulturalOven.MOD_ID, "oven"));
 
     public static final StationSchema CFB_SCHEMA = schema(CfbOven.PLACES, 1, CfbOven.OUTPUTS, true, CfbOven.TOOLS);
 
@@ -134,7 +135,7 @@ public final class OvenStation {
             .idleLogic()
             .build();
 
-    public static final Supplier<Block> ED_OVEN = () -> BuiltInRegistries.BLOCK.get(EdOven.OVEN_ID);
+    public static final Supplier<Block> ED_OVEN = () -> BuiltInRegistries.BLOCK.getValue(EdOven.OVEN_ID);
 
     /**
      * Extra Delight's oven. Its block is open in front and stays in the world while somebody works at it: the scene pulls the bakeware

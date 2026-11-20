@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
@@ -22,7 +22,7 @@ import com.pockyl.handson_delight.HandsOnDelight;
  * and players without this mod use it as before.
  */
 public final class CuttingBoardStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("cutting_board");
+    public static final Identifier ID = HandsOnDelight.id("cutting_board");
 
     /** What lies on the board to be cut: Farmer's Delight's own slot, a stack. */
     public static final String BOARD = "board";
@@ -88,26 +88,26 @@ public final class CuttingBoardStation {
     public static final String ANGLE = "angle";
 
     /** Effects for everybody who sees the board. Data: {@link #AT}, {@link #DONE}, {@link #TOOL}. */
-    public static final ResourceLocation EFFECT_CHOPPED = HandsOnDelight.id("chopped");
-    public static final ResourceLocation EFFECT_PLACED = HandsOnDelight.id("placed");
-    public static final ResourceLocation EFFECT_REFUSED = HandsOnDelight.id("refused");
+    public static final Identifier EFFECT_CHOPPED = HandsOnDelight.id("chopped");
+    public static final Identifier EFFECT_PLACED = HandsOnDelight.id("placed");
+    public static final Identifier EFFECT_REFUSED = HandsOnDelight.id("refused");
     /**
      * Data: {@link #FINISH}, how the dish was finished ({@code AssemblyRecipes.Finish}); {@link #BLOCK}, whether it is a block;
      * {@link #LAYERS}, what it was made of, bottom first, one of each (a dish picked in the book is laid and made in one tick).
      */
-    public static final ResourceLocation EFFECT_ASSEMBLED = HandsOnDelight.id("assembled");
+    public static final Identifier EFFECT_ASSEMBLED = HandsOnDelight.id("assembled");
     public static final String FINISH = "finish";
     public static final String BLOCK = "block";
     /** Data: {@link #BOOK}. */
-    public static final ResourceLocation EFFECT_BOOK = HandsOnDelight.id("board_book");
+    public static final Identifier EFFECT_BOOK = HandsOnDelight.id("board_book");
     /**
      * Something comes off the board into the inventory: {@link #STACK} from layer {@link #AT}, or from the board itself with none;
      * {@link #CARVED} when it was a tool stuck into the board.
      */
-    public static final ResourceLocation EFFECT_TAKEN = HandsOnDelight.id("taken");
+    public static final Identifier EFFECT_TAKEN = HandsOnDelight.id("taken");
     public static final String CARVED = "carved";
     /** A tool was stuck into the board: Farmer's Delight's sound of it. */
-    public static final ResourceLocation EFFECT_CARVED = HandsOnDelight.id("carved");
+    public static final Identifier EFFECT_CARVED = HandsOnDelight.id("carved");
     /** What a {@link #EFFECT_TAKEN} or {@link #EFFECT_REFUSED} is about, saved as a stack. */
     public static final String STACK = "stack";
     public static final String DONE = "done";

@@ -2,6 +2,7 @@ package com.pockyl.handson_delight.gametest;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
@@ -9,11 +10,14 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
+import net.minecraft.tags.BlockItemTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -25,11 +29,13 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import vectorwing.farmersdelight.client.recipebook.CookingPotRecipeBookTab;
+import vectorwing.farmersdelight.common.crafting.CookingPotBookCategory;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
@@ -41,6 +47,8 @@ import com.pockyl.handson_delight.Cookable;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.ItemNbt;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.KitchenPot;
@@ -62,7 +70,7 @@ public final class PotTests {
     }
 
     private static Item fd(String path) {
-        return BuiltInRegistries.ITEM.get(FarmersDelightContent.id(path));
+        return BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id(path));
     }
 
     /** A pot on a lit campfire, with the logic the station would make for it. */
@@ -108,8 +116,8 @@ public final class PotTests {
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 2));
         // What a finished recipe leaves in the pot: it knows its container only from the recipe or from its save.
         CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
-        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
-        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
+        saved.put("Container", ItemNbt.save(new ItemStack(Items.BOWL), helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), saved));
         helper.assertFalse(setup.logic.mayPlace(setup.station, player, SlotRef.of(CookingPotStation.INGREDIENTS, 0), new ItemStack(Items.BOWL)),
                 "a bowl for the soup does not go in");
         setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_SCOOP, new CompoundTag());
@@ -129,8 +137,8 @@ public final class PotTests {
         player.getInventory().setItem(5, new ItemStack(Items.BOWL, 3));
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 4));
         CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
-        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
-        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
+        saved.put("Container", ItemNbt.save(new ItemStack(Items.BOWL), helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), saved));
         CompoundTag one = new CompoundTag();
         one.putBoolean(CookingPotStation.FROM_INVENTORY, true);
         setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_SCOOP, one);
@@ -168,12 +176,12 @@ public final class PotTests {
     }
 
     /** The dish the ingredient slots make as Farmer's Delight reads them, or null. */
-    private static ResourceLocation made(GameTestHelper helper, CookingPotBlockEntity pot) {
+    private static Identifier made(GameTestHelper helper, CookingPotBlockEntity pot) {
         List<ItemStack> inPot = new ArrayList<>();
         for (int i = 0; i < CookingPotBlockEntity.MEAL_DISPLAY_SLOT; i++) {
             inPot.add(Platform.INSTANCE.getItem(pot, i));
         }
-        return Platform.INSTANCE.findRecipe(helper.getLevel(), inPot).map(RecipeHolder::id).orElse(null);
+        return Platform.INSTANCE.findRecipe(helper.getLevel(), inPot).map(holder -> holder.id().identifier()).orElse(null);
     }
 
     /**
@@ -201,22 +209,22 @@ public final class PotTests {
      */
     public static void twoAlikeThrownInMakeTheirDish(GameTestHelper helper) {
         addRecipe(helper, "cane", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, Ingredient.of(Items.GLOWSTONE_DUST),
-                Ingredient.of(Items.GLOWSTONE_DUST), Ingredient.of(Items.RED_DYE));
+                Ingredient.of(Items.GLOWSTONE_DUST), Ingredient.of(Items.DYE.red()));
         addRecipe(helper, "cane_half", new ItemStack(Items.STRING), ItemStack.EMPTY, 40, Ingredient.of(Items.GLOWSTONE_DUST),
-                Ingredient.of(Items.RED_DYE));
+                Ingredient.of(Items.DYE.red()));
         Setup setup = pot(helper);
         throwIn(setup, 0, new ItemStack(Items.GLOWSTONE_DUST, 2));
-        throwIn(setup, 1, new ItemStack(Items.RED_DYE));
+        throwIn(setup, 1, new ItemStack(Items.DYE.red()));
         helper.assertTrue(makes(helper, setup.pot, "test_cane"), "the cane, got " + made(helper, setup.pot));
         empty(setup.pot);
         // A batch of the smaller dish with some dust over (ten corn and six milk for elote) stays that dish: six servings, not five.
         throwIn(setup, 0, new ItemStack(Items.GLOWSTONE_DUST, 10));
-        throwIn(setup, 1, new ItemStack(Items.RED_DYE, 6));
+        throwIn(setup, 1, new ItemStack(Items.DYE.red(), 6));
         helper.assertTrue(makes(helper, setup.pot, "test_cane_half"), "six of the half, got " + made(helper, setup.pot));
         empty(setup.pot);
         // Three dust and a dye make one of either and neither whole (three corn and a milk bucket): it cooks as it did, the half.
         throwIn(setup, 0, new ItemStack(Items.GLOWSTONE_DUST, 3));
-        throwIn(setup, 1, new ItemStack(Items.RED_DYE));
+        throwIn(setup, 1, new ItemStack(Items.DYE.red()));
         helper.assertTrue(makes(helper, setup.pot, "test_cane_half"), "the half as before, got " + made(helper, setup.pot));
         empty(setup.pot);
         helper.succeed();
@@ -289,7 +297,7 @@ public final class PotTests {
 
     /** A tag may take what another ingredient wants: a flower and two dandelions are a dandelion stack and a poppy. */
     public static void aTagTakesWhatTheOtherIngredientsLeave(GameTestHelper helper) {
-        addRecipe(helper, "posy", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, Ingredient.of(ItemTags.SMALL_FLOWERS),
+        addRecipe(helper, "posy", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, tagged(BlockItemTags.SMALL_FLOWERS.item()),
                 Ingredient.of(Items.DANDELION), Ingredient.of(Items.DANDELION));
         Setup setup = pot(helper);
         throwIn(setup, 0, new ItemStack(Items.DANDELION, 2));
@@ -333,10 +341,10 @@ public final class PotTests {
      * for it, and its food is never laid out for it.
      */
     public static void aDishNobodyCanMakeIsNotOffered(GameTestHelper helper) {
-        Ingredient nothing = Ingredient.of(TagKey.create(Registries.ITEM, HandsOnDelight.id("test_nothing")));
+        Ingredient nothing = tagged(TagKey.create(Registries.ITEM, HandsOnDelight.id("test_nothing")));
         addRecipe(helper, "yogurt", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, Ingredient.of(Items.HONEY_BOTTLE), nothing, nothing);
         helper.assertFalse(Cookable.ingredient(nothing), "an empty tag is no ingredient anyone has");
-        helper.assertTrue(Cookable.ingredient(Ingredient.of(Items.HONEY_BOTTLE)) && Cookable.ingredient(Ingredient.EMPTY),
+        helper.assertTrue(Cookable.ingredient(Ingredient.of(Items.HONEY_BOTTLE)) && Cookable.ingredient(RecipeParts.NOTHING),
                 "an item is, and a gap asks for nothing");
         Setup setup = pot(helper);
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
@@ -352,7 +360,7 @@ public final class PotTests {
 
     /** Christmas Delight asks for milk as {@code c:foods/milk}, which no other mod fills: it takes the milk bottle and the bucket. */
     public static void milkAskedForAsFoodIsMilk(GameTestHelper helper) {
-        Ingredient milk = Ingredient.of(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "foods/milk")));
+        Ingredient milk = tagged(TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("c", "foods/milk")));
         helper.assertTrue(milk.test(new ItemStack(fd("milk_bottle"))), "a milk bottle is milk");
         helper.assertTrue(milk.test(new ItemStack(Items.MILK_BUCKET)), "a milk bucket is milk");
         helper.assertTrue(Cookable.ingredient(milk), "so the dishes of milk can be made");
@@ -379,8 +387,8 @@ public final class PotTests {
         Player player = helper.makeMockPlayer(GameType.CREATIVE);
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 2));
         CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
-        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
-        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
+        saved.put("Container", ItemNbt.save(new ItemStack(Items.BOWL), helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), saved));
         player.inventoryMenu.setCarried(new ItemStack(Items.BOWL, 5));
         CompoundTag all = new CompoundTag();
         all.putBoolean(CookingPotStation.SCOOP_ALL, true);
@@ -452,7 +460,7 @@ public final class PotTests {
         Setup setup = pot(helper);
         BlockPos above = new BlockPos(1, 3, 1);
         helper.setBlock(above, Blocks.HOPPER);
-        HopperBlockEntity hopper = (HopperBlockEntity) helper.getBlockEntity(above);
+        HopperBlockEntity hopper = helper.getBlockEntity(above, HopperBlockEntity.class);
         hopper.setItem(0, new ItemStack(Items.BEEF, 2));
         hopper.setItem(1, new ItemStack(Items.CARROT, 2));
         hopper.setItem(2, new ItemStack(Items.POTATO, 2));
@@ -471,7 +479,7 @@ public final class PotTests {
         Setup setup = pot(helper);
         BlockPos above = new BlockPos(1, 3, 1);
         helper.setBlock(above, Blocks.HOPPER);
-        HopperBlockEntity hopper = (HopperBlockEntity) helper.getBlockEntity(above);
+        HopperBlockEntity hopper = helper.getBlockEntity(above, HopperBlockEntity.class);
         hopper.setItem(0, new ItemStack(Items.BEEF, 2));
         hopper.setItem(1, new ItemStack(Items.CARROT, 2));
         hopper.setItem(2, new ItemStack(Items.POTATO, 2));
@@ -510,8 +518,8 @@ public final class PotTests {
         ServerPlayer player = TestPlayers.serverPlayer(helper, "server");
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 2));
         CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
-        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
-        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
+        saved.put("Container", ItemNbt.save(new ItemStack(Items.BOWL), helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), saved));
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.BOWL, 2));
         BlockPos pos = setup.station.pos();
         helper.getLevel().getBlockState(pos).useItemOn(player.getMainHandItem(), helper.getLevel(), player, InteractionHand.MAIN_HAND,
@@ -588,8 +596,8 @@ public final class PotTests {
         setup.station.users.add(cook);
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 12));
         CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
-        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
-        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
+        saved.put("Container", ItemNbt.save(new ItemStack(Items.BOWL), helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), saved));
         fill(setup.pot, 6);
         for (int tick = 0; tick < 340; tick += 2) {
             double angle = tick * Math.PI / 10.0;
@@ -620,8 +628,8 @@ public final class PotTests {
         setup.station.users.add(cook);
         Platform.INSTANCE.setItem(setup.pot, CookingPotBlockEntity.MEAL_DISPLAY_SLOT, new ItemStack(fd("beef_stew"), 12));
         CompoundTag saved = setup.pot.saveWithoutMetadata(helper.getLevel().registryAccess());
-        saved.put("Container", new ItemStack(Items.BOWL).save(helper.getLevel().registryAccess()));
-        setup.pot.loadWithComponents(saved, helper.getLevel().registryAccess());
+        saved.put("Container", ItemNbt.save(new ItemStack(Items.BOWL), helper.getLevel().registryAccess()));
+        setup.pot.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), saved));
         fill(setup.pot, 6);
         for (int tick = 0; tick < 340; tick += 1) {
             double angle = tick * Math.PI / 10.0;
@@ -724,7 +732,7 @@ public final class PotTests {
         helper.runAfterDelay(120, () -> {
             setup.logic.tick(setup.station);
             helper.assertTrue(setup.station.state().getControl(CookingPotStation.STARS) == 1.0F, "a dish cooked for the first time opens one star");
-            helper.assertTrue(setup.station.state().data().getInt(CookingPotStation.OPEN_STARS) == 1, "and the badge shows only that one");
+            helper.assertTrue(setup.station.state().data().getIntOr(CookingPotStation.OPEN_STARS, 0) == 1, "and the badge shows only that one");
         });
         helper.runAfterDelay(240, () -> {
             helper.assertTrue(setup.pot.getMeal().getCount() == 2, "one star brings nothing more");
@@ -829,23 +837,23 @@ public final class PotTests {
 
     /** A recipe as a data pack or another mod would add it, put among the server's recipes. */
     private static void addRecipe(GameTestHelper helper, String name, ItemStack result, ItemStack container, int cookTime, Ingredient... inputs) {
-        addRecipe(helper, name, new CookingPotRecipe("", CookingPotRecipeBookTab.MISC, NonNullList.of(Ingredient.EMPTY, inputs), result,
-                container, 0.1F, cookTime));
+        addRecipe(helper, name, TestRecipes.cooking(CookingPotBookCategory.MISC, List.of(inputs), result, container, 0.1F, cookTime));
     }
 
     private static void addRecipe(GameTestHelper helper, String name, CookingPotRecipe recipe) {
-        RecipeManager recipes = helper.getLevel().getRecipeManager();
-        ResourceLocation id = HandsOnDelight.id("test_" + name);
-        List<RecipeHolder<?>> all = new ArrayList<>(recipes.getRecipes());
-        all.removeIf(holder -> holder.id().equals(id));
-        all.add(new RecipeHolder<>(id, recipe));
-        recipes.replaceRecipes(all);
+        RecipeManager recipes = helper.getLevel().recipeAccess();
+        TestRecipes.add(helper.getLevel(), HandsOnDelight.id("test_" + name), recipe);
         // Autochef's Delight keeps its own list of pot recipes, built when the recipes load: a recipe added here must go into it too.
         try {
             Class.forName("snownee.autochefsdelight.AutochefsDelight").getMethod("buildRecipeCache", RecipeManager.class).invoke(null, recipes);
         } catch (ReflectiveOperationException absent) {
             // Not installed.
         }
+    }
+
+    /** An ingredient of a tag's items, of none when the tag is unknown (an ingredient no longer names an empty tag). */
+    private static Ingredient tagged(TagKey<Item> tag) {
+        return BuiltInRegistries.ITEM.get(tag).map(Ingredient::of).orElseGet(() -> RecipeParts.emptyTag(tag));
     }
 
     private static boolean isLoaded(String className) {
@@ -867,7 +875,7 @@ public final class PotTests {
     /** A modded drink: two servings a time, served in a bottle, one ingredient a tag. */
     public static void aModdedRecipeCooksAsABatch(GameTestHelper helper) {
         addRecipe(helper, "nectar", new ItemStack(Items.HONEY_BOTTLE, 2), new ItemStack(Items.GLASS_BOTTLE), 40, Ingredient.of(Items.SUGAR),
-                Ingredient.of(ItemTags.SMALL_FLOWERS));
+                tagged(BlockItemTags.SMALL_FLOWERS.item()));
         Setup setup = pot(helper);
         Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(Items.SUGAR, 5));
         Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.DANDELION, 5));
@@ -906,7 +914,7 @@ public final class PotTests {
         }
         ItemStack made = new ItemStack(Items.COOKIE);
         made.set(DataComponents.CUSTOM_NAME, Component.literal("Meal of what lay there"));
-        CookingPotRecipe meal = maker.make(NonNullList.of(Ingredient.EMPTY, Ingredient.of(Items.DEAD_BUSH), Ingredient.of(Items.SPIDER_EYE)),
+        CookingPotRecipe meal = maker.make(NonNullList.of(RecipeParts.NOTHING, Ingredient.of(Items.DEAD_BUSH), Ingredient.of(Items.SPIDER_EYE)),
                 made, new ItemStack(Items.COOKIE));
         List<CookingPotRecipe> with = new ArrayList<>(before);
         with.add(meal);
@@ -1114,7 +1122,7 @@ public final class PotTests {
         }
 
         @Override
-        public void effect(ResourceLocation effect, String node, CompoundTag data) {
+        public void effect(Identifier effect, String node, CompoundTag data) {
         }
     }
 }

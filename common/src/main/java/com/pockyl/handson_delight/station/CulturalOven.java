@@ -1,11 +1,10 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -13,6 +12,8 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.lang.reflect.Field;
@@ -35,15 +36,16 @@ public final class CulturalOven implements KitchenOven {
     /** As its slots hold: a whole stack a place. */
     public static final int PER_PLACE = 64;
     /** Its two recipe types: a set of ingredients in any slots, and one laid out in the grid as at a crafting table. */
-    public static final ResourceLocation BAKING = ResourceLocation.fromNamespaceAndPath(MOD_ID, "baking");
-    public static final ResourceLocation BAKING_SHAPED = ResourceLocation.fromNamespaceAndPath(MOD_ID, "baking_shaped");
+    public static final Identifier BAKING = Identifier.fromNamespaceAndPath(MOD_ID, "baking");
+    public static final Identifier BAKING_SHAPED = Identifier.fromNamespaceAndPath(MOD_ID, "baking_shaped");
 
     private static Class<?> entityClass;
     private static Field progressField;
     private static Field totalField;
     private static Method handlerMethod;
     private static boolean broken;
-    private static RecipeManager listedFor;
+    /** What the recipes were listed from: see {@link KitchenRecipes#source}. */
+    private static Object listedFor;
     private static List<Baking> listed = List.of();
 
     private final BlockEntity entity;
@@ -250,29 +252,29 @@ public final class CulturalOven implements KitchenOven {
      * recipe manager.
      */
     public static synchronized List<Baking> recipesOf(Level level) {
-        RecipeManager manager = level.getRecipeManager();
+        Object manager = KitchenRecipes.source(level);
         if (manager == listedFor) {
             return listed;
         }
         List<Baking> shaped = new ArrayList<>();
         List<Baking> loose = new ArrayList<>();
-        for (RecipeHolder<?> holder : manager.getRecipes()) {
+        for (RecipeHolder<?> holder : KitchenRecipes.recipes(level)) {
             Recipe<?> recipe = holder.value();
-            ResourceLocation type = BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType());
+            Identifier type = BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType());
             boolean isShaped = BAKING_SHAPED.equals(type);
             if (!isShaped && !BAKING.equals(type)) {
                 continue;
             }
-            ItemStack result = recipe.getResultItem(level.registryAccess());
+            ItemStack result = RecipeParts.result(recipe);
             if (result.isEmpty()) {
                 continue;
             }
             int ticks = call(recipe, "getCookTime", 200);
             if (isShaped) {
-                shaped.add(new Baking(holder.id(), List.copyOf(recipe.getIngredients()), call(recipe, "getWidth", 0),
+                shaped.add(new Baking(holder.id().identifier(), List.copyOf(RecipeParts.ingredients(recipe)), call(recipe, "getWidth", 0),
                         call(recipe, "getHeight", 0), result.copy(), ticks, OvenStation.KIND_FOOD));
             } else {
-                loose.add(new Baking(holder.id(), List.copyOf(recipe.getIngredients()), 0, 0, result.copy(), ticks,
+                loose.add(new Baking(holder.id().identifier(), List.copyOf(RecipeParts.ingredients(recipe)), 0, 0, result.copy(), ticks,
                         OvenStation.KIND_FOOD));
             }
         }

@@ -11,12 +11,15 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
@@ -42,8 +45,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.AABB;
-import vectorwing.farmersdelight.client.recipebook.CookingPotRecipeBookTab;
+import vectorwing.farmersdelight.common.crafting.CookingPotBookCategory;
 import vectorwing.farmersdelight.common.block.entity.CuttingBoardBlockEntity;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
@@ -54,6 +58,8 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.assembly.Assembling;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
@@ -81,7 +87,7 @@ public final class BoardTests {
     }
 
     private static Item fd(String path) {
-        return BuiltInRegistries.ITEM.get(FarmersDelightContent.id(path));
+        return BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id(path));
     }
 
     /** A board, the logic the station would make for it, and a cook holding nothing. */
@@ -158,14 +164,14 @@ public final class BoardTests {
         for (int slot = 0; slot < 5; slot++) {
             machine.setItem(slot, burger().get(slot));
         }
-        helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, machine.asCraftInput(), level)
-                .filter(recipe -> recipe.value().getResultItem(level.registryAccess()).is(fd("hamburger"))).isPresent(),
+        helper.assertTrue(KitchenRecipes.find(level, RecipeType.CRAFTING, machine.asCraftInput())
+                .filter(recipe -> RecipeParts.result(recipe.value()).is(fd("hamburger"))).isPresent(),
                 "an autocrafter still does");
-        RecipeHolder<?> hamburger = level.getRecipeManager().byKey(FarmersDelightContent.id("hamburger")).orElseThrow();
-        helper.assertTrue(cook.getRecipeBook().addRecipes(List.of(hamburger), cook) == 0 && !cook.getRecipeBook().contains(hamburger),
+        RecipeHolder<?> hamburger = KitchenRecipes.byId(level, FarmersDelightContent.id("hamburger")).orElseThrow();
+        helper.assertTrue(cook.getRecipeBook().addRecipes(List.of(hamburger), cook) == 0 && !cook.getRecipeBook().contains(hamburger.id()),
                 "and the recipe book does not learn it");
         helper.assertTrue(AssemblyRecipes.all().stream().anyMatch(dish -> dish.id().getPath().equals("hamburger")), "the board does");
-        helper.assertTrue(level.getRecipeManager().byKey(FarmersDelightContent.id("cooking_pot")).isPresent(), "blocks are still crafted");
+        helper.assertTrue(KitchenRecipes.byId(level, FarmersDelightContent.id("cooking_pot")).isPresent(), "blocks are still crafted");
         helper.succeed();
     }
 
@@ -185,7 +191,7 @@ public final class BoardTests {
         helper.assertTrue(tableMakes(helper, netherSalad()).isEmpty(), "the table makes no salad");
         TransientCraftingContainer machine = new TransientCraftingContainer(new MachineMenu(), 3, 3);
         netherSalad().forEach(machine::setItem);
-        helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, machine.asCraftInput(), level).isPresent(),
+        helper.assertTrue(KitchenRecipes.find(level, RecipeType.CRAFTING, machine.asCraftInput()).isPresent(),
                 "an autocrafter does");
         helper.succeed();
     }
@@ -208,7 +214,7 @@ public final class BoardTests {
      * bakes its pies and stuffed potato in its oven. There is no craft to put together then, and the board rightly has no dish.
      */
     private static boolean madeElsewhere(GameTestHelper helper, String path) {
-        return helper.getLevel().getRecipeManager().byKey(FarmersDelightContent.id(path))
+        return KitchenRecipes.byId(helper.getLevel(), FarmersDelightContent.id(path))
                 .filter(holder -> !(holder.value() instanceof CraftingRecipe)).isPresent();
     }
 
@@ -222,29 +228,28 @@ public final class BoardTests {
      * stays in the crafting table. With KubeJS ({@code -Pkubejs}) the test script adds such a recipe and the tag, as a modpack does.
      */
     public static void aTaggedCraftOfAnyModComesToTheBoard(GameTestHelper helper) {
-        RecipeManager recipes = helper.getLevel().getRecipeManager();
         HolderLookup.Provider registries = helper.getLevel().registryAccess();
         // Cultural Delights takes the stew, the cake and the bread off the crafting table (into its pot and its oven): then there is no
         // craft of them to read.
-        recipes.byKey(ResourceLocation.parse("minecraft:mushroom_stew")).ifPresent(craft -> {
+        KitchenRecipes.byId(helper.getLevel(), Identifier.parse("minecraft:mushroom_stew")).ifPresent(craft -> {
             AssemblyRecipes.Assembly stew = AssemblyRecipes.fromCraft(craft, registries).orElseThrow();
             helper.assertTrue(stew.kind() == AssemblyRecipes.Base.BOWL && stew.result().is(Items.MUSHROOM_STEW)
                     && stew.ingredients().size() == 3, "a shapeless craft is read with its ingredients and result");
         });
-        recipes.byKey(ResourceLocation.parse("minecraft:cake")).ifPresent(craft -> {
+        KitchenRecipes.byId(helper.getLevel(), Identifier.parse("minecraft:cake")).ifPresent(craft -> {
             AssemblyRecipes.Assembly cake = AssemblyRecipes.fromCraft(craft, registries).orElseThrow();
             helper.assertTrue(cake.result().is(Items.CAKE) && cake.ingredients().size() == 9 && cake.kind() == AssemblyRecipes.Base.WHEAT,
                     "a shaped craft keeps its shape");
         });
-        recipes.byKey(ResourceLocation.parse("minecraft:bread")).ifPresent(craft -> helper.assertTrue(
+        KitchenRecipes.byId(helper.getLevel(), Identifier.parse("minecraft:bread")).ifPresent(craft -> helper.assertTrue(
                 AssemblyRecipes.fromCraft(craft, registries).isEmpty(), "one kind of thing is no dish"));
         if (Platform.INSTANCE.isLoaded("kubejs")) {
-            helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.parse("kubejs:fungus_stew")),
+            helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(Identifier.parse("kubejs:fungus_stew")),
                     "a script's recipe with a tagged result is made on the board");
-            helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.parse("minecraft:mushroom_stew")),
+            helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(Identifier.parse("minecraft:mushroom_stew")),
                     "and so is every craft of that result");
         } else {
-            helper.assertTrue(!AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.parse("minecraft:mushroom_stew")),
+            helper.assertTrue(!AssemblyRecipes.isMadeOnTheBoard(Identifier.parse("minecraft:mushroom_stew")),
                     "an untagged vanilla dish stays in the crafting table");
         }
         helper.succeed();
@@ -256,10 +261,12 @@ public final class BoardTests {
      */
     public static void aPouredWaterBottleLeavesItsBottle(GameTestHelper helper) {
         ItemStack water = PotionContents.createItemStack(Items.POTION, Potions.WATER);
-        Item dough = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("wheat_dough"));
-        ShapelessRecipe craft = new ShapelessRecipe("", CraftingBookCategory.MISC, new ItemStack(dough, 3), NonNullList.of(Ingredient.EMPTY,
-                Ingredient.of(Items.WHEAT), Ingredient.of(Items.WHEAT), Ingredient.of(Items.WHEAT), Ingredient.of(water)));
-        AssemblyRecipes.Assembly dish = AssemblyRecipes.fromCraft(new RecipeHolder<>(HandsOnDelight.id("test_dough_from_water_bottle"), craft),
+        Item dough = BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("wheat_dough"));
+        // Since 1.21.2 an ingredient names items only, no longer a water bottle by its contents: any potion stands for it here.
+        ShapelessRecipe craft = TestRecipes.shapeless(new ItemStack(dough, 3), Ingredient.of(Items.WHEAT), Ingredient.of(Items.WHEAT),
+                Ingredient.of(Items.WHEAT), Ingredient.of(water.getItem()));
+        AssemblyRecipes.Assembly dish = AssemblyRecipes.fromCraft(
+                new RecipeHolder<>(TestRecipes.key(HandsOnDelight.id("test_dough_from_water_bottle")), craft),
                 helper.getLevel().registryAccess()).orElseThrow();
         List<ItemStack> layers = new ArrayList<>();
         layers.add(new ItemStack(Items.WHEAT));
@@ -351,7 +358,7 @@ public final class BoardTests {
         // Cooked beef in Farmer's Delight's recipe; an addon may stuff it with something else (Delightful: a patty).
         Item filling = made("stuffed_potato").flatMap(dish -> dish.ingredients().stream()
                         .filter(in -> !in.test(new ItemStack(Items.BAKED_POTATO)) && !in.test(new ItemStack(Items.MILK_BUCKET))).findFirst())
-                .map(in -> in.getItems()[0].getItem()).orElse(Items.COOKED_BEEF);
+                .map(in -> RecipeParts.items(in)[0].getItem()).orElse(Items.COOKED_BEEF);
         setup.carry(new ItemStack(Items.BAKED_POTATO, 3));
         setup.place();
         setup.carry(new ItemStack(filling, 3));
@@ -460,12 +467,12 @@ public final class BoardTests {
     }
 
     private static Item meal(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("modest_meals", path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("modest_meals", path));
     }
 
     /** The board's dish {@code path} of Modest Meals' meals (its folder in this mod's ids). */
     private static Optional<AssemblyRecipes.Assembly> mealDish(String path) {
-        ResourceLocation id = HandsOnDelight.id("modest_meals/" + path);
+        Identifier id = HandsOnDelight.id("modest_meals/" + path);
         return AssemblyRecipes.all().stream().filter(dish -> dish.id().equals(id)).findFirst();
     }
 
@@ -503,7 +510,7 @@ public final class BoardTests {
                 "laid on bread and pressed shut, got " + hamburger.kind() + " " + hamburger.finish());
         helper.assertTrue(mealDish("sandwich/3").filter(dish -> !dish.inBook() && dish.result().is(meal("sandwich"))).isPresent(),
                 "a sandwich of any three fillings is one too, without a page");
-        helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(ResourceLocation.fromNamespaceAndPath("modest_meals", "meal_crafting")),
+        helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(Identifier.fromNamespaceAndPath("modest_meals", "meal_crafting")),
                 "Modest Meals' recipe is made on the board");
         Map<Integer, ItemStack> grid = Map.of(1, new ItemStack(Items.BREAD), 3, new ItemStack(fd("beef_patty")),
                 4, new ItemStack(fd("cabbage_leaf")), 5, new ItemStack(fd("tomato")), 7, new ItemStack(Items.BREAD));
@@ -511,7 +518,7 @@ public final class BoardTests {
         TransientCraftingContainer machine = new TransientCraftingContainer(new MachineMenu(), 3, 3);
         grid.forEach(machine::setItem);
         Level level = helper.getLevel();
-        helper.assertTrue(level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, machine.asCraftInput(), level).isPresent(),
+        helper.assertTrue(KitchenRecipes.find(level, RecipeType.CRAFTING, machine.asCraftInput()).isPresent(),
                 "an autocrafter still does");
         helper.succeed();
     }
@@ -673,7 +680,7 @@ public final class BoardTests {
     public static void everyCuttableFoodLiesDownToBeCut(GameTestHelper helper) {
         Board setup = board(helper);
         for (CuttingBoardRecipe recipe : Cutting.all(helper.getLevel())) {
-            ItemStack[] items = recipe.getIngredients().get(0).getItems();
+            ItemStack[] items = RecipeParts.items(RecipeParts.ingredients(recipe).get(0));
             if (items.length == 0) {
                 continue;
             }
@@ -692,12 +699,12 @@ public final class BoardTests {
     /** Food lying to be cut becomes the first layer of a dish when the dish's next layer goes on top of it. */
     public static void cutFoodBecomesItsDishWhenTheNextLayerComes(GameTestHelper helper) {
         for (AssemblyRecipes.Assembly dish : AssemblyRecipes.all()) {
-            for (ItemStack base : dish.ingredients().get(dish.base()).getItems()) {
+            for (ItemStack base : RecipeParts.items(dish.ingredients().get(dish.base()))) {
                 if (Cutting.recipesFor(helper.getLevel(), base).isEmpty()) {
                     continue;
                 }
                 for (int i = 0; i < dish.ingredients().size(); i++) {
-                    ItemStack[] next = dish.ingredients().get(i).getItems();
+                    ItemStack[] next = RecipeParts.items(dish.ingredients().get(i));
                     // A next layer that cuts what lies there is its tool: it cuts.
                     if (i == dish.base() || next.length == 0 || ItemStack.isSameItemSameComponents(next[0], base)
                             || Cutting.findWith(helper.getLevel(), base, next[0]).isPresent()) {
@@ -739,14 +746,14 @@ public final class BoardTests {
      * same item as the first one last (it would join the pile to be cut). Null when an ingredient lists nothing.
      */
     private static List<ItemStack> layersOf(AssemblyRecipes.Assembly dish) {
-        ItemStack[] first = dish.ingredients().get(dish.base()).getItems();
+        ItemStack[] first = RecipeParts.items(dish.ingredients().get(dish.base()));
         if (first.length == 0) {
             return null;
         }
         List<ItemStack> order = new ArrayList<>(List.of(first[0].copyWithCount(1)));
         List<ItemStack> same = new ArrayList<>();
         for (int i = 0; i < dish.ingredients().size(); i++) {
-            ItemStack[] items = dish.ingredients().get(i).getItems();
+            ItemStack[] items = RecipeParts.items(dish.ingredients().get(i));
             if (items.length == 0) {
                 return null;
             }
@@ -867,8 +874,8 @@ public final class BoardTests {
     public static void aToolThatIsALayerCutsOnlyWhatItCuts(GameTestHelper helper) {
         Level level = helper.getLevel();
         for (CuttingBoardRecipe recipe : Cutting.all(level)) {
-            ItemStack[] inputs = recipe.getIngredients().get(0).getItems();
-            for (ItemStack tool : Cutting.tool(recipe).getItems()) {
+            ItemStack[] inputs = RecipeParts.items(RecipeParts.ingredients(recipe).get(0));
+            for (ItemStack tool : RecipeParts.items(Cutting.tool(recipe))) {
                 if (inputs.length == 0 || !AssemblyRecipes.isIngredient(tool) || !Cutting.recipesFor(level, tool).isEmpty()) {
                     continue;
                 }
@@ -974,22 +981,19 @@ public final class BoardTests {
     public static void aClientPlansTheMarksItsServerPlans(GameTestHelper helper) {
         Level level = helper.getLevel();
         ItemStack chicken = new ItemStack(Items.CHICKEN);
-        CuttingBoardRecipe wings = new CuttingBoardRecipe("", Ingredient.of(Items.CHICKEN), Ingredient.of(fd("iron_knife")),
-                NonNullList.of(ChanceResult.EMPTY, new ChanceResult(new ItemStack(fd("chicken_cuts"), 2), 1.0F),
-                        new ChanceResult(new ItemStack(Items.FEATHER, 2), 1.0F), new ChanceResult(new ItemStack(Items.BONE_MEAL), 1.0F)),
-                Optional.empty());
-        List<RecipeHolder<?>> recipes = new ArrayList<>();
-        recipes.add(new RecipeHolder<>(HandsOnDelight.id("test_chicken_wings_5808"), wings));
-        recipes.addAll(level.getRecipeManager().getRecipes());
-        RecipeManager client = new RecipeManager(level.registryAccess());
-        client.replaceRecipes(recipes);
-        Optional<?> first = client.getAllRecipesFor((RecipeType) FarmersDelightContent.CUTTING.get()).stream()
-                .map(holder -> ((RecipeHolder<?>) holder).value())
-                .filter(recipe -> ((CuttingBoardRecipe) recipe).getIngredients().get(0).test(chicken)).findFirst();
-        helper.assertTrue(first.orElse(null) == wings, "the client's manager gives the four pieces first");
+        CuttingBoardRecipe wings = TestRecipes.cutting(Ingredient.of(Items.CHICKEN), Ingredient.of(fd("iron_knife")),
+                new ItemStack(fd("chicken_cuts"), 2), new ItemStack(Items.FEATHER, 2), new ItemStack(Items.BONE_MEAL));
+        // A client's recipes in the order it was sent them, an addon's chicken recipe first.
+        Map<Identifier, RecipeHolder<?>> client = new LinkedHashMap<>();
+        Identifier wingsId = HandsOnDelight.id("test_chicken_wings_5808");
+        client.put(wingsId, new RecipeHolder<>(TestRecipes.key(wingsId), wings));
+        client.putAll(KitchenRecipes.byName(level));
+        Optional<?> first = client.values().stream().map(RecipeHolder::value)
+                .filter(recipe -> recipe instanceof CuttingBoardRecipe cutting && cutting.getInput().test(chicken)).findFirst();
+        helper.assertTrue(first.orElse(null) == wings, "the client's recipes give the four pieces first");
         int marks = Cutting.plan(level, chicken).marks();
         helper.assertTrue(marks == 2, "Farmer's Delight's own recipe plans the chicken on the server: two marks, not " + marks);
-        int clientMarks = Cutting.plan(client, level, chicken).marks();
+        int clientMarks = Cutting.plan(new Object(), client, level, chicken).marks();
         helper.assertTrue(clientMarks == marks, "and on the client, by its id first: " + marks + " marks, not " + clientMarks);
         helper.succeed();
     }
@@ -1105,7 +1109,7 @@ public final class BoardTests {
         helper.assertTrue(BoardLogic.layers(again.state()).size() == 2, "the next cook finds the dish where it was");
         CompoundTag saved = setup.board.saveWithoutMetadata(helper.getLevel().registryAccess());
         CuttingBoardBlockEntity copy = (CuttingBoardBlockEntity) setup.board.getType().create(setup.station.pos(), setup.station.blockState());
-        copy.loadWithComponents(saved, helper.getLevel().registryAccess());
+        copy.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), saved));
         helper.assertTrue(((BoardLayers) copy).handson$layers().get(1).is(fd("beef_patty")), "it is saved with the board");
         helper.succeed();
     }
@@ -1173,7 +1177,7 @@ public final class BoardTests {
         setup.carry(setup.knife().copy());
         int marks = setup.logic.plan().marks();
         helper.assertTrue(marks >= 1, "the bread has marks: " + setup.logic.plan());
-        ItemStack result = Cutting.recipesFor(level, new ItemStack(Items.BREAD)).get(0).getResults().get(0);
+        ItemStack result = Cutting.recipesFor(level, new ItemStack(Items.BREAD)).get(0).getResults().get(0).create();
         for (int mark = 0; mark < marks; mark++) {
             int next = mark;
             helper.runAfterDelay(1 + mark * 4L, () -> setup.chop(next));
@@ -1187,7 +1191,7 @@ public final class BoardTests {
 
     private static int indexOf(List<CuttingBoardRecipe> recipes, ItemStack input) {
         for (int i = 0; i < recipes.size(); i++) {
-            if (recipes.get(i).getIngredients().get(0).test(input)) {
+            if (RecipeParts.ingredients(recipes.get(i)).get(0).test(input)) {
                 return i;
             }
         }
@@ -1200,28 +1204,27 @@ public final class BoardTests {
      */
     public static void whatThePotServesOnIsCutAtTheStation(GameTestHelper helper) {
         Ingredient flesh = Ingredient.of(Items.ROTTEN_FLESH);
-        CookingPotRecipe kebab = new CookingPotRecipe("", CookingPotRecipeBookTab.MEALS, NonNullList.of(Ingredient.EMPTY, flesh, flesh), new ItemStack(Items.COOKED_MUTTON),
-                new ItemStack(Items.STICK), 1.0F, 100);
+        CookingPotRecipe kebab = TestRecipes.cooking(CookingPotBookCategory.MEALS, List.of(flesh, flesh),
+                new ItemStack(Items.COOKED_MUTTON), new ItemStack(Items.STICK), 1.0F, 100);
         Ingredient knife = Ingredient.of(fd("iron_knife"));
-        CuttingBoardRecipe skewers = new CuttingBoardRecipe("", Ingredient.of(Items.BONE), knife,
-                NonNullList.of(ChanceResult.EMPTY, new ChanceResult(new ItemStack(Items.STICK, 2), 1.0F)), Optional.empty());
-        CuttingBoardRecipe basket = new CuttingBoardRecipe("", Ingredient.of(Items.BARREL), knife, NonNullList.of(ChanceResult.EMPTY,
-                new ChanceResult(new ItemStack(Items.LEATHER), 1.0F), new ChanceResult(new ItemStack(Items.STICK), 1.0F)), Optional.empty());
-        CuttingBoardRecipe bush = new CuttingBoardRecipe("", Ingredient.of(Items.DEAD_BUSH), Ingredient.of(Items.IRON_AXE),
-                NonNullList.of(ChanceResult.EMPTY, new ChanceResult(new ItemStack(Items.STICK, 2), 1.0F)), Optional.empty());
+        CuttingBoardRecipe skewers = TestRecipes.cutting(Ingredient.of(Items.BONE), knife, new ItemStack(Items.STICK, 2));
+        CuttingBoardRecipe basket = TestRecipes.cutting(Ingredient.of(Items.BARREL), knife, new ItemStack(Items.LEATHER),
+                new ItemStack(Items.STICK));
+        CuttingBoardRecipe bush = TestRecipes.cutting(Ingredient.of(Items.DEAD_BUSH), Ingredient.of(Items.IRON_AXE),
+                new ItemStack(Items.STICK, 2));
         helper.assertTrue(Cutting.isCooking(skewers, List.of(kebab)), "a bone cut into the sticks a kebab is served on is cooking");
         helper.assertFalse(Cutting.isCooking(skewers, List.of()), "without such a meal it is not");
         helper.assertFalse(Cutting.isCooking(basket, List.of(kebab)), "a basket taken apart is not, though a stick comes off it");
         helper.assertFalse(Cutting.isCooking(bush, List.of(kebab)), "nor a bush an axe cuts into sticks");
 
         Level level = helper.getLevel();
-        ResourceLocation shard = ResourceLocation.tryParse("frightsdelight:bone_shard");
+        Identifier shard = Identifier.tryParse("frightsdelight:bone_shard");
         if (!BuiltInRegistries.ITEM.containsKey(shard)) {
             // Fright's Delight comes with -Paddons.
             helper.succeed();
             return;
         }
-        helper.assertTrue(Cutting.all(level).stream().anyMatch(recipe -> recipe.getIngredients().get(0).test(new ItemStack(Items.BONE))),
+        helper.assertTrue(Cutting.all(level).stream().anyMatch(recipe -> RecipeParts.ingredients(recipe).get(0).test(new ItemStack(Items.BONE))),
                 "and in its book");
         Board setup = board(helper);
         setup.carry(new ItemStack(Items.BONE, 3));
@@ -1234,7 +1237,7 @@ public final class BoardTests {
         }
         helper.runAfterDelay(4L * marks + 2, () -> {
             helper.assertTrue(setup.onBoard().isEmpty(), "every mark cut, the bones are cut");
-            helper.assertTrue(setup.cook.getInventory().countItem(BuiltInRegistries.ITEM.get(shard)) >= 6, "into shards for the cook");
+            helper.assertTrue(setup.cook.getInventory().countItem(BuiltInRegistries.ITEM.getValue(shard)) >= 6, "into shards for the cook");
             helper.succeed();
         });
     }
@@ -1409,7 +1412,7 @@ public final class BoardTests {
         for (AssemblyRecipes.Assembly dish : AssemblyRecipes.all()) {
             List<ItemStack> rest = new ArrayList<>();
             for (int i = 0; i < dish.ingredients().size(); i++) {
-                ItemStack[] items = dish.ingredients().get(i).getItems();
+                ItemStack[] items = RecipeParts.items(dish.ingredients().get(i));
                 if (i != dish.base() && items.length > 0) {
                     rest.add(items[0].copyWithCount(1));
                 }
@@ -1417,7 +1420,7 @@ public final class BoardTests {
             if (rest.size() != dish.ingredients().size() - 1) {
                 continue;
             }
-            for (ItemStack base : dish.ingredients().get(dish.base()).getItems()) {
+            for (ItemStack base : RecipeParts.items(dish.ingredients().get(dish.base()))) {
                 if (Cutting.recipesFor(helper.getLevel(), base).isEmpty()) {
                     continue;
                 }
@@ -1496,10 +1499,10 @@ public final class BoardTests {
         setup.place();
         setup.chop(0);
         setup.logic.onClose(setup.station, setup.cook);
-        helper.assertTrue(setup.station.state().data().getInt(CuttingBoardStation.MARKS) == 1, "the first mark stays cut for the other cook");
+        helper.assertTrue(setup.station.state().data().getIntOr(CuttingBoardStation.MARKS, 0) == 1, "the first mark stays cut for the other cook");
         setup.station.users.clear();
         setup.logic.onClose(setup.station, other);
-        helper.assertTrue(setup.station.state().data().getInt(CuttingBoardStation.MARKS) == 0, "and starts over when the board is left");
+        helper.assertTrue(setup.station.state().data().getIntOr(CuttingBoardStation.MARKS, 0) == 0, "and starts over when the board is left");
         helper.succeed();
     }
 
@@ -1550,7 +1553,7 @@ public final class BoardTests {
         private final BlockPos pos;
         private final StationState state = new StationState(CuttingBoardStation.SCHEMA);
         private final List<Player> users = new ArrayList<>();
-        private final List<ResourceLocation> effects = new ArrayList<>();
+        private final List<Identifier> effects = new ArrayList<>();
 
         Station(Level level, BlockPos pos) {
             this.level = level;
@@ -1593,7 +1596,7 @@ public final class BoardTests {
         }
 
         @Override
-        public void effect(ResourceLocation effect, String node, CompoundTag data) {
+        public void effect(Identifier effect, String node, CompoundTag data) {
             effects.add(effect);
         }
     }
@@ -1603,16 +1606,16 @@ public final class BoardTests {
      * and all, into the dish: made on the board they keep doing it, as the recipe's own code makes the dish. With -Paddons=wide.
      */
     public static void kebabsKeepTheSeasoningOfTheirSkewers(GameTestHelper helper) {
-        Item wrap = BuiltInRegistries.ITEM.get(ResourceLocation.parse("barbequesdelight:kebab_wrap"));
-        Item grilled = BuiltInRegistries.ITEM.get(ResourceLocation.parse("barbequesdelight:grilled_beef_skewer"));
-        DataComponentType<?> seasoning = BuiltInRegistries.DATA_COMPONENT_TYPE.get(ResourceLocation.parse("barbequesdelight:seasoning"));
+        Item wrap = BuiltInRegistries.ITEM.getValue(Identifier.parse("barbequesdelight:kebab_wrap"));
+        Item grilled = BuiltInRegistries.ITEM.getValue(Identifier.parse("barbequesdelight:grilled_beef_skewer"));
+        DataComponentType<?> seasoning = BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(Identifier.parse("barbequesdelight:seasoning"));
         if (wrap == Items.AIR || grilled == Items.AIR || seasoning == null) {
             // Barbeque's Delight comes with -Paddons=wide.
             helper.succeed();
             return;
         }
         for (String dish : List.of("kebab_wrap", "kebab_sandwich", "bibimbap")) {
-            ResourceLocation id = ResourceLocation.parse("barbequesdelight:" + dish);
+            Identifier id = Identifier.parse("barbequesdelight:" + dish);
             helper.assertTrue(AssemblyRecipes.all().stream().anyMatch(made -> made.id().equals(id)), dish + " is a dish of the board");
         }
         DynamicOps<JsonElement> ops = helper.getLevel().registryAccess().createSerializationContext(JsonOps.INSTANCE);
@@ -1650,13 +1653,13 @@ public final class BoardTests {
      * same way, and a dish being put together is kept in the board. The decorated board's renderer draws the board itself.
      */
     public static void choppersDelightsBoardsAreStations(GameTestHelper helper) {
-        Block oak = BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse("choppersdelight:oak_cutting_board"));
+        Block oak = BuiltInRegistries.BLOCK.getValue(Identifier.tryParse("choppersdelight:oak_cutting_board"));
         if (oak == Blocks.AIR) {
             // Chopper's Delight comes with -Paddons.
             helper.succeed();
             return;
         }
-        Block decorated = BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse("choppersdelight:decorated_cutting_board"));
+        Block decorated = BuiltInRegistries.BLOCK.getValue(Identifier.tryParse("choppersdelight:decorated_cutting_board"));
         helper.assertTrue(CuttingBoardStation.TYPE.matches(oak.defaultBlockState()), "the oak board opens as the station");
         helper.assertTrue(CuttingBoardStation.TYPE.matches(decorated.defaultBlockState()), "the decorated board opens as the station");
         ChoppersCut oakCut = cutAtChoppersBoard(helper, oak, new BlockPos(1, 1, 1));

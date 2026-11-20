@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Inventory;
@@ -11,7 +11,6 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -20,6 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import com.pockyl.diegesis.api.Diegesis;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
 
 import java.util.HashMap;
@@ -33,7 +33,7 @@ import java.util.WeakHashMap;
  * put together there. Its own type, as the stump stands half a block high: the scene is the board's, raised to its top.
  */
 public final class ChoppingBlockStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("chopping_block");
+    public static final Identifier ID = HandsOnDelight.id("chopping_block");
 
     /** Stumps that work as Sable Trees' (its chopping block, optional in the tag). */
     public static final TagKey<Block> STUMPS = TagKey.create(Registries.BLOCK, HandsOnDelight.id("chopping_blocks"));
@@ -57,7 +57,7 @@ public final class ChoppingBlockStation {
             .build();
 
     /** What each log splits into, per recipe map: the book and the axe over the log ask every frame. */
-    private static final Map<Map<?, ?>, Map<Item, ItemStack>> PLANKS = new WeakHashMap<>();
+    private static final Map<Object, Map<Item, ItemStack>> PLANKS = new WeakHashMap<>();
 
     private ChoppingBlockStation() {
     }
@@ -95,13 +95,11 @@ public final class ChoppingBlockStation {
         if (log.isEmpty() || !log.is(ItemTags.LOGS) || !(log.getItem() instanceof BlockItem)) {
             return ItemStack.EMPTY;
         }
-        RecipeManager manager = level.getRecipeManager();
-        Map<?, ?> recipes = ((RecipeManagerAccessor) manager).handson$byName();
         synchronized (PLANKS) {
-            return PLANKS.computeIfAbsent(recipes, key -> new HashMap<>()).computeIfAbsent(log.getItem(), item -> {
+            return PLANKS.computeIfAbsent(KitchenRecipes.source(level), key -> new HashMap<>()).computeIfAbsent(log.getItem(), item -> {
                 CraftingInput input = CraftingInput.of(1, 1, List.of(new ItemStack(item)));
-                return manager.getRecipeFor(RecipeType.CRAFTING, input, level).map(recipe -> {
-                    ItemStack planks = recipe.value().assemble(input, level.registryAccess());
+                return KitchenRecipes.find(level, RecipeType.CRAFTING, input).map(recipe -> {
+                    ItemStack planks = recipe.value().assemble(input);
                     planks.setCount((int) Math.round(planks.getCount() * PLANKS_YIELD));
                     return planks;
                 }).orElse(ItemStack.EMPTY);
@@ -111,8 +109,8 @@ public final class ChoppingBlockStation {
 
     /** The inventory slot of an axe: the one in hand first, then the off hand, the hotbar and the rest; -1 without one. */
     public static int axeSlot(Inventory inventory) {
-        if (isAxe(inventory.getSelected())) {
-            return inventory.selected;
+        if (isAxe(inventory.getSelectedItem())) {
+            return inventory.getSelectedSlot();
         }
         if (isAxe(inventory.getItem(Inventory.SLOT_OFFHAND))) {
             return Inventory.SLOT_OFFHAND;

@@ -5,7 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -38,7 +38,7 @@ public final class VatTests {
     }
 
     private static Item cultural(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KitchenVat.MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KitchenVat.MOD_ID, path));
     }
 
     private static final String BEER = "culturaldelights:aging/fermenting/beer";

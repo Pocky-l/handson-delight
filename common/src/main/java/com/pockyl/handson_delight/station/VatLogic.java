@@ -1,8 +1,9 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -20,6 +21,7 @@ import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.KitchenTags;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +42,9 @@ public final class VatLogic implements StationLogic {
     private static final int BREW_BOTTLE = 14;
     private static final int BREW_MOST = 60;
     /** The liquid the scene draws; its colour is the client's (the liquids poured, the drink it turns into). */
-    public static final ResourceLocation BREW_LIQUID = HandsOnDelight.id("brew");
+    public static final Identifier BREW_LIQUID = HandsOnDelight.id("brew");
     /** What the vat makes that is no drink (ice cream), waiting in it: thick, opaque, creamy. */
-    public static final ResourceLocation CREAM_LIQUID = HandsOnDelight.id("cream");
+    public static final Identifier CREAM_LIQUID = HandsOnDelight.id("cream");
 
     private final KitchenVat vat;
     /** While the lid is open: how far the vat had aged, which it stays at until the lid shuts; -1 with the lid shut. */
@@ -50,7 +52,7 @@ public final class VatLogic implements StationLogic {
     /** The places are being shared out: their own changes do not share them out again. */
     private boolean arranging;
     /** The recipe the cook last picked in the book: the vat's choice while its food makes it, until it is empty. */
-    private ResourceLocation picked;
+    private Identifier picked;
 
     public VatLogic(StationContext station) {
         vat = KitchenVat.of(station.blockEntity());
@@ -179,7 +181,7 @@ public final class VatLogic implements StationLogic {
     @Override
     public void onTaken(StationContext station, Player player, SlotRef slot, ItemStack stack) {
         if (slot.equals(VatStation.SERVED_SLOT)) {
-            stack.onCraftedBy(station.level(), player, stack.getCount());
+            stack.onCraftedBy(player, stack.getCount());
         }
     }
 
@@ -189,25 +191,25 @@ public final class VatLogic implements StationLogic {
             return;
         }
         if (VatStation.ACTION_LID.equals(action)) {
-            setLid(station, data.getBoolean(VatStation.OPEN));
+            setLid(station, data.getBooleanOr(VatStation.OPEN, false));
         } else if (VatStation.ACTION_PUT.equals(action)) {
             if (!isOpen(station) && vat.progress() == 0) {
                 // The cook came with something for a vat that ages nothing: its lid is up for them before anything else.
                 setLid(station, true);
             }
             if (isOpen(station)) {
-                put(player, data.getInt(VatStation.FROM));
+                put(player, data.getIntOr(VatStation.FROM, 0));
             }
         } else if (VatStation.ACTION_FILL.equals(action)) {
-            ResourceLocation id = ResourceLocation.tryParse(data.getString(VatStation.DISH));
+            Identifier id = Identifier.tryParse(data.getStringOr(VatStation.DISH, ""));
             KitchenVat.recipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).findFirst().ifPresent(recipe -> {
                 // A recipe picked in the book lifts the lid for its ingredients to go in.
                 setLid(station, true);
-                fill(player, recipe, data.getBoolean(VatStation.ALL) ? FILL_MOST : 1);
+                fill(player, recipe, data.getBooleanOr(VatStation.ALL, false) ? FILL_MOST : 1);
                 giveBackContainers(player);
             });
         } else if (VatStation.ACTION_TAKE.equals(action) && isOpen(station)) {
-            take(station, player, data.getBoolean(VatStation.ALL), data.contains(VatStation.FROM) ? data.getInt(VatStation.FROM) : -1);
+            take(station, player, data.getBooleanOr(VatStation.ALL, false), data.contains(VatStation.FROM) ? data.getIntOr(VatStation.FROM, 0) : -1);
         }
     }
 
@@ -232,7 +234,7 @@ public final class VatLogic implements StationLogic {
             containers.shrink(drawn);
             vat.setServings(servings.copyWithCount(servings.getCount() - drawn));
             ItemStack given = servings.copyWithCount(drawn);
-            given.onCraftedBy(station.level(), player, drawn);
+            given.onCraftedBy(player, drawn);
             if (carried && wholeStack) {
                 player.inventoryMenu.setCarried(given);
             } else {
@@ -251,7 +253,7 @@ public final class VatLogic implements StationLogic {
         int count = all ? served.getCount() : 1;
         ItemStack given = served.copyWithCount(count);
         vat.setItem(KitchenVat.OUTPUT_SLOT, served.copyWithCount(served.getCount() - count));
-        given.onCraftedBy(station.level(), player, count);
+        given.onCraftedBy(player, count);
         give(player, given);
         player.getInventory().setChanged();
     }
@@ -318,7 +320,7 @@ public final class VatLogic implements StationLogic {
 
     private static void give(Player player, ItemStack stack) {
         if (!player.getInventory().add(stack)) {
-            player.drop(stack, false);
+            player.drop(stack, false, Prediction.SERVER_ONLY);
         }
     }
 
@@ -369,7 +371,7 @@ public final class VatLogic implements StationLogic {
             return;
         }
         List<KitchenVat.Aging> recipes = KitchenVat.recipes(level);
-        ResourceLocation found = KitchenVat.matchingPlaces(recipes, places()).map(KitchenVat.Aging::id).orElse(null);
+        Identifier found = KitchenVat.matchingPlaces(recipes, places()).map(KitchenVat.Aging::id).orElse(null);
         StationRecipes.Choice<KitchenVat.Aging> choice = StationRecipes.choose(StationRecipes.candidates(recipes, KitchenVat.Aging::id,
                 KitchenVat.Aging::ingredients), kinds, KitchenVat.INGREDIENTS, picked, found, false);
         if (choice != null) {
@@ -421,7 +423,7 @@ public final class VatLogic implements StationLogic {
             if (stack.isEmpty() || !KitchenTags.is(stack, KitchenTags.POURED)) {
                 continue;
             }
-            boolean bucket = stack.getItem().getCraftingRemainingItem() == Items.BUCKET;
+            boolean bucket = RecipeParts.remainder(stack.getItem()) == Items.BUCKET;
             amount += (bucket ? BREW_BUCKET : BREW_BOTTLE) * stack.getCount();
         }
         return Math.min(BREW_MOST, amount);
@@ -434,7 +436,7 @@ public final class VatLogic implements StationLogic {
         state.setControl(VatStation.PROGRESS, time > 0 && total > 0 ? Mth.clamp((float) time / total, 0.0F, 1.0F) : 0.0F);
         int brew = brew(places(), vat.servings());
         // What waits and is no drink (ice cream) is a liquid of its own look: thick and creamy.
-        ResourceLocation liquid = !vat.servings().isEmpty() && !KitchenVat.isDrink(KitchenVat.recipes(station.level()), vat.servings())
+        Identifier liquid = !vat.servings().isEmpty() && !KitchenVat.isDrink(KitchenVat.recipes(station.level()), vat.servings())
                 ? CREAM_LIQUID : BREW_LIQUID;
         TankContents tank = brew > 0 ? TankContents.of(liquid, brew) : TankContents.EMPTY;
         if (!state.getTank(VatStation.BREW).equals(tank)) {
@@ -443,7 +445,7 @@ public final class VatLogic implements StationLogic {
         CompoundTag own = state.data().copy();
         // In whole seconds, as the badge tells it.
         int left = time > 0 && total > 0 ? Mth.ceil((total - time) / 20.0F) * 20 : 0;
-        if (own.getInt(VatStation.LEFT) != left) {
+        if (own.getIntOr(VatStation.LEFT, 0) != left) {
             own.putInt(VatStation.LEFT, left);
             state.setData(own);
         }

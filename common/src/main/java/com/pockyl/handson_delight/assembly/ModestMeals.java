@@ -13,7 +13,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.tags.TagKey;
@@ -53,7 +53,7 @@ public final class ModestMeals {
     /** The entry of the board's book that lists Modest Meals' ingredients, by item id. */
     static final String ITEMS = "meal_ingredients";
 
-    private static final ResourceLocation SERIALIZER = ResourceLocation.fromNamespaceAndPath("modest_meals", "meal_crafting");
+    private static final Identifier SERIALIZER = Identifier.fromNamespaceAndPath("modest_meals", "meal_crafting");
     private static final String ANY_INGREDIENT = "modest_meals:any_ingredient";
     private static final String TYPES = "modest_meals/meal_types";
     private static final String CRAFTING_TABLE = "crafting_table";
@@ -68,8 +68,11 @@ public final class ModestMeals {
     private ModestMeals() {
     }
 
-    /** Finds Modest Meals' recipe among those the manager loaded, and its meal types of the crafting table. */
-    static void load(ResourceManager resources, Map<ResourceLocation, RecipeHolder<?>> loaded) {
+    /**
+     * Finds Modest Meals' recipe among those the manager loaded, and its meal types of the crafting table, read from
+     * {@code resources} (none while Modest Meals has no 26.x build).
+     */
+    static void load(ResourceManager resources, Map<Identifier, RecipeHolder<?>> loaded) {
         RecipeHolder<?> found = null;
         for (RecipeHolder<?> holder : loaded.values()) {
             if (holder.value() instanceof CraftingRecipe
@@ -79,8 +82,8 @@ public final class ModestMeals {
             }
         }
         List<JsonObject> read = new ArrayList<>();
-        if (found != null) {
-            for (Map.Entry<ResourceLocation, Resource> file
+        if (found != null && resources != null) {
+            for (Map.Entry<Identifier, Resource> file
                     : resources.listResources(TYPES, path -> path.getPath().endsWith(".json")).entrySet()) {
                 try (Reader reader = file.getValue().openAsReader()) {
                     JsonObject type = JsonParser.parseReader(reader).getAsJsonObject();
@@ -97,13 +100,13 @@ public final class ModestMeals {
     }
 
     /** The id of Modest Meals' recipe, which a player's crafting grid no longer makes; empty without Modest Meals. */
-    static Optional<ResourceLocation> recipeId() {
+    static Optional<Identifier> recipeId() {
         RecipeHolder<?> holder = recipe;
-        return holder == null || types.isEmpty() ? Optional.empty() : Optional.of(holder.id());
+        return holder == null || types.isEmpty() ? Optional.empty() : Optional.of(holder.id().identifier());
     }
 
     /** The board's dishes of Modest Meals' meals, the named ones first; none without Modest Meals. */
-    static List<AssemblyRecipes.Assembly> dishes(List<ResourceLocation> ingredients) {
+    static List<AssemblyRecipes.Assembly> dishes(List<Identifier> ingredients) {
         RecipeHolder<?> holder = recipe;
         if (holder == null || !(holder.value() instanceof CraftingRecipe crafting) || types.isEmpty() || ingredients.isEmpty()) {
             return List.of();
@@ -112,7 +115,7 @@ public final class ModestMeals {
         JsonArray any = choices(ingredients);
         List<AssemblyRecipes.Assembly> named = new ArrayList<>();
         List<AssemblyRecipes.Assembly> free = new ArrayList<>();
-        Set<ResourceLocation> ids = new HashSet<>();
+        Set<Identifier> ids = new HashSet<>();
         for (JsonObject type : types) {
             try {
                 Meal meal = Meal.of(type);
@@ -122,7 +125,7 @@ public final class ModestMeals {
                 for (JsonElement element : array(type, "item_overrides")) {
                     JsonObject dish = meal.named(element.getAsJsonObject());
                     if (dish != null) {
-                        ResourceLocation result = ResourceLocation.parse(string(element.getAsJsonObject(), "result", ""));
+                        Identifier result = Identifier.parse(string(element.getAsJsonObject(), "result", ""));
                         add(named, unique(ids, HandsOnDelight.id("modest_meals/" + result.getNamespace() + "/" + result.getPath())),
                                 dish, any, crafting, registries);
                     }
@@ -142,12 +145,12 @@ public final class ModestMeals {
     }
 
     /** Everything Modest Meals takes as an ingredient, asked of Modest Meals itself; any food when it cannot be asked. */
-    static List<ResourceLocation> ingredients() {
+    static List<Identifier> ingredients() {
         RecipeHolder<?> holder = recipe;
         if (holder == null || types.isEmpty()) {
             return List.of();
         }
-        List<ResourceLocation> found = new ArrayList<>();
+        List<Identifier> found = new ArrayList<>();
         try {
             Class<?> profiles = Class.forName(PROFILES, true, holder.value().getClass().getClassLoader());
             Method isIngredient = profiles.getMethod("isIngredient", ItemStack.class);
@@ -170,7 +173,7 @@ public final class ModestMeals {
     }
 
     /** The book's entry that lists {@code ingredients} for the clients. */
-    static CompoundTag entry(List<ResourceLocation> ingredients) {
+    static CompoundTag entry(List<Identifier> ingredients) {
         ListTag items = new ListTag();
         ingredients.forEach(item -> items.add(StringTag.valueOf(item.toString())));
         CompoundTag entry = new CompoundTag();
@@ -179,14 +182,14 @@ public final class ModestMeals {
     }
 
     /** The ingredients an entry of the book lists, or null when it is a dish. */
-    static List<ResourceLocation> read(CompoundTag entry) {
-        if (!entry.contains(ITEMS, Tag.TAG_LIST)) {
+    static List<Identifier> read(CompoundTag entry) {
+        if (!(entry.get(ITEMS) instanceof ListTag)) {
             return null;
         }
-        ListTag items = entry.getList(ITEMS, Tag.TAG_STRING);
-        List<ResourceLocation> read = new ArrayList<>();
+        ListTag items = entry.getListOrEmpty(ITEMS);
+        List<Identifier> read = new ArrayList<>();
         for (int i = 0; i < items.size(); i++) {
-            ResourceLocation id = ResourceLocation.tryParse(items.getString(i));
+            Identifier id = Identifier.tryParse(items.getStringOr(i, ""));
             if (id != null && BuiltInRegistries.ITEM.containsKey(id)) {
                 read.add(id);
             }
@@ -195,9 +198,9 @@ public final class ModestMeals {
     }
 
     /** The JSON choices of {@code items}, for the marker {@link #ANY}. */
-    static JsonArray choices(List<ResourceLocation> items) {
+    static JsonArray choices(List<Identifier> items) {
         JsonArray choices = new JsonArray();
-        for (ResourceLocation item : items) {
+        for (Identifier item : items) {
             JsonObject choice = new JsonObject();
             choice.addProperty("item", item.toString());
             choices.add(choice);
@@ -224,7 +227,7 @@ public final class ModestMeals {
         return json;
     }
 
-    private static void add(List<AssemblyRecipes.Assembly> to, ResourceLocation id, JsonObject json, JsonArray any, CraftingRecipe crafting,
+    private static void add(List<AssemblyRecipes.Assembly> to, Identifier id, JsonObject json, JsonArray any, CraftingRecipe crafting,
             HolderLookup.Provider registries) {
         if (json == null) {
             return;
@@ -234,8 +237,8 @@ public final class ModestMeals {
                 dish.ingredients(), dish.slots(), dish.base(), dish.kind(), dish.result(), dish.json())));
     }
 
-    private static ResourceLocation unique(Set<ResourceLocation> taken, ResourceLocation id) {
-        ResourceLocation free = id;
+    private static Identifier unique(Set<Identifier> taken, Identifier id) {
+        Identifier free = id;
         for (int i = 2; !taken.add(free); i++) {
             free = id.withSuffix("_" + i);
         }
@@ -252,13 +255,13 @@ public final class ModestMeals {
             String name = choice.trim();
             JsonObject json = new JsonObject();
             if (name.startsWith("#")) {
-                ResourceLocation tag = ResourceLocation.tryParse(name.substring(1));
-                if (tag == null || BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, tag)).map(set -> set.size() == 0).orElse(true)) {
+                Identifier tag = Identifier.tryParse(name.substring(1));
+                if (tag == null || BuiltInRegistries.ITEM.get(TagKey.create(Registries.ITEM, tag)).map(set -> set.size() == 0).orElse(true)) {
                     continue;
                 }
                 json.addProperty("tag", tag.toString());
             } else {
-                ResourceLocation item = ResourceLocation.tryParse(name);
+                Identifier item = Identifier.tryParse(name);
                 if (item == null || !BuiltInRegistries.ITEM.containsKey(item)) {
                     continue;
                 }
@@ -308,8 +311,8 @@ public final class ModestMeals {
     private record Meal(String path, String item, List<String> pattern, JsonObject key, List<JsonElement> base, int least, int most) {
         static Meal of(JsonObject type) {
             String item = string(type, "item", null);
-            ResourceLocation id = ResourceLocation.tryParse(string(type, "id", ""));
-            if (item == null || id == null || !BuiltInRegistries.ITEM.containsKey(ResourceLocation.parse(item))) {
+            Identifier id = Identifier.tryParse(string(type, "id", ""));
+            if (item == null || id == null || !BuiltInRegistries.ITEM.containsKey(Identifier.parse(item))) {
                 return null;
             }
             List<String> pattern = new ArrayList<>();
@@ -370,7 +373,7 @@ public final class ModestMeals {
         /** The dish a type makes of given fillings ({@code item_overrides}); null when it cannot be laid here. */
         JsonObject named(JsonObject override) {
             String result = string(override, "result", null);
-            if (result == null || override.has("base") || !BuiltInRegistries.ITEM.containsKey(ResourceLocation.parse(result))) {
+            if (result == null || override.has("base") || !BuiltInRegistries.ITEM.containsKey(Identifier.parse(result))) {
                 return null;
             }
             List<JsonElement> fillings = new ArrayList<>();

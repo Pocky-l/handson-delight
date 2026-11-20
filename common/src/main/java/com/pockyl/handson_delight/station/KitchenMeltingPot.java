@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
@@ -10,6 +10,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
+
+import com.pockyl.handson_delight.KitchenRecipes;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ public interface KitchenMeltingPot {
     String MOD_ID = "extradelight";
     int INPUT_SLOT = 0;
     int TANK = 6000;
-    ResourceLocation MELTING = ResourceLocation.fromNamespaceAndPath(MOD_ID, "melting_pot");
+    Identifier MELTING = Identifier.fromNamespaceAndPath(MOD_ID, "melting_pot");
 
     static KitchenMeltingPot of(BlockEntity entity) {
         return entity instanceof KitchenMeltingPot pot ? pot : null;
@@ -55,7 +57,7 @@ public interface KitchenMeltingPot {
     ItemStack handson$containerOf(Fluid fluid);
 
     /** A melting recipe: what melts, the liquid it gives and how much, and its ticks over heat. */
-    record Melting(ResourceLocation id, Ingredient input, Fluid fluid, int amount, int ticks) {
+    record Melting(Identifier id, Ingredient input, Fluid fluid, int amount, int ticks) {
     }
 
     static List<Melting> recipes(Level level) {
@@ -74,7 +76,7 @@ public interface KitchenMeltingPot {
         }
 
         static synchronized List<Melting> of(Level level) {
-            Object manager = level.getRecipeManager();
+            Object manager = KitchenRecipes.source(level);
             if (readFrom.get() != manager) {
                 read = List.copyOf(readAll(level));
                 readFrom = new WeakReference<>(manager);
@@ -84,7 +86,7 @@ public interface KitchenMeltingPot {
 
         private static List<Melting> readAll(Level level) {
             List<Melting> recipes = new ArrayList<>();
-            for (RecipeHolder<?> holder : level.getRecipeManager().getRecipes()) {
+            for (RecipeHolder<?> holder : KitchenRecipes.recipes(level)) {
                 Recipe<?> recipe = holder.value();
                 if (!MELTING.equals(BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType()))) {
                     continue;
@@ -98,7 +100,7 @@ public interface KitchenMeltingPot {
                     if (input == null || input.isEmpty() || fluid == null || fluid == Fluids.EMPTY || amount <= 0) {
                         continue;
                     }
-                    recipes.add(new Melting(holder.id(), input, fluid, amount, ticks));
+                    recipes.add(new Melting(holder.id().identifier(), input, fluid, amount, ticks));
                 } catch (ReflectiveOperationException | RuntimeException e) {
                     // A recipe of a shape this does not know is left to the pot's own menu.
                 }

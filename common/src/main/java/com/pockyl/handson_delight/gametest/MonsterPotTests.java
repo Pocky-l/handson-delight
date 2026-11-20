@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -12,11 +12,13 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.KitchenPot;
@@ -37,7 +39,7 @@ public final class MonsterPotTests {
     }
 
     private static Item dd(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(FarmersDelightContent.DUNGEONS_DELIGHT + ":" + path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.tryParse(FarmersDelightContent.DUNGEONS_DELIGHT + ":" + path));
     }
 
     /** A monster pot over a spawner, which heats it, with the logic the station would make for it; null without Dungeons Delight. */
@@ -67,10 +69,10 @@ public final class MonsterPotTests {
         setup.station.state().setItem(SlotRef.of(CookingPotStation.INGREDIENTS, 5), new ItemStack(Items.SPIDER_EYE, 2));
         helper.assertTrue(setup.pot.handson$getItem(5).is(Items.SPIDER_EYE), "the station's slots are the pot's own");
         List<RecipeHolder<CookingPotRecipe>> recipes = setup.pot.handson$recipes(helper.getLevel());
-        helper.assertTrue(!recipes.isEmpty() && recipes.stream().allMatch(recipe -> recipe.id().getNamespace()
+        helper.assertTrue(!recipes.isEmpty() && recipes.stream().allMatch(recipe -> recipe.id().identifier().getNamespace()
                 .equals(FarmersDelightContent.DUNGEONS_DELIGHT)), "it cooks its own recipes, got " + recipes.size());
         helper.assertTrue(setup.pot.handson$findRecipe(helper.getLevel(), List.of(new ItemStack(dd("spider_meat")),
-                new ItemStack(Items.SPIDER_EYE))).filter(recipe -> recipe.value().getResultItem(helper.getLevel().registryAccess())
+                new ItemStack(Items.SPIDER_EYE))).filter(recipe -> RecipeParts.result(recipe.value())
                 .is(dd("spider_extract"))).isPresent(), "spider meat and an eye make spider extract");
         helper.succeed();
     }
@@ -102,7 +104,7 @@ public final class MonsterPotTests {
         }
         BlockPos above = new BlockPos(1, 3, 1);
         helper.setBlock(above, Blocks.HOPPER);
-        HopperBlockEntity hopper = (HopperBlockEntity) helper.getBlockEntity(above);
+        HopperBlockEntity hopper = helper.getBlockEntity(above, HopperBlockEntity.class);
         hopper.setItem(0, new ItemStack(dd("spider_meat"), 1));
         hopper.setItem(1, new ItemStack(Items.SPIDER_EYE, 1));
         helper.runAfterDelay(250, () -> {

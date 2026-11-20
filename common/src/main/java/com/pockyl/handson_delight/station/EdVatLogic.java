@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -45,7 +45,7 @@ public final class EdVatLogic implements StationLogic {
     /** The places are being shared out: their own changes do not share them out again. */
     private boolean arranging;
     /** The recipe the cook last picked in the book: the vat's choice while its food makes it, until it is empty. */
-    private ResourceLocation picked;
+    private Identifier picked;
 
     public EdVatLogic(StationContext station) {
         vat = KitchenEdVat.of(station.blockEntity());
@@ -304,7 +304,7 @@ public final class EdVatLogic implements StationLogic {
     @Override
     public void onTaken(StationContext station, Player player, SlotRef slot, ItemStack stack) {
         if (slot.equals(EdVatStation.SERVED_SLOT)) {
-            stack.onCraftedBy(station.level(), player, stack.getCount());
+            stack.onCraftedBy(player, stack.getCount());
         }
     }
 
@@ -318,7 +318,7 @@ public final class EdVatLogic implements StationLogic {
         if (vat == null) {
             return;
         }
-        int from = data.contains(EdVatStation.FROM) ? data.getInt(EdVatStation.FROM) : -1;
+        int from = data.contains(EdVatStation.FROM) ? data.getIntOr(EdVatStation.FROM, 0) : -1;
         switch (action) {
             case EdVatStation.ACTION_LID -> {
                 if (lid(station) == EdVatStation.LID_ON) {
@@ -327,19 +327,19 @@ public final class EdVatLogic implements StationLogic {
                     cover(station, player, from);
                 }
             }
-            case EdVatStation.ACTION_PUT -> put(station, player, from, data.getBoolean(EdVatStation.ALL));
+            case EdVatStation.ACTION_PUT -> put(station, player, from, data.getBooleanOr(EdVatStation.ALL, false));
             case EdVatStation.ACTION_FILL -> {
-                ResourceLocation id = ResourceLocation.tryParse(data.getString(EdVatStation.DISH));
+                Identifier id = Identifier.tryParse(data.getStringOr(EdVatStation.DISH, ""));
                 KitchenEdVat.recipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).findFirst().ifPresent(recipe -> {
                     // A recipe picked in the book takes the lid off for its things to go in.
                     lift(station, player);
-                    fill(station, player, recipe, data.getBoolean(EdVatStation.ALL) ? FILL_MOST : 1);
+                    fill(station, player, recipe, data.getBooleanOr(EdVatStation.ALL, false) ? FILL_MOST : 1);
                     giveBackContainers(station.level(), player);
                 });
             }
             case EdVatStation.ACTION_TAKE -> {
                 if (lid(station) != EdVatStation.LID_ON) {
-                    take(station, player, data.getBoolean(EdVatStation.ALL), from);
+                    take(station, player, data.getBooleanOr(EdVatStation.ALL, false), from);
                 }
             }
             case EdVatStation.ACTION_SCOOP -> {
@@ -448,7 +448,7 @@ public final class EdVatLogic implements StationLogic {
             containers.shrink(drawn);
             vat.handson$setServings(servings.copyWithCount(servings.getCount() - drawn));
             ItemStack given = servings.copyWithCount(drawn);
-            given.onCraftedBy(station.level(), player, drawn);
+            given.onCraftedBy(player, drawn);
             if (carried && wholeStack) {
                 player.inventoryMenu.setCarried(given);
             } else {
@@ -467,7 +467,7 @@ public final class EdVatLogic implements StationLogic {
         int count = all ? served.getCount() : 1;
         ItemStack given = served.copyWithCount(count);
         vat.handson$setItem(KitchenEdVat.OUTPUT_SLOT, served.copyWithCount(served.getCount() - count));
-        given.onCraftedBy(station.level(), player, count);
+        given.onCraftedBy(player, count);
         give(player, given);
         player.getInventory().setChanged();
     }
@@ -511,7 +511,7 @@ public final class EdVatLogic implements StationLogic {
 
     private static void give(Player player, ItemStack stack) {
         if (!player.getInventory().add(stack)) {
-            player.drop(stack, false);
+            player.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
         }
     }
 
@@ -567,7 +567,7 @@ public final class EdVatLogic implements StationLogic {
             return;
         }
         List<KitchenEdVat.Aging> recipes = KitchenEdVat.recipes(level);
-        ResourceLocation found = KitchenEdVat.matchingPlaces(recipes, places()).map(KitchenEdVat.Aging::id).orElse(null);
+        Identifier found = KitchenEdVat.matchingPlaces(recipes, places()).map(KitchenEdVat.Aging::id).orElse(null);
         StationRecipes.Choice<KitchenEdVat.Aging> choice = StationRecipes.choose(StationRecipes.candidates(recipes, KitchenEdVat.Aging::id,
                 KitchenEdVat.Aging::ingredients), kinds, KitchenEdVat.INGREDIENTS, picked, found, false);
         if (choice != null) {

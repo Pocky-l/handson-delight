@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.client;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
@@ -30,7 +30,7 @@ final class KegDraughts {
     private static final String NODE = "mug";
     private static final String STREAM = "keg_tap";
     /** Brewin' and Chewin's tankard: its own model, the drink seen rising in it. Other containers are shown as their items. */
-    private static final ResourceLocation TANKARD = ResourceLocation.tryBuild("brewinandchewin", "tankard");
+    private static final Identifier TANKARD = Identifier.tryBuild("brewinandchewin", "tankard");
     private static final SoundEvent POUR = SoundEvent.createVariableRangeEvent(HandsOnDelight.id("keg.pour"));
     private static final SoundEvent POUR_QUICK = SoundEvent.createVariableRangeEvent(HandsOnDelight.id("keg.pour_quick"));
     /** The mug's size in the scene (its model is 7 px high, its inside from 1 to 7) and how full it is drawn. */
@@ -63,7 +63,7 @@ final class KegDraughts {
     /** One mug on its way: what it is, what is drawn into it, whose it is and where it goes. */
     private static final class Mug {
         private final ItemStack vessel;
-        private final ResourceLocation liquid;
+        private final Identifier liquid;
         /** ARGB, the alpha how clear the drink is. */
         private final int color;
         private final KegLiquids.Drink look;
@@ -83,7 +83,7 @@ final class KegDraughts {
         private float bubbles;
         private Vector3f from;
 
-        private Mug(ItemStack vessel, ResourceLocation liquid, int color, KegLiquids.Drink look, boolean own, boolean fromHand, boolean toHand,
+        private Mug(ItemStack vessel, Identifier liquid, int color, KegLiquids.Drink look, boolean own, boolean fromHand, boolean toHand,
                 Pace pace) {
             this.vessel = vessel.copyWithCount(1);
             this.held = vessel.getCount();
@@ -143,7 +143,7 @@ final class KegDraughts {
      * after. It comes from the hand ({@code fromHand}) or from the inventory; the drink goes back to the hand when the hand held only
      * that mug, else into the inventory.
      */
-    void draw(StationView view, ItemStack vessel, ItemStack filled, ResourceLocation liquid, int color, KegLiquids.Drink look, boolean fromHand,
+    void draw(StationView view, ItemStack vessel, ItemStack filled, Identifier liquid, int color, KegLiquids.Drink look, boolean fromHand,
             boolean all) {
         Pace pace = all && vessel.getCount() > 1 ? Pace.QUICK : Pace.ONE;
         Mug mug = new Mug(vessel, liquid, color, look, true, fromHand, fromHand && vessel.getCount() == 1, pace);
@@ -160,7 +160,7 @@ final class KegDraughts {
      * The keg filled {@code count} of {@code vessel}: the cook's own mug that waits for it goes on, with more after it when
      * several were filled; a drink somebody else drew comes now.
      */
-    void tapped(StationView view, ItemStack vessel, ItemStack filled, ResourceLocation liquid, int color, KegLiquids.Drink look, int count) {
+    void tapped(StationView view, ItemStack vessel, ItemStack filled, Identifier liquid, int color, KegLiquids.Drink look, int count) {
         int drinks = Math.max(1, count);
         Mug own = unanswered();
         if (own != null) {
@@ -265,7 +265,7 @@ final class KegDraughts {
             float k = (t - pace.come()) / run;
             if (!mug.poured) {
                 mug.poured = true;
-                view.playSound(pace == Pace.QUICK ? POUR_QUICK : POUR, NODE, 0.7F, 0.96F + view.level().random.nextFloat() * 0.08F);
+                view.playSound(pace == Pace.QUICK ? POUR_QUICK : POUR, NODE, 0.7F, 0.96F + view.level().getRandom().nextFloat() * 0.08F);
             }
             // Fast while the mug is empty, slower as the drink nears the rim; the mug is set upright as it fills.
             fraction = FULL * (1.0F - (float) Math.pow(1.0F - k, 1.7F));

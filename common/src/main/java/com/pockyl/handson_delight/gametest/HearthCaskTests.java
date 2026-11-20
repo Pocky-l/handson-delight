@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -34,12 +34,12 @@ public final class HearthCaskTests {
 
     @SuppressWarnings("removal")
     private static Item hearth(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KegStation.HEARTH_MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KegStation.HEARTH_MOD_ID, path));
     }
 
     @SuppressWarnings("removal")
     private static String recipe(String path) {
-        return ResourceLocation.fromNamespaceAndPath(KegStation.HEARTH_MOD_ID, "aging/" + path).toString();
+        return Identifier.fromNamespaceAndPath(KegStation.HEARTH_MOD_ID, "aging/" + path).toString();
     }
 
     private record Setup(PotTests.TestStation station, KegLogic logic, KitchenKeg cask, BlockPos pos) {
@@ -81,10 +81,10 @@ public final class HearthCaskTests {
     private static void nearlyDone(GameTestHelper helper, Setup setup) {
         BlockEntity entity = helper.getLevel().getBlockEntity(setup.pos);
         CompoundTag tag = entity.saveWithoutMetadata(helper.getLevel().registryAccess());
-        int total = tag.getInt("AgeTimeTotal");
-        if (total > 8 && tag.getInt("AgeTime") > 0) {
+        int total = tag.getIntOr("AgeTimeTotal", 0);
+        if (total > 8 && tag.getIntOr("AgeTime", 0) > 0) {
             tag.putInt("AgeTime", total - 4);
-            entity.loadWithComponents(tag, helper.getLevel().registryAccess());
+            entity.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), tag));
         }
     }
 

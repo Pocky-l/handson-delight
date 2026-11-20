@@ -3,7 +3,7 @@ package com.pockyl.handson_delight.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -19,6 +19,8 @@ import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.ItemNbt;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.Grill;
 import com.pockyl.handson_delight.station.SkilletCooking;
 import com.pockyl.handson_delight.station.StoveCooking;
@@ -109,7 +111,7 @@ public final class StoveBehavior implements StationBehavior {
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()
                 && StoveCooking.isStove(view.level().getBlockEntity(view.pos()))
                 && StoveCooking.takes(view.level().getBlockEntity(view.pos()), player.getMainHandItem())) {
-            onInventoryShiftClick(view, player.getInventory().selected, player.getMainHandItem());
+            onInventoryShiftClick(view, player.getInventory().getSelectedSlot(), player.getMainHandItem());
         }
     }
 
@@ -142,10 +144,10 @@ public final class StoveBehavior implements StationBehavior {
         }
         boolean together = arriving > 1 && !quiet;
         int landing = 0;
-        boolean lit = data.getBoolean(StoveStation.LIT);
+        boolean lit = data.getBooleanOr(StoveStation.LIT, false);
         for (int place = 0; place < Grill.PLACES; place++) {
             ItemStack now = state.getItem(StoveStation.place(place));
-            float up = clock < heldUntil[place] ? shownUp[place] : data.getFloat(StoveStation.UP + place);
+            float up = clock < heldUntil[place] ? shownUp[place] : data.getFloatOr(StoveStation.UP + place, 0.0F);
             boolean arrives = shown[place].isEmpty() && !now.isEmpty();
             if (ItemStack.isSameItemSameComponents(now, shown[place]) && look(up) == look(shownUp[place])) {
                 continue;
@@ -211,7 +213,7 @@ public final class StoveBehavior implements StationBehavior {
 
     /** What the fire makes of {@code raw}: the look of a done top. */
     private static ItemStack cooked(StationView view, ItemStack raw) {
-        return SkilletCooking.recipe(view.level(), raw).map(recipe -> recipe.getResultItem(view.level().registryAccess()))
+        return SkilletCooking.recipe(view.level(), raw).map(recipe -> RecipeParts.result(recipe))
                 .filter(result -> !result.isEmpty()).orElse(raw);
     }
 
@@ -259,7 +261,7 @@ public final class StoveBehavior implements StationBehavior {
      */
     private void heat(StationView view, float dt) {
         CompoundTag data = view.state().data();
-        if (!data.getBoolean(StoveStation.LIT)) {
+        if (!data.getBooleanOr(StoveStation.LIT, false)) {
             sizzle = 0.0F;
             return;
         }
@@ -275,8 +277,8 @@ public final class StoveBehavior implements StationBehavior {
             if (shown[place].isEmpty() || isShownDone(view, place) || clock - turnedAt[place] < FLIGHT) {
                 continue;
             }
-            boolean waits = data.getBoolean(StoveStation.BY_HAND + place) && data.getFloat(StoveStation.DOWN + place) >= 1.0F
-                    && data.getFloat(StoveStation.UP + place) < 1.0F;
+            boolean waits = data.getBooleanOr(StoveStation.BY_HAND + place, false) && data.getFloatOr(StoveStation.DOWN + place, 0.0F) >= 1.0F
+                    && data.getFloatOr(StoveStation.UP + place, 0.0F) < 1.0F;
             (waits ? waiting : cooking).add(place);
         }
         vapour += dt * VAPOUR_RATE * cooking.size();
@@ -376,7 +378,7 @@ public final class StoveBehavior implements StationBehavior {
     /** One piece over, as everybody sees it: up and half round, then, edge on, the other side's look, the rest of the way and down. */
     private void turned(StationView view, int place) {
         turnedAt[place] = clock;
-        float newUp = view.state().data().getFloat(StoveStation.DOWN + place);
+        float newUp = view.state().data().getFloatOr(StoveStation.DOWN + place, 0.0F);
         heldUntil[place] = clock + FLIGHT / 2.0F;
         view.node("piece_" + place).ifPresent(node -> {
             float yaw = yaw(place);
@@ -457,7 +459,7 @@ public final class StoveBehavior implements StationBehavior {
         if (shown[place].isEmpty()) {
             return false;
         }
-        if (view.state().data().getBoolean(StoveStation.READY + place)) {
+        if (view.state().data().getBooleanOr(StoveStation.READY + place, false)) {
             return true;
         }
         if (doneFor[place] != shown[place]) {
@@ -480,8 +482,8 @@ public final class StoveBehavior implements StationBehavior {
     }
 
     @Override
-    public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
-        int place = data.getInt(StoveStation.PLACE);
+    public void onEffect(StationView view, Identifier effect, String node, CompoundTag data) {
+        int place = data.getIntOr(StoveStation.PLACE, 0);
         if (StoveStation.EFFECT_TURNED.equals(effect)) {
             // The cook's own turn is on show already.
             if (place >= 0 && place < Grill.PLACES && (!view.isFocused() || clock - turnedAt[place] > 0.6F)) {
@@ -496,7 +498,7 @@ public final class StoveBehavior implements StationBehavior {
         } else if (StoveStation.EFFECT_PLACED.equals(effect)) {
             view.playSound(SoundEvents.LANTERN_PLACE, "grill", 0.4F, 1.1F);
         } else if (StoveStation.EFFECT_REFUSED.equals(effect)) {
-            ItemStack refused = ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(StoveStation.STACK));
+            ItemStack refused = ItemNbt.parse(view.level().registryAccess(), data.getCompound(StoveStation.STACK));
             ghost(view, refused).ifPresent(ghost -> {
                 ghost.moveTo(0.0F, LAND_FROM + 2.0F, 0.0F, 0.0F);
                 ghost.moveTo(0.0F, 1.5F, 0.0F, 0.09F);
@@ -505,7 +507,7 @@ public final class StoveBehavior implements StationBehavior {
             });
             view.playSound(SoundEvents.LANTERN_HIT, "grill", 0.4F, 1.3F);
         } else if (StoveStation.EFFECT_TAKEN.equals(effect)) {
-            taken(view, place, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(StoveStation.STACK)));
+            taken(view, place, ItemNbt.parse(view.level().registryAccess(), data.getCompound(StoveStation.STACK)));
         } else if (StoveStation.EFFECT_GRILLED.equals(effect) && place >= 0 && place < Grill.PLACES) {
             view.spawnParticles(DiegesisParticles.STEAM, onPiece(place), new Vector3f(0.0F, 3.0F, 0.0F), 1.5F, 3, 0x60FFFFFF);
             view.spawnParticles(DiegesisParticles.GLINT, onPiece(place), new Vector3f(0.0F, 2.0F, 0.0F), 1.5F, 3, 0xFFFFE9A0);

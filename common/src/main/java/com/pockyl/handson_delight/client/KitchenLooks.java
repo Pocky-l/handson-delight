@@ -12,6 +12,7 @@ import com.pockyl.diegesis.api.client.DiegesisParticles;
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.KitchenTags;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.util.Optional;
 
@@ -43,7 +44,7 @@ final class KitchenLooks {
         if (!isCracked(stack)) {
             return stack;
         }
-        Item fried = BuiltInRegistries.ITEM.get(FarmersDelightContent.id("fried_egg"));
+        Item fried = BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id("fried_egg"));
         return fried == Items.AIR ? stack : new ItemStack(fried);
     }
 
@@ -62,7 +63,7 @@ final class KitchenLooks {
         if (full.isEmpty()) {
             return Optional.empty();
         }
-        Item container = stack.getItem().getCraftingRemainingItem();
+        Item container = RecipeParts.remainder(stack.getItem());
         Optional<ItemVoxels.Icon> empty = container == null ? Optional.empty() : ItemVoxels.icon(new ItemStack(container));
         int[] at = ItemVoxels.contents(full.get(), empty);
         int[] light = ItemVoxels.lightest(full.get(), empty);

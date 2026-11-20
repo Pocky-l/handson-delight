@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
@@ -16,6 +16,8 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -35,7 +37,7 @@ public final class KitchenVat {
     public static final int INGREDIENTS = 6;
     public static final int CONTAINER_SLOT = 6;
     public static final int OUTPUT_SLOT = 7;
-    public static final ResourceLocation AGING = ResourceLocation.fromNamespaceAndPath(MOD_ID, "aging");
+    public static final Identifier AGING = Identifier.fromNamespaceAndPath(MOD_ID, "aging");
     /** The vat's block state property for how warm it is; the same names as its {@code VatTemperature}. */
     private static final String TEMPERATURE_PROPERTY = "temperature";
 
@@ -169,7 +171,7 @@ public final class KitchenVat {
      * An aging recipe: what goes in (one of each, in any of the six places), the container the result is put in (empty for none),
      * how warm the vat must be, and what comes out after {@code ticks}.
      */
-    public record Aging(ResourceLocation id, List<Ingredient> ingredients, Ingredient container, Temperature temperature, ItemStack result,
+    public record Aging(Identifier id, List<Ingredient> ingredients, Ingredient container, Temperature temperature, ItemStack result,
             int ticks) {
         public boolean hasContainer() {
             return !container.isEmpty();
@@ -209,32 +211,32 @@ public final class KitchenVat {
 
     /** The vat's recipes as this level knows them (a client knows them too), in the order the vat tries them. */
     public static synchronized List<Aging> recipes(Level level) {
-        Object manager = level.getRecipeManager();
-        if (readFrom.get() != manager) {
+        Object source = KitchenRecipes.source(level);
+        if (readFrom.get() != source) {
             read = List.copyOf(readRecipes(level));
-            readFrom = new java.lang.ref.WeakReference<>(manager);
+            readFrom = new java.lang.ref.WeakReference<>(source);
         }
         return read;
     }
 
     private static List<Aging> readRecipes(Level level) {
         List<Aging> recipes = new ArrayList<>();
-        for (RecipeHolder<?> holder : level.getRecipeManager().getRecipes()) {
+        for (RecipeHolder<?> holder : KitchenRecipes.recipes(level)) {
             Recipe<?> recipe = holder.value();
             if (!AGING.equals(BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType()))) {
                 continue;
             }
-            ItemStack result = recipe.getResultItem(level.registryAccess());
-            List<Ingredient> ingredients = List.copyOf(recipe.getIngredients());
+            ItemStack result = RecipeParts.result(recipe);
+            List<Ingredient> ingredients = List.copyOf(RecipeParts.ingredients(recipe));
             // A recipe with an ingredient that names nothing can never be made.
             if (result.isEmpty() || ingredients.isEmpty() || ingredients.size() > INGREDIENTS || ingredients.stream().anyMatch(Ingredient::isEmpty)) {
                 continue;
             }
-            Ingredient container = call(recipe, "getContainer", Ingredient.class, Ingredient.EMPTY);
+            Ingredient container = call(recipe, "getContainer", Ingredient.class, RecipeParts.NOTHING);
             Object temperature = call(recipe, "getTemperature", Object.class, null);
             Temperature wanted = temperature instanceof StringRepresentable named ? Temperature.of(named.getSerializedName()) : Temperature.NORMAL;
             int ticks = call(recipe, "getCookTime", Integer.class, 200);
-            recipes.add(new Aging(holder.id(), ingredients, container, wanted, result.copy(), ticks));
+            recipes.add(new Aging(holder.id().identifier(), ingredients, container, wanted, result.copy(), ticks));
         }
         return recipes;
     }

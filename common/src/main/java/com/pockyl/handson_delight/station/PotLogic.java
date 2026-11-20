@@ -3,10 +3,11 @@ package com.pockyl.handson_delight.station;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -25,6 +26,7 @@ import com.pockyl.diegesis.api.station.StationLogic;
 import com.pockyl.handson_delight.Cookable;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.KitchenTags;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,9 +71,9 @@ public final class PotLogic implements StationLogic {
     private ItemStack resultMade = ItemStack.EMPTY;
     private CookingPotRecipe recipeMade;
     /** The school of the scroll the result was looked up under: some recipes cook only under their school. */
-    private ResourceLocation resultSchool;
+    private Identifier resultSchool;
     /** The dish the cook last picked in the book: the pot's choice while its food makes it, until the pot is empty. */
-    private ResourceLocation wanted;
+    private Identifier wanted;
 
     public PotLogic(StationContext station) {
         pot = (KitchenPot) station.blockEntity();
@@ -183,7 +185,7 @@ public final class PotLogic implements StationLogic {
                 net.minecraft.world.Containers.dropItemStack(station.level(), station.pos().getX() + 0.5, station.pos().getY() + 1.0,
                         station.pos().getZ() + 0.5, leftover);
             } else if (!to.getInventory().add(leftover)) {
-                to.drop(leftover, false);
+                to.drop(leftover, false, Prediction.SERVER_ONLY);
             }
         }
     }
@@ -204,7 +206,7 @@ public final class PotLogic implements StationLogic {
                 ItemStack back = stack.copyWithCount(Math.min(saved, stack.getCount()));
                 pot.handson$setItem(i, stack.copyWithCount(stack.getCount() - back.getCount()));
                 if (!cook.getInventory().add(back)) {
-                    cook.drop(back, false);
+                    cook.drop(back, false, Prediction.SERVER_ONLY);
                 }
             }
         }
@@ -221,7 +223,7 @@ public final class PotLogic implements StationLogic {
         for (int i = 0; i < pot.handson$slots(); i++) {
             inPot.add(pot.handson$getItem(i));
         }
-        ResourceLocation found = pot.handson$findRecipe(station.level(), inPot).map(RecipeHolder::id).orElse(null);
+        Identifier found = pot.handson$findRecipe(station.level(), inPot).map(holder -> holder.id().identifier()).orElse(null);
         PotRecipes.Choice choice = choose(station, kinds, found, !station.users().isEmpty());
         if (choice != null) {
             List<ItemStack> rest = lay(pot, kinds, choice.parts());
@@ -232,7 +234,7 @@ public final class PotLogic implements StationLogic {
     }
 
     /** The dish {@code kinds} make in this pot ({@link PotRecipes#choose}), with the alchemist pot's scroll; null for none. */
-    private PotRecipes.Choice choose(StationContext station, List<ItemStack> kinds, ResourceLocation found, boolean overflow) {
+    private PotRecipes.Choice choose(StationContext station, List<ItemStack> kinds, Identifier found, boolean overflow) {
         List<RecipeHolder<CookingPotRecipe>> recipes = pot.handson$recipes(station.level());
         PotRecipes.Choice choice;
         if (scrolls == null) {
@@ -240,7 +242,7 @@ public final class PotLogic implements StationLogic {
         } else {
             // The alchemist pot: a recipe of a school only under its scroll, and the pot's own recipes before Farmer's Delight's, as it
             // looks them up when it cooks.
-            ResourceLocation school = scrolls.handson$school();
+            Identifier school = scrolls.handson$school();
             List<RecipeHolder<CookingPotRecipe>> allowed = recipes.stream().filter(recipe -> scrolls.handson$schoolFor(recipe.value()) == null
                     || scrolls.handson$schoolFor(recipe.value()).equals(school)).toList();
             List<RecipeHolder<CookingPotRecipe>> own = allowed.stream().filter(recipe -> scrolls.handson$isOwnRecipe(recipe.value())).toList();
@@ -269,7 +271,7 @@ public final class PotLogic implements StationLogic {
         for (int i = 0; i < pot.handson$slots(); i++) {
             inPot.add(pot.handson$getItem(i));
         }
-        ResourceLocation found = pot.handson$findRecipe(station.level(), inPot).map(RecipeHolder::id).orElse(null);
+        Identifier found = pot.handson$findRecipe(station.level(), inPot).map(holder -> holder.id().identifier()).orElse(null);
         if (StationRecipes.offerCarried(station, this, player, CookingPotStation.INGREDIENTS, storage(pot, 0, pot.handson$slots()), one,
                 kinds -> {
                     PotRecipes.Choice choice = choose(station, kinds, found, true);
@@ -293,7 +295,7 @@ public final class PotLogic implements StationLogic {
             for (int count = kind.getCount(); count > 0; count -= kind.getMaxStackSize()) {
                 ItemStack stack = kind.copyWithCount(Math.min(count, kind.getMaxStackSize()));
                 if (!to.getInventory().add(stack)) {
-                    to.drop(stack, false);
+                    to.drop(stack, false, Prediction.SERVER_ONLY);
                 }
             }
         }
@@ -321,10 +323,10 @@ public final class PotLogic implements StationLogic {
         boolean serves = pot.handson$servesIn(stack);
         for (RecipeHolder<CookingPotRecipe> holder : pot.handson$recipes(station.level())) {
             CookingPotRecipe recipe = holder.value();
-            if (recipe.getIngredients().stream().anyMatch(ingredient -> ingredient.test(stack))) {
+            if (RecipeParts.ingredients(recipe).stream().anyMatch(ingredient -> ingredient.test(stack))) {
                 return true;
             }
-            serves |= ItemStack.isSameItem(recipe.getOutputContainer(), stack);
+            serves |= ItemStack.isSameItem(RecipeParts.container(recipe), stack);
         }
         return !serves;
     }
@@ -334,7 +336,7 @@ public final class PotLogic implements StationLogic {
      * and jams take any food beside their base, as Farmer's Delight's pot takes any item.
      */
     public static boolean takesAnything(CookingPotRecipe recipe) {
-        return recipe.getIngredients().stream().allMatch(Ingredient::isEmpty);
+        return RecipeParts.ingredients(recipe).stream().allMatch(Ingredient::isEmpty);
     }
 
     /**
@@ -344,7 +346,7 @@ public final class PotLogic implements StationLogic {
     public static boolean offered(List<CookingPotRecipe> recipes, ItemStack stack) {
         boolean anything = false;
         for (CookingPotRecipe recipe : recipes) {
-            if (ItemStack.isSameItem(recipe.getOutputContainer(), stack) || recipe.getIngredients().stream().anyMatch(ingredient -> ingredient.test(stack))) {
+            if (ItemStack.isSameItem(RecipeParts.container(recipe), stack) || RecipeParts.ingredients(recipe).stream().anyMatch(ingredient -> ingredient.test(stack))) {
                 return true;
             }
             anything |= takesAnything(recipe);
@@ -373,7 +375,7 @@ public final class PotLogic implements StationLogic {
         }
         // Two of an ingredient may lie in one slot when a mod matches stacks (Autochef's Delight): never more servings than the
         // ingredients make, whichever way they lie.
-        while (left > 0 && !makes(recipe.getIngredients(), stacks, left)) {
+        while (left > 0 && !makes(RecipeParts.ingredients(recipe), stacks, left)) {
             left--;
         }
         return left;
@@ -504,28 +506,28 @@ public final class PotLogic implements StationLogic {
     }
 
     private void served(StationContext station, Player player, ItemStack stack) {
-        stack.onCraftedBy(station.level(), player, stack.getCount());
+        stack.onCraftedBy(player, stack.getCount());
         pot.handson$awardRecipes(player);
     }
 
     @Override
     public void onCustomAction(StationContext station, Player player, String action, CompoundTag data) {
         if (StationRecipes.ACTION_OFFER.equals(action)) {
-            offer(station, player, data.getBoolean(StationRecipes.ONE));
+            offer(station, player, data.getBooleanOr(StationRecipes.ONE, false));
         } else if (CookingPotStation.ACTION_SCOOP.equals(action)) {
-            if (data.getBoolean(CookingPotStation.FROM_INVENTORY)) {
-                scoopFromInventory(station, player, data.getBoolean(CookingPotStation.SCOOP_ALL));
+            if (data.getBooleanOr(CookingPotStation.FROM_INVENTORY, false)) {
+                scoopFromInventory(station, player, data.getBooleanOr(CookingPotStation.SCOOP_ALL, false));
             } else {
-                scoop(station, player, data.getBoolean(CookingPotStation.SCOOP_ALL));
+                scoop(station, player, data.getBooleanOr(CookingPotStation.SCOOP_ALL, false));
             }
         } else if (CookingPotStation.ACTION_FILL.equals(action)) {
-            ResourceLocation id = ResourceLocation.tryParse(data.getString(CookingPotStation.DISH));
-            pot.handson$recipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).findFirst()
-                    .ifPresent(recipe -> fill(player, recipe, data.getBoolean(CookingPotStation.SCOOP_ALL) ? CookingPotStation.FILL_MOST : 1));
+            Identifier id = Identifier.tryParse(data.getStringOr(CookingPotStation.DISH, ""));
+            pot.handson$recipes(station.level()).stream().filter(recipe -> recipe.id().identifier().equals(id)).findFirst()
+                    .ifPresent(recipe -> fill(player, recipe, data.getBooleanOr(CookingPotStation.SCOOP_ALL, false) ? CookingPotStation.FILL_MOST : 1));
         } else if (CookingPotStation.ACTION_TAKE_BACK.equals(action)) {
             takeBack(player);
         } else if (CookingPotStation.ACTION_HANG.equals(action)) {
-            hang(player, data.getBoolean(CookingPotStation.FROM_HAND));
+            hang(player, data.getBooleanOr(CookingPotStation.FROM_HAND, false));
         } else if (CookingPotStation.ACTION_STIR.equals(action)) {
             long now = station.level().getGameTime();
             if (isStirring(station) && !player.getUUID().equals(cook)) {
@@ -533,12 +535,12 @@ public final class PotLogic implements StationLogic {
             }
             stirredAt = now;
             cooking.stir(now + STIR_TICKS);
-            float x = spoon(data.getFloat(CookingPotStation.STIR_X));
-            float z = spoon(data.getFloat(CookingPotStation.STIR_Z));
+            float x = spoon(data.getFloatOr(CookingPotStation.STIR_X, 0.0F));
+            float z = spoon(data.getFloatOr(CookingPotStation.STIR_Z, 0.0F));
             ItemStack dish = result(station);
             cook = player.getUUID();
-            float at = data.contains(CookingPotStation.STIR_AT) && Float.isFinite(data.getFloat(CookingPotStation.STIR_AT))
-                    ? data.getFloat(CookingPotStation.STIR_AT) : Float.NaN;
+            float at = data.contains(CookingPotStation.STIR_AT) && Float.isFinite(data.getFloatOr(CookingPotStation.STIR_AT, 0.0F))
+                    ? data.getFloatOr(CookingPotStation.STIR_AT, 0.0F) : Float.NaN;
             cooking.skill().move(now, at, x, z, pot.handson$isHeated() && batch(station) > 0, openStars(player, dish));
             station.state().setControl(CookingPotStation.SPOON_X, x);
             station.state().setControl(CookingPotStation.SPOON_Z, z);
@@ -567,7 +569,7 @@ public final class PotLogic implements StationLogic {
             player.inventoryMenu.setCarried(back);
         }
         if (!rest.isEmpty() && !before.isEmpty() && !player.getInventory().add(before)) {
-            player.drop(before, false);
+            player.drop(before, false, Prediction.SERVER_ONLY);
         }
     }
 
@@ -576,7 +578,7 @@ public final class PotLogic implements StationLogic {
      * one there before takes its place in the inventory.
      */
     private void hangFor(Player player, CookingPotRecipe recipe) {
-        ResourceLocation school = scrolls == null ? null : scrolls.handson$schoolFor(recipe);
+        Identifier school = scrolls == null ? null : scrolls.handson$schoolFor(recipe);
         if (school == null || school.equals(scrolls.handson$school())) {
             return;
         }
@@ -590,7 +592,7 @@ public final class PotLogic implements StationLogic {
         inventory.setItem(slot, taken.getCount() > 1 ? taken.copyWithCount(taken.getCount() - 1) : before);
         scrolls.handson$setScroll(taken.copyWithCount(1));
         if (taken.getCount() > 1 && !before.isEmpty() && !inventory.add(before)) {
-            player.drop(before, false);
+            player.drop(before, false, Prediction.SERVER_ONLY);
         }
     }
 
@@ -607,7 +609,7 @@ public final class PotLogic implements StationLogic {
                 for (int count = stack.getCount(); count > 0; count -= stack.getMaxStackSize()) {
                     ItemStack back = stack.copyWithCount(Math.min(count, stack.getMaxStackSize()));
                     if (!player.getInventory().add(back)) {
-                        player.drop(back, false);
+                        player.drop(back, false, Prediction.SERVER_ONLY);
                     }
                 }
                 return;
@@ -637,7 +639,7 @@ public final class PotLogic implements StationLogic {
         if (filled == null) {
             return;
         }
-        wanted = recipe.id();
+        wanted = recipe.id().identifier();
         lay(pot, filled.kinds(), filled.parts());
         hangFor(player, recipe.value());
         cooking.feedByHand();
@@ -657,7 +659,7 @@ public final class PotLogic implements StationLogic {
                 if (carried.isEmpty()) {
                     player.inventoryMenu.setCarried(serving);
                 } else if (!player.getInventory().add(serving)) {
-                    player.drop(serving, false);
+                    player.drop(serving, false, Prediction.SERVER_ONLY);
                 }
             }
         } while (all && filled);
@@ -685,7 +687,7 @@ public final class PotLogic implements StationLogic {
             scooped++;
             served(station, player, serving);
             if (!inventory.add(serving)) {
-                player.drop(serving, false);
+                player.drop(serving, false, Prediction.SERVER_ONLY);
             }
             if (!all) {
                 break;
@@ -702,8 +704,8 @@ public final class PotLogic implements StationLogic {
         if (pot.handson$meal().isEmpty()) {
             return -1;
         }
-        if (!inventory.getSelected().isEmpty() && pot.handson$isContainerValid(inventory.getSelected())) {
-            return inventory.selected;
+        if (!inventory.getSelectedItem().isEmpty() && pot.handson$isContainerValid(inventory.getSelectedItem())) {
+            return inventory.getSelectedSlot();
         }
         for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
             if (!inventory.getItem(slot).isEmpty() && pot.handson$isContainerValid(inventory.getItem(slot))) {
@@ -722,7 +724,7 @@ public final class PotLogic implements StationLogic {
     /** The recipe the ingredients in the pot make, or null. */
     private CookingPotRecipe recipe(StationContext station) {
         ItemStack[] inPot = station.state().getItems(CookingPotStation.INGREDIENTS);
-        ResourceLocation school = scrolls == null ? null : scrolls.handson$school();
+        Identifier school = scrolls == null ? null : scrolls.handson$school();
         boolean same = java.util.Objects.equals(school, resultSchool);
         resultSchool = school;
         for (int i = 0; i < resultFor.length && same; i++) {

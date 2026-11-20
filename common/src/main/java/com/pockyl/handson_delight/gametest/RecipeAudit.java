@@ -4,7 +4,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Item;
@@ -21,7 +21,9 @@ import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.KitchenTags;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.ChoppingBlockStation;
@@ -71,28 +73,28 @@ public final class RecipeAudit {
         Map<String, Integer> others = new TreeMap<>();
 
         List<AssemblyRecipes.Assembly> assembled = new ArrayList<>(AssemblyRecipes.all());
-        Set<ResourceLocation> onTheBoard = assembled.stream().map(AssemblyRecipes.Assembly::id).collect(Collectors.toSet());
-        for (RecipeHolder<?> holder : level.getRecipeManager().getRecipes()) {
+        Set<Identifier> onTheBoard = assembled.stream().map(AssemblyRecipes.Assembly::id).collect(Collectors.toSet());
+        for (RecipeHolder<?> holder : KitchenRecipes.recipes(level)) {
             Recipe<?> recipe = holder.value();
-            String namespace = holder.id().getNamespace();
+            String namespace = holder.id().identifier().getNamespace();
             boolean ours = namespace.equals(FarmersDelightContent.MOD_ID) || Platform.INSTANCE.isFarmersDelightAddon(namespace);
-            ResourceLocation type = BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType());
-            if (recipe instanceof CraftingRecipe crafting && ours && !onTheBoard.contains(holder.id())
-                    && isDish(crafting.getResultItem(level.registryAccess())) && kinds(crafting.getIngredients()) > 1
-                    && !crafting.isSpecial() && !AssemblyRecipes.usesWorkshop(crafting.getIngredients())) {
-                ResourceLocation id = holder.id();
-                ResourceLocation serializer = BuiltInRegistries.RECIPE_SERIALIZER.getKey(recipe.getSerializer());
+            Identifier type = BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType());
+            if (recipe instanceof CraftingRecipe crafting && ours && !onTheBoard.contains(holder.id().identifier())
+                    && isDish(RecipeParts.result(crafting)) && kinds(RecipeParts.ingredients(crafting)) > 1
+                    && !crafting.isSpecial() && !AssemblyRecipes.usesWorkshop(RecipeParts.ingredients(crafting))) {
+                Identifier id = holder.id().identifier();
+                Identifier serializer = BuiltInRegistries.RECIPE_SERIALIZER.getKey(recipe.getSerializer());
                 if (serializer != null && !serializer.getNamespace().equals("minecraft")
                         && !serializer.getNamespace().equals(FarmersDelightContent.MOD_ID)
                         && !(crafting instanceof ShapedRecipe) && !(crafting instanceof ShapelessRecipe)) {
                     // A crafting type of the addon's own that matches in a way of its own: it stays in the crafting table. One built
                     // on the shaped or shapeless craft is made on the board (Barbeque's Delight's kebabs, seasoning and all).
-                    ownCrafts.add(id + " -> " + name(crafting.getResultItem(level.registryAccess())) + " (" + serializer + ")");
+                    ownCrafts.add(id + " -> " + name(RecipeParts.result(crafting)) + " (" + serializer + ")");
                     continue;
                 }
                 String why = AssemblyRecipes.candidates().stream().anyMatch(candidate -> candidate.id().equals(id))
                         ? "a candidate, not chosen" : "not a candidate";
-                missed.add(id + " -> " + name(crafting.getResultItem(level.registryAccess())) + " (" + why + ", "
+                missed.add(id + " -> " + name(RecipeParts.result(crafting)) + " (" + why + ", "
                         + recipe.getClass().getSimpleName() + ")");
             }
             if (type != null && !type.getNamespace().equals("minecraft") && !type.getNamespace().equals(FarmersDelightContent.MOD_ID)) {
@@ -114,7 +116,7 @@ public final class RecipeAudit {
             for (int i = 0; i < assembly.ingredients().size(); i++) {
                 Ingredient ingredient = assembly.ingredients().get(i);
                 ingredients.add(name(ingredient));
-                if (ingredient.getItems().length == 0) {
+                if (RecipeParts.items(ingredient).length == 0) {
                     look.add("empty ingredient " + i);
                 }
                 hints(ingredient, look);
@@ -129,12 +131,12 @@ public final class RecipeAudit {
         for (RecipeHolder<CookingPotRecipe> holder : pot) {
             CookingPotRecipe recipe = holder.value();
             List<String> look = new ArrayList<>();
-            recipe.getIngredients().forEach(ingredient -> hints(ingredient, look));
-            if (recipe.getIngredients().size() > 6) {
+            RecipeParts.ingredients(recipe).forEach(ingredient -> hints(ingredient, look));
+            if (RecipeParts.ingredients(recipe).size() > 6) {
                 look.add("more than six ingredients");
             }
-            report.add(holder.id() + " | " + name(recipe.getResultItem(level.registryAccess())) + " | " + name(recipe.getOutputContainer())
-                    + " | " + recipe.getIngredients().stream().map(RecipeAudit::name).collect(Collectors.joining(", ")) + flags(look));
+            report.add(holder.id() + " | " + name(RecipeParts.result(recipe)) + " | " + name(RecipeParts.container(recipe))
+                    + " | " + RecipeParts.ingredients(recipe).stream().map(RecipeAudit::name).collect(Collectors.joining(", ")) + flags(look));
         }
 
         List<CuttingBoardRecipe> cooking = Cutting.all(level);
@@ -144,10 +146,10 @@ public final class RecipeAudit {
                 "id | input | tool | results | station: marks style | look at");
         for (CuttingBoardRecipe recipe : cutting) {
             List<String> look = new ArrayList<>();
-            Ingredient input = recipe.getIngredients().get(0);
+            Ingredient input = RecipeParts.ingredients(recipe).get(0);
             String station = "FD's own board";
             if (cooking.contains(recipe)) {
-                ItemStack item = input.getItems().length > 0 ? input.getItems()[0] : ItemStack.EMPTY;
+                ItemStack item = RecipeParts.items(input).length > 0 ? RecipeParts.items(input)[0] : ItemStack.EMPTY;
                 Cutting.Plan plan = Cutting.plan(level, item);
                 station = plan.marks() + " " + plan.style();
                 String path = path(item);
@@ -162,7 +164,7 @@ public final class RecipeAudit {
                 }
             }
             report.add(Cutting.id(level, recipe) + " | " + name(input) + " | " + name(Cutting.tool(recipe)) + " | "
-                    + recipe.getResults().stream().map(RecipeAudit::name).collect(Collectors.joining(", ")) + " | " + station + flags(look));
+                    + RecipeParts.results(recipe).stream().map(RecipeAudit::name).collect(Collectors.joining(", ")) + " | " + station + flags(look));
         }
 
         // A tree's stump (Sable Trees' chopping block) cuts the same, but splits every log with an axe instead of stripping it.
@@ -180,20 +182,20 @@ public final class RecipeAudit {
         section(report, "STUMP SPLITS (" + splits.size() + ")", "log | planks | the board's cut it takes the place of");
         report.addAll(splits);
 
-        List<RecipeHolder<CampfireCookingRecipe>> campfire = new ArrayList<>(level.getRecipeManager().getAllRecipesFor(RecipeType.CAMPFIRE_COOKING));
+        List<RecipeHolder<CampfireCookingRecipe>> campfire = new ArrayList<>(KitchenRecipes.all(level, RecipeType.CAMPFIRE_COOKING));
         campfire.sort(Comparator.comparing(holder -> holder.id().toString()));
         section(report, "SKILLET AND STOVE (" + campfire.size() + ")", "id | input | result | time | look at");
         for (RecipeHolder<CampfireCookingRecipe> holder : campfire) {
             CampfireCookingRecipe recipe = holder.value();
             List<String> look = new ArrayList<>();
-            Ingredient input = recipe.getIngredients().get(0);
-            for (ItemStack item : input.getItems()) {
+            Ingredient input = RecipeParts.ingredients(recipe).get(0);
+            for (ItemStack item : RecipeParts.items(input)) {
                 if (CRACKED.matcher(path(item)).find() && !COOKED.matcher(path(item)).find() && !item.is(KitchenTags.ONE_SIDED)) {
                     look.add(name(item) + " not one_sided");
                 }
             }
-            report.add(holder.id() + " | " + name(input) + " | " + name(recipe.getResultItem(level.registryAccess())) + " | "
-                    + recipe.getCookingTime() + flags(look));
+            report.add(holder.id() + " | " + name(input) + " | " + name(RecipeParts.result(recipe)) + " | "
+                    + recipe.cookingTime() + flags(look));
         }
 
         if (Platform.INSTANCE.isLoaded(CfbOven.MOD_ID)) {
@@ -242,7 +244,7 @@ public final class RecipeAudit {
                 }
                 List<Ingredient> inputs = (List<Ingredient>) entry.getClass().getMethod("inputs").invoke(entry);
                 ItemStack output = (ItemStack) entry.getClass().getMethod("output").invoke(entry);
-                ItemStack input = inputs.isEmpty() || inputs.get(0).getItems().length == 0 ? ItemStack.EMPTY : inputs.get(0).getItems()[0];
+                ItemStack input = inputs.isEmpty() || RecipeParts.items(inputs.get(0)).length == 0 ? ItemStack.EMPTY : RecipeParts.items(inputs.get(0))[0];
                 lines.add(entry.getClass().getMethod("bridgeId").invoke(entry) + " | " + name(input) + " | " + name(output) + " | "
                         + KitchenOven.bakingOf(oven, input).isPresent());
             }
@@ -260,12 +262,12 @@ public final class RecipeAudit {
 
     private static long kinds(Collection<Ingredient> ingredients) {
         return ingredients.stream().filter(ingredient -> !ingredient.isEmpty())
-                .map(ingredient -> Arrays.stream(ingredient.getItems()).map(RecipeAudit::name).sorted().toList()).distinct().count();
+                .map(ingredient -> Arrays.stream(RecipeParts.items(ingredient)).map(RecipeAudit::name).sorted().toList()).distinct().count();
     }
 
     /** The kitchen tags an ingredient's name suggests and it lacks. */
     private static void hints(Ingredient ingredient, List<String> look) {
-        ItemStack[] items = ingredient.getItems();
+        ItemStack[] items = RecipeParts.items(ingredient);
         if (items.length == 0) {
             return;
         }
@@ -279,7 +281,7 @@ public final class RecipeAudit {
         if (item.is(KitchenTags.GRAINS)) {
             return;
         }
-        if (item.getItem().hasCraftingRemainingItem() && !item.has(DataComponents.FOOD) || POURED.matcher(path).find()) {
+        if (RecipeParts.hasRemainder(item.getItem()) && !item.has(DataComponents.FOOD) || POURED.matcher(path).find()) {
             look.add(name + " poured?");
         } else if (CRACKED.matcher(path).find() && !COOKED.matcher(path).find()) {
             look.add(name + " cracked?");
@@ -315,7 +317,7 @@ public final class RecipeAudit {
     }
 
     private static String name(Ingredient ingredient) {
-        ItemStack[] items = ingredient.getItems();
+        ItemStack[] items = RecipeParts.items(ingredient);
         if (items.length == 0) {
             return "<nothing>";
         }

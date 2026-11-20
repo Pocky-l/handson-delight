@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.client;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 
@@ -33,8 +33,8 @@ final class KegLiquids {
      * @param rising    particles that leave its surface now and then (glitter, fumes), in {@code risingColor}, per second
      * @param brewed    it ferments under a yeast head: foam grows while it is made and settles brown as it is done
      */
-    record Drink(int color, float viscosity, float foam, int foamColor, float fizz, float mottle, boolean glows, ResourceLocation sprite,
-            ResourceLocation rising, int risingColor, float risingRate, boolean brewed) {
+    record Drink(int color, float viscosity, float foam, int foamColor, float fizz, float mottle, boolean glows, Identifier sprite,
+            Identifier rising, int risingColor, float risingRate, boolean brewed) {
         static Drink of(int color) {
             return new Drink(color, 0.0F, 0.0F, 0, 0.0F, 0.0F, false, LiquidLook.LIQUID_SPRITE, null, 0, 0.0F, false);
         }
@@ -59,11 +59,11 @@ final class KegLiquids {
             return new Drink(color, viscosity, foam, foamColor, fizz, mottle, true, sprite, rising, risingColor, risingRate, brewed);
         }
 
-        Drink drawn(ResourceLocation value) {
+        Drink drawn(Identifier value) {
             return new Drink(color, viscosity, foam, foamColor, fizz, mottle, glows, value, rising, risingColor, risingRate, brewed);
         }
 
-        Drink giving(ResourceLocation particle, int argb, float perSecond) {
+        Drink giving(Identifier particle, int argb, float perSecond) {
             return new Drink(color, viscosity, foam, foamColor, fizz, mottle, glows, sprite, particle, argb, perSecond, brewed);
         }
 
@@ -80,7 +80,7 @@ final class KegLiquids {
     static final int HEAD = 0xF4FAF0D2;
     static final int SPENT_HEAD = 0xEEC4A878;
 
-    private static final Map<ResourceLocation, Drink> DRINKS = new HashMap<>();
+    private static final Map<Identifier, Drink> DRINKS = new HashMap<>();
 
     static {
         String bnc = "brewinandchewin";
@@ -102,8 +102,8 @@ final class KegLiquids {
         drink(bnc, "withering_dross", Drink.of(0xFA221A15).thick(0.5F).cloudy(0.3F).giving(DiegesisParticles.SMOKE, 0xC0201814, 0.8F));
         // Deep amber, nearly opaque in a keg, slow, with an uneven gloss.
         drink(bnc, "honey", Drink.of(0xE6CC8418).thick(0.85F).cloudy(0.18F));
-        drink(bnc, "flaxen_cheese", Drink.of(0xFFFFFFFF).thick(1.0F).drawn(ResourceLocation.tryBuild(bnc, "block/flaxen_cheese_still")));
-        drink(bnc, "scarlet_cheese", Drink.of(0xFFFFFFFF).thick(1.0F).drawn(ResourceLocation.tryBuild(bnc, "block/scarlet_cheese_still")));
+        drink(bnc, "flaxen_cheese", Drink.of(0xFFFFFFFF).thick(1.0F).drawn(Identifier.tryBuild(bnc, "block/flaxen_cheese_still")));
+        drink(bnc, "scarlet_cheese", Drink.of(0xFFFFFFFF).thick(1.0F).drawn(Identifier.tryBuild(bnc, "block/scarlet_cheese_still")));
         Drink milk = Drink.of(0xFAF6F3EA).thick(0.1F);
         drink("minecraft", "milk", milk);
         drink(bnc, "milk", milk);
@@ -174,7 +174,7 @@ final class KegLiquids {
     }
 
     private static void drink(String namespace, String path, Drink drink) {
-        DRINKS.put(ResourceLocation.tryBuild(namespace, path), drink);
+        DRINKS.put(Identifier.tryBuild(namespace, path), drink);
     }
 
     /** Tells Diegesis how each of them looks in a tank. */

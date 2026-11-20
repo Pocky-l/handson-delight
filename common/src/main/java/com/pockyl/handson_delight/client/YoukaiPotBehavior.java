@@ -5,15 +5,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.texture.SpriteContents;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.inventory.InventoryMenu;
@@ -33,6 +34,7 @@ import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.ItemNbt;
 import com.pockyl.handson_delight.mixin.SpriteContentsAccessor;
 import com.pockyl.handson_delight.station.KitchenYoukaiPot;
 import com.pockyl.handson_delight.station.YoukaiPotStation;
@@ -70,7 +72,7 @@ public final class YoukaiPotBehavior implements StationBehavior {
     private static final int FLIERS = 4;
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "flame", "flame_lit", "preview"};
     @SuppressWarnings("removal")
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
+    private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /** What comes in flies this long from the cook, the next one starting this much later; a pour holds the next back. */
     private static final float FLY_TIME = 0.32F;
     private static final float NEXT = 0.16F;
@@ -129,16 +131,16 @@ public final class YoukaiPotBehavior implements StationBehavior {
      * of its own texture. As the pot cooks one into the next, the colour moves across. It lies calm; heated it barely stirs, cooking
      * it bubbles a little at the walls.
      */
-    public static final ResourceLocation SOUP_LIQUID = HandsOnDelight.id("youkai_soup");
+    public static final Identifier SOUP_LIQUID = HandsOnDelight.id("youkai_soup");
     private static final String WATER = "water";
     private static final int WATER_ALPHA = 0x96;
     private static final int WATER_IN_IRON = 0x1E1E24;
     private static final int SOUP_ALPHA = 0xD8;
     private static final float WATER_MOTTLE = 0.1F;
     private static final float SOUP_MOTTLE = 0.2F;
-    private static final Map<ResourceLocation, Integer> SOUP_COLOURS = new HashMap<>();
+    private static final Map<Identifier, Integer> SOUP_COLOURS = new HashMap<>();
     /** The model the game falls back on when the soup colours were read: a new one after every resource reload. */
-    private static BakedModel soupColoursReadWith;
+    private static BlockStateModel soupColoursReadWith;
 
     private final Size size;
     private final RecipeBook book;
@@ -242,7 +244,7 @@ public final class YoukaiPotBehavior implements StationBehavior {
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()
                 && pot.handson$takes(player.getMainHandItem())) {
             CompoundTag how = new CompoundTag();
-            how.putInt(YoukaiPotStation.FROM, player.getInventory().selected);
+            how.putInt(YoukaiPotStation.FROM, player.getInventory().getSelectedSlot());
             view.sendAction(YoukaiPotStation.ACTION_PUT, how);
         }
     }
@@ -379,15 +381,15 @@ public final class YoukaiPotBehavior implements StationBehavior {
     }
 
     @Override
-    public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
+    public void onEffect(StationView view, Identifier effect, String node, CompoundTag data) {
         if (YoukaiPotStation.EFFECT_IN.equals(effect)) {
-            in(view, data.getList(YoukaiPotStation.STACKS, Tag.TAG_COMPOUND));
+            in(view, data.getListOrEmpty(YoukaiPotStation.STACKS));
         } else if (YoukaiPotStation.EFFECT_BACK.equals(effect)) {
-            back(view, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(YoukaiPotStation.STACK)));
+            back(view, ItemNbt.parse(view.level().registryAccess(), data.getCompound(YoukaiPotStation.STACK)));
         } else if (YoukaiPotStation.EFFECT_REFUSED.equals(effect)) {
-            refused(view, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(YoukaiPotStation.STACK)));
+            refused(view, ItemNbt.parse(view.level().registryAccess(), data.getCompound(YoukaiPotStation.STACK)));
         } else if (YoukaiPotStation.EFFECT_DONE.equals(effect)) {
-            done(view, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(YoukaiPotStation.STACK)), data.getBoolean(YoukaiPotStation.SERVED));
+            done(view, ItemNbt.parse(view.level().registryAccess(), data.getCompoundOrEmpty(YoukaiPotStation.STACK)), data.getBooleanOr(YoukaiPotStation.SERVED, false));
         }
     }
 
@@ -397,7 +399,7 @@ public final class YoukaiPotBehavior implements StationBehavior {
         int count = went.size();
         float lands = at;
         for (int i = 0; i < count; i++) {
-            ItemStack stack = ItemStack.parseOptional(view.level().registryAccess(), went.getCompound(i));
+            ItemStack stack = ItemNbt.parse(view.level().registryAccess(), went.getCompound(i));
             int index = i;
             float begins = at;
             if (KitchenLooks.isPoured(stack) && view.node("hand_0").isPresent()) {
@@ -693,11 +695,11 @@ public final class YoukaiPotBehavior implements StationBehavior {
     }
 
     /** The colour of a soup base: water as the biome's, half darkened in iron; any other its texture's. */
-    private static int soupColour(StationView view, ResourceLocation soup) {
+    private static int soupColour(StationView view, Identifier soup) {
         if (WATER.equals(soup.getPath())) {
-            return WATER_ALPHA << 24 | blend(BiomeColors.getAverageWaterColor(view.level(), view.pos()), WATER_IN_IRON, 0.5F) & 0xFFFFFF;
+            return WATER_ALPHA << 24 | blend(BiomeColors.getAverageWaterColor((net.minecraft.client.multiplayer.ClientLevel) view.level(), view.pos()), WATER_IN_IRON, 0.5F) & 0xFFFFFF;
         }
-        BakedModel missing = Minecraft.getInstance().getModelManager().getMissingModel();
+        BlockStateModel missing = com.pockyl.diegesis.impl.client.render.SceneDraw.missingModel();
         if (missing != soupColoursReadWith) {
             // Resources were reloaded: a resource pack may paint the soups otherwise now.
             soupColoursReadWith = missing;
@@ -707,8 +709,8 @@ public final class YoukaiPotBehavior implements StationBehavior {
     }
 
     /** The average colour of a texture of the block atlas, its first frame, as much as each pixel shows. */
-    private static int textureColour(ResourceLocation texture) {
-        SpriteContents contents = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(texture).contents();
+    private static int textureColour(Identifier texture) {
+        SpriteContents contents = com.pockyl.diegesis.impl.client.render.SceneDraw.blockSprite(texture).contents();
         NativeImage image = ((SpriteContentsAccessor) contents).handson$originalImage();
         long red = 0;
         long green = 0;
@@ -716,7 +718,7 @@ public final class YoukaiPotBehavior implements StationBehavior {
         long weight = 0;
         for (int y = 0; y < contents.height(); y++) {
             for (int x = 0; x < contents.width(); x++) {
-                int abgr = image.getPixelRGBA(x, y);
+                int abgr = ARGB.toABGR(image.getPixel(x, y));
                 int alpha = abgr >>> 24;
                 red += (long) (abgr & 0xFF) * alpha;
                 green += (long) (abgr >> 8 & 0xFF) * alpha;
@@ -801,7 +803,7 @@ public final class YoukaiPotBehavior implements StationBehavior {
 
     /** The dish the pot is cooking now, or nothing. */
     private static ItemStack cooking(KitchenYoukaiPot pot) {
-        ResourceLocation id = pot.handson$cooking();
+        Identifier id = pot.handson$cooking();
         if (id == null) {
             return ItemStack.EMPTY;
         }

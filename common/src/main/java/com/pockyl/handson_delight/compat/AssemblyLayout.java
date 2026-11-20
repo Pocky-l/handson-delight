@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.compat;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
@@ -19,8 +19,8 @@ import java.util.List;
  * board, slots and arrow are Farmer's Delight's, read from its texture.
  */
 public final class AssemblyLayout {
-    public static final ResourceLocation CATEGORY = HandsOnDelight.id("assembly");
-    public static final ResourceLocation TEXTURE = FarmersDelightContent.id("textures/gui/jei/cutting_board.png");
+    public static final Identifier CATEGORY = HandsOnDelight.id("assembly");
+    public static final Identifier TEXTURE = FarmersDelightContent.id("textures/gui/jei/cutting_board.png");
     public static final int WIDTH = 154;
     public static final int HEIGHT = 54;
 

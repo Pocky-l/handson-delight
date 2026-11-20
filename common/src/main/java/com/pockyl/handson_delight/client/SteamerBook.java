@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -7,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import com.pockyl.diegesis.api.client.StationView;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.KitchenSteamer;
 import com.pockyl.handson_delight.station.SteamerStation;
 import com.pockyl.handson_delight.station.SteamerTower;
@@ -24,7 +26,7 @@ final class SteamerBook implements RecipeBook.Source {
         List<RecipeBook.Page> pages = new ArrayList<>();
         for (SteamerStation.Steaming recipe : SteamerStation.recipes(view.level())) {
             // An ingredient nothing in the game fits (a tag no mod fills) makes a recipe nobody can steam: it is not shown.
-            if (recipe.ingredient().getItems().length == 0) {
+            if (RecipeParts.items(recipe.ingredient()).length == 0) {
                 continue;
             }
             // Its times are its own. A covered tower steams a thing at 1.2 a tick (the steam up and the steam back off the lid).
@@ -40,7 +42,7 @@ final class SteamerBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(SteamerStation.DISH, page.key().toString());
-        fill.putBoolean(SteamerStation.ALL, Screen.hasShiftDown());
+        fill.putBoolean(SteamerStation.ALL, Minecraft.getInstance().hasShiftDown());
         view.sendAction(SteamerStation.ACTION_FILL, fill);
     }
 

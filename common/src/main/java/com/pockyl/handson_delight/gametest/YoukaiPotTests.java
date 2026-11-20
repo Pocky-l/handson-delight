@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -35,7 +35,7 @@ public final class YoukaiPotTests {
 
     @SuppressWarnings("removal")
     private static Item feasts(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KitchenYoukaiPot.MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KitchenYoukaiPot.MOD_ID, path));
     }
 
     private record Setup(PotTests.TestStation station, YoukaiPotLogic logic, KitchenYoukaiPot pot, BlockPos at) {
@@ -166,7 +166,7 @@ public final class YoukaiPotTests {
         helper.runAfterDelay(5, () -> helper.assertTrue(setup.pot.handson$cooking() != null && setup.pot.handson$cookTime() > 0,
                 "all three in: it cooks"));
         helper.runAfterDelay(COOKS, () -> {
-            helper.assertBlockPresent(BuiltInRegistries.BLOCK.get(feastsId("pot_of_tofu_crab_stew")),
+            helper.assertBlockPresent(BuiltInRegistries.BLOCK.getValue(feastsId("pot_of_tofu_crab_stew")),
                     setup.at);
             helper.succeed();
         });
@@ -195,13 +195,13 @@ public final class YoukaiPotTests {
         helper.runAfterDelay(5, () -> helper.assertTrue(setup.pot.handson$cooking() != null, "it cooks the higan soup: "
                 + setup.pot.handson$cooked() + "/" + setup.pot.handson$cookTime() + ", heated " + setup.pot.handson$isHeated()));
         helper.runAfterDelay(COOKS, () -> {
-            helper.assertBlockPresent(BuiltInRegistries.BLOCK.get(feastsId("higan_soup")), setup.at);
+            helper.assertBlockPresent(BuiltInRegistries.BLOCK.getValue(feastsId("higan_soup")), setup.at);
             helper.succeed();
         });
     }
 
     @SuppressWarnings("removal")
-    private static ResourceLocation feastsId(String path) {
-        return ResourceLocation.fromNamespaceAndPath(KitchenYoukaiPot.MOD_ID, path);
+    private static Identifier feastsId(String path) {
+        return Identifier.fromNamespaceAndPath(KitchenYoukaiPot.MOD_ID, path);
     }
 }

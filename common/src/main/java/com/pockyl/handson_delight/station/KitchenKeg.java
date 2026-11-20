@@ -1,7 +1,8 @@
 package com.pockyl.handson_delight.station;
 
+import net.minecraft.resources.Identifier;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
@@ -218,7 +219,7 @@ public interface KitchenKeg {
      * A fermenting recipe: up to four ingredients and a base liquid ({@code base} empty when it needs none) at a temperature, for
      * a time; it makes a liquid ({@code resultFluid}) or an item ({@code resultItem}).
      */
-    record Fermenting(ResourceLocation id, List<Ingredient> ingredients, Fluid base, int baseAmount, Fluid resultFluid, ItemStack resultItem,
+    record Fermenting(Identifier id, List<Ingredient> ingredients, Fluid base, int baseAmount, Fluid resultFluid, ItemStack resultItem,
             int ticks, int temperature) {
     }
 }

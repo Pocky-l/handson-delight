@@ -5,7 +5,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -36,7 +36,7 @@ public final class EdVatTests {
     }
 
     private static Item extra(String path) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(KitchenEdVat.MOD_ID, path));
+        return BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(KitchenEdVat.MOD_ID, path));
     }
 
     private record Setup(PotTests.TestStation station, EdVatLogic logic, KitchenEdVat vat, BlockPos pos) {
@@ -91,7 +91,7 @@ public final class EdVatTests {
         HolderLookup.Provider registries = helper.getLevel().registryAccess();
         CompoundTag tag = entity.saveWithoutMetadata(registries);
         tag.putInt("cookTime", ticks);
-        entity.loadWithComponents(tag, registries);
+        entity.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, registries, tag));
     }
 
     private static boolean lidOn(GameTestHelper helper, Setup setup) {
@@ -168,7 +168,7 @@ public final class EdVatTests {
         Player player = cook(setup, helper);
         helper.assertTrue(!lidOn(helper, setup) && !setup.vat.handson$lidAside().isEmpty(), "the lid came off for the cook, set aside");
         player.getInventory().setItem(0, new ItemStack(Items.WATER_BUCKET));
-        player.getInventory().setItem(1, new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse("farmersdelight:cabbage")), 2));
+        player.getInventory().setItem(1, new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("farmersdelight:cabbage")), 2));
         player.getInventory().setItem(2, new ItemStack(extra("salt"), 3));
         fill(setup, player, SAUERKRAUT);
         helper.assertTrue(setup.vat.handson$amount() >= 250 && setup.vat.handson$item(KitchenEdVat.STAGE_SLOT).is(extra("salt"))
@@ -225,7 +225,7 @@ public final class EdVatTests {
         }
         Player player = cook(setup, helper);
         SlotRef first = SlotRef.of(EdVatStation.INGREDIENTS, 0);
-        ItemStack cabbage = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse("farmersdelight:cabbage")));
+        ItemStack cabbage = new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("farmersdelight:cabbage")));
         helper.assertTrue(setup.logic.mayPlace(setup.station, player, first, cabbage), "a cabbage goes into the open vat");
         helper.assertFalse(setup.logic.mayPlace(setup.station, player, first, new ItemStack(Items.BOWL)), "a bowl never goes in");
         helper.assertFalse(setup.logic.mayPlace(setup.station, player, first, new ItemStack(extra("salt"))),
@@ -252,7 +252,7 @@ public final class EdVatTests {
         if (setup == null) {
             return;
         }
-        Item cabbage = BuiltInRegistries.ITEM.get(ResourceLocation.parse("farmersdelight:cabbage"));
+        Item cabbage = BuiltInRegistries.ITEM.getValue(Identifier.parse("farmersdelight:cabbage"));
         setup.vat.handson$pour(new ItemStack(Items.WATER_BUCKET));
         setup.vat.handson$setItem(0, new ItemStack(cabbage));
         setup.vat.handson$setItem(1, new ItemStack(cabbage));

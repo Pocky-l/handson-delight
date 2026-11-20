@@ -3,7 +3,7 @@ package com.pockyl.handson_delight.station;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -14,7 +14,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
@@ -24,6 +23,8 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -62,11 +63,11 @@ public final class CfbOven implements KitchenOven {
     /** Its baking time before its config's multiplier, ticks. */
     public static final int BAKE_TICKS = 200;
     /** The power upgrade a player puts into it from the world: its own use. */
-    public static final ResourceLocation HEATING_UNIT = ResourceLocation.fromNamespaceAndPath(MOD_ID, "heating_unit");
+    public static final Identifier HEATING_UNIT = Identifier.fromNamespaceAndPath(MOD_ID, "heating_unit");
     /** What its own use stands on top of it: its kitchen's utensils. */
-    public static final TagKey<Item> UTENSILS = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(MOD_ID, "utensils"));
+    public static final TagKey<Item> UTENSILS = TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(MOD_ID, "utensils"));
     /** Its own recipe type, the first it bakes by. */
-    private static final ResourceLocation OVEN_RECIPES = ResourceLocation.fromNamespaceAndPath(MOD_ID, "oven");
+    private static final Identifier OVEN_RECIPES = Identifier.fromNamespaceAndPath(MOD_ID, "oven");
 
     private static Class<?> entityClass;
     private static Method containerMethod;
@@ -74,7 +75,8 @@ public final class CfbOven implements KitchenOven {
     private static Field cookTimesField;
     private static Field burnTimeField;
     private static boolean broken;
-    private static RecipeManager listedFor;
+    /** What the recipes were listed from: see {@link KitchenRecipes#source}. */
+    private static Object listedFor;
     private static List<Baking> listed = List.of();
 
     private final BlockEntity entity;
@@ -229,7 +231,7 @@ public final class CfbOven implements KitchenOven {
      * kitchen does not count it as a tool: its skillet and cooking pot.
      */
     public static boolean standsOnBurner(ItemStack stack) {
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return id.getNamespace().equals("farmersdelight") && (id.getPath().equals("skillet") || id.getPath().equals("cooking_pot"));
     }
 
@@ -302,8 +304,8 @@ public final class CfbOven implements KitchenOven {
 
     @SuppressWarnings("unchecked")
     private static Optional<ItemStack> firstFor(Level level, RecipeType<?> type, SingleRecipeInput input) {
-        return level.getRecipeManager().getRecipeFor((RecipeType<Recipe<SingleRecipeInput>>) type, input, level)
-                .map(holder -> holder.value().assemble(input, level.registryAccess()))
+        return KitchenRecipes.find(level, (RecipeType<Recipe<SingleRecipeInput>>) type, input)
+                .map(holder -> holder.value().assemble(input))
                 .filter(result -> !result.isEmpty());
     }
 
@@ -394,7 +396,7 @@ public final class CfbOven implements KitchenOven {
      * campfire tab. Listed once a recipe manager.
      */
     public static synchronized List<Baking> recipesOf(Level level) {
-        RecipeManager manager = level.getRecipeManager();
+        Object manager = KitchenRecipes.source(level);
         if (manager == listedFor) {
             return listed;
         }
@@ -403,25 +405,25 @@ public final class CfbOven implements KitchenOven {
         int ticks = bakeTicks();
         for (RecipeType<?> type : bakingTypes()) {
             Set<Item> inputs = new HashSet<>();
-            for (RecipeHolder<?> holder : manager.getRecipes()) {
+            for (RecipeHolder<?> holder : KitchenRecipes.recipes(level)) {
                 Recipe<?> recipe = holder.value();
-                if (recipe.getType() != type || recipe.getIngredients().isEmpty() || recipe.getIngredients().get(0).isEmpty()) {
+                if (recipe.getType() != type || RecipeParts.ingredients(recipe).isEmpty() || RecipeParts.ingredients(recipe).get(0).isEmpty()) {
                     continue;
                 }
-                ItemStack result = recipe.getResultItem(level.registryAccess());
+                ItemStack result = RecipeParts.result(recipe);
                 if (result.isEmpty() || type == RecipeType.SMELTING && !result.has(DataComponents.FOOD)) {
                     continue;
                 }
                 // An input an earlier type bakes already is baked by that one.
-                Ingredient ingredient = recipe.getIngredients().get(0);
+                Ingredient ingredient = RecipeParts.ingredients(recipe).get(0);
                 boolean fresh = false;
-                for (ItemStack item : ingredient.getItems()) {
+                for (ItemStack item : RecipeParts.items(ingredient)) {
                     fresh |= !covered.contains(item.getItem());
                     inputs.add(item.getItem());
                 }
                 if (fresh) {
                     String kind = type == RecipeType.CAMPFIRE_COOKING ? OvenStation.KIND_CAMPFIRE : OvenStation.KIND_FOOD;
-                    recipes.add(new Baking(holder.id(), List.of(ingredient), 0, 0, result.copy(), ticks, kind));
+                    recipes.add(new Baking(holder.id().identifier(), List.of(ingredient), 0, 0, result.copy(), ticks, kind));
                 }
             }
             covered.addAll(inputs);

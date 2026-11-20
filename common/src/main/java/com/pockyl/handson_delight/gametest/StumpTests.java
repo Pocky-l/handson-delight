@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -39,7 +39,7 @@ public final class StumpTests {
 
     @SuppressWarnings("removal")
     private static Item fd(String path) {
-        return BuiltInRegistries.ITEM.get(FarmersDelightContent.id(path));
+        return BuiltInRegistries.ITEM.getValue(FarmersDelightContent.id(path));
     }
 
     private record Stump(PotTests.TestStation station, BoardLogic logic, KitchenStump stump, ServerPlayer cook) {
@@ -76,7 +76,7 @@ public final class StumpTests {
             return null;
         }
         @SuppressWarnings("removal")
-        Block block = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(SABLE_TREES, "chopping_block"));
+        Block block = BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(SABLE_TREES, "chopping_block"));
         helper.assertTrue(ChoppingBlockStation.TYPE.matches(block.defaultBlockState()), "the chopping block opens as the stump's station");
         helper.setBlock(at, block);
         BlockPos pos = helper.absolutePos(at);
@@ -224,7 +224,7 @@ public final class StumpTests {
             helper.succeed();
             return;
         }
-        helper.assertTrue(BuiltInRegistries.BLOCK.getTag(ChoppingBlockStation.STUMPS).map(tag -> tag.size() == 0).orElse(true),
+        helper.assertTrue(BuiltInRegistries.BLOCK.get(ChoppingBlockStation.STUMPS).map(tag -> tag.size() == 0).orElse(true),
                 "no block is a stump");
         helper.assertFalse(ChoppingBlockStation.TYPE.matches(Blocks.OAK_LOG.defaultBlockState()), "a log is no stump");
         helper.assertFalse(ChoppingBlockStation.TYPE.matches(FarmersDelightContent.CUTTING_BOARD.get().defaultBlockState()),

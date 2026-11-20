@@ -27,6 +27,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.pockyl.handson_delight.HandsOnConfig;
+import com.pockyl.handson_delight.ItemNbt;
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.station.KitchenVat;
 
 import java.util.Optional;
@@ -97,13 +99,13 @@ abstract class VatMixin extends BlockEntity implements KitchenVat.Servings {
     @Inject(method = {"saveAdditional", "method_11007"}, at = @At("TAIL"))
     private void handson$saveServings(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         if (!handson$servings.isEmpty()) {
-            tag.put(HANDSON_SERVINGS, handson$servings.save(registries));
+            tag.put(HANDSON_SERVINGS, ItemNbt.save(handson$servings, registries));
         }
     }
 
     @Inject(method = {"loadAdditional", "method_11014"}, at = @At("TAIL"))
     private void handson$loadServings(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
-        handson$servings = tag.contains(HANDSON_SERVINGS) ? ItemStack.parseOptional(registries, tag.getCompound(HANDSON_SERVINGS)) : ItemStack.EMPTY;
+        handson$servings = tag.contains(HANDSON_SERVINGS) ? ItemNbt.parse(registries, tag.getCompound(HANDSON_SERVINGS)) : ItemStack.EMPTY;
     }
 
     /**
@@ -133,7 +135,7 @@ abstract class VatMixin extends BlockEntity implements KitchenVat.Servings {
             cir.setReturnValue(false);
             return;
         }
-        Optional<VatRecipe> recipe = level.getRecipeManager().byKey(aging.id()).map(RecipeHolder::value)
+        Optional<VatRecipe> recipe = KitchenRecipes.byKey(level, aging.id()).map(RecipeHolder::value)
                 .filter(VatRecipe.class::isInstance).map(VatRecipe.class::cast);
         if (recipe.isEmpty()) {
             return;

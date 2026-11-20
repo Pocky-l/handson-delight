@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -10,6 +11,7 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.Fluids;
 
 import com.pockyl.diegesis.api.client.StationView;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.KitchenKeg;
 
@@ -49,7 +51,7 @@ final class KegBook implements RecipeBook.Source {
             ItemStack dish = recipe.resultItem().isEmpty() ? keg.handson$drinkOf(recipe.resultFluid()) : recipe.resultItem();
             List<Ingredient> ingredients = recipe.ingredients().stream().filter(ingredient -> !ingredient.isEmpty()).toList();
             // A keg that takes several of a kind from one slot needs a slot a kind only.
-            long slots = keg.handson$laysOut() ? ingredients.size() : ingredients.stream().map(ingredient -> List.of(ingredient.getItems()).stream()
+            long slots = keg.handson$laysOut() ? ingredients.size() : ingredients.stream().map(ingredient -> List.of(RecipeParts.items(ingredient)).stream()
                     .map(stack -> stack.getItem()).toList()).distinct().count();
             if (dish.isEmpty() || slots > keg.handson$ingredients()) {
                 continue;
@@ -79,7 +81,7 @@ final class KegBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(KegStation.DISH, page.key().toString());
-        fill.putBoolean(KegStation.ALL, Screen.hasShiftDown());
+        fill.putBoolean(KegStation.ALL, Minecraft.getInstance().hasShiftDown());
         view.sendAction(KegStation.ACTION_FILL, fill);
     }
 

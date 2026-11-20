@@ -6,8 +6,10 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.BlockItem;
@@ -54,7 +56,7 @@ public final class OvenBehavior implements StationBehavior {
     private static final int PLACES = 9;
     /** The badge over the oven: its plate, the bar, the flame and the icon. */
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "flame", "flame_lit", "preview"};
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
+    private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
     /** The tray starts out once the door is this far open. */
     private static final float TRAY_AFTER = 0.7F;
     /**
@@ -144,7 +146,7 @@ public final class OvenBehavior implements StationBehavior {
     private final float[] browned = new float[PLACES];
     private final Item[] drawnFood = new Item[PLACES];
     private final Map<String, Item> drawnItems = new HashMap<>();
-    private final Map<String, ResourceLocation> drawnModels = new HashMap<>();
+    private final Map<String, Identifier> drawnModels = new HashMap<>();
     /** Seconds until each thing sets off from the player, NaN: not coming. */
     private final float[] arriveIn = new float[PLACES];
     private float time;
@@ -304,9 +306,9 @@ public final class OvenBehavior implements StationBehavior {
             ItemStack held = player.getMainHandItem();
             KitchenOven oven = oven(view);
             if (oven != null && (oven.takes(held) || isBakeware(oven, held))) {
-                lay(view, player.getInventory().selected, false);
+                lay(view, player.getInventory().getSelectedSlot(), false);
             } else if (oven != null && oven.burnsFuel() && oven.isFuel(held)) {
-                fuel(view, player.getInventory().selected);
+                fuel(view, player.getInventory().getSelectedSlot());
             }
         }
         refresh(view);
@@ -861,7 +863,7 @@ public final class OvenBehavior implements StationBehavior {
         Optional<KitchenOven.Baking> making = Optional.empty();
         if (eachPlace(view)) {
             // What bakes: the thing on the place furthest on of those still baking.
-            byte[] baked = state.data().getByteArray(OvenStation.BAKED);
+            byte[] baked = state.data().getByteArray(OvenStation.BAKED).orElse(new byte[0]);
             int best = -1;
             for (int i = 0; i < onTray.length; i++) {
                 int done = i < baked.length ? baked[i] : 0;
@@ -876,7 +878,7 @@ public final class OvenBehavior implements StationBehavior {
         } else {
             making = KitchenOven.matching(recipes, onTray, bakeware(view));
         }
-        Item wants = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(state.data().getString(OvenStation.WANTS)));
+        Item wants = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(state.data().getStringOr(OvenStation.WANTS, "")));
         wanted = making.isEmpty() && state.data().contains(OvenStation.WANTS) && wants != Items.AIR ? new ItemStack(wants) : ItemStack.EMPTY;
         ItemStack[] served = state.getItems(OvenStation.SERVED);
         ItemStack waiting = Arrays.stream(served).filter(stack -> !stack.isEmpty()).findFirst().orElse(ItemStack.EMPTY);
@@ -923,7 +925,7 @@ public final class OvenBehavior implements StationBehavior {
         boolean open = inUse && isDoorOpen(view);
         swing(view, dt, open);
         boolean whole = view.isBlockHidden();
-        boolean hot = view.state().data().getBoolean(OvenStation.HOT);
+        boolean hot = view.state().data().getBooleanOr(OvenStation.HOT, false);
         models(view, hot, door < 0.05F);
         // What stands on the burners is read every frame: in the world nobody's change of the oven reaches the scene as a change of
         // its state (its renderer's own data comes with the oven's updates).
@@ -966,7 +968,7 @@ public final class OvenBehavior implements StationBehavior {
 
     /** The models that follow the block: its colour, its lit front, the door lit through its glass while it burns shut. */
     private void models(StationView view, boolean hot, boolean doorShut) {
-        Map<String, ResourceLocation> models = look.models().of(view.level().getBlockState(view.pos()), hot, doorShut);
+        Map<String, Identifier> models = look.models().of(view.level().getBlockState(view.pos()), hot, doorShut);
         models.forEach((nodeId, model) -> {
             if (!model.equals(drawnModels.get(nodeId))) {
                 drawnModels.put(nodeId, model);
@@ -1003,11 +1005,11 @@ public final class OvenBehavior implements StationBehavior {
         boolean sounds = look.door() != OvenLook.Door.NONE || !bakeware(view).isEmpty()
                 || Arrays.stream(shown).anyMatch(stack -> stack != null && !stack.isEmpty());
         if (open && !wasOpening && before < 1.0F && sounds) {
-            view.playSound(look.openSound(), hinge, 0.5F, 0.9F + view.level().random.nextFloat() * 0.1F);
+            view.playSound(look.openSound(), hinge, 0.5F, 0.9F + view.level().getRandom().nextFloat() * 0.1F);
         }
         float closesAt = look.door() == OvenLook.Door.DROP ? 0.5F : 0.0F;
         if (before > closesAt && door <= closesAt && !open && sounds) {
-            view.playSound(look.closeSound(), hinge, 0.5F, 0.9F + view.level().random.nextFloat() * 0.1F);
+            view.playSound(look.closeSound(), hinge, 0.5F, 0.9F + view.level().getRandom().nextFloat() * 0.1F);
         }
         if (look.door() == OvenLook.Door.LEAVES && before < 1.0F && door >= 1.0F) {
             // The leaves come to rest on their hinges with a small knock of iron.
@@ -1060,7 +1062,7 @@ public final class OvenBehavior implements StationBehavior {
      */
     private void brown(StationView view, boolean open) {
         boolean each = eachPlace(view);
-        byte[] baked = view.state().data().getByteArray(OvenStation.BAKED);
+        byte[] baked = view.state().data().getByteArray(OvenStation.BAKED).orElse(new byte[0]);
         float set = baking && !open ? view.state().getControl(OvenStation.PROGRESS) : 0.0F;
         for (int i = 0; i < PLACES; i++) {
             float progress = each ? (i < baked.length ? baked[i] / 100.0F : 0.0F) : set;
@@ -1154,9 +1156,9 @@ public final class OvenBehavior implements StationBehavior {
         boolean shownHere = cookHere && !dish.isEmpty();
         view.node("badge").ifPresent(plate -> plate.setVisible(shownHere));
         float progress = view.state().getControl(OvenStation.PROGRESS);
-        int left = view.state().data().getInt(OvenStation.LEFT);
-        boolean hot = view.state().data().getBoolean(OvenStation.HOT);
-        boolean cold = view.state().data().getBoolean(OvenStation.COLD);
+        int left = view.state().data().getIntOr(OvenStation.LEFT, 0);
+        boolean hot = view.state().data().getBooleanOr(OvenStation.HOT, false);
+        boolean cold = view.state().data().getBooleanOr(OvenStation.COLD, false);
         int seconds = baking && progress > 0.0F && left > 0 ? Math.max(1, Mth.ceil(left / 20.0F)) : 0;
         int bar = baking ? Math.round(progress * BAR_LENGTH) : ready ? BAR_LENGTH : 0;
         String text = seconds >= 60 ? seconds / 60 + ":" + String.format("%02d", seconds % 60) : seconds > 0 ? Integer.toString(seconds)
@@ -1232,6 +1234,6 @@ public final class OvenBehavior implements StationBehavior {
     }
 
     static boolean shiftDown() {
-        return Screen.hasShiftDown();
+        return net.minecraft.client.Minecraft.getInstance().hasShiftDown();
     }
 }

@@ -3,15 +3,15 @@ package com.pockyl.handson_delight.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+import com.pockyl.diegesis.api.client.SceneBuffers;
 import net.minecraft.client.renderer.Sheets;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.BlockItem;
@@ -60,8 +60,8 @@ final class LogPieces {
         BlockState state = log.getItem() instanceof BlockItem item ? item.getBlock().defaultBlockState() : Blocks.OAK_LOG.defaultBlockState();
         TextureAtlasSprite end = sprite(state, Direction.UP);
         TextureAtlasSprite bark = sprite(state, Direction.NORTH);
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        Block stripped = BuiltInRegistries.BLOCK.get(id.withPath("stripped_" + id.getPath()));
+        Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        Block stripped = BuiltInRegistries.BLOCK.getValue(id.withPath("stripped_" + id.getPath()));
         TextureAtlasSprite split;
         if (stripped != Blocks.AIR && !id.getPath().startsWith("stripped_")) {
             split = sprite(stripped.defaultBlockState(), Direction.NORTH);
@@ -77,9 +77,14 @@ final class LogPieces {
     }
 
     private static TextureAtlasSprite sprite(BlockState state, Direction side) {
-        BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
-        List<BakedQuad> quads = model.getQuads(state, side, RandomSource.create(42L));
-        return quads.isEmpty() ? model.getParticleIcon() : quads.get(0).getSprite();
+        BlockStateModel model = com.pockyl.diegesis.impl.client.render.SceneDraw.blockModel(state);
+        for (net.minecraft.client.renderer.block.dispatch.BlockStateModelPart part : com.pockyl.diegesis.impl.client.render.SceneDraw.parts(model)) {
+            List<BakedQuad> quads = part.getQuads(side);
+            if (!quads.isEmpty()) {
+                return quads.get(0).materialInfo().sprite();
+            }
+        }
+        return model.particleMaterial().sprite();
     }
 
     /**
@@ -148,9 +153,9 @@ final class LogPieces {
      * {@code piece} of a log {@code height} high, standing on y 0: moved by {@code dx, dz}, then turned by {@code yaw} radians about
      * the vertical (from the scene's frame into the piece's own) and moved by {@code -footZ} along its own z.
      */
-    static void draw(PoseStack pose, MultiBufferSource buffers, int light, Faces faces, Piece piece, float height, float dx, float dz,
+    static void draw(PoseStack pose, SceneBuffers buffers, int light, Faces faces, Piece piece, float height, float dx, float dz,
             float yaw, float footZ) {
-        VertexConsumer out = buffers.getBuffer(Sheets.solidBlockSheet());
+        VertexConsumer out = buffers.getBuffer(com.pockyl.diegesis.impl.client.render.DiegesisRenderTypes.solidBlockSheet());
         PoseStack.Pose at = pose.last();
         int count = piece.xs().length;
         Vector3f[] top = new Vector3f[count];

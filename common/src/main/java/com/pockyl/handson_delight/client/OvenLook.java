@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.client;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.block.state.BlockState;
@@ -54,7 +54,7 @@ record OvenLook(Door door, float doorOpen, float doorTime, float trayOut, float 
     interface Models {
         Models NONE = (state, burning, doorShut) -> Map.of();
 
-        Map<String, ResourceLocation> of(BlockState state, boolean burning, boolean doorShut);
+        Map<String, Identifier> of(BlockState state, boolean burning, boolean doorShut);
     }
 
     /**
@@ -90,14 +90,14 @@ record OvenLook(Door door, float doorOpen, float doorTime, float trayOut, float 
             SoundEvents.LANTERN_PLACE, SoundEvents.LANTERN_HIT, new String[0], Models.NONE, 0xFFFFFF, 0x78);
 
     private static SoundEvent sound(String namespace, String path) {
-        return SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(namespace, path));
+        return SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(namespace, path));
     }
 
     /**
      * The oven's body as its block draws it, its door and handle bar as its renderer draws them: each in the oven's colour (on 1.21.1
      * every oven is one, white the first), the door lit through the glass while it burns and is shut.
      */
-    private static Map<String, ResourceLocation> cfbModels(BlockState state, boolean burning, boolean doorShut) {
+    private static Map<String, Identifier> cfbModels(BlockState state, boolean burning, boolean doorShut) {
         String block = BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath();
         // Its ovens draw their lit front while not active, their plain one while active (its blockstates).
         String body = block + (flag(state, "active") ? "" : "_active");

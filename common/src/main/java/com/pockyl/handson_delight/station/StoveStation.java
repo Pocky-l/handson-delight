@@ -1,9 +1,10 @@
 package com.pockyl.handson_delight.station;
 
+import net.minecraft.tags.ItemTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -13,7 +14,6 @@ import net.minecraft.world.item.FlintAndSteelItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,7 +31,7 @@ import com.pockyl.handson_delight.HandsOnDelight;
  * but piece by piece, as on a grill). Its six slots are windows on Farmer's Delight's own: what is put on its way cooks its way.
  */
 public final class StoveStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("stove");
+    public static final Identifier ID = HandsOnDelight.id("stove");
 
     /** What lies on the grill: Farmer's Delight's six slots, one item each. */
     public static final String GRILL = "grill";
@@ -60,14 +60,14 @@ public final class StoveStation {
     public static final String PLACE = "place";
 
     /** Effects for everybody who sees the stove. Data: {@link #PLACE}, and {@link #STACK} of what is about. */
-    public static final ResourceLocation EFFECT_PLACED = HandsOnDelight.id("stove_placed");
-    public static final ResourceLocation EFFECT_REFUSED = HandsOnDelight.id("stove_refused");
-    public static final ResourceLocation EFFECT_TURNED = HandsOnDelight.id("stove_turned");
+    public static final Identifier EFFECT_PLACED = HandsOnDelight.id("stove_placed");
+    public static final Identifier EFFECT_REFUSED = HandsOnDelight.id("stove_refused");
+    public static final Identifier EFFECT_TURNED = HandsOnDelight.id("stove_turned");
     /** A turn the server did not take (the piece was still in the air): the cook's client lays it back. */
-    public static final ResourceLocation EFFECT_UNTURNED = HandsOnDelight.id("stove_unturned");
-    public static final ResourceLocation EFFECT_TAKEN = HandsOnDelight.id("stove_taken");
+    public static final Identifier EFFECT_UNTURNED = HandsOnDelight.id("stove_unturned");
+    public static final Identifier EFFECT_TAKEN = HandsOnDelight.id("stove_taken");
     /** A piece is done on both sides: {@link #STACK} what it became, still on the grill. */
-    public static final ResourceLocation EFFECT_GRILLED = HandsOnDelight.id("grilled");
+    public static final Identifier EFFECT_GRILLED = HandsOnDelight.id("grilled");
     public static final String STACK = "stack";
 
     public static final StationSchema SCHEMA = StationSchema.builder()
@@ -127,7 +127,7 @@ public final class StoveStation {
         // Food that is also a block (a carrot, sweet berries) is planted, never set on a stove: it opens the grill like other food.
         boolean food = held.has(DataComponents.FOOD);
         if (item instanceof BlockItem && !food || item instanceof FlintAndSteelItem || item instanceof FireChargeItem
-                || item instanceof ShovelItem || item instanceof BucketItem) {
+                || item.builtInRegistryHolder().is(ItemTags.SHOVELS) || item instanceof BucketItem) {
             return false;
         }
         return food || Cutting.isTool(level, held) || held.is(Items.BOWL) || held.is(Items.GLASS_BOTTLE);

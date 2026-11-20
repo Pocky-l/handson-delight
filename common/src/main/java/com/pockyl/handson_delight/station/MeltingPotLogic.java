@@ -22,7 +22,7 @@ import com.pockyl.handson_delight.HandsOnDelight;
  */
 public final class MeltingPotLogic implements StationLogic {
     /** What has melted, as the scene draws it; its colour is the client's, from the fluid in the tank. */
-    public static final net.minecraft.resources.ResourceLocation MELTED_LIQUID = HandsOnDelight.id("melted");
+    public static final net.minecraft.resources.Identifier MELTED_LIQUID = HandsOnDelight.id("melted");
 
     private final KitchenMeltingPot pot;
 
@@ -68,10 +68,10 @@ public final class MeltingPotLogic implements StationLogic {
         if (pot == null) {
             return;
         }
-        int from = data.contains(MeltingPotStation.FROM) ? data.getInt(MeltingPotStation.FROM) : -1;
+        int from = data.contains(MeltingPotStation.FROM) ? data.getIntOr(MeltingPotStation.FROM, 0) : -1;
         switch (action) {
             case MeltingPotStation.ACTION_PUT -> put(station, player, from);
-            case MeltingPotStation.ACTION_DRAW -> draw(player, from, data.getBoolean(MeltingPotStation.ALL));
+            case MeltingPotStation.ACTION_DRAW -> draw(player, from, data.getBooleanOr(MeltingPotStation.ALL, false));
             case MeltingPotStation.ACTION_FILL -> fill(station, player, data);
             default -> {
             }
@@ -97,7 +97,7 @@ public final class MeltingPotLogic implements StationLogic {
 
     private static void give(Player player, ItemStack stack) {
         if (!stack.isEmpty() && !player.getInventory().add(stack)) {
-            player.drop(stack, false);
+            player.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
         }
     }
 
@@ -148,10 +148,10 @@ public final class MeltingPotLogic implements StationLogic {
 
     /** What melts into the picked recipe goes in from the inventory: one, or with shift a whole stack, onto what is there. */
     private void fill(StationContext station, Player player, CompoundTag data) {
-        String id = data.getString(MeltingPotStation.DISH);
+        String id = data.getStringOr(MeltingPotStation.DISH, "");
         KitchenMeltingPot.recipes(station.level()).stream().filter(recipe -> recipe.id().toString().equals(id)).findFirst().ifPresent(recipe -> {
             Inventory inventory = player.getInventory();
-            boolean all = data.getBoolean(MeltingPotStation.ALL);
+            boolean all = data.getBooleanOr(MeltingPotStation.ALL, false);
             for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++) {
                 ItemStack stack = inventory.getItem(slot);
                 if (stack.isEmpty() || !recipe.input().test(stack)) {
@@ -192,8 +192,8 @@ public final class MeltingPotLogic implements StationLogic {
         int left = time > 0 && total > time ? Mth.ceil((total - time) / 20.0F) * 20 : 0;
         String fluid = pot.handson$fluid() == Fluids.EMPTY ? "" : BuiltInRegistries.FLUID.getKey(pot.handson$fluid()).toString();
         boolean heated = pot.handson$isHeated();
-        if (own.getInt(MeltingPotStation.LEFT) != left || !own.getString(MeltingPotStation.FLUID).equals(fluid)
-                || own.getBoolean(MeltingPotStation.HEATED) != heated) {
+        if (own.getIntOr(MeltingPotStation.LEFT, 0) != left || !own.getStringOr(MeltingPotStation.FLUID, "").equals(fluid)
+                || own.getBooleanOr(MeltingPotStation.HEATED, false) != heated) {
             own.putInt(MeltingPotStation.LEFT, left);
             own.putString(MeltingPotStation.FLUID, fluid);
             own.putBoolean(MeltingPotStation.HEATED, heated);

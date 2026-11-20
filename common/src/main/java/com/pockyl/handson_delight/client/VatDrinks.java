@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.client;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import com.pockyl.diegesis.api.client.DiegesisParticles;
@@ -16,7 +16,7 @@ import java.util.Optional;
  * own items; the alpha is how clear the drink is. A drink nobody describes here takes the main colour of its icon.
  */
 final class VatDrinks {
-    private static final Map<ResourceLocation, KegLiquids.Drink> DRINKS = new HashMap<>();
+    private static final Map<Identifier, KegLiquids.Drink> DRINKS = new HashMap<>();
 
     static {
         String cd = "culturaldelights";
@@ -45,7 +45,7 @@ final class VatDrinks {
     }
 
     private static void drink(String namespace, String path, KegLiquids.Drink drink) {
-        DRINKS.put(ResourceLocation.tryBuild(namespace, path), drink);
+        DRINKS.put(Identifier.tryBuild(namespace, path), drink);
     }
 
     /** The look of the drink {@code stack} is, if anybody described it. */

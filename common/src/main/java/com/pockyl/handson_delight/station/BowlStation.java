@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * it always does, in its container from the cook's inventory. A whole bowlful is mixed at once. Sneaking keeps the bowl's own menu.
  */
 public final class BowlStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("mixing_bowl");
+    public static final Identifier ID = HandsOnDelight.id("mixing_bowl");
 
     public static final String INGREDIENTS = "ingredients";
     /** How far the stirring is, 0 to 1 of the stirs the bowlful needs. */
@@ -37,7 +37,7 @@ public final class BowlStation {
     public static final String STIRRING = "stirring";
     /** What the bowl holds as liquid for the scene: how full, in hundredths of its inside; the colour is the client's. */
     public static final String BATTER = "batter";
-    public static final ResourceLocation BATTER_LIQUID = HandsOnDelight.id("batter");
+    public static final Identifier BATTER_LIQUID = HandsOnDelight.id("batter");
 
     /**
      * A custom action: the stack in an inventory slot ({@link #FROM}; -1 the cursor) goes into the bowl: a liquid is poured, anything
@@ -80,7 +80,7 @@ public final class BowlStation {
     /** In the station's data: the container the stirred bowlful waits for, when the cook has none (an item id). */
     public static final String WANTS = "wants";
 
-    public static final Supplier<Block> BOWL = () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(KitchenBowl.MOD_ID,
+    public static final Supplier<Block> BOWL = () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(KitchenBowl.MOD_ID,
             "mixing_bowl"));
 
     public static final StationSchema SCHEMA = StationSchema.builder()

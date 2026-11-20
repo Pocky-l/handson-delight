@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.assembly.BoardDishes;
 
 /** Fabric entry point, both sides. */
@@ -11,7 +12,8 @@ public final class HandsOnDelightFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         HandsOnDelight.init();
-        PayloadTypeRegistry.playS2C().register(BoardDishes.Payload.TYPE, BoardDishes.Payload.CODEC);
-        PayloadTypeRegistry.playS2C().register(BoardDishes.NoBoard.TYPE, BoardDishes.NoBoard.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(BoardDishes.Payload.TYPE, BoardDishes.Payload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(BoardDishes.NoBoard.TYPE, BoardDishes.NoBoard.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(KitchenRecipes.Payload.TYPE, KitchenRecipes.Payload.CODEC);
     }
 }

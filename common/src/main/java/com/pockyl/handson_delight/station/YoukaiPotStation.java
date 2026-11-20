@@ -3,7 +3,7 @@ package com.pockyl.handson_delight.station;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -37,9 +37,9 @@ import java.util.function.Supplier;
  * rather than out over it. Every step goes through the pot's own code.
  */
 public final class YoukaiPotStation {
-    public static final ResourceLocation SMALL_ID = HandsOnDelight.id("youkai_small_pot");
-    public static final ResourceLocation SHORT_ID = HandsOnDelight.id("youkai_short_pot");
-    public static final ResourceLocation STOCKPOT_ID = HandsOnDelight.id("youkai_stockpot");
+    public static final Identifier SMALL_ID = HandsOnDelight.id("youkai_small_pot");
+    public static final Identifier SHORT_ID = HandsOnDelight.id("youkai_short_pot");
+    public static final Identifier STOCKPOT_ID = HandsOnDelight.id("youkai_stockpot");
 
     /** Where a stack let go over the pot is caught: one slot that never keeps anything. */
     public static final String HAND = "hand";
@@ -69,13 +69,13 @@ public final class YoukaiPotStation {
     public static final String DISH = "dish";
 
     /** Things went in: {@link #STACKS} one after the other, {@link #BOOK} when the book put them in from the inventory. */
-    public static final ResourceLocation EFFECT_IN = HandsOnDelight.id("youkai_pot_in");
+    public static final Identifier EFFECT_IN = HandsOnDelight.id("youkai_pot_in");
     /** The last thing came back out: {@link #STACK}. */
-    public static final ResourceLocation EFFECT_BACK = HandsOnDelight.id("youkai_pot_back");
+    public static final Identifier EFFECT_BACK = HandsOnDelight.id("youkai_pot_back");
     /** What the pot would not take: {@link #STACK}. */
-    public static final ResourceLocation EFFECT_REFUSED = HandsOnDelight.id("youkai_pot_refused");
+    public static final Identifier EFFECT_REFUSED = HandsOnDelight.id("youkai_pot_refused");
     /** The pot has finished a dish ({@link #STACK}); with {@link #SERVED} it went to the cook rather than out over the pot. */
-    public static final ResourceLocation EFFECT_DONE = HandsOnDelight.id("youkai_pot_done");
+    public static final Identifier EFFECT_DONE = HandsOnDelight.id("youkai_pot_done");
     public static final String STACKS = "stacks";
     public static final String STACK = "stack";
     public static final String BOOK = "book";
@@ -118,10 +118,10 @@ public final class YoukaiPotStation {
 
     @SuppressWarnings("removal")
     private static Supplier<Block> block(String path) {
-        return () -> BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(KitchenYoukaiPot.MOD_ID, path));
+        return () -> BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath(KitchenYoukaiPot.MOD_ID, path));
     }
 
-    private static StationType.Builder type(ResourceLocation id, Supplier<Block> block, Supplier<Block> empty) {
+    private static StationType.Builder type(Identifier id, Supplier<Block> block, Supplier<Block> empty) {
         return Diegesis.station(id)
                 .block(block)
                 .block(empty)

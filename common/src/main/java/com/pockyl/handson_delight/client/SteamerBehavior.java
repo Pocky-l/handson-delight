@@ -9,7 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -29,6 +29,7 @@ import com.pockyl.diegesis.api.client.StationBehavior;
 import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
+import com.pockyl.handson_delight.ItemNbt;
 import com.pockyl.handson_delight.station.KitchenSteamer;
 import com.pockyl.handson_delight.station.SteamerStation;
 import com.pockyl.handson_delight.station.SteamerTower;
@@ -108,7 +109,7 @@ public final class SteamerBehavior implements StationBehavior {
     /** The badge, as the pots': plate, a flame and a drop over the icon of what steams, the bar and the seconds left under it. */
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "flame", "flame_lit", "drop", "drop_lit", "preview"};
     @SuppressWarnings("removal")
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
+    private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
     private static final int PLATE_COLOR = 0x8C1E140C;
     private static final int DIAL_COLOR = 0xFFFFCB6B;
     private static final int TRACK_COLOR = 0x50FFF2DC;
@@ -259,7 +260,7 @@ public final class SteamerBehavior implements StationBehavior {
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
             ItemStack held = player.getMainHandItem();
             CompoundTag how = new CompoundTag();
-            how.putInt(SteamerStation.FROM, player.getInventory().selected);
+            how.putInt(SteamerStation.FROM, player.getInventory().getSelectedSlot());
             String action = action(pot, held);
             if (action != null) {
                 view.sendAction(action, how);
@@ -675,7 +676,7 @@ public final class SteamerBehavior implements StationBehavior {
             boolean wet = tower.potBlock().handson$hasWater();
             node.setVisible(wet);
             if (wet) {
-                int color = KitchenLooks.mix(BiomeColors.getAverageWaterColor(view.level(), view.pos()), WATER_IN_IRON, 0.5F);
+                int color = KitchenLooks.mix(BiomeColors.getAverageWaterColor((net.minecraft.client.multiplayer.ClientLevel) view.level(), view.pos()), WATER_IN_IRON, 0.5F);
                 node.setLiquidColor(WATER_ALPHA << 24 | color & 0xFFFFFF);
                 node.setAgitation(tower.potBlock().handson$isHeated() ? 0.08F : 0.0F);
             }
@@ -736,7 +737,7 @@ public final class SteamerBehavior implements StationBehavior {
         CompoundTag how = new CompoundTag();
         how.putInt(SteamerStation.RACK, rack);
         how.putInt(SteamerStation.PLACE, place);
-        how.putBoolean(SteamerStation.ALL, Screen.hasShiftDown());
+        how.putBoolean(SteamerStation.ALL, Minecraft.getInstance().hasShiftDown());
         view.sendAction(SteamerStation.ACTION_TAKE, how);
     }
 
@@ -859,15 +860,15 @@ public final class SteamerBehavior implements StationBehavior {
     }
 
     @Override
-    public void onEffect(StationView view, ResourceLocation effect, String node, CompoundTag data) {
+    public void onEffect(StationView view, Identifier effect, String node, CompoundTag data) {
         if (SteamerStation.EFFECT_IN.equals(effect)) {
-            in(view, data.getList(SteamerStation.LAID, Tag.TAG_COMPOUND));
+            in(view, data.getListOrEmpty(SteamerStation.LAID));
         } else if (SteamerStation.EFFECT_TAKEN.equals(effect)) {
-            taken(view, data.getList(SteamerStation.LAID, Tag.TAG_COMPOUND));
+            taken(view, data.getListOrEmpty(SteamerStation.LAID));
         } else if (SteamerStation.EFFECT_REFUSED.equals(effect)) {
-            refused(view, ItemStack.parseOptional(view.level().registryAccess(), data.getCompound(SteamerStation.STACK)));
+            refused(view, ItemNbt.parse(view.level().registryAccess(), data.getCompound(SteamerStation.STACK)));
         } else if (SteamerStation.EFFECT_RACK.equals(effect)) {
-            int rack = data.getInt(SteamerStation.RACK);
+            int rack = data.getIntOr(SteamerStation.RACK, 0);
             if (rack >= 0 && rack < RACKS) {
                 droppedAt[rack] = clock;
             }
@@ -887,10 +888,10 @@ public final class SteamerBehavior implements StationBehavior {
         int count = went.size();
         float world = worldTurn(view);
         for (int i = 0; i < count; i++) {
-            CompoundTag one = went.getCompound(i);
-            int rack = one.getInt(SteamerStation.RACK);
-            int place = one.getInt(SteamerStation.PLACE);
-            ItemStack stack = ItemStack.parseOptional(view.level().registryAccess(), one.getCompound(SteamerStation.STACK));
+            CompoundTag one = went.getCompoundOrEmpty(i);
+            int rack = one.getIntOr(SteamerStation.RACK, 0);
+            int place = one.getIntOr(SteamerStation.PLACE, 0);
+            ItemStack stack = ItemNbt.parse(view.level().registryAccess(), one.getCompound(SteamerStation.STACK));
             if (rack < 0 || rack >= RACKS || place < 0 || place >= PLACES) {
                 continue;
             }
@@ -925,10 +926,10 @@ public final class SteamerBehavior implements StationBehavior {
     private void taken(StationView view, ListTag went) {
         float world = worldTurn(view);
         for (int i = 0; i < went.size(); i++) {
-            CompoundTag one = went.getCompound(i);
-            int rack = one.getInt(SteamerStation.RACK);
-            int place = one.getInt(SteamerStation.PLACE);
-            ItemStack stack = ItemStack.parseOptional(view.level().registryAccess(), one.getCompound(SteamerStation.STACK));
+            CompoundTag one = went.getCompoundOrEmpty(i);
+            int rack = one.getIntOr(SteamerStation.RACK, 0);
+            int place = one.getIntOr(SteamerStation.PLACE, 0);
+            ItemStack stack = ItemNbt.parse(view.level().registryAccess(), one.getCompound(SteamerStation.STACK));
             if (rack < 0 || rack >= RACKS || place < 0 || place >= PLACES) {
                 continue;
             }

@@ -147,10 +147,10 @@ public final class Frying {
     }
 
     public void load(CompoundTag tag) {
-        byHand = tag.getBoolean("by_hand");
-        ready = tag.getBoolean("ready");
-        down = tag.getFloat("down");
-        up = tag.getFloat("up");
-        batch = tag.getInt("batch");
+        byHand = tag.getBooleanOr("by_hand", false);
+        ready = tag.getBooleanOr("ready", false);
+        down = tag.getFloatOr("down", 0.0F);
+        up = tag.getFloatOr("up", 0.0F);
+        batch = tag.getIntOr("batch", 0);
     }
 }

@@ -5,11 +5,12 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.joml.Quaternionf;
@@ -23,6 +24,7 @@ import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.station.BowlLogic;
 import com.pockyl.handson_delight.station.BowlStation;
 import com.pockyl.handson_delight.station.KitchenBowl;
@@ -45,8 +47,8 @@ public final class BowlBehavior implements StationBehavior {
     private static final int SLOTS = KitchenBowl.PLACES;
     private static final int HANDS = 4;
     private static final String[] BADGE_PARTS = {"badge", "dial_track", "dial", "preview"};
-    private static final ResourceLocation BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/white_concrete");
-    private static final ResourceLocation EGG_YOLK = ResourceLocation.fromNamespaceAndPath(KitchenBowl.MOD_ID, "egg_yolk");
+    private static final Identifier BADGE_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/white_concrete");
+    private static final Identifier EGG_YOLK = Identifier.fromNamespaceAndPath(KitchenBowl.MOD_ID, "egg_yolk");
     /** The inside, pixels: the floor, how deep the scene's liquid box is, the rim. */
     private static final float FLOOR = 1.0F;
     private static final float DEPTH = 4.5F;
@@ -215,9 +217,9 @@ public final class BowlBehavior implements StationBehavior {
             batter.setFloatingWake(0.0F);
         });
         StationState state = view.state();
-        pouredSeen = state.data().getInt(BowlStation.POURED_COUNT);
-        madeSeen = state.data().getInt(BowlStation.MADE_COUNT);
-        stirredSeen = state.data().getInt(BowlStation.STIRRED);
+        pouredSeen = state.data().getIntOr(BowlStation.POURED_COUNT, 0);
+        madeSeen = state.data().getIntOr(BowlStation.MADE_COUNT, 0);
+        stirredSeen = state.data().getIntOr(BowlStation.STIRRED, 0);
         refresh(view);
     }
 
@@ -232,7 +234,7 @@ public final class BowlBehavior implements StationBehavior {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && view.openedByUse() && player.inventoryMenu.getCarried().isEmpty()) {
             ItemStack held = player.getMainHandItem();
-            int selected = player.getInventory().selected;
+            int selected = player.getInventory().getSelectedSlot();
             KitchenBowl bowl = bowl(view);
             if (bowl != null && !held.isEmpty()) {
                 BowlLogic.Kind kind = BowlLogic.kind(recipes, bowl, held);
@@ -448,27 +450,27 @@ public final class BowlBehavior implements StationBehavior {
             }
         }
         CompoundTag data = state.data();
-        String id = data.getString(BowlStation.MAKING);
-        ResourceLocation key = id.isEmpty() ? null : ResourceLocation.tryParse(id);
+        String id = data.getStringOr(BowlStation.MAKING, "");
+        Identifier key = id.isEmpty() ? null : Identifier.tryParse(id);
         making = key == null ? Optional.empty() : recipes.stream().filter(recipe -> recipe.id().equals(key)).findFirst();
         making.ifPresent(recipe -> lastMaking = recipe);
         readLiquids(view);
-        int poured = data.getInt(BowlStation.POURED_COUNT);
+        int poured = data.getIntOr(BowlStation.POURED_COUNT, 0);
         if (pouredSeen >= 0 && poured > pouredSeen) {
-            for (Tag entry : data.getList(BowlStation.POURED, Tag.TAG_STRING)) {
-                Item item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(entry.getAsString()));
+            for (Tag entry : data.getListOrEmpty(BowlStation.POURED)) {
+                Item item = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(entry.asString().orElse("")));
                 if (item != Items.AIR) {
                     toPour.add(new ItemStack(item));
                 }
             }
         }
         pouredSeen = poured;
-        int made = data.getInt(BowlStation.MADE_COUNT);
+        int made = data.getIntOr(BowlStation.MADE_COUNT, 0);
         if (madeSeen >= 0 && made > madeSeen) {
             done(view, data);
         }
         madeSeen = made;
-        int stirred = data.getInt(BowlStation.STIRRED);
+        int stirred = data.getIntOr(BowlStation.STIRRED, 0);
         if (stirred > stirredSeen) {
             stirred(view);
         }
@@ -485,7 +487,7 @@ public final class BowlBehavior implements StationBehavior {
         float weight = 0;
         for (KitchenBowl.Liquid liquid : liquids) {
             ItemStack bottle = KitchenBowl.shown(liquid.fluid(), KitchenBowl.BOTTLE);
-            int color = liquid.fluid().equals(ResourceLocation.withDefaultNamespace("water")) ? WATER
+            int color = liquid.fluid().equals(Identifier.withDefaultNamespace("water")) ? WATER
                     : bottle.isEmpty() ? UNKNOWN_LIQUID : KitchenLooks.liquidColor(bottle);
             float w = liquid.amount();
             r += (color >> 16 & 0xFF) * w;
@@ -552,7 +554,7 @@ public final class BowlBehavior implements StationBehavior {
         view.node("batter").ifPresent(batter -> batter.ripple(x, z, 0.3F));
         if (level > 0.02F) {
             view.spawnParticles(DiegesisParticles.SPLASH, new Vector3f(x, surface(), z), new Vector3f(0.0F, 3.0F, 0.0F), 0.4F, 2, shownColor);
-            view.playSound(PotSounds.SCOOP, "batter", 0.18F, 1.4F + view.level().random.nextFloat() * 0.2F);
+            view.playSound(PotSounds.SCOOP, "batter", 0.18F, 1.4F + view.level().getRandom().nextFloat() * 0.2F);
         } else {
             view.playSound(SoundEvents.SAND_STEP, "batter", 0.12F, 1.6F);
         }
@@ -561,7 +563,7 @@ public final class BowlBehavior implements StationBehavior {
     /** Something was made: at the station the badge swells with a chime; a container dips in for it, or it is lifted out. */
     private void done(StationView view, CompoundTag data) {
         doneAt = time;
-        Item made = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(data.getString(BowlStation.MADE)));
+        Item made = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(data.getStringOr(BowlStation.MADE, "")));
         view.spawnParticles(DiegesisParticles.GLINT, new Vector3f(8.0F, surface() + 0.5F, 8.0F), new Vector3f(0.0F, 2.0F, 0.0F), 3.0F, 6,
                 0xFFFFE6A0);
         if (view.isInUse()) {
@@ -672,7 +674,7 @@ public final class BowlBehavior implements StationBehavior {
         int from = utensilSlot(view);
         ItemStack utensil = utensilAt(from);
         if (utensil.isEmpty() && (othersStir || stroking) && making.isPresent()) {
-            ItemStack[] any = making.get().utensil().getItems();
+            ItemStack[] any = RecipeParts.items(making.get().utensil());
             utensil = any.length > 0 ? any[0] : ItemStack.EMPTY;
         }
         boolean shownNow = view.isInUse() && making.isPresent() && !utensil.isEmpty();
@@ -684,7 +686,8 @@ public final class BowlBehavior implements StationBehavior {
         }
         if (utensil.getItem() != drawnUtensil) {
             drawnUtensil = utensil.getItem();
-            flatUtensil = !Minecraft.getInstance().getItemRenderer().getModel(utensil, view.level(), null, 0).isGui3d();
+            // Lit as a block in the GUI: a 3D model, not a flat icon.
+            flatUtensil = !com.pockyl.diegesis.impl.client.render.SceneDraw.itemState(utensil, ItemDisplayContext.GUI, view.level(), 0).usesBlockLight();
             item.setVisual(Visual.ofItem(drawnUtensil).withAnchor(ICON_MIDDLE));
             item.scaleTo(SPOON_SCALE, 0.0F);
             item.rotateTo(0.0F, 0.0F, flatUtensil ? FLAT_TURN : MODEL_TURN, 0.0F);
@@ -769,8 +772,8 @@ public final class BowlBehavior implements StationBehavior {
             return -1;
         }
         Inventory inventory = player.getInventory();
-        if (wanted.test(inventory.getSelected())) {
-            return inventory.selected;
+        if (wanted.test(inventory.getSelectedItem())) {
+            return inventory.getSelectedSlot();
         }
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
             if (wanted.test(inventory.getItem(slot))) {
@@ -947,7 +950,7 @@ public final class BowlBehavior implements StationBehavior {
 
     /** The yolk of an egg cracked for its white leaves the bowl for the cook. */
     private void yolkFrom(StationView view, Vector3f onto) {
-        Item yolk = BuiltInRegistries.ITEM.get(EGG_YOLK);
+        Item yolk = BuiltInRegistries.ITEM.getValue(EGG_YOLK);
         if (yolk == Items.AIR || !view.isFocused()) {
             return;
         }
@@ -994,7 +997,7 @@ public final class BowlBehavior implements StationBehavior {
         if (lifting < LIFT_TIME) {
             float k = KitchenMotions.out(lifting / LIFT_TIME);
             node.moveTo(DIP_AT.x, Mth.lerp(k, surface() - 0.5F, top), DIP_AT.z, 0.0F);
-            if (view.level().random.nextFloat() < dt * 14.0F) {
+            if (view.level().getRandom().nextFloat() < dt * 14.0F) {
                 view.spawnParticles(DiegesisParticles.DROPLET, new Vector3f(DIP_AT.x, Mth.lerp(k, surface(), top) - 1.0F, DIP_AT.z),
                         new Vector3f(0.0F, -2.0F, 0.0F), 0.6F, 1, 0xFF000000 | shownColor);
             }
@@ -1025,7 +1028,7 @@ public final class BowlBehavior implements StationBehavior {
         view.node("dial_track").ifPresent(node -> node.setVisible(shownNow));
         view.node("dial").ifPresent(node -> node.setVisible(shownNow));
         CompoundTag data = view.state().data();
-        int sets = data.getInt(BowlStation.SETS);
+        int sets = data.getIntOr(BowlStation.SETS, 0);
         int bar = Math.round(progress * BAR_LENGTH);
         String text = sets > 1 ? "x" + Math.min(sets, 99) : "";
         String dial = bar + "/" + text;
@@ -1042,12 +1045,12 @@ public final class BowlBehavior implements StationBehavior {
             view.node("dial").ifPresent(node -> node.setShape(bar > 0 || !text.isEmpty() ? lit.build() : null, BADGE_TEXTURE, true));
         }
         Item asked = null;
-        String wants = data.getString(BowlStation.WANTS);
+        String wants = data.getStringOr(BowlStation.WANTS, "");
         if (!wants.isEmpty()) {
-            Item container = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(wants));
+            Item container = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(wants));
             asked = container == Items.AIR ? null : container;
         } else if (making.isPresent() && utensilSlot(view) < -1) {
-            ItemStack[] utensils = making.get().utensil().getItems();
+            ItemStack[] utensils = RecipeParts.items(making.get().utensil());
             asked = utensils.length > 0 ? utensils[0].getItem() : null;
         }
         Item ask = asked;

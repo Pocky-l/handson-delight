@@ -2,7 +2,7 @@ package com.pockyl.handson_delight.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -25,7 +25,7 @@ import com.pockyl.handson_delight.station.StoveCooking;
 abstract class StoveBlockMixin {
     @Inject(method = "useItemOn", at = @At("HEAD"))
     private void handson$handOverWithoutTheMod(ItemStack held, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
-            BlockHitResult hit, CallbackInfoReturnable<ItemInteractionResult> callback) {
+            BlockHitResult hit, CallbackInfoReturnable<InteractionResult> callback) {
         StoveCooking.usedInTheWorld(player, level, pos);
     }
 }

@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,7 +24,7 @@ import java.util.List;
  * taken up).
  */
 public final class EdVatStation {
-    public static final ResourceLocation ID = HandsOnDelight.id("ed_vat");
+    public static final Identifier ID = HandsOnDelight.id("ed_vat");
 
     public static final String INGREDIENTS = "ingredients";
     /** Extra Delight's container slot: the station never puts containers there, a cook draws what is made into them. */

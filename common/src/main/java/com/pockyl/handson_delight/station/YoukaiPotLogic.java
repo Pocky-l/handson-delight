@@ -3,7 +3,8 @@ package com.pockyl.handson_delight.station;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -17,6 +18,9 @@ import net.minecraft.world.phys.Vec3;
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
+
+import com.pockyl.handson_delight.ItemNbt;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,14 +94,14 @@ public final class YoukaiPotLogic implements StationLogic {
             @Override
             public void done(ItemStack dish) {
                 CompoundTag data = new CompoundTag();
-                data.put(YoukaiPotStation.STACK, dish.saveOptional(station.level().registryAccess()));
+                data.put(YoukaiPotStation.STACK, ItemNbt.save(dish, station.level().registryAccess()));
                 station.effect(YoukaiPotStation.EFFECT_DONE, "pot", data);
             }
 
             @Override
             public void served(ItemStack dish) {
                 CompoundTag data = new CompoundTag();
-                data.put(YoukaiPotStation.STACK, dish.saveOptional(station.level().registryAccess()));
+                data.put(YoukaiPotStation.STACK, ItemNbt.save(dish, station.level().registryAccess()));
                 data.putBoolean(YoukaiPotStation.SERVED, true);
                 station.effect(YoukaiPotStation.EFFECT_DONE, "pot", data);
             }
@@ -109,7 +113,7 @@ public final class YoukaiPotLogic implements StationLogic {
         lookUp(station);
         if (pot == null) {
             if (YoukaiPotStation.ACTION_PUT.equals(action)) {
-                water(station, player, data.contains(YoukaiPotStation.FROM) ? data.getInt(YoukaiPotStation.FROM) : -1);
+                water(station, player, data.contains(YoukaiPotStation.FROM) ? data.getIntOr(YoukaiPotStation.FROM, 0) : -1);
             } else if (YoukaiPotStation.ACTION_FILL.equals(action)) {
                 // A dish picked in the book of an empty pot: water goes in first, and the bucket says so.
                 refused(station, new ItemStack(Items.WATER_BUCKET));
@@ -119,11 +123,11 @@ public final class YoukaiPotLogic implements StationLogic {
         if (pot.handson$cook() == null || !station.users().contains(pot.handson$cook().player())) {
             pot.handson$setCook(cook(station, player));
         }
-        int from = data.contains(YoukaiPotStation.FROM) ? data.getInt(YoukaiPotStation.FROM) : -1;
+        int from = data.contains(YoukaiPotStation.FROM) ? data.getIntOr(YoukaiPotStation.FROM, 0) : -1;
         switch (action) {
-            case YoukaiPotStation.ACTION_PUT -> put(station, player, from, data.getBoolean(YoukaiPotStation.ALL));
+            case YoukaiPotStation.ACTION_PUT -> put(station, player, from, data.getBooleanOr(YoukaiPotStation.ALL, false));
             case YoukaiPotStation.ACTION_BACK -> back(station, player);
-            case YoukaiPotStation.ACTION_FILL -> fill(station, player, data.getString(YoukaiPotStation.DISH));
+            case YoukaiPotStation.ACTION_FILL -> fill(station, player, data.getStringOr(YoukaiPotStation.DISH, ""));
             case YoukaiPotStation.ACTION_STIR -> stir(station, player, data);
             default -> {
             }
@@ -139,8 +143,8 @@ public final class YoukaiPotLogic implements StationLogic {
         stirredAt = now;
         stirrer = player.getUUID();
         station.state().setControl(YoukaiPotStation.STIRRING, 1.0F);
-        station.state().setControl(YoukaiPotStation.SPOON_X, spoon(data.getFloat(YoukaiPotStation.STIR_X)));
-        station.state().setControl(YoukaiPotStation.SPOON_Z, spoon(data.getFloat(YoukaiPotStation.STIR_Z)));
+        station.state().setControl(YoukaiPotStation.SPOON_X, spoon(data.getFloatOr(YoukaiPotStation.STIR_X, 0.0F)));
+        station.state().setControl(YoukaiPotStation.SPOON_Z, spoon(data.getFloatOr(YoukaiPotStation.STIR_Z, 0.0F)));
     }
 
     private boolean isStirring(long now) {
@@ -192,7 +196,7 @@ public final class YoukaiPotLogic implements StationLogic {
         }
         pot.handson$setCook(cook(station, player));
         ListTag went = new ListTag();
-        went.add(poured.saveOptional(station.level().registryAccess()));
+        went.add(ItemNbt.save(poured, station.level().registryAccess()));
         in(station, went, false);
     }
 
@@ -208,7 +212,7 @@ public final class YoukaiPotLogic implements StationLogic {
             if (!pot.handson$put(player, held)) {
                 break;
             }
-            went.add(one.saveOptional(station.level().registryAccess()));
+            went.add(ItemNbt.save(one, station.level().registryAccess()));
         }
         putBack(player, from, held);
         if (went.isEmpty()) {
@@ -231,10 +235,10 @@ public final class YoukaiPotLogic implements StationLogic {
         // What does not fit drops, and only that: the inventory keeps the part it took.
         ItemStack given = back.copy();
         if (!player.getInventory().add(given)) {
-            player.drop(given, false);
+            player.drop(given, false, Prediction.SERVER_ONLY);
         }
         CompoundTag data = new CompoundTag();
-        data.put(YoukaiPotStation.STACK, back.saveOptional(station.level().registryAccess()));
+        data.put(YoukaiPotStation.STACK, ItemNbt.save(back, station.level().registryAccess()));
         station.effect(YoukaiPotStation.EFFECT_BACK, "pot", data);
     }
 
@@ -244,7 +248,7 @@ public final class YoukaiPotLogic implements StationLogic {
      * everything it puts in what there is, and the pot waits for the rest.
      */
     private void fill(StationContext station, Player player, String id) {
-        ResourceLocation key = ResourceLocation.tryParse(id);
+        Identifier key = Identifier.tryParse(id);
         KitchenYoukaiPot.Dish dish = YoukaiPotStation.dishes(pot).stream().filter(it -> it.id().equals(key)).findFirst().orElse(null);
         if (dish == null) {
             return;
@@ -266,12 +270,12 @@ public final class YoukaiPotLogic implements StationLogic {
             ItemStack one = stack.copyWithCount(1);
             if (pot.handson$put(player, stack)) {
                 inventory.setChanged();
-                went.add(one.saveOptional(station.level().registryAccess()));
+                went.add(ItemNbt.save(one, station.level().registryAccess()));
             }
         }
         if (went.isEmpty()) {
             if (!missing.isEmpty()) {
-                refused(station, missing.get(0).getItems().length > 0 ? missing.get(0).getItems()[0] : dish.result());
+                refused(station, RecipeParts.items(missing.get(0)).length > 0 ? RecipeParts.items(missing.get(0))[0] : dish.result());
             }
             return;
         }
@@ -279,8 +283,8 @@ public final class YoukaiPotLogic implements StationLogic {
     }
 
     private int slotFor(Inventory inventory, Ingredient ingredient) {
-        for (int slot = 0; slot < inventory.items.size(); slot++) {
-            ItemStack stack = inventory.items.get(slot);
+        for (int slot = 0; slot < inventory.getNonEquipmentItems().size(); slot++) {
+            ItemStack stack = inventory.getNonEquipmentItems().get(slot);
             if (!stack.isEmpty() && ingredient.test(stack) && pot.handson$takes(stack)) {
                 return slot;
             }
@@ -313,7 +317,7 @@ public final class YoukaiPotLogic implements StationLogic {
 
     private static void refused(StationContext station, ItemStack stack) {
         CompoundTag data = new CompoundTag();
-        data.put(YoukaiPotStation.STACK, stack.copyWithCount(1).saveOptional(station.level().registryAccess()));
+        data.put(YoukaiPotStation.STACK, ItemNbt.save(stack.copyWithCount(1), station.level().registryAccess()));
         station.effect(YoukaiPotStation.EFFECT_REFUSED, "pot", data);
     }
 

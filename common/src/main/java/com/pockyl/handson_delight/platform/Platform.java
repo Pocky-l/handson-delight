@@ -99,7 +99,10 @@ public interface Platform {
      */
     Ingredient unwrap(Ingredient ingredient);
 
-    /** Sends {@code AssemblyRecipes.book()} to the player's client, for {@code BoardDishes}. */
+    /**
+     * Sends {@code AssemblyRecipes.book()} to the player's client, for {@code BoardDishes}, and the recipes its stations read
+     * ({@code KitchenRecipes}).
+     */
     void sendBoardDishes(ServerPlayer player);
 
     /** What only Extra Delight's own code knows of its vat, or null where it is not: it has a NeoForge build only. */

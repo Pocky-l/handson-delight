@@ -1,19 +1,19 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import com.pockyl.handson_delight.HandsOnDelight;
-import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -31,13 +31,13 @@ import java.util.WeakHashMap;
 public final class KitchenBasin {
     private static final String ENTITY = "com.mao.barbequesdelight.content.block.BasinBlockEntity";
     public static final int PLACES = 2;
-    public static final ResourceLocation SKEWERING = ResourceLocation.fromNamespaceAndPath(KitchenGrill.MOD_ID, "skewering");
+    public static final Identifier SKEWERING = Identifier.fromNamespaceAndPath(KitchenGrill.MOD_ID, "skewering");
 
     /**
      * The recipes per recipe manager (the client's and the server's of a single-player game are two), read again when its map of
      * recipes is a new one: the drawer and the stick on the rim ask for every inventory slot, and each recipe is read by reflection.
      */
-    private static final Map<RecipeManager, Read> READ = new WeakHashMap<>();
+    private static final Map<Object, Read> READ = new WeakHashMap<>();
 
     private static Class<?> entityClass;
     private static Field itemsField;
@@ -139,7 +139,7 @@ public final class KitchenBasin {
     }
 
     /** A skewering recipe: the tool (a stick), the food and how many, the side and how many (none for some), what comes out. */
-    public record Skewering(ResourceLocation id, Ingredient tool, Ingredient food, int foodCount, Ingredient side, int sideCount,
+    public record Skewering(Identifier id, Ingredient tool, Ingredient food, int foodCount, Ingredient side, int sideCount,
             ItemStack result) {
         /** Whether it takes no side. */
         public boolean plain() {
@@ -157,13 +157,13 @@ public final class KitchenBasin {
 
     /** Every skewering recipe of the basin, in the recipe manager's order; empty without Barbeque's Delight. */
     public static List<Skewering> recipes(Level level) {
-        RecipeManager manager = level.getRecipeManager();
-        Map<?, ?> from = ((RecipeManagerAccessor) manager).handson$byName();
+        Object source = KitchenRecipes.source(level);
+        Map<?, ?> from = KitchenRecipes.byName(level);
         synchronized (READ) {
-            Read read = READ.get(manager);
+            Read read = READ.get(source);
             if (read == null || read.from() != from) {
                 read = new Read(from, List.copyOf(read(level)));
-                READ.put(manager, read);
+                READ.put(source, read);
             }
             return read.recipes();
         }
@@ -176,19 +176,19 @@ public final class KitchenBasin {
             return recipes;
         }
         @SuppressWarnings({"unchecked", "rawtypes"})
-        List<RecipeHolder<?>> holders = (List) level.getRecipeManager().getAllRecipesFor((RecipeType) type.get());
+        List<RecipeHolder<?>> holders = (List) KitchenRecipes.all(level, (RecipeType) type.get());
         for (RecipeHolder<?> holder : holders) {
             Recipe<?> recipe = holder.value();
             Ingredient tool = field(recipe, "tool") instanceof Ingredient it ? it : null;
             Ingredient food = field(recipe, "ingredient") instanceof Ingredient it ? it : null;
-            Ingredient side = field(recipe, "side") instanceof Ingredient it ? it : Ingredient.EMPTY;
+            Ingredient side = field(recipe, "side") instanceof Ingredient it ? it : RecipeParts.NOTHING;
             int foodCount = field(recipe, "ingredientCount") instanceof Integer count ? count : 1;
             int sideCount = field(recipe, "sideCount") instanceof Integer count ? count : 0;
-            ItemStack result = recipe.getResultItem(level.registryAccess());
+            ItemStack result = RecipeParts.result(recipe);
             if (tool == null || food == null || food.isEmpty() || result.isEmpty()) {
                 continue;
             }
-            recipes.add(new Skewering(holder.id(), tool, food, Math.max(1, foodCount), side, sideCount, result.copy()));
+            recipes.add(new Skewering(holder.id().identifier(), tool, food, Math.max(1, foodCount), side, sideCount, result.copy()));
         }
         return recipes;
     }

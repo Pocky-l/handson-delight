@@ -1,5 +1,6 @@
 package com.pockyl.handson_delight.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -55,7 +56,7 @@ final class KettleBook implements RecipeBook.Source {
     public void picked(StationView view, RecipeBook.Page page) {
         CompoundTag fill = new CompoundTag();
         fill.putString(KettleStation.DISH, page.key().toString());
-        fill.putBoolean(KettleStation.ALL, Screen.hasShiftDown());
+        fill.putBoolean(KettleStation.ALL, Minecraft.getInstance().hasShiftDown());
         view.sendAction(KettleStation.ACTION_FILL, fill);
     }
 

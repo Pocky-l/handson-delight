@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.6.1+1.21.1] - Unreleased
+## [1.6.1+1.21.1] - 2026-11-20
 ### Changed
 - The recipe book has a new cover and paper, drawn by Catalyst.
 - Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.14.

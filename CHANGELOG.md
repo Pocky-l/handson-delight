@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.0+26.3] - 2026-11-20
+### New
+- Minecraft 26.3, on Fabric with [Farmer's Delight Refabricated](https://modrinth.com/mod/farmers-delight-refabricated): the pot, board, skillet and stove with their recipe books, as in 1.6.0.
+- Ported by jayvie2007, who also made the recipe book steady under shader packs ([#48](https://github.com/Pocky-l/handson-delight/pull/48)).
+- Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.13+26.3.
+
+### Not on 26.3 yet
+- NeoForge: Farmer's Delight has no NeoForge build for 26.3.
+- Stations of Farmer's Delight addons and recipe viewers (JEI, EMI, REI): they come back as those mods reach 26.3.
+
 ## [1.6.0+1.21.1] - 2026-11-19
 ### New
 - [Extra Delight](https://modrinth.com/mod/extradelight)'s mixing bowl, vat, melting pot and oven are stations: stir with the spoon, age in stages under the lid, melt chocolate, bake in its pans.

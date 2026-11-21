@@ -1,23 +1,17 @@
 package com.pockyl.handson_delight.neoforge.mixin;
 
-import com.lance5057.extradelight.util.BottleFluidRegistry;
 import com.lance5057.extradelight.workstations.FancyTank;
 import com.lance5057.extradelight.workstations.vat.VatBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.neoforged.neoforge.fluids.FluidActionResult;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.FluidUtil;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,6 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.pockyl.handson_delight.HandsOnConfig;
+import com.pockyl.handson_delight.neoforge.EdTanks;
 import com.pockyl.handson_delight.station.KitchenEdVat;
 
 import java.util.List;
@@ -112,51 +107,12 @@ abstract class EdVatMixin implements KitchenEdVat {
 
     @Override
     public ItemStack handson$pour(ItemStack full) {
-        ItemStack one = full.copyWithCount(1);
-        if (one.getItem() instanceof BucketItem bucket) {
-            FluidStack bucketful = new FluidStack(bucket.content, 1000);
-            if (bucket.content == Fluids.EMPTY || fluid.fill(bucketful, IFluidHandler.FluidAction.SIMULATE) != 1000) {
-                return null;
-            }
-            fluid.fill(bucketful, IFluidHandler.FluidAction.EXECUTE);
-            return new ItemStack(Items.BUCKET);
-        }
-        FluidStack bottled = BottleFluidRegistry.getFluidFromBottle(one);
-        if (!bottled.isEmpty()) {
-            if (fluid.fill(bottled.copy(), IFluidHandler.FluidAction.SIMULATE) != bottled.getAmount()) {
-                return null;
-            }
-            fluid.fill(bottled.copy(), IFluidHandler.FluidAction.EXECUTE);
-            ItemStack left = one.getCraftingRemainingItem();
-            return one.is(Items.POTION) || left.isEmpty() ? new ItemStack(Items.GLASS_BOTTLE) : left.copy();
-        }
-        FluidActionResult poured = FluidUtil.tryEmptyContainer(one, fluid, Integer.MAX_VALUE, null, true);
-        return poured.isSuccess() ? poured.getResult() : null;
+        return EdTanks.pour(fluid, full);
     }
 
     @Override
     public ItemStack handson$draw(ItemStack empty) {
-        ItemStack one = empty.copyWithCount(1);
-        FluidStack inside = fluid.getFluid();
-        if (inside.isEmpty()) {
-            return null;
-        }
-        if (one.is(Items.BUCKET)) {
-            if (inside.getAmount() < 1000 || inside.getFluid().getBucket() == Items.AIR) {
-                return null;
-            }
-            fluid.drain(inside.copyWithAmount(1000), IFluidHandler.FluidAction.EXECUTE);
-            return new ItemStack(inside.getFluid().getBucket());
-        }
-        ItemStack bottle = BottleFluidRegistry.getBottleFromFluid(inside.copyWithAmount(Math.min(inside.getAmount(), 250)));
-        boolean takes = !bottle.isEmpty() && (ItemStack.isSameItem(bottle.getCraftingRemainingItem(), one)
-                || bottle.is(Items.POTION) && one.is(Items.GLASS_BOTTLE));
-        if (takes && inside.getAmount() >= 250) {
-            fluid.drain(inside.copyWithAmount(250), IFluidHandler.FluidAction.EXECUTE);
-            return bottle.copyWithCount(1);
-        }
-        FluidActionResult drawn = FluidUtil.tryFillContainer(one, fluid, Integer.MAX_VALUE, null, true);
-        return drawn.isSuccess() ? drawn.getResult() : null;
+        return EdTanks.draw(fluid, empty);
     }
 
     @Override

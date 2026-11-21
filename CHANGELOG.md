@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.6.1+26.3] - Unreleased
+## [1.6.1+26.3] - 2026-11-22
 ### Fixed
 - Food on the skillet no longer vanishes with an error in the log when another mod's item model is in the game.
 

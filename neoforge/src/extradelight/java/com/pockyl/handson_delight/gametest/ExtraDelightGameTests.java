@@ -6,8 +6,6 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * Extra Delight's stations, run with {@code -Pextradelight} only: Extra Delight overrides Farmer's Delight's stews, cocoa, pies and
- * dough, so the other tests that make those fail by design with it; these have a namespace of their own.
  * Extra Delight's stations, run with {@code -Pextradelight} only: with Extra Delight the other tests that make Farmer's Delight's
  * stews, hot cocoa, apple pie or dough fail by design, so these have a namespace of their own.
  */
@@ -57,6 +55,7 @@ public final class ExtraDelightGameTests {
         BowlTests.theBookFillsFoodAndLiquids(helper);
     }
 
+    @GameTest(template = "empty")
     public static void everyEdAgingFromItsFoodDroppedIn(GameTestHelper helper) {
         EdVatTests.everyEdAgingFromItsFoodDroppedIn(helper);
     }
@@ -116,6 +115,7 @@ public final class ExtraDelightGameTests {
         EdOvenTests.cookiesBakeWithTheSheetPushedIn(helper);
     }
 
+    @GameTest(template = "empty")
     public static void theMeltingPotReadsItsRecipes(GameTestHelper helper) {
         MeltingPotTests.theMeltingPotReadsItsRecipes(helper);
     }

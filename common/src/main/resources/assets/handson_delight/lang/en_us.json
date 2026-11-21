@@ -2,6 +2,8 @@
   "handson_delight.pot.ready": "%s x %s",
   "handson_delight.pot.cooking": "%s in %s s",
   "handson_delight.melting_pot.left": "%s: %s left",
+  "handson_delight.chiller.lacks": "%s: needs %s",
+  "handson_delight.chiller.pan_full": "%s: the drip pan is full",
   "handson_delight.book.seconds": "%s s",
   "handson_delight.keg.fermenting": "%s in %s min",
   "handson_delight.keg.holds": "%s, %s mB",

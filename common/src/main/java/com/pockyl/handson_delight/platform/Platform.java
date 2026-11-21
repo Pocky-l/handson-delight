@@ -107,6 +107,11 @@ public interface Platform {
         return null;
     }
 
+    /** What only Extra Delight's own code knows of its chiller, or null where it is not: it has a NeoForge build only. */
+    default com.pockyl.handson_delight.station.KitchenChiller.Access edChillers() {
+        return null;
+    }
+
     static <T> T load(Class<T> type) {
         return ServiceLoader.load(type, type.getClassLoader()).findFirst()
                 .orElseThrow(() -> new IllegalStateException("No " + type.getName() + " for this mod loader"));

@@ -25,6 +25,7 @@
     "EdVatRecipeMixin",
     "EdVatBlockMixin",
     "MeltingPotMixin",
+    "ChillerMixin",
     "EdOvenMixin",
     "ChoppingBlockEntityMixin",
     "ChoppingBlockAccess",

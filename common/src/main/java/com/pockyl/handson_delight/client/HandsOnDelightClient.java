@@ -20,6 +20,8 @@ import com.pockyl.handson_delight.station.GrillStation;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.OvenStation;
 import com.pockyl.handson_delight.station.KettleStation;
+import com.pockyl.handson_delight.station.ChillerLogic;
+import com.pockyl.handson_delight.station.ChillerStation;
 import com.pockyl.handson_delight.station.MeltingPotLogic;
 import com.pockyl.handson_delight.station.MeltingPotStation;
 import com.pockyl.handson_delight.station.SkilletStation;
@@ -75,6 +77,10 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(MeltingPotStation.ID, MeltingPotBehavior::new);
         // What has melted in the melting pot (chocolate syrup, marshmallow fluff), coloured by the code; thick, so that it moves slowly.
         DiegesisClient.registerLiquid(MeltingPotLogic.MELTED_LIQUID, LiquidLook.of(0xF0FFFFFF).thick(0.8F));
+        DiegesisClient.registerBehavior(ChillerStation.ID, ChillerBehavior::new);
+        // What sets in the chiller (syrup, milk, cream, juice), coloured by the code and thick; and the melt water in its drip pan.
+        DiegesisClient.registerLiquid(ChillerLogic.SYRUP_LIQUID, LiquidLook.of(0xF4FFFFFF).thick(0.8F));
+        DiegesisClient.registerLiquid(ChillerLogic.MELT_WATER_LIQUID, LiquidLook.of(0xB04A7FE0));
         DiegesisClient.registerBehavior(CuisineBoardStation.ID, CuisineBehavior::new);
         DiegesisClient.registerLiquid(YoukaiPotBehavior.SOUP_LIQUID, LiquidLook.of(0x96FFFFFF));
         DiegesisClient.registerBehavior(YoukaiPotStation.SMALL_ID, view -> new YoukaiPotBehavior(view, YoukaiPotBehavior.Size.SMALL));

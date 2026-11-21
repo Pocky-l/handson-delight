@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "extradelight:block/ice_box_front",
+    "front": "extradelight:block/ice_box_front",
+    "lining": "minecraft:block/smooth_stone"
+  },
+  "elements": [
+    {
+      "name": "door_ice",
+      "from": [
+        9,
+        9,
+        0
+      ],
+      "to": [
+        15,
+        15,
+        1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            1,
+            7,
+            7
+          ],
+          "texture": "#front"
+        },
+        "east": {
+          "uv": [
+            1,
+            1,
+            2,
+            7
+          ],
+          "texture": "#front"
+        },
+        "south": {
+          "uv": [
+            9,
+            1,
+            15,
+            7
+          ],
+          "texture": "#lining"
+        },
+        "west": {
+          "uv": [
+            6,
+            1,
+            7,
+            7
+          ],
+          "texture": "#front"
+        },
+        "up": {
+          "uv": [
+            1,
+            1,
+            7,
+            2
+          ],
+          "texture": "#front"
+        },
+        "down": {
+          "uv": [
+            1,
+            6,
+            7,
+            7
+          ],
+          "texture": "#front"
+        }
+      }
+    }
+  ]
+}

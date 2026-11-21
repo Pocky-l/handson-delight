@@ -1,0 +1,786 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Pocky-l/diegesis/main/docs/schema/scene.schema.json",
+  "$comment": "Extra Delight's chiller, an old ice box, turned as the block faces and seen from its front, a little from the left and above. The station hides the block and shows it here with its three doors open: behind the tall door on the cook's right the cold chamber (x 1..8), a zinc shelf with a lip at y 6 for the container and what sets in it, a wire rack at y 11 for what has set; behind the upper small door the ice chest (x 9..15, y 9..15), behind the lower one the drip pan on the floor. Liquids are poured into the container, ice melts in the chest and drips into the pan. While nobody uses it the block is the box with its doors shut; the scene lets out its mist and its drips.",
+  "work_plane": 7,
+  "idle_visible": true,
+  "camera": {
+    "position": [
+      19.5,
+      35.0,
+      -48.0
+    ],
+    "target": [
+      10.5,
+      8.0,
+      2.0
+    ],
+    "fov": 30
+  },
+  "interface": {
+    "hide_player": true,
+    "inventory_panel": false,
+    "outline_color": "#FFFFE8C0"
+  },
+  "inventory_drawer": {
+    "side": "bottom",
+    "style": "minimal",
+    "always_open": true,
+    "compact": true,
+    "background": "#00000000",
+    "slot_color": "#8C1E140C"
+  },
+  "carry_planes": [
+    {
+      "from": [
+        0,
+        -4
+      ],
+      "to": [
+        16,
+        16
+      ],
+      "height": 7
+    }
+  ],
+  "nodes": [
+    {
+      "$comment": "Extra Delight's ice box opened up: its own outside, zinc inside; the cold chamber on the cook's right with its shelf and rack, the ice shelf over the drip pan on the left. Shown while the station hides the block.",
+      "id": "body",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/chiller/body",
+        "lit_as_block": true
+      }
+    },
+    {
+      "$comment": "The tall door of the cold chamber, hinged at its outer edge: it swings open to the right.",
+      "id": "door_cold",
+      "pos": [
+        1,
+        0,
+        0
+      ],
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/chiller/door_cold",
+        "lit_as_block": true,
+        "anchor": [
+          1,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "$comment": "The door of the ice chest, hinged at the left: it folds back out of the way.",
+      "id": "door_ice",
+      "pos": [
+        15,
+        0,
+        0
+      ],
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/chiller/door_ice",
+        "lit_as_block": true,
+        "anchor": [
+          15,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "$comment": "The door of the drip pan under it.",
+      "id": "door_pan",
+      "pos": [
+        15,
+        0,
+        0
+      ],
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/chiller/door_pan",
+        "lit_as_block": true,
+        "anchor": [
+          15,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "$comment": "Rime on the zinc while the ice melts: grown and faded by the code.",
+      "id": "frost",
+      "pos": [
+        8,
+        0,
+        8
+      ],
+      "pickable": false,
+      "hidden": true,
+      "visual": {
+        "model": "handson_delight:diegesis/chiller/frost",
+        "translucent": true,
+        "lit_as_block": true,
+        "tint": "#00FFFFFF"
+      }
+    },
+    {
+      "$comment": "A liquid on the shelf, held in by its lip: what is poured with nothing to hold it, or round sticks and bottles.",
+      "id": "pool",
+      "pickable": false,
+      "tank": {
+        "tank": "liquid",
+        "inner": {
+          "from": [
+            1.05,
+            6.02,
+            2.05
+          ],
+          "to": [
+            7.95,
+            6.8,
+            14.95
+          ]
+        }
+      }
+    },
+    {
+      "$comment": "The container what sets stands in, on the shelf: taken with an empty hand where nothing lies on it; a container let go there stands in it. Drawn by the code as its block, or as its item standing at the far side.",
+      "id": "container_slot",
+      "pos": [
+        4.5,
+        6,
+        7
+      ],
+      "slot": {
+        "slot": "container[0]",
+        "display": "hidden",
+        "highlight": false,
+        "counts": "never"
+      },
+      "collider": {
+        "from": [
+          -3.5,
+          0,
+          -5
+        ],
+        "to": [
+          3.5,
+          0.6,
+          6
+        ]
+      },
+      "children": [
+        {
+          "id": "container_model",
+          "pickable": false,
+          "hidden": true,
+          "children": [
+            {
+              "$comment": "The liquid in a container that is a pan or a mold: inside its rim, in the block's own pixels.",
+              "id": "mold",
+              "pickable": false,
+              "hidden": true,
+              "tank": {
+                "tank": "liquid",
+                "inner": {
+                  "from": [
+                    -6,
+                    1.05,
+                    -6
+                  ],
+                  "to": [
+                    6,
+                    1.9,
+                    6
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "$comment": "More of a container that is no vessel: a second stick or bottle stands behind the first.",
+          "id": "container_more",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "id": "place_0",
+      "pos": [
+        6.3,
+        6.7,
+        4.6
+      ],
+      "slot": {
+        "slot": "ingredients[0]",
+        "display": "hidden",
+        "size": 2.2,
+        "highlight": false,
+        "counts": "hover"
+      },
+      "collider": {
+        "from": [
+          -0.95,
+          -0.1,
+          -1.4
+        ],
+        "to": [
+          0.95,
+          1.6,
+          1.4
+        ]
+      },
+      "children": [
+        {
+          "id": "thing_0",
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "id": "pile_0",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "id": "place_1",
+      "pos": [
+        4.4,
+        6.7,
+        4.6
+      ],
+      "slot": {
+        "slot": "ingredients[1]",
+        "display": "hidden",
+        "size": 2.2,
+        "highlight": false,
+        "counts": "hover"
+      },
+      "collider": {
+        "from": [
+          -0.95,
+          -0.1,
+          -1.4
+        ],
+        "to": [
+          0.95,
+          1.6,
+          1.4
+        ]
+      },
+      "children": [
+        {
+          "id": "thing_1",
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "id": "pile_1",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "id": "place_2",
+      "pos": [
+        6.3,
+        6.7,
+        7.6
+      ],
+      "slot": {
+        "slot": "ingredients[2]",
+        "display": "hidden",
+        "size": 2.2,
+        "highlight": false,
+        "counts": "hover"
+      },
+      "collider": {
+        "from": [
+          -0.95,
+          -0.1,
+          -1.4
+        ],
+        "to": [
+          0.95,
+          1.6,
+          1.4
+        ]
+      },
+      "children": [
+        {
+          "id": "thing_2",
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "id": "pile_2",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "id": "place_3",
+      "pos": [
+        4.4,
+        6.7,
+        7.6
+      ],
+      "slot": {
+        "slot": "ingredients[3]",
+        "display": "hidden",
+        "size": 2.2,
+        "highlight": false,
+        "counts": "hover"
+      },
+      "collider": {
+        "from": [
+          -0.95,
+          -0.1,
+          -1.4
+        ],
+        "to": [
+          0.95,
+          1.6,
+          1.4
+        ]
+      },
+      "children": [
+        {
+          "id": "thing_3",
+          "pickable": false,
+          "hidden": true
+        },
+        {
+          "id": "pile_3",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "$comment": "What has set lies on the wire rack, at its front, where the top of the box does not hide it.",
+      "id": "served",
+      "pos": [
+        4.5,
+        11,
+        4.0
+      ],
+      "slot": {
+        "slot": "served",
+        "display": "hidden",
+        "size": 4.4,
+        "highlight": false,
+        "counts": "always",
+        "count_facing": "camera"
+      },
+      "collider": {
+        "from": [
+          -2.2,
+          0,
+          -2.2
+        ],
+        "to": [
+          2.2,
+          1.2,
+          2.4
+        ]
+      },
+      "children": [
+        {
+          "id": "dish",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "$comment": "What hops out of its container onto the rack when it has set; moved by the code.",
+      "id": "hop",
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "$comment": "The back of the cold chamber and its floor: a click there with something for the chiller puts it where it belongs.",
+      "id": "chamber",
+      "takes_items": true,
+      "collider": {
+        "from": [
+          1,
+          2,
+          14.2
+        ],
+        "to": [
+          8,
+          15,
+          15
+        ]
+      }
+    },
+    {
+      "id": "chamber_floor",
+      "takes_items": true,
+      "collider": {
+        "from": [
+          1,
+          2,
+          1
+        ],
+        "to": [
+          8,
+          2.4,
+          15
+        ]
+      }
+    },
+    {
+      "$comment": "The ice waiting in the chest, at its back; the piece melting now lies before it and shrinks.",
+      "id": "ice",
+      "pos": [
+        12,
+        9,
+        10.5
+      ],
+      "slot": {
+        "slot": "ice",
+        "display": "hidden",
+        "size": 4.4,
+        "highlight": false,
+        "counts": "always",
+        "count_facing": "camera"
+      },
+      "collider": {
+        "from": [
+          -2.8,
+          0,
+          -3.4
+        ],
+        "to": [
+          2.8,
+          4.6,
+          3.4
+        ]
+      },
+      "children": [
+        {
+          "id": "ice_waiting",
+          "pickable": false,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "id": "ice_melting",
+      "pos": [
+        12,
+        9,
+        4.6
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "$comment": "The floor and back of the ice chest: ice let go there lies in the chest.",
+      "id": "chest",
+      "takes_items": true,
+      "collider": {
+        "from": [
+          9,
+          9,
+          1
+        ],
+        "to": [
+          15,
+          9.3,
+          15
+        ]
+      }
+    },
+    {
+      "id": "chest_back",
+      "takes_items": true,
+      "collider": {
+        "from": [
+          9,
+          9,
+          14.2
+        ],
+        "to": [
+          15,
+          15,
+          15
+        ]
+      }
+    },
+    {
+      "$comment": "The drip pan under the ice shelf: slid out and tipped by the code. The melt water stands in it.",
+      "id": "pan",
+      "pos": [
+        12,
+        2.05,
+        8
+      ],
+      "pickable": false,
+      "visual": {
+        "model": "handson_delight:diegesis/chiller/pan",
+        "lit_as_block": true
+      },
+      "children": [
+        {
+          "id": "melt",
+          "pickable": false,
+          "tank": {
+            "tank": "melt",
+            "inner": {
+              "from": [
+                -1.95,
+                0.05,
+                -4.95
+              ],
+              "to": [
+                1.95,
+                0.9,
+                4.95
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "$comment": "The pan compartment: a click with a bucket or a bottle fills it from the pan; an empty hand takes a full pan with a bucket from the inventory, else tips it out.",
+      "id": "pan_zone",
+      "takes_items": true,
+      "collider": {
+        "from": [
+          9,
+          2,
+          1
+        ],
+        "to": [
+          15,
+          4.2,
+          14
+        ]
+      }
+    },
+    {
+      "id": "pan_back",
+      "takes_items": true,
+      "collider": {
+        "from": [
+          9,
+          2,
+          14.2
+        ],
+        "to": [
+          15,
+          8,
+          15
+        ]
+      }
+    },
+    {
+      "$comment": "A bottle or bucket poured into the chiller, or dipped into it; moved by the code.",
+      "id": "hand_liquid",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "dipper",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "fly_0",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "fly_1",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "fly_2",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "fly_3",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "pickable": false,
+      "hidden": true
+    },
+    {
+      "id": "badge",
+      "pos": [
+        2.0,
+        18.07,
+        -4.43
+      ],
+      "rotation": [
+        -32.0,
+        -10.2,
+        0.0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial_track",
+      "pos": [
+        2.01,
+        18.07,
+        -4.46
+      ],
+      "rotation": [
+        -32.0,
+        -10.2,
+        0.0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "dial",
+      "pos": [
+        2.02,
+        18.09,
+        -4.49
+      ],
+      "rotation": [
+        -32.0,
+        -10.2,
+        0.0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "cold",
+      "pos": [
+        2.01,
+        18.07,
+        -4.46
+      ],
+      "rotation": [
+        -32.0,
+        -10.2,
+        0.0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "pans",
+      "pos": [
+        2.01,
+        18.07,
+        -4.46
+      ],
+      "rotation": [
+        -32.0,
+        -10.2,
+        0.0
+      ],
+      "pickable": false,
+      "scale": 1.25
+    },
+    {
+      "id": "preview",
+      "pos": [
+        2.02,
+        18.11,
+        -4.54
+      ],
+      "rotation": [
+        58.0,
+        -10.2,
+        0.0
+      ],
+      "scale": 0.156,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -12,
+          -12,
+          -12
+        ],
+        "to": [
+          12,
+          12,
+          12
+        ]
+      }
+    },
+    {
+      "id": "book_open",
+      "pos": [
+        23.6,
+        23.04,
+        -23.72
+      ],
+      "rotation": [
+        -32.0,
+        -10.2,
+        0.0
+      ],
+      "scale": 0.69,
+      "hidden": true,
+      "collider": {
+        "from": [
+          -5.3,
+          -0.4,
+          -3.9
+        ],
+        "to": [
+          5.3,
+          1.4,
+          3.9
+        ]
+      }
+    }
+  ]
+}

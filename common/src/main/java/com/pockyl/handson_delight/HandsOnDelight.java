@@ -15,6 +15,7 @@ import com.pockyl.handson_delight.station.GrillStation;
 import com.pockyl.handson_delight.station.KegStation;
 import com.pockyl.handson_delight.station.OvenStation;
 import com.pockyl.handson_delight.station.KettleStation;
+import com.pockyl.handson_delight.station.ChillerStation;
 import com.pockyl.handson_delight.station.MeltingPotStation;
 import com.pockyl.handson_delight.station.SkilletStation;
 import com.pockyl.handson_delight.station.StoveStation;
@@ -59,6 +60,9 @@ public final class HandsOnDelight {
         }
         if (HandsOnConfig.meltingPot()) {
             MeltingPotStation.register();
+        }
+        if (HandsOnConfig.chiller()) {
+            ChillerStation.register();
         }
         if (HandsOnConfig.cask()) {
             KegStation.registerCask();

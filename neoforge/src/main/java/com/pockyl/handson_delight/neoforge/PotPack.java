@@ -36,7 +36,8 @@ import java.util.function.BooleanSupplier;
  * painted front, and its vat, hollow under a lid that lifts. Farmer's Respite's kettle comes the same way: its opening under the lid is a
  * real one, and its tray is Farmer's Delight's heating tray, where its own model names tray textures Farmer's Delight no longer has. Farmer's Spell's alchemist pot comes the same way: its dark top is a real opening;
  * so does Youkai's Feasts' kettle: its painted hole is a real opening under its lid, which the station lifts. Extra Delight's
- * melting pot comes the same way: its upper pot is open on what melts in it. Hearth and Harvest's cask stands shut in the
+ * melting pot comes the same way: its upper pot is open on what melts in it; and its chiller, whose three painted doors are real
+ * ones that the station swings open. Hearth and Harvest's cask stands shut in the
  * world whether it is sealed or not, so that its block does not change under the cook: the station shows it open while it
  * is worked.
  * <p>
@@ -52,17 +53,18 @@ final class PotPack {
     /** The folder of the mod's files that holds the pack's {@code assets}. */
     private static final String FOLDER = "pot_pack";
     /** Each block state file and the station that wants it. */
-    private static final Map<ResourceLocation, BooleanSupplier> STATES = Map.of(
-            ResourceLocation.fromNamespaceAndPath("farmersdelight", "blockstates/cooking_pot.json"), HandsOnConfig::cookingPot,
-            ResourceLocation.fromNamespaceAndPath("minersdelight", "blockstates/copper_pot.json"), HandsOnConfig::cookingPot,
-            ResourceLocation.fromNamespaceAndPath("dungeonsdelight", "blockstates/monster_pot.json"), HandsOnConfig::cookingPot,
-            ResourceLocation.fromNamespaceAndPath("culturaldelights", "blockstates/oven.json"), HandsOnConfig::oven,
-            ResourceLocation.fromNamespaceAndPath("culturaldelights", "blockstates/vat.json"), HandsOnConfig::vat,
-            ResourceLocation.fromNamespaceAndPath("farmersrespite", "blockstates/kettle.json"), HandsOnConfig::kettle,
-            ResourceLocation.fromNamespaceAndPath("farmers_spell", "blockstates/alchemist_pot.json"), HandsOnConfig::cookingPot,
-            ResourceLocation.fromNamespaceAndPath("youkaisfeasts", "blockstates/kettle.json"), HandsOnConfig::kettle,
-            ResourceLocation.fromNamespaceAndPath("extradelight", "blockstates/melting_pot.json"), HandsOnConfig::meltingPot,
-            ResourceLocation.fromNamespaceAndPath("hearthandharvest", "blockstates/cask.json"), HandsOnConfig::cask);
+    private static final Map<ResourceLocation, BooleanSupplier> STATES = Map.ofEntries(
+            Map.entry(ResourceLocation.fromNamespaceAndPath("farmersdelight", "blockstates/cooking_pot.json"), HandsOnConfig::cookingPot),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("minersdelight", "blockstates/copper_pot.json"), HandsOnConfig::cookingPot),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("dungeonsdelight", "blockstates/monster_pot.json"), HandsOnConfig::cookingPot),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("culturaldelights", "blockstates/oven.json"), HandsOnConfig::oven),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("culturaldelights", "blockstates/vat.json"), HandsOnConfig::vat),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("farmersrespite", "blockstates/kettle.json"), HandsOnConfig::kettle),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("farmers_spell", "blockstates/alchemist_pot.json"), HandsOnConfig::cookingPot),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("youkaisfeasts", "blockstates/kettle.json"), HandsOnConfig::kettle),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("extradelight", "blockstates/melting_pot.json"), HandsOnConfig::meltingPot),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("hearthandharvest", "blockstates/cask.json"), HandsOnConfig::cask),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("extradelight", "blockstates/chiller.json"), HandsOnConfig::chiller));
     private static final String DYED_NAMESPACE = "vanilladelight";
     private static final String DYED_MODELS = "models/block/cooking_pot_";
     private static final Set<String> NAMESPACES = Set.of("farmersdelight", "minersdelight", "dungeonsdelight", "culturaldelights", "farmersrespite",

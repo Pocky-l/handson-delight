@@ -142,4 +142,9 @@ public final class NeoForgePlatform implements Platform {
     public com.pockyl.handson_delight.station.KitchenEdVat.Access edVats() {
         return isLoaded(com.pockyl.handson_delight.station.KitchenEdVat.MOD_ID) ? EdVats.INSTANCE : null;
     }
+
+    @Override
+    public com.pockyl.handson_delight.station.KitchenChiller.Access edChillers() {
+        return isLoaded(com.pockyl.handson_delight.station.KitchenChiller.MOD_ID) ? EdChillers.INSTANCE : null;
+    }
 }

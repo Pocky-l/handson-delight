@@ -100,6 +100,11 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
   heat: drop chocolate in and watch it soften, sink and melt into the syrup going round in it, while the water below
   steams. Its book has everything it melts, with the time. Click the syrup with a bottle or a bucket to fill it; with an
   empty hand a bottle is offered from your inventory.
+- **Chiller** of [Extra Delight](https://modrinth.com/mod/extradelight) (2.7.2 or newer). An old ice box whose three
+  painted doors swing open: stand the mold, the bowl or the sticks on the zinc shelf, pour the syrup or milk in, drop the
+  rest in and lay ice in the chest. Rime grows on the zinc, cold mist rolls out, and what has set hops up onto the rack.
+  The melt water drips into the pan below, which stops the cold once it is full: fill a bucket from it or tip it out.
+  Its book has every recipe with its container, its liquid, ice and the time.
 - **Kettle** of [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port). Lift its lid off onto the stove, pour
   a bucket in at the opening and drop the leaves in: they float, soak and sink, giving the water their colour while it
   brews over the fire, with steam rising from the spout. Done, the kettle whistles. Click the spout with a bottle and
@@ -191,7 +196,7 @@ Built on [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis).
 
 [![Sodium](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/sodium.png)](https://modrinth.com/mod/sodium) ✅ **[Sodium](https://modrinth.com/mod/sodium)** and [![Iris](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/iris.png)](https://modrinth.com/mod/iris) **[Iris](https://modrinth.com/mod/iris)** (optional) - the stations draw as usual
 
-[![Extra Delight](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/extra-delight.png)](https://modrinth.com/mod/extradelight) ✅ **[Extra Delight](https://modrinth.com/mod/extradelight)** (optional) - its mixing bowl, vat, melting pot and oven are stations
+[![Extra Delight](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/extra-delight.png)](https://modrinth.com/mod/extradelight) ✅ **[Extra Delight](https://modrinth.com/mod/extradelight)** (optional) - its mixing bowl, vat, melting pot, oven and chiller are stations
 
 [![Create Aeronautics](https://raw.githubusercontent.com/Pocky-l/handson-delight/1.21.1/docs/compat/create-aeronautics.png)](https://modrinth.com/mod/create-aeronautics) ✅ **[Create Aeronautics](https://modrinth.com/mod/create-aeronautics)** (optional) - the stations open on its flying ships and stay with the ship as it flies and turns
 
@@ -212,7 +217,7 @@ How much of each mod's kitchen opens as stations right in the world. A dash mean
 | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/cultural-delights.png" width="20" height="20" align="top"> [Cultural Delights](https://modrinth.com/mod/cultural-delights) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | - | ✅ |
 | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/dungeons_delight.png" width="20" height="20" align="top"> [Dungeons Delight](https://modrinth.com/mod/dungeons_delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
 | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/ends-delight.png" width="20" height="20" align="top"> [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-delight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
-| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/extradelight.png" width="20" height="20" align="top"> [Extra Delight](https://modrinth.com/mod/extradelight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-67.png" width="64" height="8"> 67% | - | ✅ |
+| <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/extradelight.png" width="20" height="20" align="top"> [Extra Delight](https://modrinth.com/mod/extradelight) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-83.png" width="64" height="8"> 83% | - | ✅ |
 | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/farmers-respite.png" width="20" height="20" align="top"> [Farmer's Respite](https://modrinth.com/mod/farmers-respite) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
 | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/farmers-spell.png" width="20" height="20" align="top"> [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
 | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/gensokyo-delight-youkais-feasts.png" width="20" height="20" align="top"> [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts) | <img src="https://cdn.jsdelivr.net/gh/Pocky-l/handson-delight@main/docs/compat/bar-100.png" width="64" height="8"> 100% | ✅ | ✅ |
@@ -255,7 +260,7 @@ station with its own recipes, spoons and whisk.
 its [Iron's Spells 'n Spellbooks](https://modrinth.com/mod/irons-spells-n-spellbooks) scroll.
 [Barbeque's Delight](https://modrinth.com/mod/barbeques-delight-forge)'s kebabs and bibimbap are put together on the
 board and keep the seasoning of their skewers. [Extra Delight](https://modrinth.com/mod/extradelight)'s vat opens as a
-station too, in each of its looks, and so does its oven, with its pans.
+station too, in each of its looks, and so do its oven, with its pans, and its chiller, with its ice and its drip pan.
 [Sable Trees](https://www.curseforge.com/minecraft/mc-mods/sable-trees)' chopping block opens as a station of its own,
 for cutting food and splitting logs.
 [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)'s oven opens as a station in each of its
@@ -275,6 +280,7 @@ which each player sets in their own file.
 | `oven`, `vat` | `true` | The ovens of Cultural Delights and Cooking for Blockheads, and Cultural Delights' vat, as stations. Off, they keep their own menus. Cooking for Blockheads' oven keeps its own baking time |
 | `ed_vat` | `true` | Extra Delight's vat as a station. Off, it keeps its own menu. It keeps its own aging times; on, it also ages with no jars or bowls in it and keeps what it made to be drawn into them |
 | `melting_pot` | `true` | Extra Delight's melting pot as a station. Off, it keeps its own menu. It keeps its own melting times |
+| `chiller` | `true` | Extra Delight's chiller as a station. Off, it keeps its own menu. It keeps its own setting times and its ice |
 | `kettle` | `true` | The kettles of Farmer's Respite and Youkai's Feasts as stations. Off, each is used as before |
 | `grill`, `basin` | `true` | Barbeque's Delight's grill and ingredients basin as stations. Off, they are used as before |
 | `cuisine_board` | `true` | Youkai's Feasts' cuisine board as a station. Off, it is used as before |

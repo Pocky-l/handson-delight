@@ -124,4 +124,44 @@ public final class ExtraDelightGameTests {
     public static void chocolateMeltsAndIsDrawnIntoABottle(GameTestHelper helper) {
         MeltingPotTests.chocolateMeltsAndIsDrawnIntoABottle(helper);
     }
+
+    @GameTest(template = "empty")
+    public static void everyChillingFromItsThingsLaidIn(GameTestHelper helper) {
+        ChillerTests.everyChillingFromItsThingsLaidIn(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theChillerReadsItsRecipes(GameTestHelper helper) {
+        ChillerTests.theChillerReadsItsRecipes(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void aBarSetsByHand(GameTestHelper helper) {
+        ChillerTests.aBarSetsByHand(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 1000)
+    public static void iceCreamSetsFromTheBook(GameTestHelper helper) {
+        ChillerTests.iceCreamSetsFromTheBook(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aContainerGoesWhereWhatIsSetUpWantsIt(GameTestHelper helper) {
+        ChillerTests.aContainerGoesWhereWhatIsSetUpWantsIt(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void milkIsPouredForABowlAndLaidInForATray(GameTestHelper helper) {
+        ChillerTests.milkIsPouredForABowlAndLaidInForATray(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void aLiquidGoesIntoTheTankAndBackOut(GameTestHelper helper) {
+        ChillerTests.aLiquidGoesIntoTheTankAndBackOut(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 700)
+    public static void aFullPanStopsTheColdUntilItIsEmptied(GameTestHelper helper) {
+        ChillerTests.aFullPanStopsTheColdUntilItIsEmptied(helper);
+    }
 }

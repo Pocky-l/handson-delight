@@ -24,6 +24,7 @@ import org.joml.Vector3f;
 import com.pockyl.diegesis.api.client.MeshShape;
 import com.pockyl.handson_delight.mixin.SpriteContentsAccessor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,11 +44,11 @@ final class ItemVoxels {
 
     /**
      * What an icon is read for: the item and the models its stack shows (the game's identity of them), another one for a variant by
-     * its components.
+     * its components. Copied into an {@link ArrayList}: another mod's item model may add a null to the identity.
      */
     record Look(Item item, Object models) {
         static Look of(ItemStack stack) {
-            return new Look(stack.getItem(), List.copyOf((List<?>) look(stack).getModelIdentity()));
+            return new Look(stack.getItem(), new ArrayList<>((List<?>) look(stack).getModelIdentity()));
         }
     }
 

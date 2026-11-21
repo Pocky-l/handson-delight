@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.6.1+26.3] - Unreleased
+### Fixed
+- Food on the skillet no longer vanishes with an error in the log when another mod's item model is in the game.
+
 ## [1.6.0+26.3] - 2026-11-20
 ### New
 - Minecraft 26.3, on Fabric with [Farmer's Delight Refabricated](https://modrinth.com/mod/farmers-delight-refabricated): the pot, board, skillet and stove with their recipe books, as in 1.6.0.

@@ -111,14 +111,15 @@ public final class ChillerTests {
                 .orElseThrow(() -> new IllegalStateException("no chilling recipe for " + result));
     }
 
-    /** Every recipe with things is laid out as itself from its things thrown in and from the book, among those of its container and liquid. */
+    /** Every recipe with things is laid out as itself, thrown in and from the book, among those of its container and liquid. */
     public static void everyChillingFromItsThingsLaidIn(GameTestHelper helper) {
         if (!Platform.INSTANCE.isLoaded(KitchenChiller.MOD_ID)) {
             helper.succeed();
             return;
         }
         StationAudit.audit(helper, "extra delight chiller", StationRecipes.candidates(KitchenChiller.recipes(helper.getLevel()),
-                KitchenChiller.Setting::id, KitchenChiller.Setting::ingredients), recipe -> List.of(recipe.container().getItem(), recipe.fluid()),
+                KitchenChiller.Setting::id, KitchenChiller.Setting::ingredients), recipe -> List.of(recipe.container().getItem(),
+                        recipe.fluid()),
                 KitchenChiller.PLACES);
     }
 
@@ -145,7 +146,8 @@ public final class ChillerTests {
         helper.assertTrue(access.ices().size() >= 5 && access.ices().get(0).is(Items.BLUE_ICE), "blue ice lasts longest of "
                 + access.ices().size() + " kinds");
         CompoundTag update = setup.chiller.handson$entity().getUpdateTag(helper.getLevel().registryAccess());
-        helper.assertTrue(update.contains("chilltime") && update.contains("driptray") && update.contains("tank") && update.contains("cooktime"),
+        helper.assertTrue(update.contains("chilltime") && update.contains("driptray") && update.contains("tank")
+                && update.contains("cooktime"),
                 "its update carries its cold, its pan, its tank and how far it has set");
         helper.succeed();
     }
@@ -163,7 +165,8 @@ public final class ChillerTests {
         setup.player.getInventory().setItem(1, new ItemStack(extra("milk_chocolate_syrup_bottle"), 2));
         setup.player.getInventory().setItem(2, new ItemStack(Items.PACKED_ICE, 2));
         setup.put(0, true);
-        helper.assertTrue(setup.rack().is(extra("bar_mold")) && setup.player.getInventory().getItem(0).isEmpty(), "the mold stands on the rack");
+        helper.assertTrue(setup.rack().is(extra("bar_mold")) && setup.player.getInventory().getItem(0).isEmpty(),
+                "the mold stands on the rack");
         helper.assertTrue(setup.station.state().data().getString(ChillerStation.MAKING).isEmpty(), "a mold alone sets nothing up");
         setup.put(1, false);
         helper.assertTrue(setup.station.state().data().getString(ChillerStation.MAKING).endsWith("milk_chocolate_bar"),
@@ -184,7 +187,8 @@ public final class ChillerTests {
         });
         helper.succeedWhen(() -> {
             helper.assertTrue(setup.made().is(extra("milk_chocolate_bar")), "the bar has set");
-            helper.assertTrue(setup.rack().is(extra("bar_mold")) && setup.chiller.handson$amount() == 0, "the mold stays, the syrup is used");
+            helper.assertTrue(setup.rack().is(extra("bar_mold")) && setup.chiller.handson$amount() == 0,
+                    "the mold stays, the syrup is used");
             helper.assertTrue(setup.chiller.handson$pan() >= 400, "the melt water is in the pan, got " + setup.chiller.handson$pan());
         });
     }
@@ -208,18 +212,21 @@ public final class ChillerTests {
         setup.pick(iceCream, false);
         helper.assertTrue(setup.rack().is(Items.BOWL) && setup.rack().getCount() == 1, "one bowl stands on the rack");
         helper.assertTrue(setup.chiller.handson$amount() == 250 && setup.has(Items.GLASS_BOTTLE) == 1, "one bottle of milk is poured");
-        helper.assertTrue(setup.chiller.handson$item(0).is(sweetener) && setup.chiller.handson$item(0).getCount() == 1, "one sweetener lies in");
+        helper.assertTrue(setup.chiller.handson$item(0).is(sweetener) && setup.chiller.handson$item(0).getCount() == 1,
+                "one sweetener lies in");
         // 800 ticks of cold: one piece of packed ice, where snowballs would take sixteen.
         helper.assertTrue(setup.chiller.handson$item(KitchenChiller.ICE_SLOT).is(Items.PACKED_ICE)
                 && setup.chiller.handson$item(KitchenChiller.ICE_SLOT).getCount() == 1, "the ice that needs the fewest pieces goes in");
         setup.pick(iceCream, true);
-        helper.assertTrue(setup.chiller.handson$amount() == 1000 && setup.rack().getCount() == 4 && setup.chiller.handson$item(0).getCount() == 4,
+        helper.assertTrue(setup.chiller.handson$amount() == 1000 && setup.rack().getCount() == 4
+                && setup.chiller.handson$item(0).getCount() == 4,
                 "with shift four sets go in, as many as the tank holds milk for: " + setup.chiller.handson$amount() + " mB, "
                         + setup.rack().getCount() + " bowls, " + setup.chiller.handson$item(0).getCount() + " things");
         helper.onEachTick(() -> setup.logic.tick(setup.station));
         helper.succeedWhen(() -> {
             helper.assertTrue(setup.made().is(extra("ice_cream")), "ice cream has set");
-            helper.assertTrue(setup.rack().getCount() == 3 && setup.chiller.handson$amount() == 750, "it used a bowl and a bottle of milk up");
+            helper.assertTrue(setup.rack().getCount() == 3 && setup.chiller.handson$amount() == 750,
+                    "it used a bowl and a bottle of milk up");
         });
     }
 
@@ -301,10 +308,12 @@ public final class ChillerTests {
                 "another liquid is not poured onto the milk");
         setup.player.getInventory().setItem(2, new ItemStack(Items.GLASS_BOTTLE, 2));
         setup.put(2, false);
-        helper.assertTrue(setup.chiller.handson$amount() == 750 && setup.has(delight("milk_bottle")) == 1 && setup.has(Items.GLASS_BOTTLE) == 1,
+        helper.assertTrue(setup.chiller.handson$amount() == 750 && setup.has(delight("milk_bottle")) == 1
+                && setup.has(Items.GLASS_BOTTLE) == 1,
                 "a bottle draws a bottleful back");
         setup.put(0, false);
-        helper.assertTrue(setup.chiller.handson$amount() == 750 && setup.has(Items.BUCKET) == 1, "a bucket draws nothing from less than a bucketful");
+        helper.assertTrue(setup.chiller.handson$amount() == 750 && setup.has(Items.BUCKET) == 1,
+                "a bucket draws nothing from less than a bucketful");
         setup.put(2, true);
         helper.assertTrue(setup.chiller.handson$amount() == 500 && setup.has(delight("milk_bottle")) == 2, "the last bottle draws another");
         helper.succeed();
@@ -330,7 +339,8 @@ public final class ChillerTests {
         helper.onEachTick(() -> setup.logic.tick(setup.station));
         helper.runAfterDelay(60, () -> {
             helper.assertTrue(setup.chiller.handson$time() == 0 && setup.made().isEmpty(), "with a full pan nothing sets");
-            helper.assertTrue(setup.station.state().data().getInt(ChillerStation.PAN) == KitchenChiller.PAN, "the station tells the pan is full");
+            helper.assertTrue(setup.station.state().data().getInt(ChillerStation.PAN) == KitchenChiller.PAN,
+                    "the station tells the pan is full");
             setup.pan(-2);
             helper.assertTrue(setup.chiller.handson$pan() == 0 && setup.has(Items.WATER_BUCKET) == 1 && setup.has(Items.BUCKET) == 0,
                     "a bucket from the inventory takes the full pan");

@@ -72,7 +72,8 @@ final class ChillerBook implements RecipeBook.Source {
         }
         Map<Item, Integer> tabs = new LinkedHashMap<>();
         counts.entrySet().stream().filter(entry -> entry.getValue() >= OWN_TAB)
-                .sorted(Map.Entry.<Item, Integer>comparingByValue().reversed()).forEach(entry -> tabs.put(entry.getKey(), entry.getValue()));
+                .sorted(Map.Entry.<Item, Integer>comparingByValue().reversed()).forEach(entry -> tabs.put(entry.getKey(),
+                        entry.getValue()));
         return tabs;
     }
 
@@ -89,7 +90,8 @@ final class ChillerBook implements RecipeBook.Source {
             ItemStack icon = new ItemStack(container);
             tabs.add(new RecipeBook.Tab(BuiltInRegistries.ITEM.getKey(container).toString(), icon, icon.getHoverName()));
         }
-        tabs.add(new RecipeBook.Tab(OTHER, new ItemStack(Items.GLASS_BOTTLE), Component.translatable("handson_delight.book.tab.other_containers")));
+        tabs.add(new RecipeBook.Tab(OTHER, new ItemStack(Items.GLASS_BOTTLE),
+                Component.translatable("handson_delight.book.tab.other_containers")));
         return tabs;
     }
 

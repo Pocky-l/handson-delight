@@ -369,7 +369,8 @@ public final class ChillerLogic implements StationLogic {
         List<KitchenChiller.Setting> recipes = KitchenChiller.recipes(level);
         ItemStack rack = chiller.handson$item(KitchenChiller.CONTAINER_SLOT);
         ItemStack[] places = places();
-        ResourceLocation found = recipes.stream().filter(recipe -> recipe.made(places)).map(KitchenChiller.Setting::id).findFirst().orElse(null);
+        ResourceLocation found = recipes.stream().filter(recipe -> recipe.made(places)).map(KitchenChiller.Setting::id).findFirst()
+                .orElse(null);
         StationRecipes.Choice<KitchenChiller.Setting> choice = null;
         if (!rack.isEmpty()) {
             List<KitchenChiller.Setting> ofRack = recipes.stream().filter(recipe -> recipe.isContainer(rack)).toList();
@@ -421,7 +422,8 @@ public final class ChillerLogic implements StationLogic {
             int[] parts = kinds.isEmpty() ? null : StationRecipes.parts(recipe.ingredients(), kinds);
             int already = parts == null ? 0 : StationRecipes.servings(kinds, parts);
             if (most > already) {
-                StationRecipes.Filled filled = StationRecipes.fill(inventory, recipe.ingredients(), kinds, KitchenChiller.PLACES, most - already);
+                StationRecipes.Filled filled = StationRecipes.fill(inventory, recipe.ingredients(), kinds, KitchenChiller.PLACES,
+                        most - already);
                 if (filled != null) {
                     picked = recipe.id();
                     StationRecipes.lay(slots, filled.kinds(), filled.parts());
@@ -466,7 +468,8 @@ public final class ChillerLogic implements StationLogic {
                 drawn = false;
                 for (int slot = 0; slot < Inventory.INVENTORY_SIZE && !drawn; slot++) {
                     ItemStack stack = inventory.getItem(slot);
-                    if (stack.isEmpty() || access.liquidOf(stack).isPresent() || !(stack.is(Items.BUCKET) || stack.is(Items.GLASS_BOTTLE))) {
+                    if (stack.isEmpty() || access.liquidOf(stack).isPresent() || !(stack.is(Items.BUCKET)
+                            || stack.is(Items.GLASS_BOTTLE))) {
                         continue;
                     }
                     ItemStack full = chiller.handson$draw(stack);

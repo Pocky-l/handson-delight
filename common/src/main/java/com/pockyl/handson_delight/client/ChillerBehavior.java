@@ -887,7 +887,8 @@ public final class ChillerBehavior implements StationBehavior {
         while (mist >= 1.0F) {
             mist -= 1.0F;
             if (open) {
-                view.spawnParticles(DiegesisParticles.STEAM, new Vector3f(1.6F + random.nextFloat() * 5.8F, 6.8F + random.nextFloat() * 7.0F, 1.0F),
+                view.spawnParticles(DiegesisParticles.STEAM, new Vector3f(1.6F + random.nextFloat() * 5.8F,
+                        6.8F + random.nextFloat() * 7.0F, 1.0F),
                         new Vector3f(0.0F, -1.4F, -1.6F), 0.3F, 1, MIST_COLOR);
             } else {
                 float edge = switch (random.nextInt(3)) {
@@ -905,10 +906,12 @@ public final class ChillerBehavior implements StationBehavior {
             if (open) {
                 float x = 10.6F + random.nextFloat() * 2.8F;
                 float z = 4.0F + random.nextFloat() * 7.0F;
-                view.spawnParticles(DiegesisParticles.DROPLET, new Vector3f(x, 7.9F, z), new Vector3f(0.0F, -2.0F, 0.0F), 0.0F, 1, WATER_COLOR);
+                view.spawnParticles(DiegesisParticles.DROPLET, new Vector3f(x, 7.9F, z), new Vector3f(0.0F, -2.0F, 0.0F), 0.0F, 1,
+                        WATER_COLOR);
                 view.node("melt").ifPresent(melt -> melt.ripple(x - 12.0F, z - 8.0F, 0.12F));
             } else {
-                view.spawnParticles(DiegesisParticles.DROPLET, new Vector3f(2.0F + random.nextFloat() * 12.0F, 0.95F, 2.0F + random.nextFloat() * 12.0F),
+                view.spawnParticles(DiegesisParticles.DROPLET, new Vector3f(2.0F + random.nextFloat() * 12.0F, 0.95F,
+                        2.0F + random.nextFloat() * 12.0F),
                         new Vector3f(0.0F, -1.0F, 0.0F), 0.0F, 1, WATER_COLOR);
             }
         }
@@ -916,7 +919,8 @@ public final class ChillerBehavior implements StationBehavior {
             glints += dt * 0.45F * frostShown;
             if (glints >= 1.0F) {
                 glints -= 1.0F;
-                view.spawnParticles(DiegesisParticles.GLINT, new Vector3f(1.6F + random.nextFloat() * 5.8F, 6.6F + random.nextFloat() * 6.0F, 14.6F),
+                view.spawnParticles(DiegesisParticles.GLINT, new Vector3f(1.6F + random.nextFloat() * 5.8F,
+                        6.6F + random.nextFloat() * 6.0F, 14.6F),
                         new Vector3f(), 0.1F, 1, 0xD0E8F6FF);
             }
         }
@@ -943,7 +947,8 @@ public final class ChillerBehavior implements StationBehavior {
         int left = data.getInt(ChillerStation.LEFT);
         int seconds = sets && left > 0 ? Math.max(1, Mth.ceil(left / 20.0F)) : 0;
         int bar = Math.round(progress * BAR_LENGTH);
-        String text = seconds >= 60 ? seconds / 60 + ":" + String.format("%02d", seconds % 60) : seconds > 0 ? Integer.toString(seconds) : "";
+        String text = seconds >= 60 ? seconds / 60 + ":" + String.format("%02d", seconds % 60) : seconds > 0 ? Integer.toString(seconds)
+                : "";
         String dial = bar + "/" + text;
         if (!dial.equals(drawnDial)) {
             drawnDial = dial;

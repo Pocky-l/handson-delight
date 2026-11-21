@@ -90,7 +90,7 @@ dependencies {
     // Youkai's Feasts' kettle, cuisine board and pots are stations too: compiled against it only (its drinks; its blocks are reached
     // by name, as their classes build on the L2 libraries nested in its jar).
     compileOnly "maven.modrinth:gensokyo-delight-youkais-feasts:${youkais_feasts_version}"
-    // Extra Delight's mixing bowl, vat and melting pot are stations too: compiled against it only.
+    // Extra Delight's mixing bowl, vat, melting pot, oven and chiller are stations too: compiled against it only.
     compileOnly "maven.modrinth:extradelight:${extra_delight_version}"
     // Hearth and Harvest's keg and cask are stations too: compiled against it only.
     compileOnly "maven.modrinth:hearth-and-harvest:${hearth_and_harvest_version}"
@@ -119,7 +119,7 @@ if (meals) {
 var extraDelight = providers.gradleProperty('extradelight').isPresent()
 if (extraDelight) {
     dependencies {
-        localRuntime "maven.modrinth:extradelight:${extra_delight_version}" // Extra Delight 2.7.1
+        localRuntime "maven.modrinth:extradelight:${extra_delight_version}" // Extra Delight 2.7.2
     }
     sourceSets.main.java.srcDir 'src/extradelight/java'
     sourceSets.main.resources.srcDir 'src/extradelight/resources'

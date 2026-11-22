@@ -364,7 +364,7 @@ public final class KettleBehavior implements StationBehavior {
     @Override
     public boolean onInventoryShiftClick(StationView view, int slot, ItemStack stack) {
         KitchenKettle kettle = kettle(view);
-        if (kettle == null || !kettle.handson$isVessel(stack)) {
+        if (kettle == null || kettle.handson$dropsIn(stack)) {
             return false;
         }
         boolean spout = kettle.handson$canServe(stack);

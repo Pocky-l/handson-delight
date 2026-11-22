@@ -23,6 +23,8 @@ import com.pockyl.handson_delight.station.KettleLogic;
 import com.pockyl.handson_delight.station.KettleStation;
 import com.pockyl.handson_delight.station.KitchenKettle;
 
+import java.util.List;
+
 /**
  * Farmer's Respite's kettle at the station: its lid off and on as the block's own state, water poured in at the opening, green tea
  * brewed over a campfire as the kettle brews it, drinks poured from the spout. Each test passes at once where Farmer's Respite is not
@@ -186,6 +188,41 @@ public final class KettleTests {
             helper.assertTrue(player.getInventory().countItem(Items.GLASS_BOTTLE) == 2, "two bottles left");
             helper.succeed();
         });
+    }
+
+    /**
+     * Milk is both a base and an ingredient here: poured into an empty kettle for hot cocoa, steeped whole in a kettle of black tea for
+     * long black tea. A milk bucket or bottle at a kettle of tea goes into a slot and is never poured; a honey bottle for a strong tea
+     * too.
+     */
+    public static void milkPoursForCocoaAndSteepsInTea(GameTestHelper helper) {
+        Setup setup = kettle(helper, false);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        lid(setup, player, true);
+        SlotRef slot = SlotRef.of(KettleStation.INGREDIENTS, 0);
+        ItemStack bucket = new ItemStack(Items.MILK_BUCKET);
+        ItemStack bottle = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("farmersdelight", "milk_bottle")));
+        if (setup.kettle.handson$isVessel(bucket)) {
+            helper.assertTrue(setup.kettle.handson$canPour(bucket), "milk pours into an empty kettle, for hot cocoa");
+            helper.assertFalse(setup.logic.mayPlace(setup.station, player, slot, bucket), "a milk bucket is poured into an empty kettle");
+        }
+        ItemStack tea = setup.kettle.handson$drinkOf(BuiltInRegistries.FLUID.get(
+                ResourceLocation.fromNamespaceAndPath(KettleStation.MOD_ID, "black_tea")));
+        helper.assertFalse(tea.isEmpty(), "black tea has a drink");
+        player.inventoryMenu.setCarried(tea);
+        setup.logic.onCustomAction(setup.station, player, KettleStation.ACTION_USE, at(KettleStation.MOUTH, false));
+        helper.assertTrue(BuiltInRegistries.FLUID.getKey(setup.kettle.handson$fluid()).getPath().equals("black_tea"),
+                "black tea poured in, got " + BuiltInRegistries.FLUID.getKey(setup.kettle.handson$fluid()));
+        for (ItemStack stack : List.of(bucket, bottle, new ItemStack(Items.HONEY_BOTTLE))) {
+            helper.assertTrue(setup.logic.mayPlace(setup.station, player, slot, stack), stack + " goes into a kettle of black tea");
+            helper.assertFalse(setup.kettle.handson$canPour(stack), stack + " is not poured into black tea");
+        }
+        helper.assertFalse(setup.logic.mayPlace(setup.station, player, slot, new ItemStack(Items.GLASS_BOTTLE)),
+                "an empty bottle is still filled, not dropped in");
+        helper.succeed();
     }
 
     /**

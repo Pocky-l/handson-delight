@@ -448,7 +448,7 @@ public final class KegBehavior implements StationBehavior {
     @Override
     public boolean onInventoryShiftClick(StationView view, int slot, ItemStack stack) {
         KitchenKeg keg = keg(view);
-        if (keg == null || !keg.handson$isVessel(stack)) {
+        if (keg == null || keg.handson$dropsIn(stack)) {
             return false;
         }
         boolean tap = keg.handson$canTap(stack);

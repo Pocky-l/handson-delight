@@ -211,10 +211,13 @@ abstract class YoukaiKettleMixin implements KitchenKettle {
         return YoukaiFluids.canServe(handson$tank(), stack);
     }
 
-    /** A water bottle, or anything a liquid is poured from (a water bucket), with room for it. */
+    /**
+     * Water only, as it brews from nothing else: a water bottle, or a bucket or its flask of water, with room for it. A milk bottle is
+     * steeped whole (tea mocha), never poured.
+     */
     @Override
     public boolean handson$canPour(ItemStack stack) {
-        return YoukaiFluids.canPour(handson$tank(), stack);
+        return YoukaiFluids.holdsWater(stack) && YoukaiFluids.canPour(handson$tank(), stack);
     }
 
     @Override

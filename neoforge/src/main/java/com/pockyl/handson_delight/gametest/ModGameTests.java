@@ -1085,6 +1085,16 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void milkPoursForCocoaAndSteepsInTea(GameTestHelper helper) {
+        KettleTests.milkPoursForCocoaAndSteepsInTea(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void youkaiTeaMochaTakesAMilkBottle(GameTestHelper helper) {
+        YoukaiKettleTests.youkaiTeaMochaTakesAMilkBottle(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void cutPiecesThatDoNotFitDropOnce(GameTestHelper helper) {
         FullInventoryTests.cutPiecesThatDoNotFitDropOnce(helper);
     }

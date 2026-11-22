@@ -4,6 +4,7 @@ import dev.xkmc.youkaishomecoming.content.item.fluid.IYHFluidItem;
 import dev.xkmc.youkaishomecoming.content.item.fluid.SlipBottleItem;
 import dev.xkmc.youkaishomecoming.content.item.fluid.YHFluidHandler;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
@@ -41,6 +42,12 @@ public final class YoukaiFluids {
     public static boolean isWaterBottle(ItemStack stack) {
         PotionContents contents = stack.get(DataComponents.POTION_CONTENTS);
         return stack.is(Items.POTION) && contents != null && contents.is(Potions.WATER);
+    }
+
+    /** Whether {@code stack} holds water: a water bottle, a water bucket, its flask of water. */
+    public static boolean holdsWater(ItemStack stack) {
+        return isWaterBottle(stack)
+                || FluidUtil.getFluidContained(stack.copyWithCount(1)).map(fluid -> fluid.getFluid().is(FluidTags.WATER)).orElse(false);
     }
 
     /** Whether {@code stack} is filled from {@code tank} now: its drink's container, or what takes the liquid (an empty bucket). */

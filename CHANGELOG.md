@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.6.2+1.21.1] - Unreleased
+## [1.6.2+1.21.1] - 2026-11-22
 ### Changed
 - Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.16: stations out of view cost far less, and closing another mod's screen opened over a station, such as a [QuestLog](https://modrinth.com/mod/questlog) quest popup, no longer locks the player ([#51](https://github.com/Pocky-l/handson-delight/issues/51)).
 

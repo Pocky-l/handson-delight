@@ -124,7 +124,7 @@ final class KitchenMotions {
         private final float lipX;
         private final float flow;
         private final float thick;
-        private final int color;
+        private int color;
         private Runnable onFlow = () -> {
         };
         private boolean flowing;
@@ -173,6 +173,15 @@ final class KitchenMotions {
         Pour lipAtLeast(float y) {
             Vector3f lip = tipped(lipX, LIP_Y, size, tilt, yaw);
             middle.y = Math.max(middle.y, y - lip.y);
+            return this;
+        }
+
+        /**
+         * Pours in {@code argb} instead of the colour read from the container's icon: a liquid whose bottle hides its colour (a syrup
+         * behind blue glass).
+         */
+        Pour colored(int argb) {
+            color = argb;
             return this;
         }
 

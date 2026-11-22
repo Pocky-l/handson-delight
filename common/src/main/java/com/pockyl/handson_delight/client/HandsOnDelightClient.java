@@ -44,6 +44,7 @@ public final class HandsOnDelightClient {
     public static final ResourceLocation SCROLL_FLAME = HandsOnDelight.id("scroll_flame");
     public static final ResourceLocation HEAT = HandsOnDelight.id("heat");
     public static final ResourceLocation GRAIN = HandsOnDelight.id("grain");
+    public static final ResourceLocation MIST = HandsOnDelight.id("mist");
     @SuppressWarnings("removal")
     private static final ResourceLocation DIEGESIS_BUBBLE = ResourceLocation.fromNamespaceAndPath("diegesis", "bubble");
 
@@ -125,6 +126,9 @@ public final class HandsOnDelightClient {
         }
         DiegesisClient.registerParticle(PAN_SMOKE, ParticleStyle.builder(steam).color(0x58C8C6C2).size(1.8F, 2.6F).life(1.6F, 2.4F)
                 .gravity(-4.0F).drag(0.75F).grow(3.0F).wobble(1.0F).fadeIn(0.3F).build());
+        // Cold air out of the chiller: white and soft as steam, but it sinks and spreads as it rolls out.
+        DiegesisClient.registerParticle(MIST, ParticleStyle.builder(steam).color(0x60FFFFFF).size(1.2F, 1.8F).life(1.8F, 2.8F)
+                .gravity(3.5F).drag(0.8F).grow(1.9F).wobble(0.5F).fadeIn(0.35F).emissive().build());
         DiegesisClient.registerParticle(HEAT, ParticleStyle.builder(frames("heat", 4)).color(0x48FFFFFF)
                 .size(3.0F, 4.0F).life(0.8F, 1.3F).gravity(-5.0F).drag(0.6F).grow(0.4F).wobble(0.3F).fadeIn(0.4F).build());
         DiegesisClient.registerParticle(SCROLL_FLAME, ParticleStyle.builder(ResourceLocation.withDefaultNamespace("flame")).color(0xFFFFFFFF)

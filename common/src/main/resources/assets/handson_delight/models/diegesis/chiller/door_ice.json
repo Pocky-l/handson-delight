@@ -3,7 +3,7 @@
   "textures": {
     "particle": "extradelight:block/ice_box_front",
     "front": "extradelight:block/ice_box_front",
-    "lining": "minecraft:block/smooth_stone"
+    "zinc": "handson_delight:block/chiller/zinc"
   },
   "elements": [
     {
@@ -39,12 +39,12 @@
         },
         "south": {
           "uv": [
-            9,
+            7,
             1,
-            15,
+            1,
             7
           ],
-          "texture": "#lining"
+          "texture": "#front"
         },
         "west": {
           "uv": [
@@ -72,6 +72,30 @@
             7
           ],
           "texture": "#front"
+        }
+      }
+    },
+    {
+      "name": "door_ice_panel",
+      "from": [
+        10,
+        10,
+        1.1
+      ],
+      "to": [
+        14,
+        14,
+        1.1
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            10,
+            2,
+            14,
+            6
+          ],
+          "texture": "#zinc"
         }
       }
     }

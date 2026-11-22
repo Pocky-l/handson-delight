@@ -4,10 +4,11 @@
   "textures": {
     "particle": "extradelight:block/ice_box_front",
     "front": "extradelight:block/ice_box_front",
-    "lining": "minecraft:block/smooth_stone",
-    "rack": "minecraft:block/iron_bars",
+    "rack": "handson_delight:block/chiller/rack",
     "side": "extradelight:block/ice_box_side",
-    "top": "farmersdelight:block/oak_cabinet_top"
+    "top": "farmersdelight:block/oak_cabinet_top",
+    "zinc": "handson_delight:block/chiller/zinc",
+    "zinc_dark": "handson_delight:block/chiller/zinc_dark"
   },
   "elements": [
     {
@@ -125,7 +126,7 @@
             16,
             16
           ],
-          "texture": "#lining"
+          "texture": "#zinc_dark"
         },
         "down": {
           "uv": [
@@ -208,7 +209,7 @@
             16,
             16
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         }
       }
     },
@@ -242,7 +243,7 @@
             16,
             14
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         },
         "south": {
           "uv": [
@@ -316,7 +317,7 @@
             16,
             14
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         }
       }
     },
@@ -340,7 +341,7 @@
             15,
             14
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         },
         "south": {
           "uv": [
@@ -384,7 +385,7 @@
             16,
             14
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         },
         "west": {
           "uv": [
@@ -393,7 +394,7 @@
             15,
             14
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         }
       }
     },
@@ -427,7 +428,7 @@
             15,
             15
           ],
-          "texture": "#lining"
+          "texture": "#zinc_dark"
         },
         "down": {
           "uv": [
@@ -436,7 +437,7 @@
             15,
             16
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         }
       }
     },
@@ -460,7 +461,7 @@
             15,
             11
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         },
         "up": {
           "uv": [
@@ -469,7 +470,7 @@
             8,
             15
           ],
-          "texture": "#lining"
+          "texture": "#zinc_dark"
         },
         "down": {
           "uv": [
@@ -478,7 +479,7 @@
             8,
             15
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         }
       }
     },
@@ -502,7 +503,7 @@
             15,
             10
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         },
         "south": {
           "uv": [
@@ -511,7 +512,7 @@
             8,
             10
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         },
         "up": {
           "uv": [
@@ -520,12 +521,36 @@
             8,
             2
           ],
-          "texture": "#lining"
+          "texture": "#zinc"
         }
       }
     },
     {
-      "name": "rack_upper",
+      "name": "rack_wires",
+      "from": [
+        1,
+        12,
+        2
+      ],
+      "to": [
+        8,
+        12,
+        15
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            7,
+            13
+          ],
+          "texture": "#rack"
+        }
+      }
+    },
+    {
+      "name": "rack_rail",
       "from": [
         1,
         11,
@@ -533,18 +558,26 @@
       ],
       "to": [
         8,
-        11,
-        15
+        12,
+        2
       ],
       "faces": {
+        "north": {
+          "uv": [
+            9,
+            2,
+            16,
+            3
+          ],
+          "texture": "#rack"
+        },
         "up": {
           "uv": [
-            1,
             9,
-            15,
-            16
+            0,
+            16,
+            1
           ],
-          "rotation": 90,
           "texture": "#rack"
         }
       }

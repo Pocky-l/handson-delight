@@ -1,0 +1,154 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "handson_delight:block/chiller/rime_early",
+    "rime": "handson_delight:block/chiller/rime_early"
+  },
+  "elements": [
+    {
+      "name": "rime_cold_back",
+      "from": [
+        1,
+        6,
+        14.95
+      ],
+      "to": [
+        8,
+        15,
+        14.95
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            3.5,
+            4.5
+          ],
+          "texture": "#rime"
+        }
+      }
+    },
+    {
+      "name": "rime_cold_wall",
+      "from": [
+        1.05,
+        6,
+        2
+      ],
+      "to": [
+        1.05,
+        15,
+        15
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            4,
+            0,
+            10.5,
+            4.5
+          ],
+          "texture": "#rime"
+        }
+      }
+    },
+    {
+      "name": "rime_ice_back",
+      "from": [
+        9,
+        9,
+        14.95
+      ],
+      "to": [
+        15,
+        15,
+        14.95
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11,
+            0,
+            14,
+            3
+          ],
+          "texture": "#rime"
+        }
+      }
+    },
+    {
+      "name": "rime_ice_wall",
+      "from": [
+        9.05,
+        9,
+        1
+      ],
+      "to": [
+        9.05,
+        15,
+        15
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            5,
+            7,
+            8
+          ],
+          "texture": "#rime"
+        }
+      }
+    },
+    {
+      "name": "rime_rack",
+      "from": [
+        1,
+        12.05,
+        1
+      ],
+      "to": [
+        8,
+        12.05,
+        15
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            7.5,
+            5,
+            11,
+            12
+          ],
+          "texture": "#rime"
+        }
+      }
+    },
+    {
+      "name": "rime_ice_shelf",
+      "from": [
+        9,
+        9.05,
+        1
+      ],
+      "to": [
+        15,
+        9.05,
+        15
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            11.5,
+            5,
+            14.5,
+            12
+          ],
+          "texture": "#rime"
+        }
+      }
+    }
+  ]
+}

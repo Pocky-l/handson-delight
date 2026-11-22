@@ -32,6 +32,7 @@ import com.pockyl.diegesis.api.client.StationView;
 import com.pockyl.diegesis.api.event.SceneEvent;
 import com.pockyl.diegesis.api.scene.Visual;
 import com.pockyl.diegesis.api.state.StationState;
+import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.station.ChillerLogic;
 import com.pockyl.handson_delight.station.ChillerStation;
 import com.pockyl.handson_delight.station.KitchenChiller;
@@ -67,34 +68,51 @@ public final class ChillerBehavior implements StationBehavior {
 
     /** The cold shelf's top, where the container stands, and the places of what sets, scene pixels. */
     private static final float SHELF = 6.0F;
-    private static final float POOL_DEPTH = 0.78F;
     private static final float CONTAINER_X = 4.5F;
-    private static final float CONTAINER_Z = 7.0F;
-    private static final float[][] PLACES = {{6.3F, 4.6F}, {4.4F, 4.6F}, {6.3F, 7.6F}, {4.4F, 7.6F}};
+    private static final float CONTAINER_Z = 5.6F;
+    private static final float CONTAINER_LIFT = 0.03F;
+    /** The places of what sets: in a container that is a block, and round one that stands at the shelf's near right (a bowl, sticks). */
+    private static final float[][] PLACES = {{5.5F, 4.4F}, {3.1F, 4.4F}, {5.5F, 6.9F}, {3.1F, 6.9F}};
+    private static final float[][] PLACES_ROUND = {{6.1F, 4.2F}, {6.1F, 6.8F}, {3.3F, 8.0F}, {5.8F, 9.4F}};
     private static final float PLACE_Y = 6.7F;
     /** A container that is a block (a mold, a tray, a pan) is drawn this big at most, and this wide. */
     private static final float VESSEL_SCALE = 0.47F;
     private static final float VESSEL_WIDE = 6.6F;
-    /** One that is an item (a bowl, sticks, bottles) stands this high at the far side of the shelf, a second one behind it. */
+    /** Our wooden bowl for what sets in a bowl: how big, and where it stands from the shelf's middle. */
+    private static final ResourceLocation BOWL_MODEL = HandsOnDelight.id("diegesis/chiller/bowl");
+    private static final float BOWL_SCALE = 0.52F;
+    private static final float BOWL_X = -1.4F;
+    private static final float BOWL_Z = -1.0F;
+    /** Sticks and bottles stand this high in a row at the shelf's near right, this far apart; what is neither lies flat there. */
     private static final float STANDING = 3.0F;
-    private static final float STANDING_X = -2.5F;
-    private static final float STANDING_Z = -2.6F;
-    private static final float STANDING_BEHIND = 2.4F;
+    private static final float STANDING_X = -2.9F;
+    private static final float STANDING_Z = -1.6F;
+    private static final float STANDING_APART = 1.45F;
+    private static final float STICK_TURN = -45.0F;
+    private static final float STANDING_SUNK = 0.25F;
+    private static final String[] CONTAINERS = {"container_model", "container_more", "container_third", "container_fourth"};
     private static final float THING = 2.4F;
     private static final float ARRIVE_ARC = 3.0F;
     private static final float ARRIVE_TIME = 0.35F;
     private static final float ARRIVE_APART = 0.09F;
     /** What has set lies on the rack, this big and this far in; how long it takes to hop there. */
-    private static final float RACK = 11.0F;
+    private static final float RACK = 12.0F;
     private static final float DISH = 3.6F;
-    private static final float DISH_Z = 4.0F;
+    private static final float DISH_Z = 3.4F;
     private static final float DISH_LIFT = 0.15F;
+    /** Several of what has set: from how many on a second and a third piece lie half on the first. */
+    private static final int DISH_MORE = 2;
+    private static final int DISH_MOST = 4;
     private static final float HOP_TIME = 0.45F;
+    private static final float SETTLED = 0.4F;
     private static final float HAND_SIZE = 3.6F;
     private static final float DIP_SIZE = 3.2F;
 
-    /** The ice in the chest: a block of it is drawn this big; the melting piece shrinks down to this share of it. */
-    private static final float ICE_SIZE = 4.0F;
+    /**
+     * The ice in the chest: a block of it is drawn this big, so that the piece that waits and the one melting stand side by side at
+     * the front; the melting piece shrinks down to this share of it.
+     */
+    private static final float ICE_SIZE = 2.8F;
     private static final float ICE_LEAST = 0.3F;
     /** The pan slides out this far and tips this much, and how long each step takes. */
     private static final float PAN_OUT = -9.5F;
@@ -103,12 +121,16 @@ public final class ChillerBehavior implements StationBehavior {
     private static final float PAN_TURN = 0.3F;
     private static final float PAN_HOLD = 0.35F;
     private static final int WATER_COLOR = 0xD05A8FE8;
-    private static final int MIST_COLOR = 0x40FFFFFF;
-    private static final float MIST_OPEN = 5.0F;
-    private static final float MIST_SHUT = 1.4F;
-    private static final float FROST_GROWS = 4.0F;
-    private static final float FROST_GOES = 8.0F;
-    private static final int FROST_MOST = 215;
+    /** The cold mist: its colour, and how many puffs a second roll out of the open box and seep out of the shut one. */
+    private static final int MIST_COLOR = 0x70FFFFFF;
+    private static final float MIST_OPEN = 3.2F;
+    private static final float MIST_SHUT = 1.6F;
+    /** The rime: seconds to grow whole and to go, its opacity, the share of the growth its first layer takes and its second starts at. */
+    private static final float FROST_GROWS = 9.0F;
+    private static final float FROST_GOES = 14.0F;
+    private static final int FROST_MOST = 235;
+    private static final float RIME_EARLY = 0.4F;
+    private static final float RIME_LATE = 0.3F;
 
     private static final int PLATE_COLOR = 0x8C1E140C;
     private static final int DIAL_COLOR = 0xFFFFCB6B;
@@ -134,11 +156,13 @@ public final class ChillerBehavior implements StationBehavior {
     private final UsableCache usable = new UsableCache();
     private float time;
     private float doors;
-    /** The container drawn on the shelf, how many of it, and whether it is a vessel the liquid stands in. */
+    /** The container drawn on the shelf, how many of it, how it holds the liquid and how big it is drawn. */
     private Item drawnContainer;
     private int drawnContainerCount = -1;
-    private boolean vessel;
+    private Holds holds = Holds.SHELF;
     private float vesselScale = VESSEL_SCALE;
+    /** Whether the places of what sets lie round a container that stands at the shelf's near right. */
+    private boolean round;
     private final Item[] drawnThings = new Item[KitchenChiller.PLACES];
     private final int[] lastCounts = new int[KitchenChiller.PLACES];
     /** Seconds until the thing that came into a place starts its flight from the cook; whether nothing lay there before. */
@@ -146,6 +170,8 @@ public final class ChillerBehavior implements StationBehavior {
     private final boolean[] arrivesNew = new boolean[KitchenChiller.PLACES];
     private float level;
     private float heldLevel;
+    /** Seconds left in which the liquid's level follows the tank at once: what has set has just left it. */
+    private float settled;
     private int shownColor = 0xFFFFFF;
     private Fluid colorOf;
     private int fluidColor;
@@ -176,6 +202,42 @@ public final class ChillerBehavior implements StationBehavior {
     private Item shownIcon;
 
     public ChillerBehavior(StationView view) {
+    }
+
+    /**
+     * How the container on the shelf holds the liquid: the tank node that shows it and, in the container's own pixels, where the
+     * liquid's floor and its brim lie. A mold's brim is under its rim and its middle bar, so that the bar parts the two halves.
+     */
+    private enum Holds {
+        /** Nothing holds it (no container, or sticks and bottles standing in it): it pools on the shelf, behind the lip. */
+        SHELF("pool", 0.02F, 0.8F),
+        MOLD("mold", 1.05F, 1.65F),
+        TRAY("mold_tray", 1.05F, 1.65F),
+        PAN("mold_pan", 1.05F, 3.4F),
+        TIN("mold_tin", 0.1F, 1.6F),
+        BOWL("mold_bowl", 1.05F, 2.75F);
+
+        private final String node;
+        private final float floor;
+        private final float brim;
+
+        Holds(String node, float floor, float brim) {
+            this.node = node;
+            this.floor = floor;
+            this.brim = brim;
+        }
+
+        /** How {@code item} holds a liquid: Extra Delight's pans by their kind, a bowl as ours, any other block as a mold. */
+        static Holds of(Item item) {
+            if (item == Items.BOWL) {
+                return BOWL;
+            }
+            if (blockExtent(item) <= 0.0F) {
+                return SHELF;
+            }
+            String path = BuiltInRegistries.ITEM.getKey(item).getPath();
+            return path.contains("muffin") ? TIN : path.contains("square_pan") ? PAN : path.contains("tray") ? TRAY : MOLD;
+        }
     }
 
     private static KitchenChiller.Access access() {
@@ -326,13 +388,13 @@ public final class ChillerBehavior implements StationBehavior {
         if (dip != null || node.isEmpty()) {
             return;
         }
-        Vector3f over = new Vector3f(CONTAINER_X, surface() + 2.6F, CONTAINER_Z - 0.5F);
+        Vector3f over = liquidAt(surface() + 2.6F);
         Vector3f away = FromPlayer.point(view, SHELF + 8.0F, 0, 1).orElse(new Vector3f(8.0F, 14.0F, -10.0F));
         KitchenMotions.showItem(node.get(), empty.getItem(), DIP_SIZE, 0xFFFFFFFF);
         node.get().moveTo(over.x, over.y, over.z, 0.0F);
         node.get().rotateTo(0.0F, 0.0F, 0.0F, 0.0F);
         dip = new KitchenMotions.Dip(node.get(), full.getItem(), over, new Vector3f(), away, this::surface,
-                view.node(vessel ? "mold" : "pool").orElse(null), DIP_SIZE / ITEM_PIXELS, DIP_SIZE, 0xFF000000 | shownColor,
+                view.node(holds.node).orElse(null), DIP_SIZE / ITEM_PIXELS, DIP_SIZE, 0xFF000000 | shownColor,
                 () -> view.playSound(SoundEvents.BOTTLE_FILL, "container_slot", 0.45F, 0.9F));
     }
 
@@ -399,13 +461,14 @@ public final class ChillerBehavior implements StationBehavior {
         }
         heldLevel = level;
         pour = new KitchenMotions.Pour(hand.get(), "pour_chiller", container.get(), from.get(),
-                new Vector3f(CONTAINER_X, 0.0F, CONTAINER_Z - 0.5F), this::surface, vessel ? "mold" : "pool", HAND_SIZE, -1.0F, 0.0F)
-                .lipAtLeast(SHELF + 2.4F);
+                liquidAt(0.0F), this::surface, holds.node, HAND_SIZE, -1.0F, 0.0F)
+                .lipAtLeast(SHELF + 2.4F).colored(0xFF000000 | color(fluid));
     }
 
     /** Something has set: a knock on its container, it hops up turning over once to lie on the rack, and the badge swells with a chime. */
     private void set(StationView view, Item item, boolean first) {
         doneAt = time;
+        settled = SETTLED;
         view.playSound(SoundEvents.COPPER_HIT, "container_slot", 0.35F, 1.4F);
         if (view.isFocused()) {
             view.playSound(SoundEvents.NOTE_BLOCK_CHIME.value(), "badge", 0.35F, 1.26F);
@@ -413,7 +476,8 @@ public final class ChillerBehavior implements StationBehavior {
         }
         view.node("hop").ifPresent(node -> {
             KitchenMotions.showItem(node, item, DISH, 0xFFFFFFFF);
-            node.moveTo(CONTAINER_X, SHELF + 1.4F, CONTAINER_Z, 0.0F);
+            Vector3f from = liquidAt(SHELF + 1.4F);
+            node.moveTo(from.x, from.y, from.z, 0.0F);
             node.rotateTo(-LEAN, 0.0F, 0.0F, 0.0F);
             node.hopTo(CONTAINER_X, RACK + DISH_LIFT, DISH_Z, 1.6F, HOP_TIME);
             node.rotateTo(-450.0F, 0.0F, 0.0F, HOP_TIME);
@@ -527,7 +591,14 @@ public final class ChillerBehavior implements StationBehavior {
 
     /** Where the liquid stands now, scene pixels: in the container that holds it, or on the shelf. */
     private float surface() {
-        return vessel ? SHELF + vesselScale * (1.05F + 0.85F * level) : SHELF + 0.02F + POOL_DEPTH * level;
+        float over = holds.floor + (holds.brim - holds.floor) * level;
+        return holds == Holds.SHELF ? SHELF + over : SHELF + CONTAINER_LIFT + vesselScale * over;
+    }
+
+    /** The middle of the liquid at height {@code y}: over the bowl that holds it, else over the middle of the shelf. */
+    private Vector3f liquidAt(float y) {
+        return holds == Holds.BOWL ? new Vector3f(CONTAINER_X + BOWL_X, y, CONTAINER_Z + BOWL_Z)
+                : new Vector3f(CONTAINER_X, y, CONTAINER_Z - 0.5F);
     }
 
     @Override
@@ -589,41 +660,79 @@ public final class ChillerBehavior implements StationBehavior {
     }
 
     /**
-     * The container on the shelf: a mold, a tray or a pan as its own block, sized to the shelf, the liquid standing in it; anything
-     * else (a bowl, sticks, bottles) as its item standing at the far side of the shelf, a second one behind the first.
+     * The container on the shelf. A mold, a tray or a pan is its own block, sized to the shelf, and a bowl our wooden one: the
+     * liquid stands in them. Sticks and bottles stand in a row at the shelf's near right, in the liquid that pools on the shelf;
+     * anything else (a pie crust) lies flat there.
      */
     private void container(StationView view, boolean whole) {
         ItemStack rack = view.state().getItem(ChillerStation.CONTAINER_SLOT);
         Item item = rack.isEmpty() ? null : rack.getItem();
-        int count = Math.min(2, rack.getCount());
+        int count = Math.min(CONTAINERS.length, rack.getCount());
         if (item != drawnContainer || count != drawnContainerCount) {
             drawnContainer = item;
             drawnContainerCount = count;
-            float extent = item == null ? 0.0F : blockExtent(item);
-            vessel = extent > 0.0F;
-            if (vessel) {
-                vesselScale = Math.min(VESSEL_SCALE, VESSEL_WIDE / extent);
-                view.node("container_model").ifPresent(node -> {
+            holds = item == null ? Holds.SHELF : Holds.of(item);
+            round = item != null && (holds == Holds.SHELF || holds == Holds.BOWL);
+            if (holds == Holds.BOWL) {
+                vesselScale = BOWL_SCALE;
+                view.node(CONTAINERS[0]).ifPresent(node -> {
+                    node.setVisual(Visual.ofModel(BOWL_MODEL).asLitAsBlock());
+                    node.rotateTo(0.0F, 0.0F, 0.0F, 0.0F);
+                    node.scaleTo(BOWL_SCALE, 0.0F);
+                    node.moveTo(BOWL_X, CONTAINER_LIFT, BOWL_Z, 0.0F);
+                });
+            } else if (holds != Holds.SHELF) {
+                vesselScale = Math.min(VESSEL_SCALE, VESSEL_WIDE / blockExtent(item));
+                view.node(CONTAINERS[0]).ifPresent(node -> {
                     node.setVisual(Visual.ofBlock(((BlockItem) item).getBlock().defaultBlockState()));
                     node.rotateTo(0.0F, 0.0F, 0.0F, 0.0F);
                     node.scaleTo(vesselScale, 0.0F);
-                    node.moveTo(0.0F, 0.03F, 0.0F, 0.0F);
+                    node.moveTo(0.0F, CONTAINER_LIFT, 0.0F, 0.0F);
                 });
             } else if (item != null) {
-                view.node("container_model").ifPresent(node -> stand(node, item, STANDING_X, STANDING_Z));
-                view.node("container_more").ifPresent(node -> stand(node, item, STANDING_X + 0.3F, STANDING_Z + STANDING_BEHIND));
+                boolean stands = item == Items.STICK || item == Items.GLASS_BOTTLE;
+                for (int index = 0; index < CONTAINERS.length; index++) {
+                    float x = STANDING_X + STANDING_APART * index * (item == Items.STICK ? 1.0F : 1.3F);
+                    // Every other one stands a little further back, as things put down by hand do.
+                    float z = STANDING_Z + (index % 2 == 0 ? 0.0F : 0.5F);
+                    view.node(CONTAINERS[index]).ifPresent(node -> {
+                        if (stands) {
+                            stand(node, item, x, z, item == Items.STICK ? STICK_TURN : 0.0F);
+                        } else {
+                            lay(node, item, x + 1.2F, 0.08F, z, 0.0F);
+                            node.scaleTo(STANDING / ITEM_PIXELS, 0.0F);
+                        }
+                    });
+                }
+            }
+            // The places of what sets move out of the way of a container that stands at the shelf's near right.
+            for (int place = 0; place < KitchenChiller.PLACES; place++) {
+                float x = places()[place][0] - PLACES[place][0];
+                float z = places()[place][1] - PLACES[place][1];
+                view.node("place_" + place).ifPresent(node -> node.moveTo(x, 0.0F, z, 0.0F));
             }
         }
-        boolean shown = whole && item != null;
-        view.node("container_model").ifPresent(node -> node.setVisible(shown));
-        view.node("container_more").ifPresent(node -> node.setVisible(shown && !vessel && drawnContainerCount > 1));
+        boolean rows = holds == Holds.SHELF && (item == Items.STICK || item == Items.GLASS_BOTTLE);
+        for (int index = 0; index < CONTAINERS.length; index++) {
+            boolean shown = whole && item != null && (index == 0 || rows && index < drawnContainerCount);
+            view.node(CONTAINERS[index]).ifPresent(node -> node.setVisible(shown));
+        }
     }
 
-    private static void stand(NodeView node, Item item, float x, float z) {
+    /** Where the places of what sets lie now. */
+    private float[][] places() {
+        return round ? PLACES_ROUND : PLACES;
+    }
+
+    /**
+     * Stands a stick or a bottle on the shelf, leant back to the camera, its foot in the liquid there; {@code turn} sets an icon
+     * that lies on its diagonal upright.
+     */
+    private static void stand(NodeView node, Item item, float x, float z, float turn) {
         node.setVisual(Visual.ofItem(item).withAnchor(ICON_MIDDLE));
-        node.rotateTo(-LEAN, 0.0F, 0.0F, 0.0F);
+        node.rotateTo(-LEAN, 0.0F, turn, 0.0F);
         node.scaleTo(STANDING / ITEM_PIXELS, 0.0F);
-        node.moveTo(x, STANDING / 2.0F, z, 0.0F);
+        node.moveTo(x, STANDING / 2.0F - STANDING_SUNK, z, 0.0F);
     }
 
     /** How wide the block of {@code item} is, pixels; 0 for what is no block with a model and a shape. */
@@ -688,7 +797,7 @@ public final class ChillerBehavior implements StationBehavior {
         if (from.isEmpty() || thing.isEmpty()) {
             return;
         }
-        thing.get().moveTo(from.get().x - PLACES[place][0], from.get().y - PLACE_Y, from.get().z - PLACES[place][1], 0.0F);
+        thing.get().moveTo(from.get().x - places()[place][0], from.get().y - PLACE_Y, from.get().z - places()[place][1], 0.0F);
         thing.get().hopTo(0.0F, 0.05F, 0.0F, ARRIVE_ARC, ARRIVE_TIME);
         view.playSound(SoundEvents.COPPER_STEP, "container_slot", 0.25F, 1.5F);
     }
@@ -701,11 +810,16 @@ public final class ChillerBehavior implements StationBehavior {
         float wanted = view.state().getTank(ChillerStation.LIQUID).amount() / 100.0F;
         // What is being poured has not run in yet: the level waits for the stream.
         float target = pour != null && !pour.hasFlowed() ? Math.min(wanted, heldLevel) : wanted;
-        level = Mth.lerp(Math.min(1.0F, dt * 4.0F), level, target);
+        // What has just set is no liquid any more: it went out with the piece that hopped onto the rack, at once.
+        settled = Math.max(0.0F, settled - dt);
+        level = settled > 0.0F ? target : Mth.lerp(Math.min(1.0F, dt * 4.0F), level, target);
         Fluid fluid = fluid(view);
         if (fluid != colorOf) {
             colorOf = fluid;
-            fluidColor = color(fluid);
+            // The last of a liquid keeps its colour while it goes.
+            if (fluid != Fluids.EMPTY) {
+                fluidColor = color(fluid);
+            }
         }
         String making = view.state().data().getString(ChillerStation.MAKING);
         if (!making.equals(resultOf)) {
@@ -717,16 +831,13 @@ public final class ChillerBehavior implements StationBehavior {
         int color = KitchenLooks.mix(mixed, 0xFFFFFFFF, 0.12F * setting) & 0xFFFFFF;
         shownColor = color;
         float shown = target;
-        view.node("pool").ifPresent(pool -> {
-            pool.setLiquidColor(0xFF000000 | color);
-            pool.showLiquid(ChillerLogic.SYRUP_LIQUID, vessel ? 0.0F : shown);
-            pool.setVisible(whole);
-        });
-        view.node("mold").ifPresent(mold -> {
-            mold.setLiquidColor(0xFF000000 | color);
-            mold.showLiquid(ChillerLogic.SYRUP_LIQUID, vessel ? shown : 0.0F);
-            mold.setVisible(whole && vessel);
-        });
+        for (Holds kind : Holds.values()) {
+            view.node(kind.node).ifPresent(tank -> {
+                tank.setLiquidColor(0xFF000000 | color);
+                tank.showLiquid(ChillerLogic.SYRUP_LIQUID, kind == holds ? shown : 0.0F);
+                tank.setVisible(whole && kind == holds);
+            });
+        }
     }
 
     /** A fluid's colour: its tint, or for an untinted one (Extra Delight's syrups) the colour of its own texture. */
@@ -748,7 +859,7 @@ public final class ChillerBehavior implements StationBehavior {
         return containers.isEmpty() ? 0xF4F0E8 : KitchenLooks.liquidColor(containers.get(0)) & 0xFFFFFF;
     }
 
-    /** The ice that waits stands at the back of the chest; the piece melting now lies before it and shrinks as its cold goes. */
+    /** The ice that waits stands at the front of the chest; the piece melting now lies beside it and shrinks as its cold goes. */
     private void ice(StationView view, float dt, boolean whole, int chill) {
         ItemStack waiting = view.state().getItem(ChillerStation.ICE_SLOT);
         Item item = waiting.isEmpty() ? null : waiting.getItem();
@@ -756,9 +867,20 @@ public final class ChillerBehavior implements StationBehavior {
             drawnIce = item;
             if (item != null) {
                 view.node("ice_waiting").ifPresent(node -> piece(node, item));
+                view.node("ice_more").ifPresent(node -> {
+                    piece(node, item);
+                    if (blockExtent(item) > 0.0F) {
+                        // A second block lies on the first, turned a little.
+                        node.moveTo(0.1F, ICE_SIZE, -0.1F, 0.0F);
+                        node.rotateTo(0.0F, 14.0F, 0.0F, 0.0F);
+                    } else {
+                        node.moveTo(0.9F, ICE_SIZE * 0.4F, 0.9F, 0.0F);
+                    }
+                });
             }
         }
         view.node("ice_waiting").ifPresent(node -> node.setVisible(whole && item != null));
+        view.node("ice_more").ifPresent(node -> node.setVisible(whole && item != null && waiting.getCount() > 1));
         Item melting = chill > 0 ? meltingIce(view.state().data().getInt(ChillerStation.CHILL_TOTAL), item) : null;
         if (melting != drawnMelting) {
             drawnMelting = melting;
@@ -840,12 +962,9 @@ public final class ChillerBehavior implements StationBehavior {
         if (item != drawnDish) {
             drawnDish = item;
             if (item != null) {
-                view.node("dish").ifPresent(node -> {
-                    node.setVisual(Visual.ofItem(item).withAnchor(ICON_MIDDLE));
-                    node.rotateTo(-90.0F, 0.0F, 0.0F, 0.0F);
-                    node.scaleTo(DISH / ITEM_PIXELS, 0.0F);
-                    node.moveTo(0.0F, DISH_LIFT, 0.0F, 0.0F);
-                });
+                view.node("dish").ifPresent(node -> flat(node, item, 0.0F, DISH_LIFT, 0.0F, 0.0F));
+                view.node("dish_more").ifPresent(node -> flat(node, item, -1.6F, DISH_LIFT + 0.14F, 0.5F, 28.0F));
+                view.node("dish_most").ifPresent(node -> flat(node, item, 1.5F, DISH_LIFT + 0.28F, 0.8F, -22.0F));
             }
         }
         if (hopping >= 0.0F) {
@@ -856,15 +975,34 @@ public final class ChillerBehavior implements StationBehavior {
             }
         }
         boolean hidden = hopping >= 0.0F && hopsFirst;
-        view.node("dish").ifPresent(node -> node.setVisible(whole && item != null && !hidden));
+        boolean lies = whole && item != null && !hidden;
+        view.node("dish").ifPresent(node -> node.setVisible(lies));
+        view.node("dish_more").ifPresent(node -> node.setVisible(lies && served.getCount() >= DISH_MORE));
+        view.node("dish_most").ifPresent(node -> node.setVisible(lies && served.getCount() >= DISH_MOST));
         view.node("hop").ifPresent(node -> node.setVisible(whole && hopping >= 0.0F));
     }
 
-    /** Rime grows on the zinc while the ice melts, and goes more slowly once it is gone. */
+    /** Lays a piece of what has set flat on the rack, turned by {@code turn}. */
+    private static void flat(NodeView node, Item item, float x, float y, float z, float turn) {
+        node.setVisual(Visual.ofItem(item).withAnchor(ICON_MIDDLE));
+        node.rotateTo(-90.0F, 0.0F, turn, 0.0F);
+        node.scaleTo(DISH / ITEM_PIXELS, 0.0F);
+        node.moveTo(x, y, z, 0.0F);
+    }
+
+    /**
+     * Rime grows on the zinc while the ice melts, first along the walls' feet and in their corners, then higher; it goes more
+     * slowly once the ice is gone.
+     */
     private void frost(StationView view, float dt, boolean whole, boolean cold) {
         frostShown = Mth.clamp(frostShown + (cold ? dt / FROST_GROWS : -dt / FROST_GOES), 0.0F, 1.0F);
-        int alpha = Math.round(FROST_MOST * KitchenMotions.smooth(frostShown));
-        view.node("frost").ifPresent(node -> {
+        rime(view, "rime_early", whole, frostShown / RIME_EARLY);
+        rime(view, "rime_late", whole, (frostShown - RIME_LATE) / (1.0F - RIME_LATE));
+    }
+
+    private static void rime(StationView view, String id, boolean whole, float grown) {
+        int alpha = Math.round(FROST_MOST * KitchenMotions.smooth(Mth.clamp(grown, 0.0F, 1.0F)));
+        view.node(id).ifPresent(node -> {
             node.setTint(alpha << 24 | 0xFFFFFF);
             node.setVisible(whole && alpha > 3);
         });
@@ -886,18 +1024,24 @@ public final class ChillerBehavior implements StationBehavior {
         }
         while (mist >= 1.0F) {
             mist -= 1.0F;
-            if (open) {
-                view.spawnParticles(DiegesisParticles.STEAM, new Vector3f(1.6F + random.nextFloat() * 5.8F,
-                        6.8F + random.nextFloat() * 7.0F, 1.0F),
-                        new Vector3f(0.0F, -1.4F, -1.6F), 0.3F, 1, MIST_COLOR);
+            if (open && random.nextInt(4) == 0) {
+                // A wisp off the ice.
+                view.spawnParticles(HandsOnDelightClient.MIST, new Vector3f(9.6F + random.nextFloat() * 4.8F,
+                        9.6F + random.nextFloat() * 2.0F, 1.4F),
+                        new Vector3f(0.0F, -0.3F, -1.2F), 0.25F, 1, MIST_COLOR);
+            } else if (open) {
+                // Out of the cold chamber's mouth: it rolls over the lip and sinks down the front of the box.
+                view.spawnParticles(HandsOnDelightClient.MIST, new Vector3f(1.6F + random.nextFloat() * 5.8F,
+                        7.2F + random.nextFloat() * 6.5F, 1.4F),
+                        new Vector3f(0.0F, -0.4F, -1.8F), 0.3F, 1, MIST_COLOR);
             } else {
                 float edge = switch (random.nextInt(3)) {
                     case 0 -> 1.2F;
                     case 1 -> 8.5F;
                     default -> 14.8F;
                 };
-                view.spawnParticles(DiegesisParticles.STEAM, new Vector3f(edge, 2.5F + random.nextFloat() * 12.0F, -0.2F),
-                        new Vector3f(0.0F, -0.7F, -0.4F), 0.2F, 1, MIST_COLOR);
+                view.spawnParticles(HandsOnDelightClient.MIST, new Vector3f(edge, 2.5F + random.nextFloat() * 12.0F, -0.3F),
+                        new Vector3f(0.0F, -0.3F, -0.6F), 0.2F, 1, MIST_COLOR);
             }
         }
         drops += dt * (open ? 1.4F : whole ? 0.0F : 0.4F);
@@ -919,8 +1063,9 @@ public final class ChillerBehavior implements StationBehavior {
             glints += dt * 0.45F * frostShown;
             if (glints >= 1.0F) {
                 glints -= 1.0F;
+                // On the rime the cook sees: the rack's far wires.
                 view.spawnParticles(DiegesisParticles.GLINT, new Vector3f(1.6F + random.nextFloat() * 5.8F,
-                        6.6F + random.nextFloat() * 6.0F, 14.6F),
+                        RACK + 0.3F, 7.0F + random.nextFloat() * 7.0F),
                         new Vector3f(), 0.1F, 1, 0xD0E8F6FF);
             }
         }

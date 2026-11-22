@@ -43,7 +43,7 @@ abstract class StationRenderersMixin {
     /** Since Minecraft 26.x a block entity is drawn from the look the dispatcher reads of it: none read, nothing drawn. */
     @Inject(method = "tryExtractRenderState", at = @At("HEAD"), cancellable = true)
     private void handson$drawnByScene(BlockEntity blockEntity, float partialTicks, ModelFeatureRenderer.CrumblingOverlay breakProgress,
-            boolean isGloballyRendered, CallbackInfoReturnable<BlockEntityRenderState> callback) {
+            CallbackInfoReturnable<BlockEntityRenderState> callback) {
         boolean drawnByScene = StoveCooking.isStove(blockEntity) || blockEntity instanceof SkilletBlockEntity
                 || blockEntity instanceof CookingPotBlockEntity || KitchenGrill.isGrill(blockEntity)
                 || KitchenBasin.isBasin(blockEntity) || blockEntity instanceof KitchenCuisine || blockEntity instanceof KitchenBowl

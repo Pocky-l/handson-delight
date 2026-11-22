@@ -53,7 +53,7 @@ dependencies {
     gameTestMods "maven.modrinth:farmers-delight-refabricated:${farmers_delight_refabricated_version}"
     gameTestMods "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     // Not in the fabric-api jar: the module that runs the tests (the version fabric-api's POM names).
-    gameTestMods 'net.fabricmc.fabric-api:fabric-gametest-api-v1:4.0.36+3434d6d95d'
+    gameTestMods 'net.fabricmc.fabric-api:fabric-gametest-api-v1:4.0.18+867b87624c'
     // -Paddons: the addons with a 26.3 Fabric build whose stations open: Cultural Delights' oven and vat.
     if (providers.gradleProperty('addons').isPresent()) {
         gameTestMods "maven.modrinth:cultural-delights:${cultural_delights_fabric_version}"

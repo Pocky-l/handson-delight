@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Prediction;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -249,7 +248,7 @@ public final class SkilletCooking {
         for (ItemStack each : done) {
             if (cook.isPresent()) {
                 if (!cook.get().getInventory().add(each)) {
-                    cook.get().drop(each, false, Prediction.SERVER_ONLY);
+                    cook.get().drop(each, false);
                 }
             } else {
                 jumpOut(skillet, each);

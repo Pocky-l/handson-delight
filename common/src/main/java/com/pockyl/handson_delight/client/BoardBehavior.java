@@ -1668,7 +1668,7 @@ public final class BoardBehavior implements StationBehavior {
     private static SoundEvent strokeSound(ToolStroke how, Item tool, ItemStack worked, List<ItemStack> results) {
         return switch (how) {
             case CUT -> chopSound(tool);
-            case STRIP -> SoundEvents.AXE_STRIP.value();
+            case STRIP -> SoundEvents.AXE_STRIP;
             case SPLIT -> SoundEvents.WOOD_HIT;
             case SNIP -> SoundEvents.SHEEP_SHEAR;
             default -> material(worked, results).getHitSound();
@@ -2242,10 +2242,10 @@ public final class BoardBehavior implements StationBehavior {
 
     private static SoundEvent chopSound(Item tool) {
         if (tool.builtInRegistryHolder().is(ItemTags.AXES)) {
-            return SoundEvents.AXE_STRIP.value();
+            return SoundEvents.AXE_STRIP;
         }
         if (tool.builtInRegistryHolder().is(ItemTags.SHOVELS)) {
-            return SoundEvents.SHOVEL_FLATTEN.value();
+            return SoundEvents.SHOVEL_FLATTEN;
         }
         return FarmersDelightContent.KNIFE_CUT;
     }

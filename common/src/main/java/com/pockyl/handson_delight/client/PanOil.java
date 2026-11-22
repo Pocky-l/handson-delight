@@ -63,7 +63,7 @@ final class PanOil implements NodePainter {
             poseStack.pushPose();
             poseStack.translate(places[i][0], 0.0F, places[i][1]);
             // Quarter turns only: pixels turned by any other angle break the grid they share with the pan.
-            poseStack.rotate(Axis.YP.rotationDegrees(90.0F * i));
+            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F * i));
             quad(consumer, poseStack.last(), sprite, half, alpha, light);
             poseStack.popPose();
         }

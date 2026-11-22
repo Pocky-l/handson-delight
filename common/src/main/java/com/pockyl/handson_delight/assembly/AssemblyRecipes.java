@@ -478,12 +478,21 @@ public final class AssemblyRecipes {
     }
 
     /**
+     * What recipes are written with. The reload's own lookup wraps the registries, and a tag an ingredient holds belongs to the
+     * registry itself: writing it through the wrapper fails ("not valid in current registry set"). Ingredients and results name
+     * built-in items and tags only, so the built-in registries write them.
+     */
+    private static DynamicOps<JsonElement> encoding() {
+        return RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY).createSerializationContext(JsonOps.INSTANCE);
+    }
+
+    /**
      * Finds the recipes of Farmer's Delight and its addons the board could make among those the manager is made of, each as its own
      * codec writes it (the JSON of a datapack, which the manager no longer reads itself since Minecraft 26.x), and keeps them for the
      * board. Only those the manager has: a recipe whose conditions failed is not made anywhere.
      */
     private static void readRecipes(RecipeManager manager, HolderLookup.Provider registries) {
-        DynamicOps<JsonElement> ops = registries.createSerializationContext(JsonOps.INSTANCE);
+        DynamicOps<JsonElement> ops = encoding();
         Map<Identifier, JsonObject> taken = new HashMap<>();
         Map<Identifier, RecipeHolder<?>> loaded = KitchenRecipes.byName(manager);
         loaded.forEach((id, holder) -> {
@@ -492,7 +501,7 @@ public final class AssemblyRecipes {
             }
             // One broken recipe of an addon or datapack must not stop the reload: the game itself only logs it.
             try {
-                JsonElement json = Recipe.DIRECT_CODEC.encodeStart(ops, holder.value()).getOrThrow(JsonParseException::new);
+                JsonElement json = Recipe.CODEC.encodeStart(ops, holder.value()).getOrThrow(JsonParseException::new);
                 if (json.isJsonObject()) {
                     plain(json.getAsJsonObject()).ifPresent(recipe -> taken.put(id, recipe));
                 }
@@ -551,7 +560,7 @@ public final class AssemblyRecipes {
         if (!RecipeParts.result(holder.value()).getComponentsPatch().isEmpty()) {
             return Optional.empty();
         }
-        JsonElement json = Recipe.DIRECT_CODEC.encodeStart(registries.createSerializationContext(JsonOps.INSTANCE), holder.value())
+        JsonElement json = Recipe.CODEC.encodeStart(encoding(), holder.value())
                 .getOrThrow(JsonParseException::new);
         return json.isJsonObject() ? plain(json.getAsJsonObject()).flatMap(recipe -> parse(holder.id().identifier(), recipe, null, registries))
                 .map(dish -> holder.value() instanceof CraftingRecipe crafting ? dish.madeBy(crafting) : dish) : Optional.empty();
@@ -648,7 +657,7 @@ public final class AssemblyRecipes {
     static Optional<Assembly> parse(Identifier id, JsonObject json, JsonArray any, HolderLookup.Provider registries) {
         DynamicOps<JsonElement> ops = registries.createSerializationContext(JsonOps.INSTANCE);
         JsonObject full = any == null ? json : ModestMeals.expand(json, any).getAsJsonObject();
-        Recipe<?> recipe = Recipe.DIRECT_CODEC.parse(ops, full).getOrThrow(JsonParseException::new);
+        Recipe<?> recipe = Recipe.CODEC.parse(ops, full).getOrThrow(JsonParseException::new);
         List<JsonElement> named = named(full);
         List<JsonElement> written = named(json);
         if (!(recipe instanceof CraftingRecipe crafting) || named == null || written == null || named.isEmpty()

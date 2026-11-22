@@ -12,7 +12,6 @@ import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -68,7 +67,7 @@ public final class FullInventoryTests {
         }
 
         @Override
-        public ItemEntity drop(ItemStack stack, boolean thrownFromHand, Prediction prediction) {
+        public ItemEntity drop(ItemStack stack, boolean thrownFromHand) {
             dropped.add(stack.copy());
             return null;
         }
@@ -92,7 +91,7 @@ public final class FullInventoryTests {
         }
 
         @Override
-        public ItemEntity drop(ItemStack stack, boolean thrownFromHand, Prediction prediction) {
+        public ItemEntity drop(ItemStack stack, boolean thrownFromHand) {
             dropped.add(stack.copy());
             return null;
         }

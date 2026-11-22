@@ -6,6 +6,9 @@
 - Cultural Delights' vat reads its recipes, ages a drink without its container and stands upright when placed, as on 1.21.1.
 - Everyone near Cultural Delights' oven or vat sees what lies in it.
 
+### Changed
+- Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.13.2+26.3: closing another mod's screen opened over a station, such as a [QuestLog](https://modrinth.com/mod/questlog) quest popup, no longer locks the player ([#51](https://github.com/Pocky-l/handson-delight/issues/51)).
+
 ## [1.6.1+26.3] - 2026-11-22
 ### Fixed
 - Food on the skillet no longer vanishes with an error in the log when another mod's item model is in the game.

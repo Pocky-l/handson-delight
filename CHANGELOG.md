@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.6.3+26.3] - Unreleased
+### Changed
+- Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.17.1+26.3, whose network format changed: client and server need this version of both mods.
+
 ## [1.6.2+26.3] - 2026-11-22
 ### Fixed
 - [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven shares a stack out over its tray, and its recipe book lists the oven's dishes ([#52](https://github.com/Pocky-l/handson-delight/issues/52)).

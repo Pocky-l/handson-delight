@@ -104,7 +104,7 @@ public final class ChillerBehavior implements StationBehavior {
     private static final int DISH_MORE = 2;
     private static final int DISH_MOST = 4;
     private static final float HOP_TIME = 0.45F;
-    private static final float SETTLED = 0.4F;
+    private static final float SETTLED = 1.5F;
     private static final float HAND_SIZE = 3.6F;
     private static final float DIP_SIZE = 3.2F;
 
@@ -170,8 +170,9 @@ public final class ChillerBehavior implements StationBehavior {
     private final boolean[] arrivesNew = new boolean[KitchenChiller.PLACES];
     private float level;
     private float heldLevel;
-    /** Seconds left in which the liquid's level follows the tank at once: what has set has just left it. */
+    /** Seconds left in which the liquid's level follows the tank at once: what has set has just left it; whether that was all of it. */
     private float settled;
+    private boolean gone;
     private int shownColor = 0xFFFFFF;
     private Fluid colorOf;
     private int fluidColor;
@@ -460,6 +461,7 @@ public final class ChillerBehavior implements StationBehavior {
             pour.stop();
         }
         heldLevel = level;
+        settled = 0.0F;
         pour = new KitchenMotions.Pour(hand.get(), "pour_chiller", container.get(), from.get(),
                 liquidAt(0.0F), this::surface, holds.node, HAND_SIZE, -1.0F, 0.0F)
                 .lipAtLeast(SHELF + 2.4F).colored(0xFF000000 | color(fluid));
@@ -469,6 +471,11 @@ public final class ChillerBehavior implements StationBehavior {
     private void set(StationView view, Item item, boolean first) {
         doneAt = time;
         settled = SETTLED;
+        // The liquid went into what has set. When that was the last of it, it is gone with the piece: the tank says so a moment
+        // later, and the liquid's own level would sink after it.
+        int one = wanted(view).filter(KitchenChiller.Setting::wantsLiquid).map(KitchenChiller.Setting::amount)
+                .orElse(KitchenChiller.BOTTLE);
+        gone = view.state().data().getInt(ChillerStation.AMOUNT) <= one;
         view.playSound(SoundEvents.COPPER_HIT, "container_slot", 0.35F, 1.4F);
         if (view.isFocused()) {
             view.playSound(SoundEvents.NOTE_BLOCK_CHIME.value(), "badge", 0.35F, 1.26F);
@@ -809,9 +816,9 @@ public final class ChillerBehavior implements StationBehavior {
     private void liquid(StationView view, float dt, boolean whole, float progress) {
         float wanted = view.state().getTank(ChillerStation.LIQUID).amount() / 100.0F;
         // What is being poured has not run in yet: the level waits for the stream.
-        float target = pour != null && !pour.hasFlowed() ? Math.min(wanted, heldLevel) : wanted;
         // What has just set is no liquid any more: it went out with the piece that hopped onto the rack, at once.
         settled = Math.max(0.0F, settled - dt);
+        float target = settled > 0.0F && gone ? 0.0F : pour != null && !pour.hasFlowed() ? Math.min(wanted, heldLevel) : wanted;
         level = settled > 0.0F ? target : Mth.lerp(Math.min(1.0F, dt * 4.0F), level, target);
         Fluid fluid = fluid(view);
         if (fluid != colorOf) {
@@ -835,7 +842,7 @@ public final class ChillerBehavior implements StationBehavior {
             view.node(kind.node).ifPresent(tank -> {
                 tank.setLiquidColor(0xFF000000 | color);
                 tank.showLiquid(ChillerLogic.SYRUP_LIQUID, kind == holds ? shown : 0.0F);
-                tank.setVisible(whole && kind == holds);
+                tank.setVisible(whole && kind == holds && !(settled > 0.0F && gone));
             });
         }
     }

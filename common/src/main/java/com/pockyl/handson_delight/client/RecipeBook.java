@@ -1270,10 +1270,8 @@ final class RecipeBook implements NodePainter {
      * and the station is one: it always says up there.
      */
     private static boolean leftHeld() {
-        try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
-            // SDL's mask of the buttons down: the left one is its first bit (SDL_BUTTON_LMASK).
-            return (org.lwjgl.sdl.SDLMouse.SDL_GetMouseState(stack.mallocFloat(1), stack.mallocFloat(1)) & 1) != 0;
-        }
+        return org.lwjgl.glfw.GLFW.glfwGetMouseButton(net.minecraft.client.Minecraft.getInstance().getWindow().handle(),
+                org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
     }
 
     /** The size the book is drawn at, against its own: as given, and a little bigger while it is held. */
@@ -2008,9 +2006,9 @@ final class RecipeBook implements NodePainter {
         // How far each cover has turned from shut, as the enchanting table's book turns them.
         float angle = 1.25F * OPEN * eased;
         poseStack.pushPose();
-        poseStack.rotate(LYING);
+        poseStack.mulPose(LYING);
         poseStack.scale(16.0F * SIZE, 16.0F * SIZE, 16.0F * SIZE);
-        poseStack.rotate(new Quaternionf().rotationY(CLOSED_TURN * closed));
+        poseStack.mulPose(new Quaternionf().rotationY(CLOSED_TURN * closed));
         poseStack.translate(-CLOSED_SHIFT * closed, 0.0F, 0.0F);
         model.setupAnim(angle);
         // Cut out: the brass corners are triangles on square caps.
@@ -2019,7 +2017,7 @@ final class RecipeBook implements NodePainter {
         if (open > 0.0F) {
             // The sheets go with the model: the same turn from closed, the same angle of the pages all the way open.
             poseStack.pushPose();
-            poseStack.rotate(new Quaternionf().rotationZ(CLOSED_TURN * closed));
+            poseStack.mulPose(new Quaternionf().rotationZ(CLOSED_TURN * closed));
             poseStack.translate(0.0F, -CLOSED_SHIFT * 16.0F * SIZE * closed, 0.0F);
             spread(poseStack, buffers, Mth.HALF_PI - angle, (Mth.sin(angle) + PAGE_GAP) * SIZE);
             poseStack.popPose();
@@ -2062,7 +2060,7 @@ final class RecipeBook implements NodePainter {
     private void side(PoseStack poseStack, SceneBuffers buffers, boolean left, float turn, float height, Leaf leaf, boolean resting) {
         poseStack.pushPose();
         poseStack.translate(0.0F, height, 0.0F);
-        poseStack.rotate(new Quaternionf().rotationZ(turn));
+        poseStack.mulPose(new Quaternionf().rotationZ(turn));
         Matrix4f sheet = new Matrix4f(-UNIT, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, -UNIT, 0.0F, 0.0F, UNIT, 0.0F, 0.0F, left ? PAGE_WIDTH : 0.0F, 0.0F, PAGE_HEIGHT / 2.0F, 1.0F);
         poseStack.last().pose().mul(sheet);
         Sheet canvas = new Sheet(poseStack, buffers);

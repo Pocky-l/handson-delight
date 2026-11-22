@@ -14,7 +14,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
-import net.minecraft.tags.BlockItemTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.ProblemReporter;
@@ -209,22 +208,22 @@ public final class PotTests {
      */
     public static void twoAlikeThrownInMakeTheirDish(GameTestHelper helper) {
         addRecipe(helper, "cane", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, Ingredient.of(Items.GLOWSTONE_DUST),
-                Ingredient.of(Items.GLOWSTONE_DUST), Ingredient.of(Items.DYE.red()));
+                Ingredient.of(Items.GLOWSTONE_DUST), Ingredient.of(Items.RED_DYE));
         addRecipe(helper, "cane_half", new ItemStack(Items.STRING), ItemStack.EMPTY, 40, Ingredient.of(Items.GLOWSTONE_DUST),
-                Ingredient.of(Items.DYE.red()));
+                Ingredient.of(Items.RED_DYE));
         Setup setup = pot(helper);
         throwIn(setup, 0, new ItemStack(Items.GLOWSTONE_DUST, 2));
-        throwIn(setup, 1, new ItemStack(Items.DYE.red()));
+        throwIn(setup, 1, new ItemStack(Items.RED_DYE));
         helper.assertTrue(makes(helper, setup.pot, "test_cane"), "the cane, got " + made(helper, setup.pot));
         empty(setup.pot);
         // A batch of the smaller dish with some dust over (ten corn and six milk for elote) stays that dish: six servings, not five.
         throwIn(setup, 0, new ItemStack(Items.GLOWSTONE_DUST, 10));
-        throwIn(setup, 1, new ItemStack(Items.DYE.red(), 6));
+        throwIn(setup, 1, new ItemStack(Items.RED_DYE, 6));
         helper.assertTrue(makes(helper, setup.pot, "test_cane_half"), "six of the half, got " + made(helper, setup.pot));
         empty(setup.pot);
         // Three dust and a dye make one of either and neither whole (three corn and a milk bucket): it cooks as it did, the half.
         throwIn(setup, 0, new ItemStack(Items.GLOWSTONE_DUST, 3));
-        throwIn(setup, 1, new ItemStack(Items.DYE.red()));
+        throwIn(setup, 1, new ItemStack(Items.RED_DYE));
         helper.assertTrue(makes(helper, setup.pot, "test_cane_half"), "the half as before, got " + made(helper, setup.pot));
         empty(setup.pot);
         helper.succeed();
@@ -297,7 +296,7 @@ public final class PotTests {
 
     /** A tag may take what another ingredient wants: a flower and two dandelions are a dandelion stack and a poppy. */
     public static void aTagTakesWhatTheOtherIngredientsLeave(GameTestHelper helper) {
-        addRecipe(helper, "posy", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, tagged(BlockItemTags.SMALL_FLOWERS.item()),
+        addRecipe(helper, "posy", new ItemStack(Items.STICK), ItemStack.EMPTY, 40, tagged(ItemTags.SMALL_FLOWERS),
                 Ingredient.of(Items.DANDELION), Ingredient.of(Items.DANDELION));
         Setup setup = pot(helper);
         throwIn(setup, 0, new ItemStack(Items.DANDELION, 2));
@@ -875,7 +874,7 @@ public final class PotTests {
     /** A modded drink: two servings a time, served in a bottle, one ingredient a tag. */
     public static void aModdedRecipeCooksAsABatch(GameTestHelper helper) {
         addRecipe(helper, "nectar", new ItemStack(Items.HONEY_BOTTLE, 2), new ItemStack(Items.GLASS_BOTTLE), 40, Ingredient.of(Items.SUGAR),
-                tagged(BlockItemTags.SMALL_FLOWERS.item()));
+                tagged(ItemTags.SMALL_FLOWERS));
         Setup setup = pot(helper);
         Platform.INSTANCE.setItem(setup.pot, 0, new ItemStack(Items.SUGAR, 5));
         Platform.INSTANCE.setItem(setup.pot, 1, new ItemStack(Items.DANDELION, 5));

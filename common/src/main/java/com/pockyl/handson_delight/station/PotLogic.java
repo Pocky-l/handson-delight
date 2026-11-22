@@ -7,7 +7,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Prediction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -185,7 +184,7 @@ public final class PotLogic implements StationLogic {
                 net.minecraft.world.Containers.dropItemStack(station.level(), station.pos().getX() + 0.5, station.pos().getY() + 1.0,
                         station.pos().getZ() + 0.5, leftover);
             } else if (!to.getInventory().add(leftover)) {
-                to.drop(leftover, false, Prediction.SERVER_ONLY);
+                to.drop(leftover, false);
             }
         }
     }
@@ -206,7 +205,7 @@ public final class PotLogic implements StationLogic {
                 ItemStack back = stack.copyWithCount(Math.min(saved, stack.getCount()));
                 pot.handson$setItem(i, stack.copyWithCount(stack.getCount() - back.getCount()));
                 if (!cook.getInventory().add(back)) {
-                    cook.drop(back, false, Prediction.SERVER_ONLY);
+                    cook.drop(back, false);
                 }
             }
         }
@@ -295,7 +294,7 @@ public final class PotLogic implements StationLogic {
             for (int count = kind.getCount(); count > 0; count -= kind.getMaxStackSize()) {
                 ItemStack stack = kind.copyWithCount(Math.min(count, kind.getMaxStackSize()));
                 if (!to.getInventory().add(stack)) {
-                    to.drop(stack, false, Prediction.SERVER_ONLY);
+                    to.drop(stack, false);
                 }
             }
         }
@@ -569,7 +568,7 @@ public final class PotLogic implements StationLogic {
             player.inventoryMenu.setCarried(back);
         }
         if (!rest.isEmpty() && !before.isEmpty() && !player.getInventory().add(before)) {
-            player.drop(before, false, Prediction.SERVER_ONLY);
+            player.drop(before, false);
         }
     }
 
@@ -592,7 +591,7 @@ public final class PotLogic implements StationLogic {
         inventory.setItem(slot, taken.getCount() > 1 ? taken.copyWithCount(taken.getCount() - 1) : before);
         scrolls.handson$setScroll(taken.copyWithCount(1));
         if (taken.getCount() > 1 && !before.isEmpty() && !inventory.add(before)) {
-            player.drop(before, false, Prediction.SERVER_ONLY);
+            player.drop(before, false);
         }
     }
 
@@ -609,7 +608,7 @@ public final class PotLogic implements StationLogic {
                 for (int count = stack.getCount(); count > 0; count -= stack.getMaxStackSize()) {
                     ItemStack back = stack.copyWithCount(Math.min(count, stack.getMaxStackSize()));
                     if (!player.getInventory().add(back)) {
-                        player.drop(back, false, Prediction.SERVER_ONLY);
+                        player.drop(back, false);
                     }
                 }
                 return;
@@ -659,7 +658,7 @@ public final class PotLogic implements StationLogic {
                 if (carried.isEmpty()) {
                     player.inventoryMenu.setCarried(serving);
                 } else if (!player.getInventory().add(serving)) {
-                    player.drop(serving, false, Prediction.SERVER_ONLY);
+                    player.drop(serving, false);
                 }
             }
         } while (all && filled);
@@ -687,7 +686,7 @@ public final class PotLogic implements StationLogic {
             scooped++;
             served(station, player, serving);
             if (!inventory.add(serving)) {
-                player.drop(serving, false, Prediction.SERVER_ONLY);
+                player.drop(serving, false);
             }
             if (!all) {
                 break;

@@ -330,7 +330,7 @@ public final class OvenLogic implements StationLogic {
 
     private static void giveBack(Player player, ItemStack stack) {
         if (!player.getInventory().add(stack)) {
-            player.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
+            player.drop(stack, false);
         }
     }
 

@@ -105,7 +105,7 @@ final class RecipeBookModel {
 
     void render(PoseStack poseStack, VertexConsumer consumer, int light, int overlay) {
         poseStack.pushPose();
-        poseStack.rotate(FROM_EXPORT);
+        poseStack.mulPose(FROM_EXPORT);
         root.render(poseStack, consumer, light, overlay);
         poseStack.popPose();
     }

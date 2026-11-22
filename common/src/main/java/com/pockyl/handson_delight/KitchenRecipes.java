@@ -1,5 +1,7 @@
 package com.pockyl.handson_delight;
 
+import io.netty.buffer.Unpooled;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.WeakHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 /**
@@ -36,6 +39,9 @@ public final class KitchenRecipes {
     /** The kinds of recipe the stations' client side reads. */
     private static final List<Supplier<RecipeType<?>>> SYNCED = new ArrayList<>(List.of(
             () -> RecipeType.CAMPFIRE_COOKING, () -> RecipeType.SMELTING, () -> ModRecipeTypes.COOKING.get(), FarmersDelightContent.CUTTING));
+
+    /** Whether the recipes left out of the packet were named in the log already. */
+    private static final AtomicBoolean UNSENT_LOGGED = new AtomicBoolean();
 
     private static volatile List<RecipeHolder<?>> received = List.of();
     private static volatile Map<Identifier, RecipeHolder<?>> receivedByName = Map.of();
@@ -65,13 +71,42 @@ public final class KitchenRecipes {
         SYNCED.add(type);
     }
 
-    /** The packet, on the server. */
+    /**
+     * The packet, on the server. A recipe that would not come out of it whole is left out (one with a tag no mod fills, as an addon's
+     * recipe for a mod that is not there): the client could not read the packet, and the recipe can never be made anyway.
+     */
     public static Payload payload(ServerLevel level) {
         List<RecipeType<?>> types = SYNCED.stream().<RecipeType<?>>map(Supplier::get).toList();
-        List<RecipeHolder<?>> recipes = level.recipeAccess().getRecipes().stream()
-                .filter(holder -> types.contains(holder.value().getType()))
-                .toList();
+        List<RecipeHolder<?>> recipes = new ArrayList<>();
+        List<Identifier> unsent = new ArrayList<>();
+        for (RecipeHolder<?> holder : level.recipeAccess().getRecipes()) {
+            if (!types.contains(holder.value().getType())) {
+                continue;
+            }
+            if (travels(holder, level.registryAccess())) {
+                recipes.add(holder);
+            } else {
+                unsent.add(holder.id().identifier());
+            }
+        }
+        if (!unsent.isEmpty() && UNSENT_LOGGED.compareAndSet(false, true)) {
+            HandsOnDelight.LOGGER.info("Recipes the stations leave out on clients, as they name things no mod adds: {}", unsent);
+        }
         return new Payload(recipes);
+    }
+
+    /** Whether the recipe comes out of the packet as it went in. */
+    private static boolean travels(RecipeHolder<?> holder, RegistryAccess registries) {
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), registries);
+        try {
+            RecipeHolder.STREAM_CODEC.encode(buffer, holder);
+            RecipeHolder.STREAM_CODEC.decode(buffer);
+            return true;
+        } catch (RuntimeException e) {
+            return false;
+        } finally {
+            buffer.release();
+        }
     }
 
     /** Called on the network thread. */

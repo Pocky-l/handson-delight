@@ -15,6 +15,7 @@ import com.pockyl.diegesis.api.state.StationSchema;
 import com.pockyl.diegesis.api.state.TankSpec;
 import com.pockyl.diegesis.api.station.StationType;
 import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.util.function.Supplier;
@@ -99,6 +100,8 @@ public final class VatStation {
     public static void register() {
         if (Platform.INSTANCE.isLoaded(KitchenVat.MOD_ID)) {
             Diegesis.register(TYPE);
+            // The station's book and lid on the client read the vat's recipes, which a client is not sent by the game.
+            KitchenRecipes.sync(() -> BuiltInRegistries.RECIPE_TYPE.getValue(KitchenVat.AGING));
         }
     }
 

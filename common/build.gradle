@@ -10,9 +10,10 @@ neoForge {
     neoFormVersion = neo_form_version
 }
 
-// Minecraft 26.3: the recipe viewers and addon mods have no 26.3 Fabric builds yet, so what compiles against them is left
-// out of the build (the sources stay). The loader projects leave out the same files. The addon mixins are also left out of
-// handson_delight.mixins.json; the rest of the addon support finds the addons at runtime and stays dormant without them.
+// Minecraft 26.3: the recipe viewers and most addon mods have no 26.3 Fabric builds yet, so what compiles against them is
+// left out of the build (the sources stay). The loader projects leave out the same files. The addon mixins are also left out
+// of handson_delight.mixins.json; the rest of the addon support finds the addons at runtime and stays dormant without them.
+// Cultural Delights has one: the mixins of its oven and vat are built against it.
 ext.compatSources = [
         'com/pockyl/handson_delight/compat/jei/**',
         'com/pockyl/handson_delight/compat/emi/**',
@@ -21,10 +22,6 @@ ext.compatSources = [
         'com/pockyl/handson_delight/mixin/DecoratedBoardContentMixin.java',
         'com/pockyl/handson_delight/mixin/DecoratedBoardMixin.java',
         'com/pockyl/handson_delight/mixin/KegMixin.java',
-        'com/pockyl/handson_delight/mixin/OvenMixin.java',
-        'com/pockyl/handson_delight/mixin/VatMixin.java',
-        'com/pockyl/handson_delight/mixin/VatSparksMixin.java',
-        'com/pockyl/handson_delight/mixin/VatUprightMixin.java',
 ]
 sourceSets.main.java.exclude(compatSources)
 
@@ -41,6 +38,9 @@ dependencies {
     compileOnly("net.fabricmc.fabric-api:fabric-api-base:${fabric_api_base_version}") { transitive = false }
     // Its cooking pot is an extended menu provider of Fabric's menu API, which the game tests read it as.
     compileOnly("net.fabricmc.fabric-api:fabric-menu-api-v1:${fabric_menu_api_version}") { transitive = false }
+    // Cultural Delights' oven and vat are stations: their block entities send their content to clients through mixins compiled
+    // against its 26.3 Fabric build.
+    compileOnly("maven.modrinth:cultural-delights:${cultural_delights_fabric_version}") { transitive = false }
 }
 
 repositories {

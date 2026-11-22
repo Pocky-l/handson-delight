@@ -10,6 +10,7 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     compileOnly("maven.modrinth:farmers-delight-refabricated:${farmers_delight_refabricated_version}") { transitive = false }
+    compileOnly("maven.modrinth:cultural-delights:${cultural_delights_fabric_version}") { transitive = false }
     // The API is in Diegesis' common jar; the Fabric jar of the library plays in the game.
     compileOnly "com.pockyl.diegesis:common:${diegesis_version}"
 }
@@ -53,7 +54,10 @@ dependencies {
     gameTestMods "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     // Not in the fabric-api jar: the module that runs the tests (the version fabric-api's POM names).
     gameTestMods 'net.fabricmc.fabric-api:fabric-gametest-api-v1:4.0.36+3434d6d95d'
-    // Minecraft 26.3: no addons (-Paddons) until they have 26.3 Fabric builds.
+    // -Paddons: the addons with a 26.3 Fabric build whose stations open: Cultural Delights' oven and vat.
+    if (providers.gradleProperty('addons').isPresent()) {
+        gameTestMods "maven.modrinth:cultural-delights:${cultural_delights_fabric_version}"
+    }
 }
 
 tasks.register('runGameTest', net.fabricmc.loom.task.prod.ServerProductionRunTask) {

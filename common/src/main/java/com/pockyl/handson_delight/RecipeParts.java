@@ -21,6 +21,7 @@ import com.pockyl.handson_delight.mixin.ShapedRecipeAccessor;
 import com.pockyl.handson_delight.mixin.ShapelessRecipeAccessor;
 import com.pockyl.handson_delight.mixin.SingleItemRecipeAccessor;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +37,27 @@ public final class RecipeParts {
      * this very object.
      */
     public static final Ingredient NOTHING = emptyTag(TagKey.create(Registries.ITEM, HandsOnDelight.id("nothing")));
+
+    /** The names another mod's recipe still gives its result by, tried in this order. */
+    private static final List<String> RESULT_NAMES = List.of("getResultItem", "getOutput");
+    /** Per recipe class: its own method that gives its result, or null. */
+    private static final ClassValue<Method> RESULT_METHODS = new ClassValue<>() {
+        @Override
+        protected Method computeValue(Class<?> type) {
+            for (String name : RESULT_NAMES) {
+                try {
+                    Method method = type.getMethod(name);
+                    Class<?> returns = method.getReturnType();
+                    if (returns == ItemStack.class || returns == ItemStackTemplate.class) {
+                        return method;
+                    }
+                } catch (NoSuchMethodException | RuntimeException e) {
+                    // Not this name: try the next.
+                }
+            }
+            return null;
+        }
+    };
 
     private RecipeParts() {
     }
@@ -97,7 +119,8 @@ public final class RecipeParts {
 
     /**
      * What the recipe makes without knowing what it is made of, as {@code getResultItem} said: empty for a recipe that makes nothing
-     * set (a special craft), and for a cutting recipe its first result.
+     * set (a special craft), and for a cutting recipe its first result. Another mod's recipe is asked as it still answers
+     * ({@link #ownResult}).
      */
     public static ItemStack result(Recipe<?> recipe) {
         ItemStackTemplate result = switch (recipe) {
@@ -108,7 +131,28 @@ public final class RecipeParts {
             case ShapelessRecipe shapeless -> ((ShapelessRecipeAccessor) shapeless).handson$result();
             default -> null;
         };
-        return result == null ? ItemStack.EMPTY : result.create();
+        return result != null ? result.create() : ownResult(recipe);
+    }
+
+    /**
+     * The result of a recipe of another mod. Minecraft's recipes no longer say what they make, but the ports of the addons kept a
+     * method that does (Cultural Delights' oven and vat: {@code getResultItem()} with no arguments, {@code getOutput()}); without one,
+     * empty.
+     */
+    private static ItemStack ownResult(Recipe<?> recipe) {
+        Method method = RESULT_METHODS.get(recipe.getClass());
+        if (method == null) {
+            return ItemStack.EMPTY;
+        }
+        try {
+            return switch (method.invoke(recipe)) {
+                case ItemStack stack -> stack;
+                case ItemStackTemplate template -> template.create();
+                case null, default -> ItemStack.EMPTY;
+            };
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return ItemStack.EMPTY;
+        }
     }
 
     /** What a cutting recipe gives, each result as a stack, before its chances are rolled (as {@code getResults} gave them). */

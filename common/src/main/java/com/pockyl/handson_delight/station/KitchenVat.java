@@ -232,13 +232,19 @@ public final class KitchenVat {
             if (result.isEmpty() || ingredients.isEmpty() || ingredients.size() > INGREDIENTS || ingredients.stream().anyMatch(Ingredient::isEmpty)) {
                 continue;
             }
-            Ingredient container = call(recipe, "getContainer", Ingredient.class, RecipeParts.NOTHING);
+            Ingredient container = container(call(recipe, "getContainer", Object.class, null));
             Object temperature = call(recipe, "getTemperature", Object.class, null);
             Temperature wanted = temperature instanceof StringRepresentable named ? Temperature.of(named.getSerializedName()) : Temperature.NORMAL;
             int ticks = call(recipe, "getCookTime", Integer.class, 200);
             recipes.add(new Aging(holder.id().identifier(), ingredients, container, wanted, result.copy(), ticks));
         }
         return recipes;
+    }
+
+    /** The recipe's container as it gives it: an ingredient, or one in an optional (its 26.3 build); a gap for none. */
+    private static Ingredient container(Object given) {
+        Object container = given instanceof Optional<?> optional ? optional.orElse(null) : given;
+        return container instanceof Ingredient ingredient ? ingredient : RecipeParts.NOTHING;
     }
 
     private static <T> T call(Recipe<?> recipe, String method, Class<T> type, T otherwise) {

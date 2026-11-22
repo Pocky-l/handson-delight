@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.2+26.3] - Unreleased
+### Fixed
+- [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven shares a stack out over its tray, and its recipe book lists the oven's dishes ([#52](https://github.com/Pocky-l/handson-delight/issues/52)).
+- Cultural Delights' vat reads its recipes, ages a drink without its container and stands upright when placed, as on 1.21.1.
+- Everyone near Cultural Delights' oven or vat sees what lies in it.
+
 ## [1.6.1+26.3] - 2026-11-22
 ### Fixed
 - Food on the skillet no longer vanishes with an error in the log when another mod's item model is in the game.

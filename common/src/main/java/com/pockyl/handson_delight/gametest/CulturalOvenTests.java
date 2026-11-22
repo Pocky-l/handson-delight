@@ -1,19 +1,24 @@
 package com.pockyl.handson_delight.gametest;
 
+import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import com.pockyl.diegesis.api.state.SlotRef;
+import com.pockyl.handson_delight.KitchenRecipes;
+import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.StationRecipes;
 import com.pockyl.handson_delight.station.CulturalOven;
@@ -43,6 +48,7 @@ public final class CulturalOvenTests {
     }
 
     private static final String PIE = "culturaldelights:baking/butterscotch_cinnamon_pie";
+    private static final String SAUSAGES_AND_MASH = "culturaldelights:baking/sausages_and_mash";
 
     private record Setup(PotTests.TestStation station, OvenLogic logic, CulturalOven oven, BlockPos pos) {
     }
@@ -102,9 +108,9 @@ public final class CulturalOvenTests {
                 && own.get().result().is(cultural("butterscotch_cinnamon_pie")), "its own pie is read with five things and a time");
         CulturalOven.recipesOf(helper.getLevel()).stream().filter(recipe -> recipe.result().is(farmers("apple_pie"))).findFirst()
                 .ifPresent(pie -> helper.assertTrue(pie.needed().size() == 9, "the apple pie takes nine things, got " + pie.needed().size()));
-        // The oven sends what lies in it to clients (OvenMixin): its update carries its inventory.
+        // The oven sends what lies in it to clients (OvenMixin): its update carries its items, as its 26.3 build saves them.
         setup.oven.setPlace(0, new ItemStack(Items.WHEAT));
-        helper.assertTrue(setup.oven.blockEntity().getUpdateTag(helper.getLevel().registryAccess()).contains("inventory"),
+        helper.assertTrue(setup.oven.blockEntity().getUpdateTag(helper.getLevel().registryAccess()).contains("Items"),
                 "the oven's update carries what lies in it");
         helper.succeed();
     }
@@ -236,6 +242,54 @@ public final class CulturalOvenTests {
         }
         // The stack keeps its place and the sticks go to free places: what lies on the tray does not move about.
         helper.assertTrue(sticks == 3, "one stick a place, three places, got " + sticks);
+        helper.succeed();
+    }
+
+    /**
+     * Three wheat dough laid as one stack are shared out over three places: the bread from dough is on the tray, as the oven bakes it.
+     */
+    public static void doughIsSharedOutForBread(GameTestHelper helper) {
+        Setup setup = oven(helper);
+        if (setup == null) {
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        setup.station.users.add(player);
+        setup.logic.onOpen(setup.station, player);
+        player.getInventory().setItem(0, new ItemStack(farmers("wheat_dough"), 3));
+        CompoundTag lay = new CompoundTag();
+        lay.putInt(OvenStation.FROM, 0);
+        setup.logic.onCustomAction(setup.station, player, OvenStation.ACTION_LAY, lay);
+        int places = 0;
+        for (int slot = 0; slot < CulturalOven.PLACES; slot++) {
+            ItemStack there = setup.oven.item(slot);
+            places += there.is(farmers("wheat_dough")) && there.getCount() == 1 ? 1 : 0;
+        }
+        helper.assertTrue(places == 3, "one dough a place, three places, got " + places);
+        Optional<KitchenOven.Baking> making = KitchenOven.matching(CulturalOven.recipesOf(helper.getLevel()),
+                setup.station.state().getItems(OvenStation.INGREDIENTS));
+        helper.assertTrue(making.isPresent() && making.get().result().is(Items.BREAD), "the tray makes bread");
+        helper.succeed();
+    }
+
+    /**
+     * A client is sent the oven's recipes with the station's (it gets none from the game since 1.21.2), and reads them back whole: the
+     * book lists sausages and mash, of six things.
+     */
+    public static void theClientIsSentTheOvenRecipes(GameTestHelper helper) {
+        if (!Platform.INSTANCE.isLoaded(CulturalOven.MOD_ID)) {
+            helper.succeed();
+            return;
+        }
+        KitchenRecipes.Payload sent = KitchenRecipes.payload(helper.getLevel());
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
+        KitchenRecipes.Payload.CODEC.encode(buffer, sent);
+        KitchenRecipes.Payload received = KitchenRecipes.Payload.CODEC.decode(buffer);
+        Optional<RecipeHolder<?>> mash = received.recipes().stream()
+                .filter(holder -> holder.id().identifier().toString().equals(SAUSAGES_AND_MASH)).findFirst();
+        helper.assertTrue(mash.isPresent(), "the client is sent " + SAUSAGES_AND_MASH);
+        helper.assertTrue(RecipeParts.result(mash.get().value()).is(cultural("sausages_and_mash")), "and reads what it makes");
+        helper.assertTrue(RecipeParts.ingredients(mash.get().value()).size() == 6, "and its six things");
         helper.succeed();
     }
 }

@@ -17,6 +17,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,7 +29,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.pockyl.handson_delight.HandsOnConfig;
-import com.pockyl.handson_delight.ItemNbt;
 import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.station.KitchenVat;
 
@@ -96,16 +97,16 @@ abstract class VatMixin extends BlockEntity implements KitchenVat.Servings {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    @Inject(method = {"saveAdditional", "method_11007"}, at = @At("TAIL"))
-    private void handson$saveServings(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
+    @Inject(method = "saveAdditional", at = @At("TAIL"))
+    private void handson$saveServings(ValueOutput output, CallbackInfo ci) {
         if (!handson$servings.isEmpty()) {
-            tag.put(HANDSON_SERVINGS, ItemNbt.save(handson$servings, registries));
+            output.store(HANDSON_SERVINGS, ItemStack.CODEC, handson$servings);
         }
     }
 
-    @Inject(method = {"loadAdditional", "method_11014"}, at = @At("TAIL"))
-    private void handson$loadServings(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
-        handson$servings = tag.contains(HANDSON_SERVINGS) ? ItemNbt.parse(registries, tag.getCompound(HANDSON_SERVINGS)) : ItemStack.EMPTY;
+    @Inject(method = "loadAdditional", at = @At("TAIL"))
+    private void handson$loadServings(ValueInput input, CallbackInfo ci) {
+        handson$servings = input.read(HANDSON_SERVINGS, ItemStack.CODEC).orElse(ItemStack.EMPTY);
     }
 
     /**
@@ -135,7 +136,7 @@ abstract class VatMixin extends BlockEntity implements KitchenVat.Servings {
             cir.setReturnValue(false);
             return;
         }
-        Optional<VatRecipe> recipe = KitchenRecipes.byKey(level, aging.id()).map(RecipeHolder::value)
+        Optional<VatRecipe> recipe = KitchenRecipes.byId(level, aging.id()).map(RecipeHolder::value)
                 .filter(VatRecipe.class::isInstance).map(VatRecipe.class::cast);
         if (recipe.isEmpty()) {
             return;

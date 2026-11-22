@@ -17,6 +17,9 @@
     "StoveBlockEntityMixin",
     "StoveBlockMixin",
     "PlayerListMixin",
+    "OvenMixin",
+    "VatMixin",
+    "VatUprightMixin",
     "ShapedRecipeAccessor",
     "ShapelessRecipeAccessor",
     "SingleItemRecipeAccessor",
@@ -31,6 +34,7 @@
     "StoveSmokeMixin",
     "AddonStoveSmokeMixin",
     "CampfireSmokeMixin",
+    "VatSparksMixin",
     "GrillSmokeMixin",
     "GrillSizzleMixin"
   ],

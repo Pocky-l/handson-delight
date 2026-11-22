@@ -39,4 +39,14 @@ public final class FabricOvenTests {
     public void aStackIsSharedOutForItsRecipe(GameTestHelper helper) {
         CulturalOvenTests.aStackIsSharedOutForItsRecipe(helper);
     }
+
+    @GameTest(maxTicks = 100)
+    public void doughIsSharedOutForBread(GameTestHelper helper) {
+        CulturalOvenTests.doughIsSharedOutForBread(helper);
+    }
+
+    @GameTest(maxTicks = 100)
+    public void theClientIsSentTheOvenRecipes(GameTestHelper helper) {
+        CulturalOvenTests.theClientIsSentTheOvenRecipes(helper);
+    }
 }

@@ -3,6 +3,7 @@ package com.pockyl.handson_delight.station;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
@@ -20,6 +21,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Cultural Delights' oven, as the oven station sees it. Its block entity keeps an item handler of the loader's own class (NeoForge's,
@@ -271,7 +273,7 @@ public final class CulturalOven implements KitchenOven {
             }
             int ticks = call(recipe, "getCookTime", 200);
             if (isShaped) {
-                shaped.add(new Baking(holder.id().identifier(), List.copyOf(RecipeParts.ingredients(recipe)), call(recipe, "getWidth", 0),
+                shaped.add(new Baking(holder.id().identifier(), gridOf(recipe), call(recipe, "getWidth", 0),
                         call(recipe, "getHeight", 0), result.copy(), ticks, OvenStation.KIND_FOOD));
             } else {
                 loose.add(new Baking(holder.id().identifier(), List.copyOf(RecipeParts.ingredients(recipe)), 0, 0, result.copy(), ticks,
@@ -283,6 +285,26 @@ public final class CulturalOven implements KitchenOven {
         listedFor = manager;
         listed = List.copyOf(shaped);
         return listed;
+    }
+
+    /**
+     * A laid-out recipe's grid, row by row with its blank places as gaps ({@link RecipeParts#NOTHING}): its {@code getIngredients()}
+     * gives the places as optional ingredients, where the game's own list of what it takes leaves the blanks out.
+     */
+    private static List<Ingredient> gridOf(Recipe<?> recipe) {
+        try {
+            if (recipe.getClass().getMethod("getIngredients").invoke(recipe) instanceof List<?> places) {
+                List<Ingredient> grid = new ArrayList<>(places.size());
+                for (Object place : places) {
+                    Object inside = place instanceof Optional<?> optional ? optional.orElse(null) : place;
+                    grid.add(inside instanceof Ingredient ingredient ? ingredient : RecipeParts.NOTHING);
+                }
+                return List.copyOf(grid);
+            }
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            // Read as the game lists what it takes, below.
+        }
+        return List.copyOf(RecipeParts.ingredients(recipe));
     }
 
     private static int call(Recipe<?> recipe, String method, int otherwise) {

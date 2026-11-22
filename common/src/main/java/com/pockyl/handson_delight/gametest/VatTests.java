@@ -133,7 +133,8 @@ public final class VatTests {
         helper.assertTrue(KitchenVat.isContainer(recipes, new ItemStack(Items.GLASS_BOTTLE)), "a bottle is a container");
         helper.assertFalse(KitchenVat.isContainer(recipes, new ItemStack(Items.SUGAR)), "sugar is an ingredient");
         setup.vat.setItem(0, new ItemStack(Items.WHEAT));
-        helper.assertTrue(setup.vat.blockEntity().getUpdateTag(helper.getLevel().registryAccess()).contains("inventory"),
+        // Its 26.3 build saves its items as a container does.
+        helper.assertTrue(setup.vat.blockEntity().getUpdateTag(helper.getLevel().registryAccess()).contains("Items"),
                 "the vat's update carries what lies in it");
         helper.succeed();
     }

@@ -125,6 +125,19 @@ public interface KitchenKettle {
     /** Whether {@code stack} is a vessel of the kettle (a bucket, a cup, a bottle, a drink): it is poured or filled, never dropped in. */
     boolean handson$isVessel(ItemStack stack);
 
+    /**
+     * Whether {@code stack} goes into the kettle's slots: anything that is no vessel, and a vessel that a recipe steeps whole while it
+     * does not pour in now (a milk bottle for Youkai's Feasts' tea mocha in a kettle of water, a milk bucket for Respite's long teas in
+     * a kettle of tea). Where it pours (milk into an empty Respite kettle, for hot cocoa) it is poured.
+     */
+    default boolean handson$dropsIn(ItemStack stack) {
+        if (!handson$isVessel(stack)) {
+            return true;
+        }
+        return !handson$canPour(stack) && !handson$canServe(stack)
+                && handson$recipes().stream().anyMatch(recipe -> recipe.ingredients().stream().anyMatch(ingredient -> ingredient.test(stack)));
+    }
+
     /** A full container of {@code fluid} as the kettle pours it (a bottle of green tea), or its bucket; empty for none. */
     ItemStack handson$drinkOf(Fluid fluid);
 

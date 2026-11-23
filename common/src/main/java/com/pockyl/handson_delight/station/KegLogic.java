@@ -218,10 +218,10 @@ public final class KegLogic implements StationLogic {
         }
     }
 
-    /** Only food goes in, and only at the open top: buckets, bottles and drinks are poured or filled, never dropped in. */
+    /** Only food goes in, and only at the open top: buckets, bottles and drinks are poured or filled, unless a recipe takes one. */
     @Override
     public boolean mayPlace(StationContext station, Player player, SlotRef slot, ItemStack stack) {
-        return isOpen(station) && !keg.handson$isVessel(stack);
+        return isOpen(station) && keg.handson$dropsIn(stack);
     }
 
     /**

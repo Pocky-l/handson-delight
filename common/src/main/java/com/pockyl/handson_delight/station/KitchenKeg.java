@@ -164,6 +164,19 @@ public interface KitchenKeg {
     /** Whether {@code stack} is a vessel of the keg (a bucket, a bottle, a tankard, a drink): it is poured or filled, never dropped in. */
     boolean handson$isVessel(ItemStack stack);
 
+    /**
+     * Whether {@code stack} goes into the keg's slots: anything that is no vessel, and a vessel that a recipe ferments whole while it
+     * does not pour in now (a honey bottle for Brewin' and Chewin's pale jane in a keg of rice wine). Where it pours (honey into an
+     * empty keg, for mead) it is poured.
+     */
+    default boolean handson$dropsIn(ItemStack stack) {
+        if (!handson$isVessel(stack)) {
+            return true;
+        }
+        return !handson$canPour(stack) && !handson$canTap(stack) && !handson$canDrawBack(stack)
+                && handson$recipes().stream().anyMatch(recipe -> recipe.ingredients().stream().anyMatch(ingredient -> ingredient.test(stack)));
+    }
+
     /** The colour {@code fluid} is tinted with where it is drawn (its own texture's tint), 0 when it is not known here. */
     default int handson$tint(Fluid fluid) {
         return 0;

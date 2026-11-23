@@ -131,10 +131,10 @@ public final class KettleLogic implements StationLogic {
         return StationRecipes.matches(recipe.ingredients(), items);
     }
 
-    /** Only what steeps goes in, and only at the open top: buckets, cups and drinks are poured or filled, never dropped in. */
+    /** Only what steeps goes in, and only at the open top: buckets, cups and drinks are poured or filled, unless a recipe steeps one. */
     @Override
     public boolean mayPlace(StationContext station, Player player, SlotRef slot, ItemStack stack) {
-        return kettle.handson$isOpen() && !kettle.handson$isVessel(stack);
+        return kettle.handson$isOpen() && kettle.handson$dropsIn(stack);
     }
 
     @Override

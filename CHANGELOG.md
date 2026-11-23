@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.6.3+26.1.2] - Unreleased
+## [1.6.3+26.1.2] - 2026-11-23
 ### New
 - Minecraft 26.1.2, on Fabric with [Farmer's Delight Refabricated](https://modrinth.com/mod/farmers-delight-refabricated): everything of 1.6.3 on 26.3, [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven and vat included.
 - Ported by HoneyShard ([#54](https://github.com/Pocky-l/handson-delight/pull/54)).

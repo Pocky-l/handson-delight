@@ -1,6 +1,9 @@
 # Changelog
 
 ## [1.6.3+26.3] - Unreleased
+### Fixed
+- [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven no longer sits with a full tray that never bakes: a dish left over from the last bake goes to the cook, and the new one bakes.
+
 ### Changed
 - Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.17.1+26.3, whose network format changed: client and server need this version of both mods.
 

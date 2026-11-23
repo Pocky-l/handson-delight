@@ -50,6 +50,8 @@ public final class OvenLogic implements StationLogic {
      * and lies still a moment, the oven takes it in ({@link #TAKE_IN_AFTER}). Off once it is in, and when the cook opens it by hand.
      */
     private boolean armed;
+    /** The cook who last laid on the tray or picked in the book: handed what waits in the output when it is in the way. */
+    private Player lastCook;
     private long changedAt;
 
     public OvenLogic(StationContext station) {
@@ -99,10 +101,11 @@ public final class OvenLogic implements StationLogic {
         refresh(station);
     }
 
-    /** The last cook goes: the door is shut behind them. */
+    /** The last cook goes: the door is shut behind them, and they take along a dish that would keep what they laid from baking. */
     @Override
     public void onClose(StationContext station, Player player) {
         if (oven != null && station.users().stream().allMatch(user -> user == player) && isOpen(station)) {
+            makeWay(player, station.level());
             setDoor(station, false);
         }
     }
@@ -133,6 +136,8 @@ public final class OvenLogic implements StationLogic {
             return;
         }
         armed = false;
+        Player cook = station.users().contains(lastCook) ? lastCook : station.users().iterator().next();
+        makeWay(cook, station.level());
         if (makesDish(station.level())) {
             setDoor(station, false);
         }
@@ -140,10 +145,34 @@ public final class OvenLogic implements StationLogic {
 
     /** Whether the tray makes a dish now: a recipe of its bakeware (where it needs some) whose dish the output still has room for. */
     private boolean makesDish(Level level) {
-        List<KitchenOven.Baking> recipes = oven.recipes(level);
-        Optional<KitchenOven.Baking> recipe = oven.usesBakeware() ? KitchenOven.matching(recipes, grid(), oven.bakeware())
-                : KitchenOven.matching(recipes, grid());
+        Optional<KitchenOven.Baking> recipe = onTray(level);
         return recipe.isPresent() && room(recipe.get()) >= Math.max(1, recipe.get().result().getCount());
+    }
+
+    /** The recipe what lies on the tray makes, in the bakeware standing in the oven where it needs some, whatever waits in the output. */
+    private Optional<KitchenOven.Baking> onTray(Level level) {
+        List<KitchenOven.Baking> recipes = oven.recipes(level);
+        return oven.usesBakeware() ? KitchenOven.matching(recipes, grid(), oven.bakeware()) : KitchenOven.matching(recipes, grid());
+    }
+
+    /**
+     * A dish still waiting in the output that leaves no room for the one the tray makes (another dish, or a full stack) goes to the
+     * cook, as a baker takes the last batch out before the next goes in: the oven bakes nothing beside it, and the set would lie there
+     * with no sign why. Into the inventory, at the cook's feet what does not fit.
+     */
+    private void makeWay(Player cook, Level level) {
+        if (cook == null || level == null || oven.bakesEachPlace()) {
+            return;
+        }
+        Optional<KitchenOven.Baking> recipe = onTray(level);
+        ItemStack waiting = oven.output(0);
+        if (recipe.isEmpty() || waiting.isEmpty() || room(recipe.get()) >= Math.max(1, recipe.get().result().getCount())) {
+            return;
+        }
+        oven.setOutput(0, ItemStack.EMPTY);
+        oven.onTaken(cook, waiting.copy());
+        giveBack(cook, waiting);
+        cook.getInventory().setChanged();
     }
 
     /** The cook changed the tray or the bakeware: the oven takes it in once it lies still and makes a dish. */
@@ -219,6 +248,7 @@ public final class OvenLogic implements StationLogic {
                 setDoor(station, data.getBooleanOr(OvenStation.OPEN, false));
             }
             case OvenStation.ACTION_LAY -> {
+                lastCook = player;
                 if (!isOpen(station) && (!isBaking() || !oven.bakesEachPlace())) {
                     // The cook came with food: the door opens (the tray comes out) for it. An oven that bakes a set holds it while open.
                     setDoor(station, true);
@@ -232,6 +262,7 @@ public final class OvenLogic implements StationLogic {
                 }
             }
             case OvenStation.ACTION_FILL -> {
+                lastCook = player;
                 Identifier id = Identifier.tryParse(data.getStringOr(OvenStation.DISH, ""));
                 oven.recipes(station.level()).stream().filter(recipe -> recipe.id().equals(id)).findFirst().ifPresent(recipe -> {
                     // A recipe picked in the book opens the door for its ingredients to go in.

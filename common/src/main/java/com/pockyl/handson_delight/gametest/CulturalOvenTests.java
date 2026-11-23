@@ -1,11 +1,9 @@
 package com.pockyl.handson_delight.gametest;
 
-import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -664,18 +662,15 @@ public final class CulturalOvenTests {
     }
 
     /**
-     * A client is sent the oven's recipes with the station's (it gets none from the game since 1.21.2), and reads them back whole: the
-     * book lists sausages and mash, of six things.
+     * A client is sent the oven's recipes with the station's (it gets none from the game since 1.21.2), as a dedicated server's connection
+     * writes them, and reads them back whole: the book lists sausages and mash, of six things.
      */
     public static void theClientIsSentTheOvenRecipes(GameTestHelper helper) {
         if (!Platform.INSTANCE.isLoaded(CulturalOven.MOD_ID)) {
             helper.succeed();
             return;
         }
-        KitchenRecipes.Payload sent = KitchenRecipes.payload(helper.getLevel());
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
-        KitchenRecipes.Payload.CODEC.encode(buffer, sent);
-        KitchenRecipes.Payload received = KitchenRecipes.Payload.CODEC.decode(buffer);
+        KitchenRecipes.Payload received = TestConnection.sent(helper.getLevel(), KitchenRecipes.payload(helper.getLevel()));
         Optional<RecipeHolder<?>> mash = received.recipes().stream()
                 .filter(holder -> holder.id().identifier().toString().equals(SAUSAGES_AND_MASH)).findFirst();
         helper.assertTrue(mash.isPresent(), "the client is sent " + SAUSAGES_AND_MASH);

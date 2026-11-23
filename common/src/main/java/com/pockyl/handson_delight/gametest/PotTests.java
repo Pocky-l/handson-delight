@@ -38,6 +38,7 @@ import net.minecraft.world.phys.Vec3;
 import vectorwing.farmersdelight.common.crafting.CookingPotBookCategory;
 import vectorwing.farmersdelight.common.block.entity.CookingPotBlockEntity;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
+import vectorwing.farmersdelight.common.registry.ModRecipeTypes;
 
 import com.pockyl.diegesis.api.state.SlotRef;
 import com.pockyl.diegesis.api.state.StationState;
@@ -48,6 +49,7 @@ import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.ItemNbt;
+import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.platform.Platform;
 import com.pockyl.handson_delight.station.CookingPotStation;
@@ -59,7 +61,9 @@ import com.pockyl.handson_delight.station.StirSkill;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The station's rules against a real pot of Farmer's Delight, the same on every loader: each loader project runs these through its
@@ -1041,6 +1045,36 @@ public final class PotTests {
         helper.assertTrue(totals[0] == recipe.getCookTime(), "1.0: the recipe's " + recipe.getCookTime() + " ticks, got " + totals[0]);
         helper.assertTrue(totals[1] == 2 * recipe.getCookTime(), "2.0: twice the recipe's time, got " + totals[1]);
         empty(setup.pot);
+        helper.succeed();
+    }
+
+    /**
+     * A client is sent the pot's recipes as a dedicated server's connection writes them (it gets none from the game since 1.21.2) and
+     * reads each back whole: the book lists every dish of Farmer's Delight. A recipe the client could not read (a tag no mod fills, as
+     * an addon's recipe for a mod that is not there) is left out alone. Other tests lay their own recipes in meanwhile: only Farmer's
+     * Delight's are compared.
+     */
+    public static void theClientIsSentThePotsRecipes(GameTestHelper helper) {
+        List<RecipeHolder<?>> recipes = new ArrayList<>(KitchenRecipes.payload(helper.getLevel()).recipes());
+        List<RecipeHolder<?>> dishes = recipes.stream().filter(holder -> holder.value().getType() == ModRecipeTypes.COOKING.get()
+                && holder.id().identifier().getNamespace().equals(FarmersDelightContent.MOD_ID)).toList();
+        Identifier unreadable = HandsOnDelight.id("test/stew_of_a_missing_mod");
+        TagKey<Item> unfilled = TagKey.create(Registries.ITEM, HandsOnDelight.id("test/filled_by_no_mod"));
+        recipes.add(new RecipeHolder<>(TestRecipes.key(unreadable), TestRecipes.cooking(CookingPotBookCategory.MEALS,
+                List.of(Ingredient.of(HolderSet.emptyNamed(BuiltInRegistries.ITEM, unfilled)), Ingredient.of(Items.BEEF)),
+                new ItemStack(fd("beef_stew")), new ItemStack(Items.BOWL), 0.0F, 200)));
+        KitchenRecipes.Payload received = TestConnection.sent(helper.getLevel(), new KitchenRecipes.Payload(recipes));
+        Map<Identifier, RecipeHolder<?>> read = new HashMap<>();
+        received.recipes().forEach(holder -> read.put(holder.id().identifier(), holder));
+        helper.assertTrue(!read.containsKey(unreadable), "the recipe naming a tag no mod fills is left out");
+        helper.assertTrue(!dishes.isEmpty(), "the server has the pot's recipes");
+        for (RecipeHolder<?> dish : dishes) {
+            RecipeHolder<?> sent = read.get(dish.id().identifier());
+            helper.assertTrue(sent != null, "the client is sent " + dish.id().identifier() + ", " + read.size() + " recipes read");
+            helper.assertTrue(ItemStack.isSameItemSameComponents(RecipeParts.result(sent.value()), RecipeParts.result(dish.value()))
+                    && RecipeParts.ingredients(sent.value()).size() == RecipeParts.ingredients(dish.value()).size(),
+                    dish.id().identifier() + " reads back with its result and ingredients");
+        }
         helper.succeed();
     }
 

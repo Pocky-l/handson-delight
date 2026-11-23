@@ -2,6 +2,7 @@
 
 ## [1.6.4+26.3] - Unreleased
 ### Fixed
+- The stations' recipe books are no longer blank with [Polymer](https://modrinth.com/mod/polymer) installed ([#58](https://github.com/Pocky-l/handson-delight/issues/58)).
 - Going over from a station to a [Hands-On Vanilla](https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla) one, the recipe book goes away at once instead of hanging in the air for a second. Thanks to hummusaki ([#57](https://github.com/Pocky-l/handson-delight/pull/57)).
 
 ## [1.6.3+26.3] - 2026-11-23

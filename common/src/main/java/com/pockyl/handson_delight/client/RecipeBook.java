@@ -142,9 +142,9 @@ final class RecipeBook implements NodePainter {
     /**
      * What the player does not have yet: the icon dimmed toward the paper's brown, but solid. A see-through icon flickered under a
      * shader pack (Complementary and others): it draws partly see-through things dithered, and its temporal anti-aliasing moves the
-     * dither every frame. Solid icons stay steady.
+     * dither every frame. Solid icons stay steady. {@link #PAPER_TONE} darkened by about a quarter, warmer in blue.
      */
-    private static final int FADED = 0xFFB4A48C;
+    private static final int FADED = 0xFFB6A793;
     private static final int RULE = 0x405A3C18;
     /** Stars on a page: open, the part of the next one already earned, still shut. */
     private static final int STAR_OPEN = 0xFFD08A1E;
@@ -152,8 +152,10 @@ final class RecipeBook implements NodePainter {
     private static final int STAR_SHUT = 0x305A3C18;
     /** The paper texture: its size, the page in its corner (the fold on the left), the ribbon and the lit ribbon beside it. */
     private static final float PAPER_SIZE = 128.0F;
-    /** The paper's own colour, all over the page: what a see-through rect is laid on. */
-    private static final int PAPER_TONE = 0xF3EACB;
+    /** The paper's colour in the middle of the page (it darkens towards the edges): what the see-through colours are laid on. */
+    private static final int PAPER_TONE = 0xF6EED5;
+    /** The colour of the flat sprite the solid shapes are drawn with ({@link #WHITE}): it is no pure white. */
+    private static final int SPRITE_TONE = 0xCFD5D6;
     private static final float PAPER_U1 = UNITS_WIDE / PAPER_SIZE;
     private static final float PAPER_V1 = UNITS_HIGH / PAPER_SIZE;
     private static final float RIBBON_U = 80.0F;
@@ -2320,11 +2322,41 @@ final class RecipeBook implements NodePainter {
         canvas.text(bonus, left + starsWide + 3, line);
     }
 
+    /**
+     * What a sheet's see-through shapes lie on: the paper texture, its texel {@code u, v} under the sheet's (0, 0), going left as x
+     * grows when {@code mirrored}, multiplied by {@code tint} (RGB).
+     */
+    private record Ground(float u, float v, boolean mirrored, int tint) {
+        static final Ground PAGE = new Ground(0.0F, 0.0F, false, 0xFFFFFF);
+        static final Ground MIRRORED_PAGE = new Ground(UNITS_WIDE, 0.0F, true, 0xFFFFFF);
+
+        float u(float x) {
+            return mirrored ? u - x : u + x;
+        }
+
+        /**
+         * A see-through colour as it looks laid here, as a solid tint of the paper under it: exact where the paper is
+         * {@link #PAPER_TONE}, and darker where the paper is, as a shadow is (the page darkens towards its edges).
+         */
+        int laid(int argb) {
+            float alpha = (argb >>> 24) / 255.0F;
+            int laid = 0xFF000000;
+            for (int shift = 16; shift >= 0; shift -= 8) {
+                float shape = (argb >> shift & 0xFF) * (SPRITE_TONE >> shift & 0xFF) / (255.0F * 255.0F);
+                float paper = (PAPER_TONE >> shift & 0xFF) / 255.0F;
+                float tone = (tint >> shift & 0xFF) / 255.0F * (1.0F - alpha) + alpha * shape / paper;
+                laid |= Math.min(255, Math.round(tone * 255.0F)) << shift;
+            }
+            return laid;
+        }
+    }
+
     /** Drawing on a page. */
     private final class Sheet {
         private final PoseStack poseStack;
         private final SceneBuffers buffers;
         private final TextureAtlasSprite white;
+        private Ground ground = Ground.PAGE;
 
         Sheet(PoseStack poseStack, SceneBuffers buffers) {
             this.poseStack = poseStack;
@@ -2335,27 +2367,27 @@ final class RecipeBook implements NodePainter {
         void paper(boolean mirrored) {
             VertexConsumer consumer = buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(PAPER));
             quad(consumer, 0.0F, 0.0F, UNITS_WIDE, UNITS_HIGH, 0.0F, 0xFFFFFFFF, mirrored ? PAPER_U1 : 0.0F, mirrored ? 0.0F : PAPER_U1, 0.0F, PAPER_V1);
-        }
-
-        void rect(float x, float y, float width, float height, float lift, int argb) {
-            VertexConsumer consumer = buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(TextureAtlas.LOCATION_BLOCKS));
-            quad(consumer, x, y, x + width, y + height, lift, onPaper(argb), white.getU0(), white.getU1(), white.getV0(), white.getV1());
+            ground = mirrored ? Ground.MIRRORED_PAGE : Ground.PAGE;
         }
 
         /**
-         * A see-through colour as it looks laid on the paper, solid. A shader pack (Complementary and others) draws what is partly
-         * see-through dithered and its temporal anti-aliasing moves the dither every frame, so the wells, the fold's shade and the
-         * rules flickered. Everything a rect is laid on is the paper, which is one colour ({@link #PAPER_TONE}).
+         * A see-through colour is drawn solid, as the paper under it tinted ({@link Ground#laid}): a shader pack (Complementary and
+         * others) draws what is partly see-through dithered and its temporal anti-aliasing moves the dither every frame, so the
+         * wells, the fold's shade, the rules, stars and tab edges flickered. The paper itself, not one colour, as it is not one colour.
          */
-        private static int onPaper(int argb) {
-            int a = argb >>> 24;
-            if (a == 0xFF) {
-                return argb;
+        void rect(float x, float y, float width, float height, float lift, int argb) {
+            if (argb >>> 24 == 0xFF) {
+                VertexConsumer consumer = buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(TextureAtlas.LOCATION_BLOCKS));
+                quad(consumer, x, y, x + width, y + height, lift, argb, white.getU0(), white.getU1(), white.getV0(), white.getV1());
+                return;
             }
-            int red = ((argb >> 16 & 0xFF) * a + (PAPER_TONE >> 16 & 0xFF) * (0xFF - a)) / 0xFF;
-            int green = ((argb >> 8 & 0xFF) * a + (PAPER_TONE >> 8 & 0xFF) * (0xFF - a)) / 0xFF;
-            int blue = ((argb & 0xFF) * a + (PAPER_TONE & 0xFF) * (0xFF - a)) / 0xFF;
-            return 0xFF000000 | red << 16 | green << 8 | blue;
+            quad(buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(PAPER)), x, y, x + width, y + height, lift, ground.laid(argb), ground.u(x) / PAPER_SIZE,
+                    ground.u(x + width) / PAPER_SIZE, (ground.v() + y) / PAPER_SIZE, (ground.v() + y + height) / PAPER_SIZE);
+        }
+
+        /** The paper of a tab or slip standing over the page, {@code high} over its top, from {@code x}, tinted. */
+        private Ground tabGround(float x, float high, int tint) {
+            return new Ground(TAB_PAPER_U - x, TAB_PAPER_V + high, false, tint & 0xFFFFFF);
         }
 
         /**
@@ -2371,12 +2403,15 @@ final class RecipeBook implements NodePainter {
             float v0 = TAB_PAPER_V / PAPER_SIZE;
             quad(buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(PAPER)), x, -high, x + TAB_WIDE, bottom, chosen ? 0.05F : 0.0F, paper, u0,
                     u0 + TAB_WIDE / PAPER_SIZE, v0, v0 + (bottom + high) / PAPER_SIZE);
+            Ground page = ground;
+            ground = tabGround(x, high, paper);
             if (washed) {
                 rect(x + 1.0F, -high + 1.0F, TAB_WIDE - 2.0F, high - 1.0F + bottom, 0.08F, WELL_READY);
             }
             rect(x + 1.0F, -high, TAB_WIDE - 2.0F, 1.0F, 0.1F, TAB_EDGE);
             rect(x, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
             rect(x + TAB_WIDE - 1.0F, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
+            ground = page;
             if (!icon.isEmpty()) {
                 item(icon, x + (TAB_WIDE - TAB_ICON) / 2.0F, -high + 2.0F - nod, TAB_ICON, !chosen && !lit && !washed);
             }
@@ -2388,9 +2423,12 @@ final class RecipeBook implements NodePainter {
             float v0 = TAB_PAPER_V / PAPER_SIZE;
             quad(buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(PAPER)), x, -high, x + wide, 1.0F, 0.05F, lit ? 0xFFF6F0E2 : 0xFFFFFFFF, u0,
                     u0 + wide / PAPER_SIZE, v0, v0 + (high + 1.0F) / PAPER_SIZE);
+            Ground page = ground;
+            ground = tabGround(x, high, lit ? 0xFFF6F0E2 : 0xFFFFFFFF);
             rect(x + 1.0F, -high, wide - 2.0F, 1.0F, 0.1F, TAB_EDGE);
             rect(x, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
             rect(x + wide - 1.0F, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
+            ground = page;
         }
 
         /** A magnifying glass in ink, 7 units square: a ring and its handle going down to the right. */
@@ -2429,6 +2467,8 @@ final class RecipeBook implements NodePainter {
             float v0 = TAB_PAPER_V / PAPER_SIZE;
             quad(buffers.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.text(PAPER)), x, -high, x + ARROW_TAB_WIDE, 0.0F, 0.0F, paper, u0,
                     u0 + ARROW_TAB_WIDE / PAPER_SIZE, v0, v0 + high / PAPER_SIZE);
+            Ground page = ground;
+            ground = tabGround(x, high, paper);
             rect(x + 1.0F, -high, ARROW_TAB_WIDE - 2.0F, 1.0F, 0.1F, TAB_EDGE);
             rect(x, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
             rect(x + ARROW_TAB_WIDE - 1.0F, -high + 1.0F, 1.0F, high - 1.0F, 0.1F, TAB_EDGE);
@@ -2441,6 +2481,7 @@ final class RecipeBook implements NodePainter {
                 int wide = ARROW_TAB_HEAD - Math.abs(row - middle);
                 rect(next ? left : left + ARROW_TAB_HEAD - wide, top + row, wide, 1.0F, 0.15F, colour);
             }
+            ground = page;
         }
 
         /**
@@ -2478,7 +2519,7 @@ final class RecipeBook implements NodePainter {
             item(stack, x, y, size, false);
         }
 
-        /** {@code faded}: what the player does not have yet, the icon itself dimmed ({@link #FADED}), solid so it stays steady under a shader pack. */
+        /** {@code faded}: what the player does not have yet, the icon dimmed ({@link #FADED}), solid so it stays steady under a shader pack. */
         void item(ItemStack stack, float x, float y, float size, boolean faded) {
             poseStack.pushPose();
             poseStack.translate(x + size / 2.0F, y + size / 2.0F, ITEM_LIFT);

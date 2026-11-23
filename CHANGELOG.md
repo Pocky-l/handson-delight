@@ -6,6 +6,9 @@
 - Going over from a station to a [Hands-On Vanilla](https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla) one, the recipe book goes away at once instead of hanging in the air for a second. Thanks to hummusaki ([#57](https://github.com/Pocky-l/handson-delight/pull/57)).
 - A crafting recipe of another mod or a datapack that takes the same things as a dish of the cutting board is made in the crafting grid instead of nothing.
 
+### Changed
+- The recipe book has a new cover and paper, drawn by Catalyst.
+
 ## [1.6.3+26.1.2] - 2026-11-23
 ### New
 - Minecraft 26.1.2, on Fabric with [Farmer's Delight Refabricated](https://modrinth.com/mod/farmers-delight-refabricated): everything of 1.6.3 on 26.3, [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven and vat included.

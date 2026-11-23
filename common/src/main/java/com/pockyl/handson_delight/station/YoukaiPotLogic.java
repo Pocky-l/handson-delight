@@ -4,7 +4,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Prediction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -235,7 +234,7 @@ public final class YoukaiPotLogic implements StationLogic {
         // What does not fit drops, and only that: the inventory keeps the part it took.
         ItemStack given = back.copy();
         if (!player.getInventory().add(given)) {
-            player.drop(given, false, Prediction.SERVER_ONLY);
+            player.drop(given, false);
         }
         CompoundTag data = new CompoundTag();
         data.put(YoukaiPotStation.STACK, ItemNbt.save(back, station.level().registryAccess()));

@@ -2,7 +2,6 @@ package com.pockyl.handson_delight.station;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -121,7 +120,7 @@ public final class BasinLogic implements StationLogic {
         data.put(BasinStation.STACK, ItemNbt.save(taken.copyWithCount(1), station.level().registryAccess()));
         station.effect(BasinStation.EFFECT_TAKEN, "basin", data);
         if (!player.getInventory().add(taken)) {
-            player.drop(taken, false, Prediction.SERVER_ONLY);
+            player.drop(taken, false);
         }
     }
 
@@ -164,7 +163,7 @@ public final class BasinLogic implements StationLogic {
         for (int i = 0; i < made; i++) {
             ItemStack given = result.copy();
             if (!player.getInventory().add(given)) {
-                player.drop(given, false, Prediction.SERVER_ONLY);
+                player.drop(given, false);
             }
         }
         CompoundTag data = new CompoundTag();

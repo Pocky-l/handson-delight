@@ -3,7 +3,6 @@ package com.pockyl.handson_delight.station;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Prediction;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
@@ -134,7 +133,7 @@ public final class CuisineLogic implements StationLogic {
         // What does not fit drops, and only that: the inventory keeps the part it took.
         ItemStack given = back.copy();
         if (!given.isEmpty() && !player.getInventory().add(given)) {
-            player.drop(given, false, Prediction.SERVER_ONLY);
+            player.drop(given, false);
         }
         CompoundTag data = new CompoundTag();
         data.put(CuisineBoardStation.STACK, ItemNbt.save(back, station.level().registryAccess()));
@@ -196,7 +195,7 @@ public final class CuisineLogic implements StationLogic {
             pieces.add(ItemNbt.save(result, station.level().registryAccess()));
             ItemStack given = result.copy();
             if (!player.getInventory().add(given)) {
-                player.drop(given, false, Prediction.SERVER_ONLY);
+                player.drop(given, false);
             }
         }
         CompoundTag data = new CompoundTag();

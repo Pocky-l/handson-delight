@@ -353,7 +353,7 @@ public final class BowlLogic implements StationLogic {
 
     private static void give(Player player, ItemStack stack) {
         if (!stack.isEmpty() && !player.getInventory().add(stack)) {
-            player.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
+            player.drop(stack, false);
         }
     }
 

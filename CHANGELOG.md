@@ -6,6 +6,9 @@
 - Going over from a station to a [Hands-On Vanilla](https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla) one, the recipe book goes away at once instead of hanging in the air for a second. Thanks to hummusaki ([#57](https://github.com/Pocky-l/handson-delight/pull/57)).
 - A crafting recipe of another mod or a datapack that takes the same things as a dish of the cutting board is made in the crafting grid instead of nothing.
 
+### Changed
+- The recipe book has a new cover and paper, drawn by Catalyst.
+
 ## [1.6.3+26.3] - 2026-11-23
 ### Fixed
 - [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven no longer sits with a full tray that never bakes: a dish left over from the last bake goes to the cook, and the new one bakes.

@@ -4,6 +4,7 @@
 ### Fixed
 - The stations' recipe books are no longer blank with [Polymer](https://modrinth.com/mod/polymer) installed ([#58](https://github.com/Pocky-l/handson-delight/issues/58)).
 - Going over from a station to a [Hands-On Vanilla](https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla) one, the recipe book goes away at once instead of hanging in the air for a second. Thanks to hummusaki ([#57](https://github.com/Pocky-l/handson-delight/pull/57)).
+- A crafting recipe of another mod or a datapack that takes the same things as a dish of the cutting board is made in the crafting grid instead of nothing.
 
 ## [1.6.3+26.3] - 2026-11-23
 ### Fixed

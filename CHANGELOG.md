@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.6.3+1.21.11] - Unreleased
+## [1.6.3+1.21.11] - 2026-11-23
 ### New
 - Minecraft 1.21.11, on Fabric with [Farmer's Delight Refabricated](https://modrinth.com/mod/farmers-delight-refabricated): the pot, board, skillet and stove with their recipe books, as in 1.6.3.
 - Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.17.2+1.21.11.

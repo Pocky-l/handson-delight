@@ -1,9 +1,9 @@
 package com.pockyl.handson_delight;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
@@ -53,12 +53,14 @@ public final class KitchenRecipes {
     private KitchenRecipes() {
     }
 
-    /** The packet: the server's recipes of the kinds the stations read. A client without this mod never gets it. */
+    /**
+     * The packet: the server's recipes of the kinds the stations read. A client without this mod never gets it. Each recipe is an
+     * entry of its own, so that one a client cannot read costs only itself ({@link #write}).
+     */
     public record Payload(List<RecipeHolder<?>> recipes) implements CustomPacketPayload {
         public static final Type<Payload> TYPE = new Type<>(CHANNEL);
-        public static final StreamCodec<RegistryFriendlyByteBuf, Payload> CODEC = RecipeHolder.STREAM_CODEC
-                .apply(ByteBufCodecs.list())
-                .map(Payload::new, Payload::recipes);
+        public static final StreamCodec<RegistryFriendlyByteBuf, Payload> CODEC =
+                StreamCodec.of(KitchenRecipes::write, KitchenRecipes::read);
 
         @Override
         public Type<Payload> type() {
@@ -71,42 +73,79 @@ public final class KitchenRecipes {
         SYNCED.add(type);
     }
 
-    /**
-     * The packet, on the server. A recipe that would not come out of it whole is left out (one with a tag no mod fills, as an addon's
-     * recipe for a mod that is not there): the client could not read the packet, and the recipe can never be made anyway.
-     */
+    /** The packet, on the server: what of it reaches the client is decided as it is written ({@link #write}). */
     public static Payload payload(ServerLevel level) {
         List<RecipeType<?>> types = SYNCED.stream().<RecipeType<?>>map(Supplier::get).toList();
         List<RecipeHolder<?>> recipes = new ArrayList<>();
-        List<Identifier> unsent = new ArrayList<>();
         for (RecipeHolder<?> holder : level.recipeAccess().getRecipes()) {
-            if (!types.contains(holder.value().getType())) {
-                continue;
-            }
-            if (travels(holder, level.registryAccess())) {
+            if (types.contains(holder.value().getType())) {
                 recipes.add(holder);
-            } else {
-                unsent.add(holder.id().identifier());
             }
-        }
-        if (!unsent.isEmpty() && UNSENT_LOGGED.compareAndSet(false, true)) {
-            HandsOnDelight.LOGGER.info("Recipes the stations leave out on clients, as they name things no mod adds: {}", unsent);
         }
         return new Payload(recipes);
     }
 
-    /** Whether the recipe comes out of the packet as it went in. */
-    private static boolean travels(RecipeHolder<?> holder, RegistryAccess registries) {
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), registries);
+    /**
+     * Writes each recipe that comes back whole from its own bytes, with their length. One that does not is left out (one with a tag no
+     * mod fills, as an addon's recipe for a mod that is not there): the client could not read it, and it can never be made anyway. The
+     * check runs here, as the connection writes the packet, because mods that change what a player is sent (Polymer) can only write a
+     * recipe for a connection: tried anywhere else, every recipe fails.
+     */
+    private static void write(RegistryFriendlyByteBuf buffer, Payload payload) {
+        List<ByteBuf> entries = new ArrayList<>();
+        List<Identifier> unsent = new ArrayList<>();
         try {
-            RecipeHolder.STREAM_CODEC.encode(buffer, holder);
-            RecipeHolder.STREAM_CODEC.decode(buffer);
-            return true;
-        } catch (RuntimeException e) {
-            return false;
+            for (RecipeHolder<?> holder : payload.recipes()) {
+                ByteBuf entry = entry(holder, buffer.registryAccess());
+                if (entry != null) {
+                    entries.add(entry);
+                } else {
+                    unsent.add(holder.id().identifier());
+                }
+            }
+            buffer.writeVarInt(entries.size());
+            for (ByteBuf entry : entries) {
+                buffer.writeVarInt(entry.readableBytes());
+                buffer.writeBytes(entry);
+            }
         } finally {
-            buffer.release();
+            entries.forEach(ByteBuf::release);
         }
+        if (!unsent.isEmpty() && UNSENT_LOGGED.compareAndSet(false, true)) {
+            HandsOnDelight.LOGGER.info("Recipes the stations leave out on clients, as they name things no mod adds: {}", unsent);
+        }
+    }
+
+    /** The recipe's bytes in the packet, or null when they do not read back as a recipe. */
+    private static ByteBuf entry(RecipeHolder<?> holder, RegistryAccess registries) {
+        ByteBuf bytes = Unpooled.buffer();
+        try {
+            RecipeHolder.STREAM_CODEC.encode(new RegistryFriendlyByteBuf(bytes, registries), holder);
+            RecipeHolder.STREAM_CODEC.decode(new RegistryFriendlyByteBuf(bytes.slice(), registries));
+            return bytes;
+        } catch (RuntimeException e) {
+            bytes.release();
+            return null;
+        }
+    }
+
+    /** Reads each recipe from its own bytes: one this client cannot read is skipped, and the others still come. */
+    private static Payload read(RegistryFriendlyByteBuf buffer) {
+        int count = buffer.readVarInt();
+        List<RecipeHolder<?>> recipes = new ArrayList<>(count);
+        int unread = 0;
+        for (int i = 0; i < count; i++) {
+            ByteBuf entry = buffer.readSlice(buffer.readVarInt());
+            try {
+                recipes.add(RecipeHolder.STREAM_CODEC.decode(new RegistryFriendlyByteBuf(entry, buffer.registryAccess())));
+            } catch (RuntimeException e) {
+                unread++;
+            }
+        }
+        if (unread > 0) {
+            HandsOnDelight.LOGGER.warn("{} of the server's recipes could not be read here and are left out of the stations", unread);
+        }
+        return new Payload(recipes);
     }
 
     /** Called on the network thread. */

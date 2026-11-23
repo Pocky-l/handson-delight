@@ -58,6 +58,10 @@ dependencies {
     if (providers.gradleProperty('addons').isPresent()) {
         gameTestMods "maven.modrinth:cultural-delights:${cultural_delights_fabric_version}"
     }
+    // -Ppolymer: Polymer, which changes items and ingredients as a player's connection writes them (the recipes sent to clients).
+    if (providers.gradleProperty('polymer').isPresent()) {
+        gameTestMods "maven.modrinth:polymer:${polymer_version}"
+    }
 }
 
 tasks.register('runGameTest', net.fabricmc.loom.task.prod.ServerProductionRunTask) {

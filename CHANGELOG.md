@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.6.4+26.3] - Unreleased
+### Fixed
+- Going over from a station to a [Hands-On Vanilla](https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla) one, the recipe book goes away at once instead of hanging in the air for a second. Thanks to hummusaki ([#57](https://github.com/Pocky-l/handson-delight/pull/57)).
+
 ## [1.6.3+26.3] - 2026-11-23
 ### Fixed
 - [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven no longer sits with a full tray that never bakes: a dish left over from the last bake goes to the cook, and the new one bakes.

@@ -31,6 +31,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -320,6 +321,65 @@ public final class BoardTests {
         setup.place();
         helper.assertTrue(setup.onBoard().is(fd("wheat_dough")) && setup.onBoard().getCount() == 5, "five dough of five wheat");
         helper.assertTrue(setup.cook.getInventory().countItem(Items.WATER_BUCKET) == 1, "and the water comes back");
+        helper.succeed();
+    }
+
+    /**
+     * Another recipe of a dish's ingredients (a datapack's) is what a player's grid makes then: the lookup steps past the dish, a list
+     * of every match (Polymorph's choice) holds the other recipe alone, and the grid leaves what that recipe leaves. A machine's grid
+     * and the grid of a player whose client lacks the mod still make the dish. A manager of the test's own holds the recipes with each
+     * dish looked at first, as a server's may; the grid is named as the crafting menu names it ({@code CraftingMenuMixin}).
+     */
+    public static void aDishsIngredientsMakeAnotherRecipeInTheGrid(GameTestHelper helper) {
+        Level level = helper.getLevel();
+        RecipeManager server = level.getRecipeManager();
+        RecipeHolder<?> dough = server.byKey(FarmersDelightContent.id("wheat_dough_from_water")).orElseThrow();
+        RecipeHolder<?> hamburger = server.byKey(FarmersDelightContent.id("hamburger")).orElseThrow();
+        RecipeHolder<CraftingRecipe> paperOfDough = new RecipeHolder<>(HandsOnDelight.id("paper_of_dough"), new ShapelessRecipe("",
+                CraftingBookCategory.MISC, new ItemStack(Items.PAPER),
+                NonNullList.of(Ingredient.EMPTY, Ingredient.of(Items.WHEAT), Ingredient.of(Items.WATER_BUCKET))));
+        RecipeHolder<CraftingRecipe> paperOfBurger = new RecipeHolder<>(HandsOnDelight.id("paper_of_burger"), new ShapelessRecipe("",
+                CraftingBookCategory.MISC, new ItemStack(Items.PAPER), hamburger.value().getIngredients()));
+        RecipeManager manager = new RecipeManager(level.registryAccess());
+        manager.replaceRecipes(List.of(dough, hamburger, paperOfDough, paperOfBurger));
+        ServerPlayer cook = TestPlayers.withTheMod(helper, "cook");
+        ServerPlayer stranger = TestPlayers.serverPlayer(helper, "stranger");
+        for (boolean ofDough : List.of(true, false)) {
+            RecipeHolder<?> dish = ofDough ? dough : hamburger;
+            RecipeHolder<CraftingRecipe> other = ofDough ? paperOfDough : paperOfBurger;
+            List<ItemStack> stacks = ofDough ? List.of(new ItemStack(Items.WATER_BUCKET), new ItemStack(Items.WHEAT)) : burger();
+            NonNullList<ItemStack> items = NonNullList.withSize(9, ItemStack.EMPTY);
+            for (int slot = 0; slot < stacks.size(); slot++) {
+                items.set(slot, stacks.get(slot).copy());
+            }
+            CraftingInput grid = CraftingInput.of(3, 3, items);
+            String name = dish.id().getPath();
+            AssemblyRecipes.lookingUp(cook, grid);
+            try {
+                helper.assertTrue(manager.getRecipeFor(RecipeType.CRAFTING, grid, level).orElse(null) == other,
+                        "the table makes the paper of " + name + "'s ingredients");
+                helper.assertTrue(manager.getRecipesFor(RecipeType.CRAFTING, grid, level).equals(List.of(other)),
+                        "and lists it alone among the matches");
+                if (ofDough) {
+                    ItemStack left = manager.getRemainingItemsFor(RecipeType.CRAFTING, grid, level).get(0);
+                    helper.assertTrue(left.is(Items.BUCKET), "the paper leaves the bucket empty: " + left);
+                }
+            } finally {
+                AssemblyRecipes.lookedUp();
+            }
+            AssemblyRecipes.lookingUp(stranger, grid);
+            try {
+                helper.assertTrue(manager.getRecipeFor(RecipeType.CRAFTING, grid, level).orElse(null) == dish,
+                        "a player without the mod makes " + name);
+            } finally {
+                AssemblyRecipes.lookedUp();
+            }
+            helper.assertTrue(manager.getRecipeFor(RecipeType.CRAFTING, grid, level).orElse(null) == dish, "an autocrafter makes " + name);
+            if (ofDough) {
+                ItemStack kept = manager.getRemainingItemsFor(RecipeType.CRAFTING, grid, level).get(0);
+                helper.assertTrue(kept.is(Items.WATER_BUCKET), "the dough keeps its water: " + kept);
+            }
+        }
         helper.succeed();
     }
 

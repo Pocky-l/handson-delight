@@ -12,6 +12,7 @@ import com.pockyl.handson_delight.CookingTimes;
 import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -37,6 +38,8 @@ public final class BoardDishes {
     private static volatile boolean craftedToo;
     private static ListTag readFrom;
     private static List<AssemblyRecipes.Assembly> dishes = List.of();
+    private static ListTag namesFrom;
+    private static Set<ResourceLocation> names = Set.of();
 
     private BoardDishes() {
     }
@@ -109,5 +112,30 @@ public final class BoardDishes {
             return Set.of();
         }
         return all().stream().map(AssemblyRecipes.Assembly::id).collect(Collectors.toUnmodifiableSet());
+    }
+
+    /**
+     * The crafting recipes this client's own grid leaves to the board, as its server named them: a lookup of what the grid matches
+     * here (Hands-On Vanilla's choice of recipes) leaves them out, as the server does. Read from the names alone, so it may be asked
+     * before the tags are bound.
+     */
+    public static synchronized Set<ResourceLocation> notInTheGrid() {
+        if (craftedToo || !HandsOnConfig.cuttingBoard()) {
+            return Set.of();
+        }
+        ListTag book = received;
+        if (book != namesFrom) {
+            Set<ResourceLocation> read = new HashSet<>();
+            for (int i = 0; i < book.size(); i++) {
+                String name = book.getCompound(i).getString("id");
+                ResourceLocation id = name.isEmpty() ? null : ResourceLocation.tryParse(name);
+                if (id != null) {
+                    read.add(id);
+                }
+            }
+            names = Set.copyOf(read);
+            namesFrom = book;
+        }
+        return names;
     }
 }

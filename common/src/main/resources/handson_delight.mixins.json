@@ -11,6 +11,7 @@
     "RecipeManagerMixin",
     "RecipeManagerAccessor",
     "CraftingMenuMixin",
+    "ResultSlotMixin",
     "ServerRecipeBookMixin",
     "CuttingBoardBlockEntityMixin",
     "CuttingBoardBlockEntityAccessor",

@@ -325,6 +325,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void aDishsIngredientsMakeAnotherRecipeInTheGrid(GameTestHelper helper) {
+        BoardTests.aDishsIngredientsMakeAnotherRecipeInTheGrid(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void aPieGoesIntoItsCrust(GameTestHelper helper) {
         BoardTests.aPieGoesIntoItsCrust(helper);
     }

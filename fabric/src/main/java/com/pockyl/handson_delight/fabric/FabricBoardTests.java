@@ -60,6 +60,11 @@ public final class FabricBoardTests implements FabricGameTest {
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+    public void aDishsIngredientsMakeAnotherRecipeInTheGrid(GameTestHelper helper) {
+        BoardTests.aDishsIngredientsMakeAnotherRecipeInTheGrid(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
     public void aPieGoesIntoItsCrust(GameTestHelper helper) {
         BoardTests.aPieGoesIntoItsCrust(helper);
     }

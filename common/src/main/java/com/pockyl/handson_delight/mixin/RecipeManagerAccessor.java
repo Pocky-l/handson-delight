@@ -6,9 +6,15 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-/** The recipes a manager holds, which the game tests replace to cook recipes of their own ({@code TestRecipes}). */
+/**
+ * The recipes a manager holds: a player's grid looks past a dish among them ({@code AssemblyRecipes.firstInThisGrid}), the game tests
+ * replace them to cook recipes of their own ({@code TestRecipes}).
+ */
 @Mixin(RecipeManager.class)
 public interface RecipeManagerAccessor {
+    @Accessor("recipes")
+    RecipeMap handson$recipes();
+
     @Mutable
     @Accessor("recipes")
     void handson$setRecipes(RecipeMap recipes);

@@ -17,6 +17,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.ProblemReporter;
@@ -328,6 +329,63 @@ public final class BoardTests {
         helper.assertTrue(setup.onBoard().is(fd("wheat_dough")) && setup.onBoard().getCount() == 5, "five dough of five wheat");
         helper.assertTrue(setup.cook.getInventory().countItem(Items.WATER_BUCKET) == 1, "and the water comes back");
         helper.succeed();
+    }
+
+    /**
+     * Another recipe of a dish's ingredients (a datapack's) is what a player's crafting table makes then: the lookup steps past the dish,
+     * and the grid leaves what that recipe leaves. The table of a player whose client lacks the mod and a machine's grid still make the
+     * dish. The server holds these recipes alone for the test, each dish looked at first, as a server's may.
+     */
+    public static void aDishsIngredientsMakeAnotherRecipeInTheGrid(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        RecipeHolder<?> dough = KitchenRecipes.byId(level, FarmersDelightContent.id("wheat_dough_from_water")).orElseThrow();
+        RecipeHolder<?> hamburger = KitchenRecipes.byId(level, FarmersDelightContent.id("hamburger")).orElseThrow();
+        helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(dough.id().identifier())
+                && AssemblyRecipes.isMadeOnTheBoard(hamburger.id().identifier()), "the dough and the hamburger are the board's");
+        RecipeHolder<?> paperOfDough = new RecipeHolder<>(TestRecipes.key(HandsOnDelight.id("paper_of_dough")),
+                TestRecipes.shapeless(new ItemStack(Items.PAPER), Ingredient.of(Items.WHEAT), Ingredient.of(Items.WATER_BUCKET)));
+        Ingredient[] burgerParts = hamburger.value().placementInfo().ingredients().toArray(Ingredient[]::new);
+        RecipeHolder<?> paperOfBurger = new RecipeHolder<>(TestRecipes.key(HandsOnDelight.id("paper_of_burger")),
+                TestRecipes.shapeless(new ItemStack(Items.PAPER), burgerParts));
+        ServerPlayer cook = TestPlayers.withTheMod(helper, "cook");
+        ServerPlayer stranger = TestPlayers.serverPlayer(helper, "stranger");
+        TestRecipes.whileHolding(level.recipeAccess(), List.of(dough, hamburger, paperOfDough, paperOfBurger), () -> {
+            for (boolean ofDough : List.of(true, false)) {
+                RecipeHolder<?> dish = ofDough ? dough : hamburger;
+                Item made = fd(ofDough ? "wheat_dough" : "hamburger");
+                List<ItemStack> stacks = ofDough ? List.of(new ItemStack(Items.WATER_BUCKET), new ItemStack(Items.WHEAT)) : burger();
+                String name = dish.id().identifier().getPath();
+                CraftingMenu table = tableWith(helper, cook, stacks);
+                helper.assertTrue(table.getSlot(0).getItem().is(Items.PAPER), "the table makes the paper of " + name + "'s ingredients");
+                CraftingMenu theirs = tableWith(helper, stranger, stacks);
+                helper.assertTrue(theirs.getSlot(0).getItem().is(made), "a player without the mod makes " + name);
+                if (ofDough) {
+                    table.getSlot(0).onTake(cook, table.getSlot(0).getItem().copy());
+                    helper.assertTrue(table.getSlot(1).getItem().is(Items.BUCKET),
+                            "the paper leaves the bucket empty: " + table.getSlot(1).getItem());
+                    theirs.getSlot(0).onTake(stranger, theirs.getSlot(0).getItem().copy());
+                    helper.assertTrue(theirs.getSlot(1).getItem().is(Items.WATER_BUCKET),
+                            "the dough keeps its water: " + theirs.getSlot(1).getItem());
+                }
+                TransientCraftingContainer machine = new TransientCraftingContainer(new MachineMenu(), 3, 3);
+                for (int slot = 0; slot < stacks.size(); slot++) {
+                    machine.setItem(slot, stacks.get(slot).copy());
+                }
+                helper.assertTrue(KitchenRecipes.find(level, RecipeType.CRAFTING, machine.asCraftInput()).filter(recipe -> recipe == dish)
+                        .isPresent(), "an autocrafter makes " + name);
+            }
+        });
+        helper.succeed();
+    }
+
+    /** A crafting table of {@code player}'s with {@code stacks} laid into its grid from the first slot on. */
+    private static CraftingMenu tableWith(GameTestHelper helper, ServerPlayer player, List<ItemStack> stacks) {
+        CraftingMenu table = new CraftingMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(BlockPos.ZERO)));
+        for (int slot = 0; slot < stacks.size(); slot++) {
+            table.getSlot(1 + slot).set(stacks.get(slot).copy());
+        }
+        return table;
     }
 
     /** A shaped recipe: the crust first, then all the rest in any order; the pie is a block and lies on the board. */

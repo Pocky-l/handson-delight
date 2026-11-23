@@ -12,6 +12,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import vectorwing.farmersdelight.common.crafting.CookingPotBookCategory;
@@ -78,5 +79,20 @@ final class TestRecipes {
         }
         ((RecipeManagerAccessor) manager).handson$setRecipes(RecipeMapAccessor.handson$create(byType.build(), byKey.build()));
         KitchenRecipes.forget(manager);
+    }
+
+    /**
+     * {@code check} run while {@code manager} holds {@code recipes} alone, in that order; its own come back after, untouched. The
+     * board chooses its dishes from the server's recipes when first asked: they must be chosen before ({@code AssemblyRecipes}).
+     */
+    static void whileHolding(RecipeManager manager, Collection<RecipeHolder<?>> recipes, Runnable check) {
+        RecipeMap own = ((RecipeManagerAccessor) manager).handson$recipes();
+        replace(manager, recipes);
+        try {
+            check.run();
+        } finally {
+            ((RecipeManagerAccessor) manager).handson$setRecipes(own);
+            KitchenRecipes.forget(manager);
+        }
     }
 }

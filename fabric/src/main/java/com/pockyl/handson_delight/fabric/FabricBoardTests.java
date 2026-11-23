@@ -58,6 +58,11 @@ public final class FabricBoardTests {
     }
 
     @GameTest(maxTicks = 100)
+    public void aDishsIngredientsMakeAnotherRecipeInTheGrid(GameTestHelper helper) {
+        BoardTests.aDishsIngredientsMakeAnotherRecipeInTheGrid(helper);
+    }
+
+    @GameTest(maxTicks = 100)
     public void aPieGoesIntoItsCrust(GameTestHelper helper) {
         BoardTests.aPieGoesIntoItsCrust(helper);
     }

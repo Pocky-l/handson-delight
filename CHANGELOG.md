@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.6.3+26.3] - Unreleased
+## [1.6.3+26.3] - 2026-11-23
 ### Fixed
 - [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven no longer sits with a full tray that never bakes: a dish left over from the last bake goes to the cook, and the new one bakes.
 

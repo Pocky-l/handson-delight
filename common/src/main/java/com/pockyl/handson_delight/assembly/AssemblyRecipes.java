@@ -9,6 +9,7 @@ import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -16,21 +17,29 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemUseAnimation;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CakeBlock;
 import vectorwing.farmersdelight.common.block.FeastBlock;
@@ -38,10 +47,12 @@ import vectorwing.farmersdelight.common.block.PieBlock;
 import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
+import com.pockyl.handson_delight.HandsOnConfig;
 import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.KitchenTags;
 import com.pockyl.handson_delight.RecipeParts;
+import com.pockyl.handson_delight.mixin.RecipeManagerAccessor;
 import com.pockyl.handson_delight.platform.Platform;
 
 import java.lang.ref.WeakReference;
@@ -102,6 +113,11 @@ public final class AssemblyRecipes {
     private static volatile Chosen chosen;
     /** A recipe manager made and not read yet ({@link #load}): read when the board first asks, once its items are complete. */
     private static volatile Pending pending;
+    /**
+     * A player's crafting grid while the server looks up what it makes, when that player does not make the board's dishes there
+     * ({@link #lookingUp}). A grid's {@link CraftingInput} names no menu or player: the lookups know it by being this very object.
+     */
+    private static final ThreadLocal<CraftingInput> PLAYERS_GRID = new ThreadLocal<>();
 
     private record Pending(WeakReference<RecipeManager> manager, HolderLookup.Provider registries) {
     }
@@ -280,6 +296,72 @@ public final class AssemblyRecipes {
      */
     public static boolean isMadeOnTheBoard(Identifier id) {
         return chosen().ids().contains(id);
+    }
+
+    /**
+     * The server looks up next what {@code player}'s crafting table or inventory grid makes, as {@code grid}, until {@link #lookedUp}:
+     * those lookups leave the board's dishes out ({@link #notInThisGrid}). Automation crafts with grids of its own (Create's crafters,
+     * AE2's assemblers, Refined Storage) and goes on making them, as without this mod. So does a player whose client lacks the mod, or
+     * has the board's station off: it cannot open the board, the crafting table stays theirs.
+     */
+    public static void lookingUp(Player player, CraftingInput grid) {
+        PLAYERS_GRID.set(leavesDishes(player) ? grid : null);
+    }
+
+    /**
+     * The lookup of the grid {@link #lookingUp} named is done: {@code found}, or what else the grid makes when {@code found} is still a
+     * dish it leaves to the board (the recipe the menu tried first, which the manager gives without looking further).
+     */
+    public static Optional<RecipeHolder<CraftingRecipe>> lookedUp(Optional<RecipeHolder<CraftingRecipe>> found, ServerLevel level) {
+        CraftingInput grid = PLAYERS_GRID.get();
+        try {
+            if (grid != null && found.isPresent() && notInThisGrid(found.get().id(), grid)) {
+                return firstInThisGrid(level.recipeAccess(), RecipeType.CRAFTING, grid, level);
+            }
+            return found;
+        } finally {
+            PLAYERS_GRID.remove();
+        }
+    }
+
+    /** Whether a lookup of {@code input} leaves the recipe {@code id} to the board: one of a player's grid ({@link #lookingUp}). */
+    public static boolean notInThisGrid(ResourceKey<Recipe<?>> id, RecipeInput input) {
+        return input == PLAYERS_GRID.get() && isMadeOnTheBoard(id.identifier());
+    }
+
+    /**
+     * What a player's grid makes when the first recipe it matches is a dish it leaves to the board: the next match that is not one,
+     * as if the dish were not there (a datapack's recipe of the same ingredients), or nothing.
+     */
+    public static <I extends RecipeInput, T extends Recipe<I>> Optional<RecipeHolder<T>> firstInThisGrid(RecipeManager manager,
+            RecipeType<T> type, I input, Level level) {
+        return ((RecipeManagerAccessor) manager).handson$recipes().getRecipesFor(type, input, level)
+                .filter(recipe -> !notInThisGrid(recipe.id(), input)).findFirst();
+    }
+
+    /**
+     * What {@code player}'s grid leaves when its result is taken, while it leaves dishes to the board: what the recipe that made the
+     * result leaves. That is the recipe the grid makes, which may be another recipe of a dish's ingredients; failing that the dish
+     * itself, as another mod's crafting table may make it by a lookup of its own. Never the grid's stacks themselves, which vanilla
+     * gives back when it finds no recipe and then adds to themselves (the wheat doubled, the water bucket lost). Empty: as vanilla.
+     */
+    public static Optional<NonNullList<ItemStack>> leftInTheGrid(Player player, CraftingInput grid, ServerLevel level) {
+        if (!leavesDishes(player)) {
+            return Optional.empty();
+        }
+        RecipeManager manager = level.recipeAccess();
+        Optional<RecipeHolder<CraftingRecipe>> made;
+        PLAYERS_GRID.set(grid);
+        try {
+            made = manager.getRecipeFor(RecipeType.CRAFTING, grid, level);
+        } finally {
+            PLAYERS_GRID.remove();
+        }
+        return made.or(() -> manager.getRecipeFor(RecipeType.CRAFTING, grid, level)).map(recipe -> recipe.value().getRemainingItems(grid));
+    }
+
+    private static boolean leavesDishes(Player player) {
+        return HandsOnConfig.removeCraftingRecipes() && !(player instanceof ServerPlayer server && !Platform.INSTANCE.hasBoard(server));
     }
 
     /**

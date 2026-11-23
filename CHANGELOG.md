@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.1+1.21.1] - Unreleased
+### Fixed
+- Going over from a station to a [Hands-On Vanilla](https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla) one, the recipe book goes away at once instead of hanging in the air for a second. Thanks to hummusaki ([#57](https://github.com/Pocky-l/handson-delight/pull/57)).
+
 ## [1.7.0+1.21.1] - 2026-11-23
 ### New
 - [Extra Delight](https://modrinth.com/mod/extradelight)'s chiller is a station: an ice box whose doors swing open, with a mold on its shelf, ice in its chest and a drip pan; it needs Extra Delight 2.7.2 or newer.

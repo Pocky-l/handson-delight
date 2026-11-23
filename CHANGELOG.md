@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.7.0+1.21.1] - Unreleased
+## [1.7.0+1.21.1] - 2026-11-23
 ### New
 - [Extra Delight](https://modrinth.com/mod/extradelight)'s chiller is a station: an ice box whose doors swing open, with a mold on its shelf, ice in its chest and a drip pan; it needs Extra Delight 2.7.2 or newer.
 

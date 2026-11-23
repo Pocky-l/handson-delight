@@ -305,7 +305,7 @@ public final class CfbOven implements KitchenOven {
     @SuppressWarnings("unchecked")
     private static Optional<ItemStack> firstFor(Level level, RecipeType<?> type, SingleRecipeInput input) {
         return KitchenRecipes.find(level, (RecipeType<Recipe<SingleRecipeInput>>) type, input)
-                .map(holder -> holder.value().assemble(input))
+                .map(holder -> holder.value().assemble(input, level.registryAccess()))
                 .filter(result -> !result.isEmpty());
     }
 

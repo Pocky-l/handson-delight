@@ -6,14 +6,14 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.client.renderer.LightTexture;
 import com.pockyl.diegesis.api.client.SceneBuffers;
 import com.pockyl.diegesis.impl.client.render.SceneDraw;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
@@ -372,7 +372,7 @@ final class RecipeBook implements NodePainter {
     private float reach;
     private float time;
     /** The light the book is drawn in: where it hangs, never darker than a lit kitchen, so it stays readable. */
-    private int shade = LightCoordsUtil.FULL_BRIGHT;
+    private int shade = LightTexture.FULL_BRIGHT;
     /** The last time the player's statistics were asked for, milliseconds. */
     private long statsAsked;
     /** The dish's name broken into lines, for the entry it was broken for. */
@@ -1997,7 +1997,7 @@ final class RecipeBook implements NodePainter {
 
     @Override
     public void paint(PoseStack poseStack, SceneBuffers buffers, int light) {
-        shade = LightCoordsUtil.pack(Math.max(LightCoordsUtil.block(light), LIT), Math.max(LightCoordsUtil.sky(light), LIT));
+        shade = LightTexture.pack(Math.max(LightTexture.block(light), LIT), Math.max(LightTexture.sky(light), LIT));
         if (model == null) {
             model = RecipeBookModel.bake();
         }

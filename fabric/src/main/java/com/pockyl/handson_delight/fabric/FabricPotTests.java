@@ -2,10 +2,8 @@ package com.pockyl.handson_delight.fabric;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
@@ -232,8 +230,8 @@ public final class FabricPotTests {
         private final ItemStack plain;
 
         MealOfWhatLiesThere(List<Ingredient> inputs, ItemStack made, ItemStack plain) {
-            super("", CookingPotBookCategory.MEALS, inputs, ItemStackTemplate.fromNonEmptyStack(made),
-                    Optional.of(new ItemStackTemplate(Items.BOWL)), 0.1F, 40);
+            super("", CookingPotBookCategory.MEALS, inputs, made,
+                    Optional.of(new ItemStack(Items.BOWL)), 0.1F, 40);
             this.inputs = inputs;
             this.plain = plain;
         }
@@ -256,8 +254,8 @@ public final class FabricPotTests {
         }
 
         @Override
-        public ItemStackTemplate result() {
-            return ItemStackTemplate.fromNonEmptyStack(plain);
+        public ItemStack result() {
+            return plain;
         }
     }
 }

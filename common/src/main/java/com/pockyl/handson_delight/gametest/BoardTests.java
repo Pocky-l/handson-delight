@@ -1177,7 +1177,7 @@ public final class BoardTests {
         setup.carry(setup.knife().copy());
         int marks = setup.logic.plan().marks();
         helper.assertTrue(marks >= 1, "the bread has marks: " + setup.logic.plan());
-        ItemStack result = Cutting.recipesFor(level, new ItemStack(Items.BREAD)).get(0).getResults().get(0).create();
+        ItemStack result = Cutting.recipesFor(level, new ItemStack(Items.BREAD)).get(0).getResults().get(0).copy();
         for (int mark = 0; mark < marks; mark++) {
             int next = mark;
             helper.runAfterDelay(1 + mark * 4L, () -> setup.chop(next));

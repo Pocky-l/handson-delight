@@ -13,20 +13,15 @@
   "license": "${mod_license}",
   "environment": "*",
   "entrypoints": {
-    "main": ["com.pockyl.handson_delight.fabric.HandsOnDelightFabric"],
-    "client": ["com.pockyl.handson_delight.fabric.HandsOnDelightFabricClient"],
-    "fabric-gametest": ["com.pockyl.handson_delight.fabric.FabricPotTests", "com.pockyl.handson_delight.fabric.FabricBoardTests",
-      "com.pockyl.handson_delight.fabric.FabricSkilletTests",
-      "com.pockyl.handson_delight.fabric.FabricStoveTests", "com.pockyl.handson_delight.fabric.FabricKegTests",
-      "com.pockyl.handson_delight.fabric.FabricOvenTests",
-      "com.pockyl.handson_delight.fabric.FabricVatTests", "com.pockyl.handson_delight.fabric.FabricRecipeEditTests"]
+    "main": ["com.pockyl.handson_delight.fabric.HandsOnDelightFabric", "com.pockyl.handson_delight.fabric.FabricGameTests"],
+    "client": ["com.pockyl.handson_delight.fabric.HandsOnDelightFabricClient"]
   },
   "mixins": ["handson_delight.mixins.json"],
   "depends": {
     "fabricloader": ">=${fabric_loader_version}",
     "fabric-api": ">=${fabric_api_version}",
     "minecraft": "${minecraft_version}",
-    "java": ">=25",
+    "java": ">=21",
     "farmersdelight": ">=${farmers_delight_version}",
     "diegesis": ">=${diegesis_version}"
   }

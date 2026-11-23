@@ -47,7 +47,7 @@ public final class FabricPlatform implements Platform {
 
     @Override
     public ItemStack cooked(Level level, CookingPotRecipe recipe, List<ItemStack> items) {
-        return recipe.assemble(new RecipeWrapper(slots(items)));
+        return recipe.assemble(new RecipeWrapper(slots(items)), level.registryAccess());
     }
 
     private static final IntList INPUT_SLOTS = IntList.of(java.util.stream.IntStream.range(0, CookingPotBlockEntity.MEAL_DISPLAY_SLOT).toArray());

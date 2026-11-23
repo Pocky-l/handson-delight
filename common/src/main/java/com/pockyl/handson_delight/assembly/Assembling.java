@@ -68,7 +68,7 @@ public final class Assembling {
             if (!dish.recipe().matches(grid.input(), level)) {
                 break;
             }
-            ItemStack made = dish.recipe().assemble(grid.input());
+            ItemStack made = dish.recipe().assemble(grid.input(), level.registryAccess());
             if (made.isEmpty()) {
                 break;
             }

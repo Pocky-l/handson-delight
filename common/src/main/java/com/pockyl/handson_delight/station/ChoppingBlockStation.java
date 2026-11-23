@@ -99,7 +99,7 @@ public final class ChoppingBlockStation {
             return PLANKS.computeIfAbsent(KitchenRecipes.source(level), key -> new HashMap<>()).computeIfAbsent(log.getItem(), item -> {
                 CraftingInput input = CraftingInput.of(1, 1, List.of(new ItemStack(item)));
                 return KitchenRecipes.find(level, RecipeType.CRAFTING, input).map(recipe -> {
-                    ItemStack planks = recipe.value().assemble(input);
+                    ItemStack planks = recipe.value().assemble(input, level.registryAccess());
                     planks.setCount((int) Math.round(planks.getCount() * PLANKS_YIELD));
                     return planks;
                 }).orElse(ItemStack.EMPTY);

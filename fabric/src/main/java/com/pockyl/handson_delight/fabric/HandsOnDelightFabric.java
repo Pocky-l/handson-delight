@@ -12,8 +12,8 @@ public final class HandsOnDelightFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         HandsOnDelight.init();
-        PayloadTypeRegistry.clientboundPlay().register(BoardDishes.Payload.TYPE, BoardDishes.Payload.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(BoardDishes.NoBoard.TYPE, BoardDishes.NoBoard.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(KitchenRecipes.Payload.TYPE, KitchenRecipes.Payload.CODEC);
+        PayloadTypeRegistry.playS2C().register(BoardDishes.Payload.TYPE, BoardDishes.Payload.CODEC);
+        PayloadTypeRegistry.playS2C().register(BoardDishes.NoBoard.TYPE, BoardDishes.NoBoard.CODEC);
+        PayloadTypeRegistry.playS2C().register(KitchenRecipes.Payload.TYPE, KitchenRecipes.Payload.CODEC);
     }
 }

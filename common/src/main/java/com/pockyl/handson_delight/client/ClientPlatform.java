@@ -1,7 +1,7 @@
 package com.pockyl.handson_delight.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.resources.Identifier;
 
 import com.pockyl.handson_delight.platform.Platform;

@@ -5,8 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.sprite.Material;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.item.TrackingItemStackRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.AtlasIds;
@@ -62,8 +61,8 @@ final class ItemVoxels {
 
     /** The sprite a stack's particles come from, which for an icon drawn flat is its texture; the missing one for none. */
     static TextureAtlasSprite particle(ItemStack stack) {
-        Material.Baked material = look(stack).pickParticleMaterial(RandomSource.create(0L));
-        return material != null ? material.sprite()
+        TextureAtlasSprite sprite = look(stack).pickParticleIcon(RandomSource.create(0L));
+        return sprite != null ? sprite
                 : Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.ITEMS).missingSprite();
     }
 

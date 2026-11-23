@@ -5,10 +5,10 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import com.pockyl.diegesis.api.client.SceneBuffers;
 import net.minecraft.client.renderer.Sheets;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -78,13 +78,13 @@ final class LogPieces {
 
     private static TextureAtlasSprite sprite(BlockState state, Direction side) {
         BlockStateModel model = com.pockyl.diegesis.impl.client.render.SceneDraw.blockModel(state);
-        for (net.minecraft.client.renderer.block.dispatch.BlockStateModelPart part : com.pockyl.diegesis.impl.client.render.SceneDraw.parts(model)) {
+        for (net.minecraft.client.renderer.block.model.BlockModelPart part : com.pockyl.diegesis.impl.client.render.SceneDraw.parts(model)) {
             List<BakedQuad> quads = part.getQuads(side);
             if (!quads.isEmpty()) {
-                return quads.get(0).materialInfo().sprite();
+                return quads.get(0).sprite();
             }
         }
-        return model.particleMaterial().sprite();
+        return model.particleIcon();
     }
 
     /**

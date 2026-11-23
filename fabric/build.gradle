@@ -1,22 +1,28 @@
 plugins {
     id 'multiloader-loader'
-    id 'net.fabricmc.fabric-loom'
+    id 'fabric-loom'
 }
 
-// Minecraft 26.x is unobfuscated: no mappings and no remapping, so mods are plain implementation dependencies and the jar
-// task builds the release file.
+// Farmer's Delight Refabricated to compile against, prepared by common (see common/build.gradle). Clients play the
+// release jar.
+evaluationDependsOn(':common')
+def refabricatedForCompile = project(':common').refabricatedForCompile
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
-    compileOnly("maven.modrinth:farmers-delight-refabricated:${farmers_delight_refabricated_version}") { transitive = false }
-    compileOnly("maven.modrinth:cultural-delights:${cultural_delights_fabric_version}") { transitive = false }
-    // The API is in Diegesis' common jar; the Fabric jar of the library plays in the game.
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${parchment_minecraft_version}:${parchment_mappings_version}@zip")
+    }
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    modCompileOnly files(refabricatedForCompile)
+    // The API is in Diegesis' common jar, in Mojang names like this project; the Fabric jar of the library plays in
+    // the playtest client (playtest-1.21.11-fabric).
     compileOnly "com.pockyl.diegesis:common:${diegesis_version}"
 }
 
 // The compat sources common leaves out (see common/build.gradle), and the REI plugin with them.
-evaluationDependsOn(':common')
 def compatSources = project(':common').compatSources
 tasks.named('compileJava', JavaCompile) {
     exclude(compatSources)
@@ -53,21 +59,21 @@ dependencies {
     gameTestMods "maven.modrinth:farmers-delight-refabricated:${farmers_delight_refabricated_version}"
     gameTestMods "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     // Not in the fabric-api jar: the module that runs the tests (the version fabric-api's POM names).
-    gameTestMods 'net.fabricmc.fabric-api:fabric-gametest-api-v1:4.0.18+867b87624c'
-    // -Paddons: the addons with a 26.1.2 Fabric build whose stations open: Cultural Delights' oven and vat.
-    if (providers.gradleProperty('addons').isPresent()) {
-        gameTestMods "maven.modrinth:cultural-delights:${cultural_delights_fabric_version}"
-    }
+    gameTestMods 'net.fabricmc.fabric-api:fabric-gametest-api-v1:3.1.27+4fc5413f3e'
 }
 
+// The game tests of common on a production Fabric server with the release jars: gradlew :fabric:runGameTest. Not a Loom dev
+// run: Refabricated extends enums through its class tweaker, and the loader's runtime remapper of a dev run fails on that.
 tasks.register('runGameTest', net.fabricmc.loom.task.prod.ServerProductionRunTask) {
     group = 'fabric'
-    dependsOn gradle.includedBuild('diegesis').task(':fabric:jar')
-    mods.from(tasks.named('jar'))
+    dependsOn gradle.includedBuild('diegesis').task(':fabric:remapJar')
+    mods.from(tasks.named('remapJar'))
     mods.from(configurations.gameTestMods)
     mods.from(file("../../diegesis/fabric/build/libs/diegesis-fabric-${minecraft_version}-${diegesis_version}.jar"))
     installerVersion = '1.1.0'
     jvmArgs.add('-Dfabric-api.gametest')
+    // Each test by name and how it went: run-gametest/report.xml.
+    jvmArgs.add("-Dfabric-api.gametest.report-file=${file('run-gametest/report.xml').absolutePath}".toString())
     runDir = file('run-gametest')
     def eula = file('run-gametest/eula.txt')
     doFirst {
@@ -75,6 +81,48 @@ tasks.register('runGameTest', net.fabricmc.loom.task.prod.ServerProductionRunTas
         eula.text = 'eula=true' + System.lineSeparator()
     }
 }
+
+// The data pack of the game tests (see FabricGameTests): a test file for each method marked @GameTest in the Fabric test classes,
+// named as the method in snake case, with its time limit and environment.
+def gameTestSources = fileTree('src/main/java') { include '**/Fabric*Tests.java' }
+def gameTestPack = layout.buildDirectory.dir('generated/gametests')
+def writeGameTestPack = tasks.register('writeGameTestPack') {
+    inputs.files(gameTestSources)
+    outputs.dir(gameTestPack)
+    def modId = mod_id
+    doLast {
+        def root = gameTestPack.get().dir('resourcepacks/gametests').asFile
+        root.deleteDir()
+        def tests = new File(root, "data/${modId}/test_instance")
+        tests.mkdirs()
+        new File(root, 'pack.mcmeta').setText('{\n  "pack": {\n    "description": "Hands-On Delight game tests",\n' +
+                '    "min_format": 94,\n    "max_format": 94\n  }\n}\n', 'UTF-8')
+        def found = 0
+        gameTestSources.each { source ->
+            (source.getText('UTF-8') =~ /@GameTest\(([^)]*)\)\s*public void (\w+)\(/).each { match ->
+                def attributes = match[1]
+                def ticks = attributes =~ /maxTicks\s*=\s*(\d+)/
+                def maxTicks = ticks.find() ? ticks.group(1) : '20'
+                def env = attributes =~ /environment\s*=\s*"([^"]+)"/
+                def environment = env.find() ? env.group(1) : 'minecraft:default'
+                def name = match[2].replaceAll(/([a-z0-9])([A-Z])/, '$1_$2').toLowerCase(Locale.ROOT)
+                new File(tests, "${name}.json").setText("""{
+  "type": "minecraft:function",
+  "function": "${modId}:${name}",
+  "environment": "${environment}",
+  "structure": "fabric-gametest-api-v1:empty",
+  "max_ticks": ${maxTicks}
+}
+""", 'UTF-8')
+                found++
+            }
+        }
+        if (found == 0) {
+            throw new GradleException('No @GameTest methods found for the game test data pack')
+        }
+    }
+}
+sourceSets.main.resources.srcDir(files(gameTestPack).builtBy(writeGameTestPack))
 
 tasks.named('processResources', ProcessResources) {
     var replaceProperties = [
@@ -98,7 +146,7 @@ tasks.named('processResources', ProcessResources) {
 }
 
 publishMods {
-    file = tasks.named('jar').flatMap { it.archiveFile }
+    file = tasks.named('remapJar').flatMap { it.archiveFile }
     displayName = "${mod_name} ${mod_version}+${minecraft_version} (Fabric)"
     modLoaders.add('fabric')
 }

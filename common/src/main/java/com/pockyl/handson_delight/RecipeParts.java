@@ -6,7 +6,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
@@ -48,7 +47,7 @@ public final class RecipeParts {
                 try {
                     Method method = type.getMethod(name);
                     Class<?> returns = method.getReturnType();
-                    if (returns == ItemStack.class || returns == ItemStackTemplate.class) {
+                    if (returns == ItemStack.class) {
                         return method;
                     }
                 } catch (NoSuchMethodException | RuntimeException e) {
@@ -123,7 +122,7 @@ public final class RecipeParts {
      * ({@link #ownResult}).
      */
     public static ItemStack result(Recipe<?> recipe) {
-        ItemStackTemplate result = switch (recipe) {
+        ItemStack result = switch (recipe) {
             case CookingPotRecipe cooking -> cooking.result();
             case CuttingBoardRecipe cutting -> cutting.getResults().isEmpty() ? null : cutting.getResults().getFirst();
             case SingleItemRecipe single -> ((SingleItemRecipeAccessor) single).handson$result();
@@ -131,7 +130,7 @@ public final class RecipeParts {
             case ShapelessRecipe shapeless -> ((ShapelessRecipeAccessor) shapeless).handson$result();
             default -> null;
         };
-        return result != null ? result.create() : ownResult(recipe);
+        return result != null ? result.copy() : ownResult(recipe);
     }
 
     /**
@@ -147,7 +146,6 @@ public final class RecipeParts {
         try {
             return switch (method.invoke(recipe)) {
                 case ItemStack stack -> stack;
-                case ItemStackTemplate template -> template.create();
                 case null, default -> ItemStack.EMPTY;
             };
         } catch (ReflectiveOperationException | RuntimeException e) {
@@ -157,7 +155,7 @@ public final class RecipeParts {
 
     /** What a cutting recipe gives, each result as a stack, before its chances are rolled (as {@code getResults} gave them). */
     public static List<ItemStack> results(CuttingBoardRecipe recipe) {
-        return recipe.getResults().stream().map(ItemStackTemplate::create).toList();
+        return recipe.getResults().stream().map(ItemStack::copy).toList();
     }
 
     /**
@@ -165,18 +163,18 @@ public final class RecipeParts {
      * empty for none.
      */
     public static ItemStack container(CookingPotRecipe recipe) {
-        ItemStackTemplate container = recipe.container();
-        return container == null ? ItemStack.EMPTY : container.create();
+        ItemStack container = recipe.container();
+        return container == null ? ItemStack.EMPTY : container.copy();
     }
 
     /** What stays of {@code item} in the grid when it is crafted with (a bucket of milk's bucket); null when nothing does. */
     public static @Nullable Item remainder(Item item) {
-        ItemStackTemplate remainder = item.getCraftingRemainder();
-        return remainder == null ? null : remainder.item().value();
+        ItemStack remainder = item.getCraftingRemainder();
+        return remainder.isEmpty() ? null : remainder.getItem();
     }
 
     /** Whether something stays of {@code item} in the grid when it is crafted with. */
     public static boolean hasRemainder(Item item) {
-        return item.getCraftingRemainder() != null;
+        return !item.getCraftingRemainder().isEmpty();
     }
 }

@@ -213,7 +213,7 @@ public final class SkilletCooking {
         int cooked = had - skillet.getStoredStack().getCount();
         if (cooked < count) {
             // Farmer's Delight did not take all of it (another mod changed what its skillet cooks): the rest as the campfire makes it.
-            ItemStack one = recipe.assemble(new SingleRecipeInput(raw));
+            ItemStack one = recipe.assemble(new SingleRecipeInput(raw), level.registryAccess());
             made.add(one.copyWithCount(one.getCount() * (count - cooked)));
             ItemStack inPan = skillet.getStoredStack();
             Platform.INSTANCE.setItem(skillet, inPan.copyWithCount(Math.max(0, inPan.getCount() - (count - cooked))));

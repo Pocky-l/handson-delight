@@ -1,6 +1,6 @@
 package com.pockyl.handson_delight.mixin;
 
-import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,7 +12,7 @@ import java.util.List;
 @Mixin(ShapelessRecipe.class)
 public interface ShapelessRecipeAccessor {
     @Accessor("result")
-    ItemStackTemplate handson$result();
+    ItemStack handson$result();
 
     @Accessor("ingredients")
     List<Ingredient> handson$ingredients();

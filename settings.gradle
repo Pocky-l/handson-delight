@@ -17,7 +17,7 @@ rootProject.name = 'handson_delight'
 
 // common: the stations, scenes and assets, compiled against plain Minecraft and Farmer's Delight; neoforge / fabric: the
 // loader glue. Each loader project compiles the common sources into its own jar.
-// Minecraft 26.1.2: Fabric only for now. The neoforge project is kept but not built until it is ported too.
+// Minecraft 1.21.11: Fabric only. Farmer's Delight has no NeoForge 1.21.11 build; the neoforge project is kept but not built.
 include 'common', 'fabric'
 
 // The Diegesis library comes from its working copy while both are developed together.

@@ -7,9 +7,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
-import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -46,21 +44,20 @@ final class TestRecipes {
     /** A cooking pot recipe; {@code container} empty for none of its own. */
     static CookingPotRecipe cooking(CookingPotBookCategory category, List<Ingredient> inputs, ItemStack result, ItemStack container,
             float experience, int cookTime) {
-        return new CookingPotRecipe("", category, List.copyOf(inputs), ItemStackTemplate.fromNonEmptyStack(result),
-                container.isEmpty() ? Optional.empty() : Optional.of(ItemStackTemplate.fromNonEmptyStack(container)), experience, cookTime);
+        return new CookingPotRecipe("", category, List.copyOf(inputs), result.copy(),
+                container.isEmpty() ? Optional.empty() : Optional.of(container.copy()), experience, cookTime);
     }
 
     /** A cutting recipe giving each of {@code results} for sure, with Farmer's Delight's own sound. */
     static CuttingBoardRecipe cutting(Ingredient input, Ingredient tool, ItemStack... results) {
-        List<ChanceResult> chances = Arrays.stream(results).map(stack -> new ChanceResult(ItemStackTemplate.fromNonEmptyStack(stack), 1.0F))
+        List<ChanceResult> chances = Arrays.stream(results).map(stack -> new ChanceResult(stack.copy(), 1.0F))
                 .toList();
         return new CuttingBoardRecipe("", input, tool, chances, null);
     }
 
     /** A shapeless craft of the crafting table's. */
     static ShapelessRecipe shapeless(ItemStack result, Ingredient... ingredients) {
-        return new ShapelessRecipe(new Recipe.CommonInfo(true), new CraftingRecipe.CraftingBookInfo(CraftingBookCategory.MISC, ""),
-                ItemStackTemplate.fromNonEmptyStack(result), List.of(ingredients));
+        return new ShapelessRecipe("", CraftingBookCategory.MISC, result.copy(), List.of(ingredients));
     }
 
     /** The server's recipes with {@code recipe} under {@code id}, in place of one of that id. */

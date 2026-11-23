@@ -2,8 +2,8 @@ package com.pockyl.handson_delight.fabric;
 
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
+import net.minecraft.client.renderer.block.model.BlockModelDefinition;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -86,7 +86,7 @@ final class PotModels {
             return Optional.empty();
         }
         try (Reader reader = Files.newBufferedReader(file.get())) {
-            BlockStateModelDispatcher definition = BlockStateModelDispatcher.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader))
+            BlockModelDefinition definition = BlockModelDefinition.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader))
                     .getOrThrow();
             if (definition.multiPart().isEmpty()) {
                 HandsOnDelight.LOGGER.error("{} is no multipart", name);

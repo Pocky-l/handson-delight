@@ -1,6 +1,5 @@
 package com.pockyl.handson_delight.client;
 
-import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.tags.ItemTags;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -44,6 +43,7 @@ import com.pockyl.handson_delight.ItemNbt;
 import com.pockyl.handson_delight.RecipeParts;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.assembly.BoardDishes;
+import com.pockyl.handson_delight.mixin.LayerRenderStateAccessor;
 import com.pockyl.handson_delight.station.BoardLogic;
 import com.pockyl.handson_delight.station.ChoppingBlockStation;
 import com.pockyl.handson_delight.station.Cutting;
@@ -878,11 +878,12 @@ public final class BoardBehavior implements StationBehavior {
 
     /** The colour the game gives an item's icon (leather armour's dye), white for the rest: built from the icon, it is drawn so. */
     private static int dyed(ItemStack stack) {
-        // Since Minecraft 26.x an item's tints are its model's, worked out into its look: the first layer's first tint.
+        // Since Minecraft 1.21.4 an item's tints are its model's, worked out into its look: the first layer's first tint.
         ItemStackRenderStateAccessor look = (ItemStackRenderStateAccessor) SceneDraw.itemState(stack, ItemDisplayContext.GUI,
                 Minecraft.getInstance().level, 0);
-        IntList tints = look.diegesis$layerCount() == 0 ? IntList.of() : look.diegesis$layers()[0].tintLayers();
-        int color = tints.isEmpty() ? -1 : tints.getInt(0);
+        int[] tints = look.diegesis$layerCount() == 0 ? new int[0]
+                : ((LayerRenderStateAccessor) (Object) look.diegesis$layers()[0]).handson$tintLayers();
+        int color = tints.length == 0 ? -1 : tints[0];
         return color == -1 ? 0xFFFFFFFF : 0xFF000000 | color;
     }
 

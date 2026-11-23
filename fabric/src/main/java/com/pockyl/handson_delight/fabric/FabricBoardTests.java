@@ -1,7 +1,6 @@
 package com.pockyl.handson_delight.fabric;
 
 import net.fabricmc.fabric.api.entity.FakePlayer;
-import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 
 import com.pockyl.handson_delight.gametest.BoardTests;

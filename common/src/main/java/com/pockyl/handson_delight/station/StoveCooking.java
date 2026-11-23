@@ -299,7 +299,7 @@ public final class StoveCooking {
             return null;
         }
         ItemStack expected = level == null ? ItemStack.EMPTY : SkilletCooking.recipe(level, raw)
-                .map(recipe -> recipe.assemble(new SingleRecipeInput(raw.copyWithCount(1)))).orElse(ItemStack.EMPTY);
+                .map(recipe -> recipe.assemble(new SingleRecipeInput(raw.copyWithCount(1)), level.registryAccess())).orElse(ItemStack.EMPTY);
         for (int i = 0; i < drops.size(); i++) {
             if (drops.get(i).stack().is(expected.getItem())) {
                 return drops.remove(i);
@@ -321,7 +321,7 @@ public final class StoveCooking {
             ItemStack stack = item(stove, place);
             Optional<CampfireCookingRecipe> recipe = level == null || stack.isEmpty() ? Optional.empty() : SkilletCooking.recipe(level, stack);
             if (recipe.isPresent()) {
-                grilled(stove, place, recipe.get().assemble(new SingleRecipeInput(stack.copyWithCount(1))));
+                grilled(stove, place, recipe.get().assemble(new SingleRecipeInput(stack.copyWithCount(1)), level.registryAccess()));
             } else {
                 grill(stove).done(place);
             }

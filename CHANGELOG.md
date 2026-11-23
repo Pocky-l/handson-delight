@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.6.4+26.1.2] - Unreleased
+### Fixed
+- Going over from a station to a [Hands-On Vanilla](https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla) one, the recipe book goes away at once instead of hanging in the air for a second. Thanks to hummusaki ([#57](https://github.com/Pocky-l/handson-delight/pull/57)).
+
 ## [1.6.3+26.1.2] - 2026-11-23
 ### New
 - Minecraft 26.1.2, on Fabric with [Farmer's Delight Refabricated](https://modrinth.com/mod/farmers-delight-refabricated): everything of 1.6.3 on 26.3, [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven and vat included.

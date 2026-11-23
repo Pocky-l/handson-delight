@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.3+26.1.2] - Unreleased
+### New
+- Minecraft 26.1.2, on Fabric with [Farmer's Delight Refabricated](https://modrinth.com/mod/farmers-delight-refabricated): everything of 1.6.3 on 26.3, [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven and vat included.
+- Ported by HoneyShard ([#54](https://github.com/Pocky-l/handson-delight/pull/54)).
+- Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.17.1+26.1.2.
+
+### Not on 26.1.2 yet
+- NeoForge: Farmer's Delight has no NeoForge build for 26.1.2.
+- Stations of other Farmer's Delight addons and recipe viewers (JEI, EMI, REI): they come back as those mods reach 26.1.2.
+
 ## [1.6.2+26.3] - 2026-11-22
 ### Fixed
 - [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven shares a stack out over its tray, and its recipe book lists the oven's dishes ([#52](https://github.com/Pocky-l/handson-delight/issues/52)).

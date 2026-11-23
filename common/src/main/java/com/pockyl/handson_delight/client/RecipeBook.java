@@ -640,13 +640,18 @@ final class RecipeBook implements NodePainter {
         leafing = 0;
         endSearch();
         Optional<NodeView> node = view.node("book_open");
-        if (DiegesisClient.goingOver() < 1.0F && node.isPresent() && node.get().isVisible()) {
+        boolean otherStation = focusedWithoutBook();
+        if (DiegesisClient.goingOver() < 1.0F && !otherStation && node.isPresent() && node.get().isVisible()) {
             passOn(node.get());
             return;
         }
         arrivingFrom = null;
         arrivingHeld = false;
         wanted = false;
+        if (otherStation) {
+            open = 0.0F;
+            node.ifPresent(n -> n.setVisible(false));
+        }
     }
 
     /**
@@ -705,6 +710,16 @@ final class RecipeBook implements NodePainter {
 
     static boolean isWorkedAt(StationView view) {
         return DiegesisClient.focusedStation().map(focused -> focused.pos().equals(view.pos())).orElse(false);
+    }
+
+    /**
+     * Whether the player is now at another mod's station (such as a vanilla Hands On station) that has no book of ours and will
+     * never take a handoff.
+     */
+    private static boolean focusedWithoutBook() {
+        return DiegesisClient.focusedStation()
+                .map(focused -> !HandsOnDelight.MOD_ID.equals(focused.type().id().getNamespace()))
+                .orElse(false);
     }
 
     private void turnSound() {
@@ -978,8 +993,9 @@ final class RecipeBook implements NodePainter {
             arrivingFrom = null;
             arrivingHeld = false;
         }
+        boolean otherStation = focusedWithoutBook();
         if (leaving != null) {
-            if (leaving.taken || leaving.isStale()) {
+            if (leaving.taken || leaving.isStale() || otherStation) {
                 if (handoff == leaving) {
                     handoff = null;
                 }
@@ -992,7 +1008,7 @@ final class RecipeBook implements NodePainter {
         } else if (passing != null && !passing.taken && !passing.isStale() && isWorkedAt(view)) {
             arrive(view, node, passing);
         }
-        if (arrivingFrom != null && !arrivingHeld && leaving == null && flight < 1.0F && !isWorkedAt(view)) {
+        if (arrivingFrom != null && !arrivingHeld && leaving == null && flight < 1.0F && !isWorkedAt(view) && !otherStation) {
             // The player went on before the book got here (the station was not theirs yet, so it was not shut).
             passOn(node);
         }

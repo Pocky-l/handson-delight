@@ -4,6 +4,7 @@
 ### Fixed
 - Going over from a station to a [Hands-On Vanilla](https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla) one, the recipe book goes away at once instead of hanging in the air for a second. Thanks to hummusaki ([#57](https://github.com/Pocky-l/handson-delight/pull/57)).
 - A crafting recipe of another mod that takes the same things as a cutting board dish is made in the crafting grid, and [Polymorph](https://www.curseforge.com/minecraft/mc-mods/polymorph) no longer offers the dish there.
+- The recipe book's faded icons, wells and tab edges no longer flicker under shader packs such as Complementary. Thanks to jayvie2007 ([#48](https://github.com/Pocky-l/handson-delight/pull/48)).
 
 ## [1.7.0+1.21.1] - 2026-11-23
 ### New

@@ -224,6 +224,11 @@ public final class FabricPotTests {
         PotTests.theCookingTimeFollowsTheConfig(helper);
     }
 
+    @GameTest(maxTicks = 100)
+    public void theClientIsSentThePotsRecipes(GameTestHelper helper) {
+        PotTests.theClientIsSentThePotsRecipes(helper);
+    }
+
     /** {@link PotTests.MealMaker}'s meal of what lies in the pot on Fabric. */
     private static final class MealOfWhatLiesThere extends CookingPotRecipe {
         private final List<Ingredient> inputs;

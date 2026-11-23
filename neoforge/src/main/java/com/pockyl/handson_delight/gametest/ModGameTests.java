@@ -774,6 +774,46 @@ public final class ModGameTests {
         VatTests.everyAgingFromItsFoodDroppedIn(helper);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void sausagesAndMashLaidByHandBake(GameTestHelper helper) {
+        CulturalOvenTests.sausagesAndMashLaidByHandBake(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void twoSetsLaidByHandBakeBoth(GameTestHelper helper) {
+        CulturalOvenTests.twoSetsLaidByHandBakeBoth(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void twoSetsFromTheBookBakeBoth(GameTestHelper helper) {
+        CulturalOvenTests.twoSetsFromTheBookBakeBoth(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aWaitingDishMakesWayForTheNext(GameTestHelper helper) {
+        CulturalOvenTests.aWaitingDishMakesWayForTheNext(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aWaitingDishGoesWithTheCookWhoLeaves(GameTestHelper helper) {
+        CulturalOvenTests.aWaitingDishGoesWithTheCookWhoLeaves(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void everyLooseBakingLaidByHand(GameTestHelper helper) {
+        CulturalOvenTests.everyLooseBakingLaidByHand(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void berriesAreSharedOutForTheCheesecake(GameTestHelper helper) {
+        CulturalOvenTests.berriesAreSharedOutForTheCheesecake(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void sausagesAndMashInAnyOrder(GameTestHelper helper) {
+        CulturalOvenTests.sausagesAndMashInAnyOrder(helper);
+    }
+
     @GameTest(template = "empty")
     public static void theOvenReadsItsRecipes(GameTestHelper helper) {
         CulturalOvenTests.theOvenReadsItsRecipes(helper);

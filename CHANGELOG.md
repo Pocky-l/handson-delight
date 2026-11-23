@@ -4,6 +4,9 @@
 ### New
 - [Extra Delight](https://modrinth.com/mod/extradelight)'s chiller is a station: an ice box whose doors swing open, with a mold on its shelf, ice in its chest and a drip pan; it needs Extra Delight 2.7.2 or newer.
 
+### Fixed
+- The ovens of [Cultural Delights](https://modrinth.com/mod/cultural-delights) and [Extra Delight](https://modrinth.com/mod/extradelight) no longer sit with a full tray that never bakes: a dish left over from the last bake goes to the cook, and the new one bakes.
+
 ## [1.6.2+1.21.1] - 2026-11-22
 ### Changed
 - Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.16: stations out of view cost far less, and closing another mod's screen opened over a station, such as a [QuestLog](https://modrinth.com/mod/questlog) quest popup, no longer locks the player ([#51](https://github.com/Pocky-l/handson-delight/issues/51)).

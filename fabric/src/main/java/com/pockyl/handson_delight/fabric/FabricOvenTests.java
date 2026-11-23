@@ -40,4 +40,44 @@ public final class FabricOvenTests implements FabricGameTest {
     public void aStackIsSharedOutForItsRecipe(GameTestHelper helper) {
         CulturalOvenTests.aStackIsSharedOutForItsRecipe(helper);
     }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 400)
+    public void sausagesAndMashLaidByHandBake(GameTestHelper helper) {
+        CulturalOvenTests.sausagesAndMashLaidByHandBake(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 600)
+    public void twoSetsLaidByHandBakeBoth(GameTestHelper helper) {
+        CulturalOvenTests.twoSetsLaidByHandBakeBoth(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 600)
+    public void twoSetsFromTheBookBakeBoth(GameTestHelper helper) {
+        CulturalOvenTests.twoSetsFromTheBookBakeBoth(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 400)
+    public void aWaitingDishMakesWayForTheNext(GameTestHelper helper) {
+        CulturalOvenTests.aWaitingDishMakesWayForTheNext(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 400)
+    public void aWaitingDishGoesWithTheCookWhoLeaves(GameTestHelper helper) {
+        CulturalOvenTests.aWaitingDishGoesWithTheCookWhoLeaves(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void everyLooseBakingLaidByHand(GameTestHelper helper) {
+        CulturalOvenTests.everyLooseBakingLaidByHand(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void berriesAreSharedOutForTheCheesecake(GameTestHelper helper) {
+        CulturalOvenTests.berriesAreSharedOutForTheCheesecake(helper);
+    }
+
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void sausagesAndMashInAnyOrder(GameTestHelper helper) {
+        CulturalOvenTests.sausagesAndMashInAnyOrder(helper);
+    }
 }

@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.3+1.21.11] - Unreleased
+### New
+- Minecraft 1.21.11, on Fabric with [Farmer's Delight Refabricated](https://modrinth.com/mod/farmers-delight-refabricated): the pot, board, skillet and stove with their recipe books, as in 1.6.3.
+- Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.17.2+1.21.11.
+
+### Not on 1.21.11 yet
+- NeoForge: Farmer's Delight has no NeoForge build for 1.21.11.
+- Stations of Farmer's Delight addons and recipe viewers (JEI, EMI, REI): they come back as those mods reach 1.21.11 and the support for them is ported.
+
 ## [1.6.3+26.1.2] - 2026-11-23
 ### New
 - Minecraft 26.1.2, on Fabric with [Farmer's Delight Refabricated](https://modrinth.com/mod/farmers-delight-refabricated): everything of 1.6.3 on 26.3, [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven and vat included.

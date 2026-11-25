@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -12,6 +14,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
 
@@ -181,6 +184,41 @@ public final class AlchemistPotTests {
         helper.assertTrue(setup.pot.handson$findRecipe(helper.getLevel(), List.of(setup.pot.handson$getItem(0), setup.pot.handson$getItem(1),
                 setup.pot.handson$getItem(2))).isPresent(), "and the food in the pot cooks now");
         helper.succeed();
+    }
+
+    /**
+     * A dish cooked with a container waits in the pot for it: a glass bottle dipped in comes back full, and the client, which decides
+     * whether a click dips or opens, learns the container with the meal (GitHub #62).
+     */
+    public static void aBottleDishIsScoopedInABottle(GameTestHelper helper) {
+        Setup setup = pot(helper, Blocks.CAMPFIRE);
+        if (setup == null) {
+            return;
+        }
+        for (int i = 0; i < 3; i++) {
+            setup.pot.handson$setItem(i, new ItemStack(fs("amethyst_beetroot")));
+        }
+        stir(helper, setup, 200);
+        helper.runAfterDelay(200, () -> {
+            helper.assertTrue(setup.pot.handson$meal().is(fs("amethyst_sugar")), "amethyst sugar waits in the pot, got " + setup.pot.handson$meal());
+            ItemStack bottle = new ItemStack(Items.GLASS_BOTTLE);
+            helper.assertTrue(setup.pot.handson$isContainerValid(bottle), "a glass bottle serves it");
+            BlockEntity entity = setup.pot.handson$blockEntity();
+            Packet<?> update = entity.getUpdatePacket();
+            helper.assertTrue(update instanceof ClientboundBlockEntityDataPacket, "the pot sends its change to the client");
+            BlockEntity seen = entity.getType().create(entity.getBlockPos(), entity.getBlockState());
+            helper.assertTrue(seen != null, "a client copy of the pot");
+            seen.loadWithComponents(((ClientboundBlockEntityDataPacket) update).getTag(), helper.getLevel().registryAccess());
+            KitchenPot client = KitchenPot.of(seen);
+            helper.assertTrue(client != null && client.handson$meal().is(fs("amethyst_sugar")) && client.handson$isContainerValid(bottle),
+                    "the client sees the meal and that a glass bottle serves it");
+            Player player = helper.makeMockPlayer(GameType.CREATIVE);
+            player.inventoryMenu.setCarried(bottle.copy());
+            setup.logic.onCustomAction(setup.station, player, CookingPotStation.ACTION_SCOOP, new CompoundTag());
+            helper.assertTrue(player.inventoryMenu.getCarried().is(fs("amethyst_sugar")),
+                    "the bottle dipped in comes back full, got " + player.inventoryMenu.getCarried());
+            helper.succeed();
+        });
     }
 
     /** Food a hopper brings cooks by itself, the pot's own way: automation goes on working. */

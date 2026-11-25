@@ -669,6 +669,12 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aBottleDishIsScoopedInABottle(GameTestHelper helper) {
+        spellSchools(helper);
+        AlchemistPotTests.aBottleDishIsScoopedInABottle(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
     public static void aHopperFedAlchemistPotCooksByItself(GameTestHelper helper) {
         spellSchools(helper);
         AlchemistPotTests.aHopperFedAlchemistPotCooksByItself(helper);

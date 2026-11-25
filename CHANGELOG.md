@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.7.2+1.21.1] - Unreleased
+## [1.7.2+1.21.1] - 2026-11-25
 ### Fixed
 - [Farmer's Spell 'n Spell Book](https://modrinth.com/mod/farmers-spell)'s Arcane Cooking Pot fills a glass bottle: a dish served in a bottle, such as Amethyst Sugar, is scooped at the station and with a bottle used on the pot ([#62](https://github.com/Pocky-l/handson-delight/issues/62)).
 

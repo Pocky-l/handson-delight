@@ -268,6 +268,16 @@ var prepareGameTestServer = tasks.register('prepareGameTestServer') {
                             + ".id('farmersdelight:chicken_sandwich')",
                     // With -Pculinary: a Pam craft Culinary Compat cuts together, edited before it reads it.
                     "  event.replaceInput({id: 'pamhc2foodcore:caramelyogurtitem'}, '#forge:caramel', 'minecraft:honey_bottle')",
+                    // Every other station: a pot meal, a cut, a board dish and a campfire recipe removed; a pot meal and a cut added.
+                    // Recipes no other game test uses.
+                    "  event.remove({id: 'farmersdelight:cooking/beetroot_soup'})",
+                    "  event.remove({id: 'farmersdelight:cutting/allium'})",
+                    "  event.remove({id: 'farmersdelight:fruit_salad'})",
+                    "  event.remove({id: 'farmersdelight:cooked_cod_slice_from_campfire_cooking'})",
+                    "  event.custom({type: 'farmersdelight:cooking', ingredients: [{item: 'minecraft:apple'}, {item: 'minecraft:sugar'}], "
+                            + "result: {item: 'minecraft:honey_bottle'}, cookingtime: 100, recipe_book_tab: 'misc'}).id('kubejs:apple_honey')",
+                    "  event.custom({type: 'farmersdelight:cutting', ingredients: [{item: 'minecraft:apple'}], "
+                            + "tool: {tag: 'forge:tools/knives'}, result: [{item: 'minecraft:stick', count: 2}]}).id('kubejs:apple_sticks')",
                     "})",
                     "ServerEvents.tags('item', event => event.add('handson_delight:assembled', 'minecraft:mushroom_stew'))"
             ].join(System.lineSeparator()) + System.lineSeparator()

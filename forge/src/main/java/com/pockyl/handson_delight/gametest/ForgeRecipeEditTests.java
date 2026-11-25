@@ -25,6 +25,16 @@ public final class ForgeRecipeEditTests {
     }
 
     @GameTest(template = "empty")
+    public static void aScriptsEditsReachEveryStation(GameTestHelper helper) {
+        RecipeEditTests.aScriptsEditsReachEveryStation(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 1200, batch = "reload_scripts")
+    public static void aReloadKeepsTheScriptsEdits(GameTestHelper helper) {
+        RecipeEditTests.aReloadKeepsTheScriptsEdits(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void aDatapacksEditsOfPamsCraftsReachTheBoard(GameTestHelper helper) {
         RecipeEditTests.aDatapacksEditsOfPamsCraftsReachTheBoard(helper);
     }

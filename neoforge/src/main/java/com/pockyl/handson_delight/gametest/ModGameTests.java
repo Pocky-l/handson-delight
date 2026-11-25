@@ -970,6 +970,11 @@ public final class ModGameTests {
         YoukaiPotTests.youkaiSmallPotCooksFromTheBook(helper);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 1300)
+    public static void youkaiStockpotFinishesWithNobodyAtIt(GameTestHelper helper) {
+        YoukaiPotTests.youkaiStockpotFinishesWithNobodyAtIt(helper);
+    }
+
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void youkaiSteamerSteamsAPotato(GameTestHelper helper) {
         YoukaiSteamerTests.youkaiSteamerSteamsAPotato(helper);

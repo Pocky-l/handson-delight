@@ -200,6 +200,35 @@ public final class YoukaiPotTests {
         });
     }
 
+    /**
+     * Mushroom soup in the stockpot, the cook gone before it is done (Discord, 2026-11-24: "the recipes go to 1 second and
+     * stop"): put in at the station, left alone over the campfire, the pot of the soup stands there when its time is up.
+     */
+    public static void youkaiStockpotFinishesWithNobodyAtIt(GameTestHelper helper) {
+        Setup setup = pot(helper, YoukaiPotStation.STOCKPOT, YoukaiPotStation.STOCKPOT_TYPE);
+        if (setup == null) {
+            return;
+        }
+        KitchenYoukaiPot.Dish soup = setup.pot.handson$dishes().stream()
+                .filter(dish -> dish.id().toString().equals("youkaisfeasts:unordered_cooking/pot_of_mushroom_soup")).findFirst().orElse(null);
+        helper.assertTrue(soup != null, "the stockpot's mushroom soup is read");
+        Player player = cook(helper, setup.at);
+        opened(setup, player);
+        for (net.minecraft.world.item.crafting.Ingredient ingredient : soup.ingredients()) {
+            ItemStack[] items = ingredient.getItems();
+            helper.assertTrue(items.length > 0, "every ingredient names an item");
+            helper.assertTrue(setup.pot.handson$put(player, items[0].copyWithCount(1)), "it takes " + items[0]);
+        }
+        setup.station.users.remove(player);
+        setup.logic.onClose(setup.station, player);
+        helper.runAfterDelay(5, () -> helper.assertTrue(setup.pot.handson$cooking() != null, "everything in: it cooks, "
+                + setup.pot.handson$cooked() + "/" + setup.pot.handson$cookTime()));
+        helper.runAfterDelay(soup.ticks() + 40, () -> {
+            helper.assertBlockPresent(BuiltInRegistries.BLOCK.get(feastsId("pot_of_mushroom_soup")), setup.at);
+            helper.succeed();
+        });
+    }
+
     @SuppressWarnings("removal")
     private static ResourceLocation feastsId(String path) {
         return ResourceLocation.fromNamespaceAndPath(KitchenYoukaiPot.MOD_ID, path);

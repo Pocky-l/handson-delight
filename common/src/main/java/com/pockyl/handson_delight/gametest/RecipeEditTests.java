@@ -15,13 +15,18 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.Level;
 
 import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.assembly.AssemblyRecipes;
 import com.pockyl.handson_delight.platform.Platform;
+import com.pockyl.handson_delight.station.Cutting;
+import com.pockyl.handson_delight.station.SkilletCooking;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * A modpack edits Farmer's Delight's dishes with a script: the board makes each dish exactly as the server's recipes have it, or not at
@@ -69,6 +74,76 @@ public final class RecipeEditTests {
             helper.assertTrue(!AssemblyRecipes.isMadeOnTheBoard(chicken), "and the board does not make it");
         }
         helper.succeed();
+    }
+
+    /**
+     * The KubeJS test script's edits of the other stations reach them and their books: a pot meal, a cut, a board dish and a campfire
+     * recipe removed are made nowhere, a pot meal and a cut added are made. Every station and book reads the level's recipes.
+     */
+    public static void aScriptsEditsReachEveryStation(GameTestHelper helper) {
+        if (Platform.INSTANCE.isLoaded("kubejs")) {
+            scriptsEdits(helper);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * After a {@code /reload} KubeJS runs its scripts again: the stations still follow them and read the new recipes, not the ones from
+     * before the reload. Runs in a batch of its own: the reload swaps every recipe.
+     */
+    public static void aReloadKeepsTheScriptsEdits(GameTestHelper helper) {
+        if (!Platform.INSTANCE.isLoaded("kubejs")) {
+            helper.succeed();
+            return;
+        }
+        MinecraftServer server = helper.getLevel().getServer();
+        ResourceLocation sticks = ResourceLocation.parse("kubejs:apple_sticks");
+        Recipe<?> oldCut = server.getRecipeManager().byKey(sticks).map(RecipeHolder::value).orElse(null);
+        CompletableFuture<Void> reload = server.reloadResources(server.getPackRepository().getSelectedIds());
+        helper.succeedWhen(() -> {
+            helper.assertTrue(reload.isDone(), "the reload is done");
+            scriptsEdits(helper);
+            Recipe<?> newCut = server.getRecipeManager().byKey(sticks).map(RecipeHolder::value).orElse(null);
+            helper.assertTrue(newCut != null && newCut != oldCut, "the reload made the script's cut anew");
+            helper.assertTrue(Cutting.all(helper.getLevel()).contains(newCut) && !Cutting.all(helper.getLevel()).contains(oldCut),
+                    "the board cuts by the recipes after the reload");
+            everyDishIsTheServersRecipe(helper);
+        });
+    }
+
+    private static void scriptsEdits(GameTestHelper helper) {
+        Level level = helper.getLevel();
+        ResourceLocation soup = FarmersDelightContent.id("cooking/beetroot_soup");
+        helper.assertTrue(Platform.INSTANCE.cookingRecipes(level).stream().noneMatch(recipe -> recipe.id().equals(soup)),
+                "a pot meal a script removed is not in the pot's book");
+        ItemStack beetroot = new ItemStack(Items.BEETROOT);
+        helper.assertTrue(Platform.INSTANCE.findRecipe(level, List.of(beetroot, beetroot.copy(), beetroot.copy())).isEmpty(),
+                "and the pot does not cook it");
+        ResourceLocation honey = ResourceLocation.parse("kubejs:apple_honey");
+        helper.assertTrue(Platform.INSTANCE.cookingRecipes(level).stream().anyMatch(recipe -> recipe.id().equals(honey)),
+                "a pot meal a script added is in the pot's book");
+        helper.assertTrue(Platform.INSTANCE.findRecipe(level, List.of(new ItemStack(Items.APPLE), new ItemStack(Items.SUGAR)))
+                .map(recipe -> recipe.id().equals(honey)).orElse(false), "and the pot cooks it");
+
+        ResourceLocation allium = FarmersDelightContent.id("cutting/allium");
+        helper.assertTrue(Cutting.all(level).stream().noneMatch(recipe -> allium.equals(Cutting.id(level, recipe))),
+                "a cut a script removed is not in the board's book");
+        helper.assertTrue(Cutting.recipesFor(level, new ItemStack(Items.ALLIUM)).stream().noneMatch(recipe -> allium.equals(Cutting.id(level, recipe))),
+                "and the board does not cut it");
+        ResourceLocation sticks = ResourceLocation.parse("kubejs:apple_sticks");
+        helper.assertTrue(Cutting.all(level).stream().anyMatch(recipe -> sticks.equals(Cutting.id(level, recipe))),
+                "a cut a script added is in the board's book");
+        helper.assertTrue(Cutting.recipesFor(level, new ItemStack(Items.APPLE)).stream().anyMatch(recipe -> sticks.equals(Cutting.id(level, recipe))),
+                "and the board cuts it");
+
+        // Its twin stays: it shows that such a dish is the board's when no script takes it out.
+        helper.assertTrue(AssemblyRecipes.isMadeOnTheBoard(FarmersDelightContent.id("mixed_salad")), "a tossed salad is made on the board");
+        ResourceLocation salad = FarmersDelightContent.id("fruit_salad");
+        helper.assertTrue(AssemblyRecipes.all().stream().noneMatch(dish -> dish.id().equals(salad)) && !AssemblyRecipes.isMadeOnTheBoard(salad),
+                "a board dish a script removed is not made on the board");
+
+        helper.assertTrue(SkilletCooking.recipe(level, new ItemStack(fd("cod_slice"))).isEmpty(),
+                "a campfire recipe a script removed is not fried in the skillet");
     }
 
     private static AssemblyRecipes.Assembly dish(GameTestHelper helper, String path) {

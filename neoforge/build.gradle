@@ -235,6 +235,16 @@ var prepareKubeJs = tasks.register('prepareKubeJs') {
                     "  event.remove({id: 'farmersdelight:chicken_sandwich'})",
                     "  event.shapeless('farmersdelight:chicken_sandwich', ['#c:foods/bread', 'minecraft:cooked_chicken', 'minecraft:apple'])"
                             + ".id('farmersdelight:chicken_sandwich')",
+                    // Every other station: a pot meal, a cut, a board dish and a campfire recipe removed; a pot meal and a cut added.
+                    // Recipes no other game test uses.
+                    "  event.remove({id: 'farmersdelight:cooking/beetroot_soup'})",
+                    "  event.remove({id: 'farmersdelight:cutting/allium'})",
+                    "  event.remove({id: 'farmersdelight:fruit_salad'})",
+                    "  event.remove({id: 'farmersdelight:cooked_cod_slice_from_campfire_cooking'})",
+                    "  event.custom({type: 'farmersdelight:cooking', ingredients: [{item: 'minecraft:apple'}, {item: 'minecraft:sugar'}], "
+                            + "result: {id: 'minecraft:honey_bottle', count: 1}, cookingtime: 100, recipe_book_tab: 'misc'}).id('kubejs:apple_honey')",
+                    "  event.custom({type: 'farmersdelight:cutting', ingredients: [{item: 'minecraft:apple'}], "
+                            + "tool: {tag: 'c:tools/knife'}, result: [{item: {id: 'minecraft:stick', count: 2}}]}).id('kubejs:apple_sticks')",
                     "})",
                     "ServerEvents.tags('item', event => event.add('handson_delight:assembled', 'minecraft:mushroom_stew'))"
             ].join(System.lineSeparator()) + System.lineSeparator()

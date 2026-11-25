@@ -1166,6 +1166,16 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void aScriptsEditsReachEveryStation(GameTestHelper helper) {
+        RecipeEditTests.aScriptsEditsReachEveryStation(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 1200, batch = "reload_scripts")
+    public static void aReloadKeepsTheScriptsEdits(GameTestHelper helper) {
+        RecipeEditTests.aReloadKeepsTheScriptsEdits(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void aKnifeThatBreaksOnTheLastCutLeavesThePieces(GameTestHelper helper) {
         FullInventoryTests.aKnifeThatBreaksOnTheLastCutLeavesThePieces(helper);
     }

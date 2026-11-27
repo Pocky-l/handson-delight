@@ -18,6 +18,7 @@
     "StoveBlockEntityMixin",
     "StoveBlockMixin",
     "PlayerListMixin",
+    "DecoratedBoardMixin",
     "ShapedRecipeAccessor",
     "ShapelessRecipeAccessor",
     "SingleItemRecipeAccessor",
@@ -34,7 +35,8 @@
     "AddonStoveSmokeMixin",
     "CampfireSmokeMixin",
     "GrillSmokeMixin",
-    "GrillSizzleMixin"
+    "GrillSizzleMixin",
+    "DecoratedBoardContentMixin"
   ],
   "injectors": {
     "defaultRequire": 1

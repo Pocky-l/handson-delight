@@ -24,8 +24,11 @@ public final class OptionalMixins implements IMixinConfigPlugin {
             PACKAGE + "GrillSizzleMixin", PACKAGE + "DecoratedBoardMixin", PACKAGE + "DecoratedBoardContentMixin",
             PACKAGE + "CfbOvenToolsMixin", PACKAGE + "CfbOvenTopMixin");
     private static final String CHOPPERS_BOARD = PACKAGE + "DecoratedBoardMixin";
-    /** {@code clearContent} of Chopper's board, as the jar names it: Mojang's name (NeoForge, Fabric's dev runs) or Fabric's. */
-    private static final Set<String> CLEAR_CONTENT = Set.of("clearContent", "method_5448");
+    /**
+     * {@code preRemoveSideEffects} of Chopper's board, where its station drops a dish being put together, as the jar names it:
+     * Mojang's name (Fabric's dev runs) or Fabric's.
+     */
+    private static final Set<String> CHOPPERS_MARKER = Set.of("preRemoveSideEffects", "method_66473");
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -45,7 +48,7 @@ public final class OptionalMixins implements IMixinConfigPlugin {
         if (target == null) {
             return false;
         }
-        if (CHOPPERS_BOARD.equals(mixinClassName) && target.methods.stream().noneMatch(method -> CLEAR_CONTENT.contains(method.name))) {
+        if (CHOPPERS_BOARD.equals(mixinClassName) && target.methods.stream().noneMatch(method -> CHOPPERS_MARKER.contains(method.name))) {
             LoggerFactory.getLogger(OptionalMixins.class).warn("This version of choppersdelight is older than its station needs: "
                     + "DecoratedBoardMixin is left out");
             return false;

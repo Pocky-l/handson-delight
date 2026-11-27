@@ -14,17 +14,15 @@ plugins {
     id 'fabric-loom'
 }
 
-// Minecraft 1.21.11: the recipe viewers and the addon mods have no 1.21.11 builds the code is written for, so what compiles
+// Minecraft 1.21.11: the recipe viewers and most addon mods have no 1.21.11 builds the code is written for, so what compiles
 // against them is left out of the build (the sources stay). The loader projects leave out the same files. The addon mixins are
 // also left out of handson_delight.mixins.json; the rest of the addon support finds the addons at runtime and stays dormant
-// without them.
+// without them. Chopper's Delight has one: the decorated board's mixins are built against it.
 ext.compatSources = [
         'com/pockyl/handson_delight/compat/jei/**',
         'com/pockyl/handson_delight/compat/emi/**',
         'com/pockyl/handson_delight/mixin/CfbOvenToolsMixin.java',
         'com/pockyl/handson_delight/mixin/CfbOvenTopMixin.java',
-        'com/pockyl/handson_delight/mixin/DecoratedBoardContentMixin.java',
-        'com/pockyl/handson_delight/mixin/DecoratedBoardMixin.java',
         'com/pockyl/handson_delight/mixin/KegMixin.java',
         'com/pockyl/handson_delight/mixin/OvenMixin.java',
         'com/pockyl/handson_delight/mixin/VatMixin.java',
@@ -33,28 +31,28 @@ ext.compatSources = [
 ]
 sourceSets.main.java.exclude(compatSources)
 
-// Farmer's Delight Refabricated 1.21.11 is built with a newer Loom, and this build's Loom (1.14.10, shared by every 1.21.11
-// Fabric build that playtest-1.21.11-fabric composes: one composite cannot mix Loom versions) refuses such jars. Compiling
-// needs only its classes, so a copy without the Loom entries of the manifest is remapped like any other mod. Prepared at
-// configuration time, since Loom resolves the mod dependencies while it configures the project.
-ext.refabricatedForCompile = layout.buildDirectory
-        .file("refabricated/farmers-delight-refabricated-${farmers_delight_refabricated_version}.jar").get().asFile
-if (!refabricatedForCompile.isFile()) {
-    def release = configurations.detachedConfiguration(
-            dependencies.create("maven.modrinth:farmers-delight-refabricated:${farmers_delight_refabricated_version}"))
+// Farmer's Delight Refabricated 1.21.11 and Chopper's Delight 1.21.11 are built with a newer Loom, and this build's Loom (1.14.10,
+// shared by every 1.21.11 Fabric build that playtest-1.21.11-fabric composes: one composite cannot mix Loom versions) refuses
+// such jars. Compiling needs only their classes, so a copy without the Loom entries of the manifest is remapped like any other
+// mod. Prepared at configuration time, since Loom resolves the mod dependencies while it configures the project.
+def forCompile = { String notation, File copy ->
+    if (copy.isFile()) {
+        return copy
+    }
+    def release = configurations.detachedConfiguration(dependencies.create(notation))
     release.transitive = false
-    refabricatedForCompile.parentFile.mkdirs()
+    copy.parentFile.mkdirs()
     new JarFile(release.singleFile).withCloseable { jar ->
         def manifest = new Manifest(jar.manifest)
         manifest.mainAttributes.keySet().removeIf { it.toString().startsWith('Fabric-Loom-') }
-        new JarOutputStream(new FileOutputStream(refabricatedForCompile), manifest).withCloseable { out ->
+        new JarOutputStream(new FileOutputStream(copy), manifest).withCloseable { out ->
             jar.entries().each { entry ->
                 if (entry.name == JarFile.MANIFEST_NAME || entry.name.endsWith('.classtweaker')) {
                     return
                 }
                 out.putNextEntry(new ZipEntry(entry.name))
                 if (entry.name == 'fabric.mod.json') {
-                    // Its class tweaker is format v2, which Loom 1.14 cannot read; the widened members are not used here.
+                    // Refabricated's class tweaker is format v2, which Loom 1.14 cannot read; the widened members are not used here.
                     def text = jar.getInputStream(entry).getText('UTF-8')
                     out << text.readLines().findAll { !it.contains('"accessWidener"') }.join('\n').getBytes('UTF-8')
                 } else {
@@ -64,7 +62,13 @@ if (!refabricatedForCompile.isFile()) {
             }
         }
     }
+    return copy
 }
+ext.refabricatedForCompile = forCompile("maven.modrinth:farmers-delight-refabricated:${farmers_delight_refabricated_version}",
+        layout.buildDirectory.file("refabricated/farmers-delight-refabricated-${farmers_delight_refabricated_version}.jar").get().asFile)
+// Chopper's Delight's decorated board is a board station: its mixins are compiled against its 1.21.11 Fabric build.
+ext.choppersForCompile = forCompile("maven.modrinth:choppers-delight:${choppers_delight_fabric_version}",
+        layout.buildDirectory.file("choppers/choppers-delight-${choppers_delight_fabric_version}.jar").get().asFile)
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
@@ -76,6 +80,7 @@ dependencies {
     modCompileOnly "net.fabricmc:fabric-loader:${fabric_loader_version}"
     compileOnly "com.pockyl.diegesis:common:${diegesis_version}"
     modCompileOnly files(refabricatedForCompile)
+    modCompileOnly files(choppersForCompile)
     // Refabricated's block entities name Fabric's transfer and menu APIs in their signatures: javac needs them to read them.
     modCompileOnly "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 }

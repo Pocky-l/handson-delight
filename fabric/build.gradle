@@ -17,6 +17,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     modCompileOnly files(refabricatedForCompile)
+    modCompileOnly files(project(':common').choppersForCompile)
     // The API is in Diegesis' common jar, in Mojang names like this project; the Fabric jar of the library plays in
     // the playtest client (playtest-1.21.11-fabric).
     compileOnly "com.pockyl.diegesis:common:${diegesis_version}"
@@ -60,6 +61,10 @@ dependencies {
     gameTestMods "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     // Not in the fabric-api jar: the module that runs the tests (the version fabric-api's POM names).
     gameTestMods 'net.fabricmc.fabric-api:fabric-gametest-api-v1:3.1.27+4fc5413f3e'
+    // -Paddons: the addons with a 1.21.11 Fabric build whose stations open: Chopper's Delight's boards.
+    if (providers.gradleProperty('addons').isPresent()) {
+        gameTestMods "maven.modrinth:choppers-delight:${choppers_delight_fabric_version}"
+    }
     // -Ppolymer: Polymer, which changes items and ingredients as a player's connection writes them (the recipes sent to clients).
     if (providers.gradleProperty('polymer').isPresent()) {
         gameTestMods "maven.modrinth:polymer:${polymer_version}"

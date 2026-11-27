@@ -1,15 +1,19 @@
 package com.pockyl.handson_delight.mixin;
 
 import com.phantomwing.choppersdelight.block.entity.DecoratedCuttingBoardBlockEntity;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
@@ -112,22 +116,25 @@ abstract class DecoratedBoardMixin implements KitchenBoard {
     }
 
     @Inject(method = "saveAdditional", at = @At("TAIL"), remap = true)
-    private void handson$saveLayers(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo callback) {
+    private void handson$saveLayers(ValueOutput output, CallbackInfo callback) {
         if (handson$layers.stream().anyMatch(stack -> !stack.isEmpty())) {
-            tag.put(LAYERS, ContainerHelper.saveAllItems(new CompoundTag(), handson$layers, registries));
+            ContainerHelper.saveAllItems(output.child(LAYERS), handson$layers);
         }
     }
 
     @Inject(method = "loadAdditional", at = @At("TAIL"), remap = true)
-    private void handson$loadLayers(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo callback) {
+    private void handson$loadLayers(ValueInput input, CallbackInfo callback) {
         handson$layers.clear();
-        if (tag.contains(LAYERS)) {
-            ContainerHelper.loadAllItems(tag.getCompound(LAYERS), handson$layers, registries);
-        }
+        input.child(LAYERS).ifPresent(layers -> ContainerHelper.loadAllItems(layers, handson$layers));
     }
 
-    @Inject(method = "clearContent", at = @At("TAIL"), remap = true)
-    private void handson$clearLayers(CallbackInfo callback) {
+    /** The board goes (broken, replaced): what lies on it falls with it, as its own item does. */
+    @Inject(method = "preRemoveSideEffects", at = @At("HEAD"), remap = true)
+    private void handson$dropLayers(BlockPos pos, BlockState state, CallbackInfo callback) {
+        Level level = ((BlockEntity) (Object) this).getLevel();
+        if (level != null) {
+            Containers.dropContents(level, pos, handson$layers);
+        }
         handson$layers.clear();
     }
 

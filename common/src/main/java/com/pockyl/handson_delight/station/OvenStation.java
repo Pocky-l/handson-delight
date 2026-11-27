@@ -9,6 +9,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -190,6 +191,9 @@ public final class OvenStation {
         }
         if (Platform.INSTANCE.isLoaded(CfbOven.MOD_ID)) {
             Diegesis.register(CFB_TYPE);
+            // Its book and rack on the client read what it bakes: its own recipes and smoking, besides campfire and smelting.
+            KitchenRecipes.sync(CfbOven::ovenRecipes);
+            KitchenRecipes.sync(() -> RecipeType.SMOKING);
         }
         if (Platform.INSTANCE.isLoaded(EdOven.MOD_ID)) {
             Diegesis.register(ED_TYPE);

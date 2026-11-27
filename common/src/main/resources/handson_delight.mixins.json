@@ -22,6 +22,7 @@
     "VatMixin",
     "VatUprightMixin",
     "DecoratedBoardMixin",
+    "CfbOvenTopMixin",
     "ShapedRecipeAccessor",
     "ShapelessRecipeAccessor",
     "SingleItemRecipeAccessor",
@@ -39,7 +40,8 @@
     "VatSparksMixin",
     "GrillSmokeMixin",
     "GrillSizzleMixin",
-    "DecoratedBoardContentMixin"
+    "DecoratedBoardContentMixin",
+    "CfbOvenToolsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

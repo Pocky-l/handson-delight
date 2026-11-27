@@ -21,6 +21,7 @@
     "OvenMixin",
     "VatMixin",
     "VatUprightMixin",
+    "DecoratedBoardMixin",
     "ShapedRecipeAccessor",
     "ShapelessRecipeAccessor",
     "SingleItemRecipeAccessor",
@@ -37,7 +38,8 @@
     "CampfireSmokeMixin",
     "VatSparksMixin",
     "GrillSmokeMixin",
-    "GrillSizzleMixin"
+    "GrillSizzleMixin",
+    "DecoratedBoardContentMixin"
   ],
   "injectors": {
     "defaultRequire": 1

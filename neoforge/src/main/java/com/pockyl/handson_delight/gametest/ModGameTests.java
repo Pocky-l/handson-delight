@@ -991,6 +991,11 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void youkaiSteamerTakesARackOnShift(GameTestHelper helper) {
+        YoukaiSteamerTests.youkaiSteamerTakesARackOnShift(helper);
+    }
+
+    @GameTest(template = "empty")
     public static void anEmptyYoukaiPotTakesItsWaterAtTheStation(GameTestHelper helper) {
         YoukaiPotTests.anEmptyYoukaiPotTakesItsWaterAtTheStation(helper);
     }

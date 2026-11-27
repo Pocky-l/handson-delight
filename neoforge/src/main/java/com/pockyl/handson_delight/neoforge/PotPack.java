@@ -35,6 +35,7 @@ import java.util.function.BooleanSupplier;
  * Dungeons Delight's monster pot, and Cultural Delights' oven, a brick oven with a real door and a hearth inside instead of a
  * painted front, and its vat, hollow under a lid that lifts. Farmer's Respite's kettle comes the same way: its opening under the lid is a
  * real one, and its tray is Farmer's Delight's heating tray, where its own model names tray textures Farmer's Delight no longer has. Farmer's Spell's alchemist pot comes the same way: its dark top is a real opening;
+ * so does Twilight's Flavor & Delight's fiery cooking pot: its painted mouth is a real one;
  * so does Youkai's Feasts' kettle: its painted hole is a real opening under its lid, which the station lifts. Extra Delight's
  * melting pot comes the same way: its upper pot is open on what melts in it; and its chiller, whose three painted doors are real
  * ones that the station swings open. Hearth and Harvest's cask stands shut in the
@@ -64,11 +65,12 @@ final class PotPack {
             Map.entry(ResourceLocation.fromNamespaceAndPath("youkaisfeasts", "blockstates/kettle.json"), HandsOnConfig::kettle),
             Map.entry(ResourceLocation.fromNamespaceAndPath("extradelight", "blockstates/melting_pot.json"), HandsOnConfig::meltingPot),
             Map.entry(ResourceLocation.fromNamespaceAndPath("hearthandharvest", "blockstates/cask.json"), HandsOnConfig::cask),
-            Map.entry(ResourceLocation.fromNamespaceAndPath("extradelight", "blockstates/chiller.json"), HandsOnConfig::chiller));
+            Map.entry(ResourceLocation.fromNamespaceAndPath("extradelight", "blockstates/chiller.json"), HandsOnConfig::chiller),
+            Map.entry(ResourceLocation.fromNamespaceAndPath("twilightdelight", "blockstates/fiery_cooking_pot.json"), HandsOnConfig::cookingPot));
     private static final String DYED_NAMESPACE = "vanilladelight";
     private static final String DYED_MODELS = "models/block/cooking_pot_";
     private static final Set<String> NAMESPACES = Set.of("farmersdelight", "minersdelight", "dungeonsdelight", "culturaldelights", "farmersrespite",
-            "farmers_spell", "youkaisfeasts", "extradelight", DYED_NAMESPACE, "hearthandharvest");
+            "farmers_spell", "youkaisfeasts", "extradelight", DYED_NAMESPACE, "hearthandharvest", "twilightdelight");
 
     private PotPack() {
     }

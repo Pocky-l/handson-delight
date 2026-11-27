@@ -55,6 +55,7 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(CookingPotStation.ID, PotBehavior::new);
         DiegesisClient.registerBehavior(CookingPotStation.COPPER_ID, view -> new PotBehavior(view, PotBehavior.Shape.COPPER_POT));
         DiegesisClient.registerBehavior(CookingPotStation.MONSTER_ID, view -> new PotBehavior(view, PotBehavior.Shape.MONSTER_POT));
+        DiegesisClient.registerBehavior(CookingPotStation.FIERY_ID, view -> new PotBehavior(view, PotBehavior.Shape.FIERY_POT));
         DiegesisClient.registerBehavior(CookingPotStation.ALCHEMIST_ID, view -> new PotBehavior(view, PotBehavior.Shape.ALCHEMIST_POT));
         DiegesisClient.registerBehavior(KegStation.ID, KegBehavior::lying);
         DiegesisClient.registerBehavior(KegStation.STANDING_ID, KegBehavior::standing);
@@ -97,7 +98,10 @@ public final class HandsOnDelightClient {
         DiegesisClient.registerBehavior(StoveStation.ID, StoveBehavior::new);
         DiegesisClient.registerBehavior(OvenStation.CFB_ID, OvenBehavior::cfb);
         DiegesisClient.registerBehavior(OvenStation.ED_ID, OvenBehavior::extra);
-        DiegesisClient.registerLiquid(HandsOnDelight.id("broth"), LiquidLook.of(0xE0B0A070).thick(0.6F));
+        DiegesisClient.registerLiquid(CookingPotStation.BROTH_LIQUID, LiquidLook.of(0xE0B0A070).thick(0.6F));
+        // Twilight's fiery pot holds a molten broth: lava's own surface, glowing in the dark, slow as lava.
+        DiegesisClient.registerLiquid(CookingPotStation.FIERY_BROTH_LIQUID,
+                new LiquidLook(0xFFFFFFFF, LiquidLook.LAVA_SPRITE, true, 0.8F));
         registerParticles();
     }
 

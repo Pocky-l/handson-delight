@@ -26,13 +26,18 @@ import java.util.function.Supplier;
  * The cooking pot as a station. Its slots are windows on the pot's own inventory: hoppers reach it and it keeps its items whoever is
  * at it. The block is the pot, open in the world too (the mod's blockstate): the scene only adds what is in it, for everybody around.
  * Miner's Delight's copper pot is the same station, smaller: four ingredients instead of six. Dungeons Delight's monster pot is the same
- * station in its own textures, cooking its own recipes of monster food.
+ * station in its own textures, cooking its own recipes of monster food. Twilight's Flavor & Delight's fiery cooking pot is Farmer's
+ * Delight's pot block in a body of its own, a little narrower inside.
  */
 public final class CookingPotStation {
     public static final ResourceLocation ID = HandsOnDelight.id("cooking_pot");
     public static final ResourceLocation COPPER_ID = HandsOnDelight.id("copper_pot");
     public static final ResourceLocation MONSTER_ID = HandsOnDelight.id("monster_pot");
     public static final ResourceLocation ALCHEMIST_ID = HandsOnDelight.id("alchemist_pot");
+    public static final ResourceLocation FIERY_ID = HandsOnDelight.id("fiery_pot");
+    /** What the pot holds: soup, or in the fiery pot a molten broth that glows as lava does. */
+    public static final ResourceLocation BROTH_LIQUID = HandsOnDelight.id("broth");
+    public static final ResourceLocation FIERY_BROTH_LIQUID = HandsOnDelight.id("fiery_broth");
 
     /** Brazilian Delight: a milk bucket on Farmer's Delight's pot in the world makes its milk pot, the way to its heavy cream. */
     private static final String BRAZILIAN_DELIGHT = "braziliandelight";
@@ -109,6 +114,7 @@ public final class CookingPotStation {
     public static final StationType COPPER_TYPE = type(COPPER_ID, FarmersDelightContent.COPPER_POT, schema(COPPER_SLOTS, false));
     public static final StationType MONSTER_TYPE = type(MONSTER_ID, FarmersDelightContent.MONSTER_POT, SCHEMA);
     public static final StationType ALCHEMIST_TYPE = type(ALCHEMIST_ID, FarmersDelightContent.ALCHEMIST_POT, schema(SLOTS, true));
+    public static final StationType FIERY_TYPE = type(FIERY_ID, FarmersDelightContent.FIERY_POT, SCHEMA);
 
     private CookingPotStation() {
     }
@@ -154,6 +160,9 @@ public final class CookingPotStation {
         }
         if (Platform.INSTANCE.isLoaded(FarmersDelightContent.FARMERS_SPELL)) {
             Diegesis.register(ALCHEMIST_TYPE);
+        }
+        if (Platform.INSTANCE.isLoaded(FarmersDelightContent.TWILIGHT_DELIGHT)) {
+            Diegesis.register(FIERY_TYPE);
         }
     }
 

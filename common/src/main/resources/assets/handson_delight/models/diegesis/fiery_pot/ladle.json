@@ -1,0 +1,233 @@
+{
+  "textures": {
+    "particle": "twilightdelight:block/hot_cooking_pot_parts",
+    "parts": "twilightdelight:block/hot_cooking_pot_parts",
+    "pattern": "twilightdelight:block/hot_cooking_pot_pattern"
+  },
+  "elements": [
+    {
+      "name": "spoon",
+      "from": [
+        7,
+        2.8,
+        7
+      ],
+      "to": [
+        9,
+        14.8,
+        9
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -22.5,
+        "axis": "z",
+        "origin": [
+          8,
+          3.05,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            2,
+            0,
+            14
+          ],
+          "texture": "#parts",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "east": {
+          "uv": [
+            0,
+            2,
+            2,
+            14
+          ],
+          "texture": "#parts",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "south": {
+          "uv": [
+            2,
+            2,
+            0,
+            14
+          ],
+          "texture": "#parts",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "west": {
+          "uv": [
+            0,
+            2,
+            2,
+            14
+          ],
+          "texture": "#parts",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#parts",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#parts",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        }
+      }
+    },
+    {
+      "name": "spoon_glow",
+      "from": [
+        11.7961,
+        14.84328,
+        9.5
+      ],
+      "to": [
+        8.7961,
+        1.84328,
+        6.5
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -22.5,
+        "axis": "z",
+        "origin": [
+          10.2961,
+          8.59328,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            4,
+            2,
+            16
+          ],
+          "rotation": 180,
+          "texture": "#pattern",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "east": {
+          "uv": [
+            2,
+            4,
+            4,
+            16
+          ],
+          "rotation": 180,
+          "texture": "#pattern",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "south": {
+          "uv": [
+            4,
+            4,
+            2,
+            16
+          ],
+          "rotation": 180,
+          "texture": "#pattern",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "west": {
+          "uv": [
+            2,
+            4,
+            4,
+            16
+          ],
+          "rotation": 180,
+          "texture": "#pattern",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            4,
+            16
+          ],
+          "rotation": 180,
+          "texture": "#pattern",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "down": {
+          "uv": [
+            2,
+            4,
+            4,
+            6
+          ],
+          "rotation": 180,
+          "texture": "#pattern",
+          "neoforge_data": {
+            "color": "FFFFFFFF",
+            "block_light": 15,
+            "sky_light": 15
+          }
+        }
+      }
+    }
+  ]
+}

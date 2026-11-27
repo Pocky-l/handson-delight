@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link HearthKegTests}, {@link HearthCaskTests}, {@link CulturalOvenTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link YoukaiTankTests}, {@link StumpTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
+ * {@link PotTests}, {@link CopperPotTests}, {@link MonsterPotTests}, {@link FieryPotTests}, {@link AlchemistPotTests}, {@link KegTests}, {@link HearthKegTests}, {@link HearthCaskTests}, {@link CulturalOvenTests}, {@link OvenTests}, {@link VatTests}, {@link KettleTests}, {@link YoukaiKettleTests}, {@link YoukaiBoardTests}, {@link YoukaiPotTests}, {@link YoukaiSteamerTests}, {@link YoukaiTankTests}, {@link StumpTests}, {@link BoardTests}, {@link SkilletTests}, {@link StoveTests}
  * and {@link RecipeAudit} on NeoForge.
  */
 @GameTestHolder(HandsOnDelight.MOD_ID)
@@ -622,6 +622,21 @@ public final class ModGameTests {
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void aHopperFedMonsterPotCooksByItself(GameTestHelper helper) {
         MonsterPotTests.aHopperFedMonsterPotCooksByItself(helper);
+    }
+
+    @GameTest(template = "empty")
+    public static void theFieryPotIsAPotStation(GameTestHelper helper) {
+        FieryPotTests.theFieryPotIsAPotStation(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 500)
+    public static void aStirredFieryPotWaitsAndCooksTheBatch(GameTestHelper helper) {
+        FieryPotTests.aStirredFieryPotWaitsAndCooksTheBatch(helper);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aLongTwilightDishCooksInTenSeconds(GameTestHelper helper) {
+        FieryPotTests.aLongTwilightDishCooksInTenSeconds(helper);
     }
 
     private static boolean spellSchools;

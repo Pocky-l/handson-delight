@@ -23,7 +23,7 @@ import com.pockyl.diegesis.api.state.TankContents;
 import com.pockyl.diegesis.api.station.StationContext;
 import com.pockyl.diegesis.api.station.StationLogic;
 import com.pockyl.handson_delight.Cookable;
-import com.pockyl.handson_delight.HandsOnDelight;
+import com.pockyl.handson_delight.FarmersDelightContent;
 import com.pockyl.handson_delight.KitchenTags;
 
 import java.util.ArrayList;
@@ -57,6 +57,8 @@ public final class PotLogic implements StationLogic {
     private static final int THIRD_STAR = 32;
 
     private final KitchenPot pot;
+    /** The liquid the pot holds: the fiery pot's glows as lava does. */
+    private final ResourceLocation broth;
     /** The same pot when it holds a spell scroll too (the alchemist pot), or null. */
     private final ScrollPot scrolls;
     private final PotCooking cooking;
@@ -76,6 +78,8 @@ public final class PotLogic implements StationLogic {
     public PotLogic(StationContext station) {
         pot = (KitchenPot) station.blockEntity();
         cooking = pot.handson$cooking();
+        broth = pot.handson$blockEntity().getBlockState().is(FarmersDelightContent.FIERY_POT.get())
+                ? CookingPotStation.FIERY_BROTH_LIQUID : CookingPotStation.BROTH_LIQUID;
         resultFor = new ItemStack[pot.handson$slots()];
         StationState state = station.state();
         state.bindSlots(CookingPotStation.INGREDIENTS, storage(pot, 0, pot.handson$slots()));
@@ -752,7 +756,8 @@ public final class PotLogic implements StationLogic {
         // The whole batch cooks at once, and the dial shows how far it is.
         ItemStack dish = result(station);
         int batch = batch(station);
-        float speed = speed(batch);
+        // Twilight's Flavor & Delight's fiery pot and maze stove add to every step of its dishes.
+        float speed = speed(batch) + TwilightPot.extraPerStep(pot.handson$blockEntity(), recipe(station), station.level().registryAccess());
         float progress = batch > 0 && total > 0 ? Math.min(1.0F, (float) time / total) : 0.0F;
         state.setControl(CookingPotStation.PROGRESS, progress);
         state.setControl(CookingPotStation.HEATED, pot.handson$isHeated() ? 1.0F : 0.0F);
@@ -786,6 +791,6 @@ public final class PotLogic implements StationLogic {
         if (!pot.handson$meal().isEmpty()) {
             level = Math.max(level, Math.min(100, SOUP_BASE + SOUP_PER_SERVING * pot.handson$meal().getCount()));
         }
-        state.setTank(CookingPotStation.BROTH, TankContents.of(HandsOnDelight.id("broth"), level));
+        state.setTank(CookingPotStation.BROTH, TankContents.of(broth, level));
     }
 }

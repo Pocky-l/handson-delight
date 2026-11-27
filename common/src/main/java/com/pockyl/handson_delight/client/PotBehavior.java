@@ -53,20 +53,27 @@ public final class PotBehavior implements StationBehavior {
      * and the waves showed as a thin line over the rim from the side at a low camera angle. The scene's {@code broth} tank ends at the
      * same height. {@code rim}: where an egg is knocked; {@code lean}: how the spoon leans at rest in its model, degrees, plus to the
      * right; {@code scroll}: the pot holds a spell scroll ({@link PotScroll}); {@code liquid}: what the pot holds instead of the
-     * biome's water (RGB, alpha as the water's), 0 for water.
+     * biome's water (RGB, alpha as the water's), 0 for water; {@code inside}: half the width inside, where the spoon, what floats and
+     * the walls that stop it are measured from.
      */
-    public record Shape(int slots, float floor, float depth, float spoonEnd, float rim, float lean, boolean scroll, int liquid) {
+    public record Shape(int slots, float floor, float depth, float spoonEnd, float rim, float lean, boolean scroll, int liquid, float inside) {
         /** Farmer's Delight's pot: walls 2 px, floor 2 px, rim at 10. */
-        public static final Shape COOKING_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.5F, 3.0F, 10.0F, 22.5F, false, 0);
+        public static final Shape COOKING_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.5F, 3.0F, 10.0F, 22.5F, false, 0, 4.0F);
         /** Miner's Delight's copper pot: as wide inside, walls and floor 1 px, rim at 8. */
-        public static final Shape COPPER_POT = new Shape(CookingPotStation.COPPER_SLOTS, 1.0F, 5.5F, 2.0F, 10.0F, 22.5F, false, 0);
+        public static final Shape COPPER_POT = new Shape(CookingPotStation.COPPER_SLOTS, 1.0F, 5.5F, 2.0F, 10.0F, 22.5F, false, 0, 4.0F);
         /**
          * Dungeons Delight's monster pot: Farmer's Delight's pot (our model in its textures) full of the green ooze its own top shows
          * (`monster_pot_top`, an animated green surface), whatever cooks in it.
          */
-        public static final Shape MONSTER_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.5F, 3.0F, 10.0F, 22.5F, false, 0x47A44F);
+        public static final Shape MONSTER_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.5F, 3.0F, 10.0F, 22.5F, false, 0x47A44F, 4.0F);
         /** Farmer's Spell's alchemist pot: as wide inside, floor 2 px, rim at 9; its stick leans the other way and it holds a scroll. */
-        public static final Shape ALCHEMIST_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 5.5F, 3.0F, 9.0F, -22.5F, true, 0);
+        public static final Shape ALCHEMIST_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 5.5F, 3.0F, 9.0F, -22.5F, true, 0, 4.0F);
+        /**
+         * Twilight's Flavor & Delight's fiery cooking pot: its dark body (rim at 9.55) round its painted 7 px mouth, made real, floor 2 px;
+         * its spoon pivots at 3.05 and leans as Farmer's Delight's. It holds a molten broth on lava's own surface
+         * ({@code CookingPotStation.FIERY_BROTH_LIQUID}), untinted, which the food only shades.
+         */
+        public static final Shape FIERY_POT = new Shape(CookingPotStation.SLOTS, 2.0F, 6.0F, 3.05F, 9.55F, 22.5F, false, 0xFFFFFF, 3.5F);
     }
 
     /** Arrays are as long as the biggest pot needs; a pot uses its own {@link Shape#slots} of them. */
@@ -81,6 +88,8 @@ public final class PotBehavior implements StationBehavior {
     private static final float ITEM_REST = 8.0F - 0.25F;
     /** How far the ingredients drift from the middle of the pot, in pixels. */
     private static final float DRIFT_RADIUS = 2.2F;
+    /** Half the width inside Farmer's Delight's pot, which the sizes here are made for. */
+    private static final float FARMERS_DELIGHT_INSIDE = 4.0F;
     /**
      * The badge is drawn in the pixels of the dish's icon, which is 16 of them wide and centred on the badge: a dark plate with cut
      * corners, three stars over the icon for how well the pot is stirred, a bar under it for how far the batch is.
@@ -144,7 +153,7 @@ public final class PotBehavior implements StationBehavior {
     /** How much of the food's colour the water has before any cooking. */
     private static final float RAW_TINT = 0.3F;
 
-    /** How far the spoon's end goes from the pot's middle, in pixels. */
+    /** How far the spoon's end goes from the middle of Farmer's Delight's pot, in pixels; a narrower pot narrows it. */
     private static final float SPOON_REACH = 2.3F;
     /** How much the spoon leans in the hand, degrees; at rest it leans as its model does ({@link Shape#lean}). */
     private static final float STIR_LEAN = 7.0F;
@@ -155,6 +164,7 @@ public final class PotBehavior implements StationBehavior {
     private static final float SPOON_HOME_RATE = 1.8F;
     private static final float SPOON_HOME_GRIP = 2.0F;
     private static final float ITEM_CLEARANCE = 2.1F;
+    /** In Farmer's Delight's pot, 4 px from the middle to a wall; a narrower pot narrows it. */
     private static final float ITEM_ROOM = 2.9F;
     private static final float ITEM_RADIUS = 1.15F;
     private static final float POT_HALF = 5.0F;
@@ -229,6 +239,10 @@ public final class PotBehavior implements StationBehavior {
     private final int liquid;
     private final float rimTop;
     private final float restLean;
+    /** {@link #DRIFT_RADIUS}, {@link #SPOON_REACH} and {@link #ITEM_ROOM} in this pot, which may be narrower inside than Farmer's Delight's. */
+    private final float driftRadius;
+    private final float spoonReach;
+    private final float itemRoom;
     /** The alchemist pot's scroll, or null for a pot without one. */
     private final PotScroll scroll;
     /** The school the dish in the pot waits for (its scroll does not hang there), or null; the school the dish was looked up under. */
@@ -386,6 +400,10 @@ public final class PotBehavior implements StationBehavior {
         liquid = shape.liquid();
         rimTop = shape.rim();
         restLean = shape.lean();
+        float narrower = FARMERS_DELIGHT_INSIDE - shape.inside();
+        driftRadius = DRIFT_RADIUS - narrower;
+        spoonReach = SPOON_REACH - narrower;
+        itemRoom = ITEM_ROOM - narrower;
         scroll = shape.scroll() ? new PotScroll() : null;
         book = new RecipeBook(new PotBook(slots));
         java.util.Arrays.fill(shown, ItemStack.EMPTY);
@@ -1081,7 +1099,7 @@ public final class PotBehavior implements StationBehavior {
         if (!food.isEmpty()) {
             float cooked = meal.isEmpty() ? RAW_TINT + (1.0F - RAW_TINT) * view.state().getControl(CookingPotStation.PROGRESS) : 1.0F;
             int soup = preview.isEmpty() ? FoodColors.mix(food) : FoodColors.broth(view.level(), preview);
-            // The monster pot's ooze stays green: the food only shades it.
+            // The monster pot's ooze stays green and the fiery pot's broth molten: the food only shades them.
             colour = blend(water, SOUP_ALPHA << 24 | soup, liquid != 0 ? cooked * OOZE_TAKES : cooked);
             uneven = cooked;
         }
@@ -1315,7 +1333,7 @@ public final class PotBehavior implements StationBehavior {
             if (cursor.isPresent()) {
                 Vector3f inPot = potInverse.set(pot.sceneMatrix()).invert().transformPosition(cursor.get());
                 float distance = (float) Math.hypot(inPot.x, inPot.z);
-                float shorter = distance > SPOON_REACH ? SPOON_REACH / distance : 1.0F;
+                float shorter = distance > spoonReach ? spoonReach / distance : 1.0F;
                 wantX = inPot.x * shorter;
                 wantZ = inPot.z * shorter;
             }
@@ -1325,8 +1343,8 @@ public final class PotBehavior implements StationBehavior {
             wantX = tipX;
             wantZ = tipZ;
         } else if (stirred) {
-            wantX = view.state().getControl(CookingPotStation.SPOON_X) * SPOON_REACH;
-            wantZ = view.state().getControl(CookingPotStation.SPOON_Z) * SPOON_REACH;
+            wantX = view.state().getControl(CookingPotStation.SPOON_X) * spoonReach;
+            wantZ = view.state().getControl(CookingPotStation.SPOON_Z) * spoonReach;
         }
         handLeft -= dt;
         // Nobody holds it any more: it sets off softly and takes its time, the rest of its moves answer a hand.
@@ -1375,8 +1393,8 @@ public final class PotBehavior implements StationBehavior {
                 sendClock = SEND_INTERVAL;
                 sendTravel = 0.0F;
                 CompoundTag where = new CompoundTag();
-                where.putFloat(CookingPotStation.STIR_X, tipX / SPOON_REACH);
-                where.putFloat(CookingPotStation.STIR_Z, tipZ / SPOON_REACH);
+                where.putFloat(CookingPotStation.STIR_X, tipX / spoonReach);
+                where.putFloat(CookingPotStation.STIR_Z, tipZ / spoonReach);
                 where.putFloat(CookingPotStation.STIR_AT, time * 20.0F);
                 view.sendAction(CookingPotStation.ACTION_STIR, where);
             }
@@ -1387,7 +1405,7 @@ public final class PotBehavior implements StationBehavior {
     private void pose(NodeView spoon, NodeView pot) {
         // The lean grows with the distance from the middle, so it goes through the middle without a jump.
         float rest = (float) Math.tan(restLean * Mth.DEG_TO_RAD);
-        float held = (float) Math.tan(STIR_LEAN * Mth.DEG_TO_RAD) / SPOON_REACH;
+        float held = (float) Math.tan(STIR_LEAN * Mth.DEG_TO_RAD) / spoonReach;
         float leanX = Mth.lerp(grip, rest, tipX * held);
         float leanZ = Mth.lerp(grip, 0.0F, tipZ * held);
         // The shortest way from how the model leans by itself: the handle tips, it never twists about itself.
@@ -1425,7 +1443,7 @@ public final class PotBehavior implements StationBehavior {
             if (floats(i)) {
                 places[i] = Mth.lerp(Math.min(1.0F, dt * 2.5F), places[i], rank++ * Mth.TWO_PI / Math.max(present, 1));
                 float angle = turned + start + places[i];
-                place(i, Mth.cos(angle) * DRIFT_RADIUS, Mth.sin(angle) * DRIFT_RADIUS, dt);
+                place(i, Mth.cos(angle) * driftRadius, Mth.sin(angle) * driftRadius, dt);
             }
         }
         shoulder();
@@ -1541,8 +1559,8 @@ public final class PotBehavior implements StationBehavior {
     }
 
     private void shift(int index, float x, float z) {
-        float nx = Mth.clamp(itemX[index] + x, -ITEM_ROOM, ITEM_ROOM);
-        float nz = Mth.clamp(itemZ[index] + z, -ITEM_ROOM, ITEM_ROOM);
+        float nx = Mth.clamp(itemX[index] + x, -itemRoom, itemRoom);
+        float nz = Mth.clamp(itemZ[index] + z, -itemRoom, itemRoom);
         pushX[index] += nx - itemX[index];
         pushZ[index] += nz - itemZ[index];
         itemX[index] = nx;
@@ -1578,8 +1596,8 @@ public final class PotBehavior implements StationBehavior {
                 px = spoonX + dx * out;
                 pz = spoonZ + dz * out;
             }
-            px = Mth.clamp(px, -ITEM_ROOM, ITEM_ROOM);
-            pz = Mth.clamp(pz, -ITEM_ROOM, ITEM_ROOM);
+            px = Mth.clamp(px, -itemRoom, itemRoom);
+            pz = Mth.clamp(pz, -itemRoom, itemRoom);
         }
         pushX[index] = px - x;
         pushZ[index] = pz - z;

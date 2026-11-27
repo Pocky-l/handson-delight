@@ -249,7 +249,8 @@ the stoves of [End's Delight](https://www.curseforge.com/minecraft/mc-mods/ends-
 [Miner's Delight](https://modrinth.com/mod/miners-delight)'s copper pot,
 [Dungeons Delight](https://modrinth.com/mod/dungeons_delight)'s monster pot and dungeon stove,
 [Twilight's Flavor & Delight](https://modrinth.com/mod/twilight-delight)'s maze stove (Twilight food still grills twice
-as fast on it), [Trail&Tales Delight](https://modrinth.com/mod/trailtales-delight)'s mud stove (its pottery cooking pot keeps Farmer's
+as fast on it) and fiery cooking pot (it still heats itself and hurries Twilight dishes),
+[Trail&Tales Delight](https://modrinth.com/mod/trailtales-delight)'s mud stove (its pottery cooking pot keeps Farmer's
 Delight's menu), and every cutting board of
 [Chopper's Delight](https://modrinth.com/mod/choppers-delight), the decorated one too, each in its own look.
 [Farmer's Respite](https://modrinth.com/mod/farmers-respite-unofficial-port)'s kettle opens as a station too, its tray on a stove
@@ -275,7 +276,7 @@ which each player sets in their own file.
 
 | Key | Default | What it does |
 |---|---|---|
-| `cooking_pot`, `cutting_board`, `skillet`, `stove` | `true` | The station of that block. Off, the block works as in Farmer's Delight. `cooking_pot` covers the addons' pots too (copper, monster, alchemist) |
+| `cooking_pot`, `cutting_board`, `skillet`, `stove` | `true` | The station of that block. Off, the block works as in Farmer's Delight. `cooking_pot` covers the addons' pots too (copper, monster, alchemist, fiery) |
 | `keg` | `true` | The kegs of Brewin' and Chewin' and Hearth and Harvest as stations. Off, each keg keeps its own menu. Hearth and Harvest's keeps its own fermenting times |
 | `oven`, `vat` | `true` | The ovens of Cultural Delights and Cooking for Blockheads, and Cultural Delights' vat, as stations. Off, they keep their own menus. Cooking for Blockheads' oven keeps its own baking time |
 | `ed_vat` | `true` | Extra Delight's vat as a station. Off, it keeps its own menu. It keeps its own aging times; on, it also ages with no jars or bowls in it and keeps what it made to be drawn into them |

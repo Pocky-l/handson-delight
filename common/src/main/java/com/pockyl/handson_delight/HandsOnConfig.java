@@ -63,7 +63,7 @@ public final class HandsOnConfig {
             "Those are true or false. The cooking times are numbers from 0.1 to 10:",
             "cooking_pot_time: how long food takes in the pot, as a multiple of the usual time: 1.0 as it is, 2.0 twice as",
             "  long, 0.5 half. Every way the pot cooks follows it: stirred, left alone, fed by a hopper or Farmer's Delight's",
-            "  menu (Miner's Delight's copper pot too).",
+            "  menu (Miner's Delight's copper pot and Twilight's Flavor & Delight's fiery cooking pot too).",
             "skillet_time, stove_time: the same for food fried in the skillet and grilled on the stove at the station.",
             "  Food put in with Farmer's Delight's own right click (sneaking, a player without this mod) keeps its time.",
             "kettle_time: the same for drinks brewed in Farmer's Respite's kettle, however they got into it.",

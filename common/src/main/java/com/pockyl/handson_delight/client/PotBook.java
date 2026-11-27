@@ -20,6 +20,7 @@ import com.pockyl.handson_delight.station.CookingPotStation;
 import com.pockyl.handson_delight.station.KitchenPot;
 import com.pockyl.handson_delight.station.PotLogic;
 import com.pockyl.handson_delight.station.ScrollPot;
+import com.pockyl.handson_delight.station.TwilightPot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +71,8 @@ final class PotBook implements RecipeBook.Source {
             }
             foot.add(new ItemStack(Items.CLOCK));
             Component seconds = Component.translatable("handson_delight.book.seconds",
-                    Math.round(recipe.getCookTime() * CookingTimes.cookingPot() / 20.0F / PotLogic.speed(1)));
+                    Math.round(recipe.getCookTime() * CookingTimes.cookingPot() / 20.0F
+                            / (PotLogic.speed(1) + TwilightPot.extraPerStep(pot, recipe, level.registryAccess()))));
             String kind = scrolls == null ? null : scrolls.handson$isOwnRecipe(recipe) ? OWN : FARMERS_DELIGHT;
             pages.add(new RecipeBook.Page(holder.id(), KitchenPot.resultOf(pot, recipe, level.registryAccess()), ingredients, foot, seconds,
                     true, kind));

@@ -17,12 +17,11 @@ plugins {
 // Minecraft 1.21.11: the recipe viewers and most addon mods have no 1.21.11 builds the code is written for, so what compiles
 // against them is left out of the build (the sources stay). The loader projects leave out the same files. The addon mixins are
 // also left out of handson_delight.mixins.json; the rest of the addon support finds the addons at runtime and stays dormant
-// without them. Chopper's Delight has one: the decorated board's mixins are built against it.
+// without them. Chopper's Delight has one: the decorated board's mixins are built against it. Cooking for Blockheads' oven
+// mixins name its classes only by string.
 ext.compatSources = [
         'com/pockyl/handson_delight/compat/jei/**',
         'com/pockyl/handson_delight/compat/emi/**',
-        'com/pockyl/handson_delight/mixin/CfbOvenToolsMixin.java',
-        'com/pockyl/handson_delight/mixin/CfbOvenTopMixin.java',
         'com/pockyl/handson_delight/mixin/KegMixin.java',
         'com/pockyl/handson_delight/mixin/OvenMixin.java',
         'com/pockyl/handson_delight/mixin/VatMixin.java',

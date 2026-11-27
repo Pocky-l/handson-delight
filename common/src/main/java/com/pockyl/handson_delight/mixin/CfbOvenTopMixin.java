@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -23,8 +22,8 @@ import com.pockyl.handson_delight.station.CfbOven;
  * The burners on top of Cooking for Blockheads' oven, where its station is on: cookware stands on them as on a stove. Its own use
  * stands only the tools of its kitchen there (knives, Pam's cookware); Farmer's Delight's skillet and cooking pot clicked on a free
  * burner now stand on it too, and an empty hand on a burner takes back what stands there. Everything else is
- * its own use (its tools, its menu, its door held open). On 1.21.1 a held thing goes through its {@code useItemOn}, an empty hand
- * through its {@code useWithoutItem}; named per loader as in {@code CfbOvenToolsMixin}.
+ * its own use (its tools, its menu, its door held open). A held thing goes through its {@code useItemOn}, an empty hand through its
+ * {@code useWithoutItem}: Mojang's names in a development run, the intermediary names on Fabric.
  */
 @Pseudo
 @Mixin(targets = "net.blay09.mods.cookingforblockheads.block.OvenBlock", remap = false)
@@ -32,7 +31,7 @@ abstract class CfbOvenTopMixin {
     /** A skillet or a pot onto a free burner. */
     @Inject(method = {"useItemOn", "method_55765"}, at = @At("HEAD"), cancellable = true, require = 0)
     private void handson$burner(ItemStack held, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
-            BlockHitResult hit, CallbackInfoReturnable<ItemInteractionResult> result) {
+            BlockHitResult hit, CallbackInfoReturnable<InteractionResult> result) {
         CfbOven oven = handson$oven(level, pos, hit);
         if (oven == null || !CfbOven.standsOnBurner(held)) {
             return;
@@ -42,7 +41,7 @@ abstract class CfbOvenTopMixin {
             if (!level.isClientSide()) {
                 oven.setTool(burner, held.split(1));
             }
-            result.setReturnValue(ItemInteractionResult.sidedSuccess(level.isClientSide()));
+            result.setReturnValue(InteractionResult.SUCCESS);
         }
     }
 
@@ -61,7 +60,7 @@ abstract class CfbOvenTopMixin {
                 player.setItemInHand(InteractionHand.MAIN_HAND, there.copy());
                 oven.setTool(burner, ItemStack.EMPTY);
             }
-            result.setReturnValue(InteractionResult.sidedSuccess(level.isClientSide()));
+            result.setReturnValue(InteractionResult.SUCCESS);
         }
     }
 

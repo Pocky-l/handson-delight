@@ -26,7 +26,6 @@ import com.pockyl.handson_delight.HandsOnDelight;
 import com.pockyl.handson_delight.KitchenRecipes;
 import com.pockyl.handson_delight.RecipeParts;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -34,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Cooking for Blockheads' oven, as the oven station sees it. Its block entity keeps one container of 20 (vanilla's {@link Container},
@@ -49,8 +49,6 @@ public final class CfbOven implements KitchenOven {
     private static final String ENTITY = "net.blay09.mods.cookingforblockheads.block.entity.OvenBlockEntity";
     private static final String CONFIG = "net.blay09.mods.cookingforblockheads.CookingForBlockheadsConfig";
     private static final String SMELTED_EVENT = "net.blay09.mods.cookingforblockheads.api.event.OvenItemSmeltedEvent";
-    private static final String BALM = "net.blay09.mods.balm.api.Balm";
-    private static final String BALM_EVENTS = "net.blay09.mods.balm.api.event.BalmEvents";
     public static final int INPUT = 0;
     public static final int INPUTS = 3;
     public static final int FUEL = 3;
@@ -112,7 +110,8 @@ public final class CfbOven implements KitchenOven {
         }
         try {
             Method container = type.getMethod("getInternalContainer");
-            Method fuel = type.getMethod("isItemFuel", ItemStack.class);
+            // Since 1.21.2 its fuel test asks the level's fuel values.
+            Method fuel = type.getMethod("isItemFuel", Level.class, ItemStack.class);
             Field cookTimes = type.getField("slotCookTime");
             Field burnTime = type.getField("furnaceBurnTime");
             containerMethod = container;
@@ -198,7 +197,8 @@ public final class CfbOven implements KitchenOven {
     @Override
     public boolean isFuel(ItemStack stack) {
         try {
-            return !stack.isEmpty() && (boolean) fuelMethod.invoke(null, stack);
+            Level level = entity.getLevel();
+            return !stack.isEmpty() && level != null && (boolean) fuelMethod.invoke(entity, level, stack);
         } catch (ReflectiveOperationException | RuntimeException e) {
             fail(e);
             return false;
@@ -307,6 +307,11 @@ public final class CfbOven implements KitchenOven {
         return KitchenRecipes.find(level, (RecipeType<Recipe<SingleRecipeInput>>) type, input)
                 .map(holder -> holder.value().assemble(input, level.registryAccess()))
                 .filter(result -> !result.isEmpty());
+    }
+
+    /** Its own recipe type, null without it. */
+    public static RecipeType<?> ovenRecipes() {
+        return BuiltInRegistries.RECIPE_TYPE.getValue(OVEN_RECIPES);
     }
 
     /** Its recipe types in the order it tries them: its own, campfire, smoking, smelting. */
@@ -436,6 +441,7 @@ public final class CfbOven implements KitchenOven {
 
     /** As its own output slot: the item's own hook, then its event for what the player took out of the oven. */
     @Override
+    @SuppressWarnings("unchecked")
     public void onTaken(Player player, ItemStack stack) {
         KitchenOven.super.onTaken(player, stack);
         Level level = entity.getLevel();
@@ -443,10 +449,14 @@ public final class CfbOven implements KitchenOven {
             return;
         }
         try {
-            Constructor<?> event = Class.forName(SMELTED_EVENT).getConstructor(Player.class, Level.class, BlockPos.class, ItemStack.class);
-            Object events = Class.forName(BALM).getMethod("getEvents").invoke(null);
-            Method fire = Class.forName(BALM_EVENTS).getMethod("fireEvent", Object.class);
-            fire.invoke(events, event.newInstance(player, level, entity.getBlockPos(), stack));
+            // Since 1.21.11 the event carries its own listeners: its EVENT mapper's invoker is a consumer of it.
+            Class<?> type = Class.forName(SMELTED_EVENT);
+            Object event = type.getConstructor(Player.class, Level.class, BlockPos.class, ItemStack.class)
+                    .newInstance(player, level, entity.getBlockPos(), stack);
+            Field mapper = type.getField("EVENT");
+            // Called through the field's public interface: the mapper itself is one of Balm's own classes.
+            Object invoker = mapper.getType().getMethod("invoker").invoke(mapper.get(null));
+            ((Consumer<Object>) invoker).accept(event);
         } catch (ReflectiveOperationException | RuntimeException e) {
             HandsOnDelight.LOGGER.debug("Cooking for Blockheads' smelted event not fired", e);
         }

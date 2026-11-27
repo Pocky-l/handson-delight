@@ -19,6 +19,7 @@
     "StoveBlockMixin",
     "PlayerListMixin",
     "DecoratedBoardMixin",
+    "CfbOvenTopMixin",
     "ShapedRecipeAccessor",
     "ShapelessRecipeAccessor",
     "SingleItemRecipeAccessor",
@@ -36,7 +37,8 @@
     "CampfireSmokeMixin",
     "GrillSmokeMixin",
     "GrillSizzleMixin",
-    "DecoratedBoardContentMixin"
+    "DecoratedBoardContentMixin",
+    "CfbOvenToolsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

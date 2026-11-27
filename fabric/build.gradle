@@ -61,9 +61,12 @@ dependencies {
     gameTestMods "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     // Not in the fabric-api jar: the module that runs the tests (the version fabric-api's POM names).
     gameTestMods 'net.fabricmc.fabric-api:fabric-gametest-api-v1:3.1.27+4fc5413f3e'
-    // -Paddons: the addons with a 1.21.11 Fabric build whose stations open: Chopper's Delight's boards.
+    // -Paddons: the addons with a 1.21.11 Fabric build whose stations open: Chopper's Delight's boards, Cooking for Blockheads'
+    // oven (with Balm).
     if (providers.gradleProperty('addons').isPresent()) {
         gameTestMods "maven.modrinth:choppers-delight:${choppers_delight_fabric_version}"
+        gameTestMods 'maven.modrinth:cooking-for-blockheads:5Ykn1jsb' // Cooking for Blockheads 21.11.6
+        gameTestMods 'maven.modrinth:balm:5POKgjJn'                   // Balm 21.11.9.1, which it needs
     }
     // -Ppolymer: Polymer, which changes items and ingredients as a player's connection writes them (the recipes sent to clients).
     if (providers.gradleProperty('polymer').isPresent()) {

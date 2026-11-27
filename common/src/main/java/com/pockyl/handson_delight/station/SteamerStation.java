@@ -156,6 +156,31 @@ public final class SteamerStation {
         return !stack.isEmpty() && stack.is(LID.get().asItem());
     }
 
+    /**
+     * A rack held with Shift on the pot, a block of racks or the lid of a tower goes onto the tower's top, flush, as a plain click
+     * does without the station. A plain click opens the station here, so Shift is the way round it; Youkai's own click passes on
+     * Shift, and the rack item then placed a block of its own over the pot, its one rack drawn 8 px over the pot's top (Discord,
+     * 2026-11-26). A rack on anything else, or a full tower, keeps the rack's own placing. True when the rack went on; on the client
+     * when it would, so the placing is stopped there too.
+     */
+    public static boolean stacksOnShift(Player player, Level level, BlockPos pos, ItemStack held) {
+        if (!player.isSecondaryUseActive() || !isRack(held)) {
+            return false;
+        }
+        BlockState state = level.getBlockState(pos);
+        if (!SteamerTower.isPot(state) && !SteamerTower.isRack(state) && !SteamerTower.isLid(state)) {
+            return false;
+        }
+        SteamerTower tower = SteamerTower.of(level, SteamerTower.potUnder(level, pos, state));
+        if (tower == null || !tower.hasRoom() || !tower.top().handson$addRack()) {
+            return false;
+        }
+        if (!level.isClientSide() && !player.getAbilities().instabuild) {
+            held.shrink(1);
+        }
+        return true;
+    }
+
     /** The steamer's recipes, in the recipe manager's order. */
     @SuppressWarnings({"unchecked", "rawtypes", "removal"})
     public static List<Steaming> recipes(Level level) {

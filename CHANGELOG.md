@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.1+1.20.1] - 2026-11-27
+### Fixed
+- A steamer rack put with Shift on [Gensokyo Delight: Youkai's Feasts](https://modrinth.com/mod/gensokyo-delight-youkais-feasts)' steamer now sits on the pot or the tower instead of floating over it.
+
 ## [1.7.0+1.20.1] - 2026-11-23
 ### New
 - [Twilight's Flavor & Delight](https://modrinth.com/mod/twilight-delight)'s fiery cooking pot is a pot station with a molten broth that glows like lava.

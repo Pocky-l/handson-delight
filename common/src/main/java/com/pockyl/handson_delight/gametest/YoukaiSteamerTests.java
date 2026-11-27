@@ -1,13 +1,18 @@
 package com.pockyl.handson_delight.gametest;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import com.pockyl.handson_delight.station.KitchenSteamer;
 import com.pockyl.handson_delight.station.SteamerLogic;
@@ -15,7 +20,10 @@ import com.pockyl.handson_delight.station.SteamerStation;
 import com.pockyl.handson_delight.station.SteamerTower;
 import com.pockyl.handson_delight.station.Youkai;
 
+import com.mojang.authlib.GameProfile;
+
 import java.util.List;
+import java.util.UUID;
 
 /** Youkai's Feasts' steamer at the station: its tower, water, racks, lid, things laid and taken, and the steaming itself. */
 public final class YoukaiSteamerTests {
@@ -225,6 +233,29 @@ public final class YoukaiSteamerTests {
         helper.assertTrue(SteamerTower.potUnder(helper.getLevel(), alone, helper.getLevel().getBlockState(alone)).equals(alone)
                 && !SteamerStation.opens(setup.player, alone, helper.getLevel().getBlockState(alone)),
                 "a rack on stone is no station: it keeps its own use");
+        helper.succeed();
+    }
+
+    /**
+     * Shift with racks on the pot, the way round the station: each goes onto the tower flush (the pot's own two), none is placed as a
+     * block of its own over the pot (Discord, 2026-11-26: a rack floated 8 px over the pot). The real click, so the loader's hook runs.
+     */
+    public static void youkaiSteamerTakesARackOnShift(GameTestHelper helper) {
+        Setup setup = steamer(helper);
+        if (setup == null) {
+            return;
+        }
+        ServerPlayer cook = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), new GameProfile(UUID.randomUUID(), "cook"));
+        cook.setShiftKeyDown(true);
+        cook.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(SteamerStation.RACK_BLOCK.get(), 2));
+        BlockPos pot = setup.station.pos();
+        for (int i = 0; i < 2; i++) {
+            cook.gameMode.useItemOn(cook, helper.getLevel(), cook.getMainHandItem(), InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.upFromBottomCenterOf(pot, 1.0), Direction.UP, pot, false));
+        }
+        helper.assertTrue(setup.tower().racks() == 2, "both racks went onto the pot, got " + setup.tower().racks());
+        helper.assertTrue(helper.getLevel().getBlockState(pot.above()).isAir(), "no block of racks over the pot");
+        helper.assertTrue(cook.getMainHandItem().isEmpty(), "both racks were used");
         helper.succeed();
     }
 }

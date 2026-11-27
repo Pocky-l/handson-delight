@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.7.0+26.3] - 2026-11-27
+### New
+- [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)'s oven is a station: food bakes on its rack, fuel goes in at the fire and a skillet or pot stands on its burners.
+- [Chopper's Delight](https://modrinth.com/mod/choppers-delight)'s decorated cutting board is a board station, as its wooden boards are.
+
 ## [1.6.4+26.3] - 2026-11-23
 ### Fixed
 - The stations' recipe books are no longer blank with [Polymer](https://modrinth.com/mod/polymer) installed ([#58](https://github.com/Pocky-l/handson-delight/issues/58)).

@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.0+26.2] - 2026-11-28
+### New
+- Minecraft 26.2, on Fabric with [Farmer's Delight Refabricated](https://modrinth.com/mod/farmers-delight-refabricated): everything of 1.7.0 on 26.3, [Cultural Delights](https://modrinth.com/mod/cultural-delights)' oven and vat, [Chopper's Delight](https://modrinth.com/mod/choppers-delight)'s decorated board and [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)' oven included.
+- Needs [Diegesis](https://www.curseforge.com/minecraft/mc-mods/diegesis) 1.0.0-beta.19.4+26.2.
+
+### Not on 26.2 yet
+- NeoForge: Farmer's Delight has no NeoForge build for 26.2.
+- Stations of other Farmer's Delight addons and recipe viewers (JEI, EMI, REI): they come back as those mods reach 26.2 and the support for them is ported.
+
 ## [1.7.0+26.3] - 2026-11-27
 ### New
 - [Cooking for Blockheads](https://modrinth.com/mod/cooking-for-blockheads)'s oven is a station: food bakes on its rack, fuel goes in at the fire and a skillet or pot stands on its burners.

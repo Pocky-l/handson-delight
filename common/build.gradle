@@ -10,7 +10,7 @@ neoForge {
     neoFormVersion = neo_form_version
 }
 
-// Minecraft 26.3: the recipe viewers and most addon mods have no 26.3 Fabric builds yet, so what compiles against them is
+// Minecraft 26.2: the recipe viewers and most addon mods have no 26.2 Fabric builds yet, so what compiles against them is
 // left out of the build (the sources stay). The loader projects leave out the same files. The addon mixins are also left out
 // of handson_delight.mixins.json; the rest of the addon support finds the addons at runtime and stays dormant without them.
 // Cultural Delights and Chopper's Delight have one: the mixins of the oven and vat and of the decorated board are built against
@@ -27,7 +27,7 @@ dependencies {
     // The mixin plugin's interface names ASM's class node; the loaders bring ASM at runtime.
     compileOnly 'org.ow2.asm:asm-tree:9.5'
     compileOnly "com.pockyl.diegesis:common:${diegesis_version}"
-    // Farmer's Delight on NeoForge has no 26.3 build: Refabricated stands for both. 26.x is unobfuscated, so its jar is in
+    // Farmer's Delight on NeoForge has no 26.2 build: Refabricated stands for both. 26.x is unobfuscated, so its jar is in
     // Mojang names like this project.
     compileOnly("maven.modrinth:farmers-delight-refabricated:${farmers_delight_refabricated_version}") { transitive = false }
     // Refabricated's block entities name Fabric's transfer and menu APIs in their signatures: javac needs them to read them.
@@ -36,9 +36,9 @@ dependencies {
     // Its cooking pot is an extended menu provider of Fabric's menu API, which the game tests read it as.
     compileOnly("net.fabricmc.fabric-api:fabric-menu-api-v1:${fabric_menu_api_version}") { transitive = false }
     // Cultural Delights' oven and vat are stations: their block entities send their content to clients through mixins compiled
-    // against its 26.3 Fabric build.
+    // against its 26.2 Fabric build.
     compileOnly("maven.modrinth:cultural-delights:${cultural_delights_fabric_version}") { transitive = false }
-    // Chopper's Delight's decorated board is a board station: its mixins are compiled against its 26.3 Fabric build.
+    // Chopper's Delight's decorated board is a board station: its mixins are compiled against its 26.2 Fabric build.
     compileOnly("maven.modrinth:choppers-delight:${choppers_delight_fabric_version}") { transitive = false }
 }
 

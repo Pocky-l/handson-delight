@@ -1,7 +1,6 @@
 package com.pockyl.handson_delight.station;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -120,7 +119,7 @@ public final class SkilletLogic implements StationLogic {
         data.put(SkilletStation.STACK, ItemNbt.save(taken, station.level().registryAccess()));
         station.effect(SkilletStation.EFFECT_TAKEN, "pan", data);
         if (!player.getInventory().add(taken)) {
-            player.drop(taken, false, Prediction.SERVER_ONLY);
+            player.drop(taken, false);
         }
     }
 

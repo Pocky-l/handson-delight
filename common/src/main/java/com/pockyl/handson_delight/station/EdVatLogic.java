@@ -511,7 +511,7 @@ public final class EdVatLogic implements StationLogic {
 
     private static void give(Player player, ItemStack stack) {
         if (!player.getInventory().add(stack)) {
-            player.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
+            player.drop(stack, false);
         }
     }
 

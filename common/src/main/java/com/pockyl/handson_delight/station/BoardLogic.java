@@ -7,7 +7,6 @@ import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Prediction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -166,7 +165,7 @@ public final class BoardLogic implements StationLogic {
         if (!free) {
             for (ItemStack stack : stacked) {
                 if (!player.getInventory().add(stack)) {
-                    player.drop(stack, false, Prediction.SERVER_ONLY);
+                    player.drop(stack, false);
                 }
             }
             return;
@@ -949,7 +948,7 @@ public final class BoardLogic implements StationLogic {
         while (!stack.isEmpty()) {
             ItemStack part = stack.split(stack.getMaxStackSize());
             if (!player.getInventory().add(part)) {
-                player.drop(part, false, Prediction.SERVER_ONLY);
+                player.drop(part, false);
             }
         }
     }

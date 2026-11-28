@@ -99,12 +99,6 @@ final class IconLight implements VertexConsumer {
     }
 
     @Override
-    public VertexConsumer setUv3(float u, float v) {
-        delegate.setUv3(u, v);
-        return this;
-    }
-
-    @Override
     public VertexConsumer setUv(float u, float v) {
         delegate.setUv(u, v);
         return this;

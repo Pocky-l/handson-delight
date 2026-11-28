@@ -44,7 +44,7 @@ final class PotBody implements NodePainter {
         poseStack.mulPose(new Matrix4f(node.sceneMatrix()).invert());
         poseStack.scale(16.0F, 16.0F, 16.0F);
         poseStack.translate(0.5F, 0.0F, 0.5F);
-        poseStack.rotate(Axis.YP.rotationDegrees(yaw(view)));
+        poseStack.mulPose(Axis.YP.rotationDegrees(yaw(view)));
         poseStack.translate(-0.5F, 0.0F, -0.5F);
         // As the world draws the pot since Minecraft 26.x: its look read into a render state, then submitted, here into the scene.
         BlockEntityRenderState state = renderer.createRenderState();

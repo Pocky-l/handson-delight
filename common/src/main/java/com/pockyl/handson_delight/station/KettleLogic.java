@@ -4,7 +4,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
@@ -202,7 +201,7 @@ public final class KettleLogic implements StationLogic {
                 putBack(player, from, stack);
                 handFree = false;
             } else if (!player.getInventory().add(stack)) {
-                player.drop(stack, false, Prediction.SERVER_ONLY);
+                player.drop(stack, false);
             }
         }
         if (handFree) {
@@ -250,7 +249,7 @@ public final class KettleLogic implements StationLogic {
         List<ItemStack> back = useWhile(container, true, all);
         for (ItemStack stack : back) {
             if (!player.getInventory().add(stack)) {
-                player.drop(stack, false, Prediction.SERVER_ONLY);
+                player.drop(stack, false);
             }
         }
         player.getInventory().setChanged();
